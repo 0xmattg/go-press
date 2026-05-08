@@ -217,6 +217,16 @@
         <div style="margin-top:0.5rem;"><img src="{{index $s "home_logo_combined_footer_image"}}" alt="Footer combined logo preview" style="max-height:48px; border-radius:6px; border:1px solid #e2e8f0; background:#0f172a; padding:6px 10px;"></div>
         {{end}}
     </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.142" "导航 CTA 按钮文字"}}</label>
+            <input type="text" name="home_cta_text" value="{{index $s "home_cta_text"}}" placeholder="Book a Call">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.143" "导航 CTA 跳转链接"}}</label>
+            <input type="text" name="home_cta_link" value="{{index $s "home_cta_link"}}" placeholder="/contact">
+        </div>
+    </div>
 </div>
 
 <!-- ============ TAB: Hero carousel ============ -->

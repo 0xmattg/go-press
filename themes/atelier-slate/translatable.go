@@ -13,6 +13,7 @@ func registerTranslatableOptions() {
 
 	// Brand
 	option.RegisterTranslatable("home_logo_text", "brand", "Logo 品牌名")
+	option.RegisterTranslatable("home_cta_text", "brand", "导航 CTA 按钮文字")
 
 	// Hero slides (x3)
 	for _, n := range []string{"1", "2", "3"} {

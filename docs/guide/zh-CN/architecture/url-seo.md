@@ -27,9 +27,9 @@ GoPress 把 SEO 相关能力内建在引擎层，主题和插件**不需要**自
 
 ## 统一站点信息
 
-浏览器标题和 meta description 都从 admin「系统设置 > 网站设置」的 `site_name` / `site_description` 取（WordPress `blogname` / `blogdescription` 的等价物），全部主题共用同一来源。
+浏览器标题、meta description 和 favicon 都从 admin「系统设置 > 网站设置」的 `site_name` / `site_description` / `site_icon` 取（前两者对应 WordPress `blogname` / `blogdescription`），全部主题共用同一来源。
 
-留空时各主题各自的兜底字符串接管，避免新装系统出现空标题。
+`site_icon` 非空时会输出 `<link rel="icon">` 和 `<link rel="apple-touch-icon">`。留空时各主题各自的兜底字符串接管，避免新装系统出现空标题。
 
 ## Per-content SEO 覆盖（插件路线）
 

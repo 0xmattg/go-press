@@ -150,5 +150,7 @@
   "theme.settings.text.139": "经验标题",
   "theme.settings.text.140": "经验描述...",
   "theme.settings.text.141": "CTA 描述...",
+  "theme.settings.text.142": "导航 CTA 按钮文字",
+  "theme.settings.text.143": "导航 CTA 跳转链接",
   "theme.settings.title": "%s - 主题设置"
 }
