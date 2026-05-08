@@ -1,0 +1,32 @@
+{{define "content"}}
+{{$s := .Settings}}
+<section class="as-page-hero">
+    <div class="as-container">
+        <div class="as-page-hero-panel">
+            <div>
+                <p class="as-kicker as-kicker-light">Products</p>
+                <h1>{{settingOr $s "products_page_title" "Modular launch products built for founders who move fast."}}</h1>
+                <p>{{settingOr $s "products_page_subtitle" "Choose a focused product system, then expand it into campaigns, web experiences, and content engines."}}</p>
+            </div>
+            <img src="{{settingOr $s "subpage_hero_image" "/static/images/atelier-hero.svg"}}" alt="">
+        </div>
+    </div>
+</section>
+<section class="as-section">
+    <div class="as-container">
+        <div class="as-card-grid">
+            {{range .Products}}
+            <article class="as-content-card as-content-card-large">
+                <a href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}" class="as-card-media">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{end}}</a>
+                <div class="as-card-body">
+                    <span>0{{.SortOrder}}</span>
+                    <h3><a href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}">{{.Title}}</a></h3>
+                    <p>{{if .Excerpt}}{{.Excerpt}}{{else}}{{truncate (stripTags .Description) 150}}{{end}}</p>
+                    <a class="as-text-link" href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}">{{T $.Ctx "btn_learn_more"}} ↗</a>
+                </div>
+            </article>
+            {{end}}
+        </div>
+    </div>
+</section>
+{{end}}

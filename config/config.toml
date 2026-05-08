@@ -1,0 +1,29 @@
+[server]
+host = "0.0.0.0"
+port = 8080
+mode = "debug"
+
+[pg]
+user = "pguser"
+password = "yourpassword"
+hostname = "localhost"
+port = "5432"
+database = "yourdatabase"
+schema = "public"
+table_prefix = "gp_"
+version = "v0"
+max_open_conns = 100
+max_idle_conns = 50
+conn_max_lifetime = "30m"
+
+[redis]
+host = "localhost"
+port = 6379
+password = ""
+db = 0
+
+[cms]
+jwt_secret = "go-press-change-this-secret-in-production"
+jwt_expire_hours = 24
+upload_dir = "web/static/uploads"
+upload_max_size_mb = 10

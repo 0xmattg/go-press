@@ -1,0 +1,202 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>{{T . "nav.media"}}</h2>
+    {{if can .CurrentRole "media" "update"}}
+    <div class="content-header-actions">
+        <form method="POST" action="/admin/media/regenerate" class="inline-form">
+            <button type="submit" class="btn" onclick="return confirm('{{T . "confirm.regenerate_variants"}}')">{{T . "action.regenerate_variants"}}</button>
+        </form>
+        <form method="POST" action="/admin/media/regenerate" class="inline-form">
+            <input type="hidden" name="force" value="1">
+            <button type="submit" class="btn" onclick="return confirm('{{T . "confirm.force_regenerate_variants"}}')">{{T . "action.force_regenerate_variants"}}</button>
+        </form>
+    </div>
+    {{end}}
+</div>
+
+{{with .MediaVariantJob}}
+{{if .Running}}
+<div class="alert alert-success">{{T . "media.force_job_running"}}</div>
+{{else if .Completed}}
+    {{if .Error}}
+    <div class="alert alert-error">{{T $ "media.force_job_failed" .Error}}</div>
+    {{else if gt .FailCount 0}}
+    <div class="alert alert-error">{{T $ "media.force_job_complete" .OKCount .FailCount}}</div>
+    {{else}}
+    <div class="alert alert-success">{{T $ "media.force_job_complete" .OKCount .FailCount}}</div>
+    {{end}}
+{{end}}
+{{end}}
+
+{{if can .CurrentRole "media" "create"}}
+<div class="card">
+    <div class="card-header"><h3>{{T . "media.upload_files"}}</h3></div>
+    <form method="POST" action="/admin/media/upload" enctype="multipart/form-data" class="upload-form">
+        <div class="form-row">
+            <div class="form-group" style="flex:1; margin-bottom:0;">
+                <input type="file" name="files" id="fileInput" multiple required accept="image/*,.pdf,.doc,.docx,.xls,.xlsx">
+            </div>
+            <button type="submit" class="btn btn-primary">{{T . "action.upload"}}</button>
+        </div>
+        <ul class="upload-file-list" id="uploadFileList" hidden></ul>
+    </form>
+</div>
+{{end}}
+
+<div class="media-grid">
+    {{range .Items}}
+    <div class="media-card">
+        {{if contains .MimeType "image"}}
+        <a class="media-preview media-preview-link" href="{{.URL $.PublicBaseURL}}" target="_blank" rel="noopener" title="{{T $ "media.open_image"}}">
+            <img src="{{.URL $.PublicBaseURL}}" alt="{{.OriginalName}}">
+        </a>
+        {{else}}
+        <a class="media-preview media-file media-preview-link" href="{{.URL $.PublicBaseURL}}" target="_blank" rel="noopener" title="{{T $ "media.open_file"}}">
+            <span class="file-ext">{{.MimeType}}</span>
+        </a>
+        {{end}}
+        <div class="media-info">
+            <div class="media-name" title="{{.OriginalName}}">{{truncate .OriginalName 20}}</div>
+            <div class="media-size">{{formatSize .Size}}</div>
+            {{if .AltText}}<div class="media-meta-line" title="Alt Text">🏷️ {{truncate .AltText 30}}</div>{{end}}
+            <div class="media-actions">
+                <input type="text" value="{{.URL $.PublicBaseURL}}" class="media-url" readonly onclick="this.select()">
+                {{if can $.CurrentRole "media" "update"}}
+                <button type="button" class="btn btn-sm" onclick='openMediaMetaModal({{.ID}}, {{.AltText | toJSON}}, {{.Title | toJSON}}, {{.Caption | toJSON}})'>{{T $ "media.edit_info"}}</button>
+                {{end}}
+                {{if can $.CurrentRole "media" "delete"}}
+                <form method="POST" action="/admin/media/{{.ID}}/delete" class="inline-form">
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('{{T $ "confirm.delete"}}')">{{T $ "action.delete"}}</button>
+                </form>
+                {{end}}
+            </div>
+        </div>
+    </div>
+    {{else}}
+    <div class="empty-msg" style="grid-column:1/-1">{{T . "media.empty"}}</div>
+    {{end}}
+</div>
+
+<!-- Media Meta Edit Modal -->
+<div class="modal-overlay" id="mediaMetaModal">
+    <div class="modal-dialog" style="max-width:520px;">
+        <div class="modal-header">
+            <h3>{{T . "media.edit_image_info"}}</h3>
+            <button type="button" class="modal-close" onclick="closeMediaMetaModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="mediaMetaID">
+            <div class="form-group">
+                <label>Alt Text <span style="color:#94a3b8; font-weight:normal;">({{T . "media.alt_help"}})</span></label>
+                <input type="text" id="mediaMetaAlt" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="mediaMetaTitle" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Caption <span style="color:#94a3b8; font-weight:normal;">({{T . "media.caption_help"}})</span></label>
+                <textarea id="mediaMetaCaption" class="form-control" rows="2"></textarea>
+            </div>
+            <div id="mediaMetaStatus" style="font-size:0.85rem; color:#64748b;"></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn" onclick="closeMediaMetaModal()">{{T . "action.cancel"}}</button>
+            <button type="button" class="btn btn-primary" onclick="saveMediaMeta()">{{T . "action.save"}}</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Render the picked files as a zebra-striped list below the form row.
+// Each row has an × button that removes that file from the upload set, so
+// users can drop accidentally-picked files without re-running the file
+// dialog. The selection lives in a JS array; we mirror it back into
+// input.files via DataTransfer so the form posts only the remaining files.
+(function() {
+    var input = document.getElementById('fileInput');
+    var list = document.getElementById('uploadFileList');
+    if (!input || !list) return;
+    function fmtSize(n) {
+        if (n >= 1024 * 1024) return (n / 1024 / 1024).toFixed(1) + ' MB';
+        if (n >= 1024) return (n / 1024).toFixed(1) + ' KB';
+        return n + ' B';
+    }
+    function syncInput(files) {
+        var dt = new DataTransfer();
+        files.forEach(function(f) { dt.items.add(f); });
+        input.files = dt.files;
+    }
+    function render(files) {
+        list.innerHTML = '';
+        if (!files || files.length === 0) { list.hidden = true; return; }
+        files.forEach(function(f, idx) {
+            var li = document.createElement('li');
+            li.className = 'upload-file-item';
+
+            var name = document.createElement('span');
+            name.className = 'upload-file-name';
+            name.textContent = f.name;
+
+            var size = document.createElement('span');
+            size.className = 'upload-file-size';
+            size.textContent = fmtSize(f.size);
+
+            var remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'upload-file-remove';
+            remove.setAttribute('aria-label', {{jsT . "action.delete"}} + ' ' + f.name);
+            remove.title = {{jsT . "action.delete"}};
+            remove.textContent = '×';
+            remove.addEventListener('click', function() {
+                var current = Array.prototype.slice.call(input.files);
+                current.splice(idx, 1);
+                syncInput(current);
+                render(current);
+            });
+
+            li.appendChild(name);
+            li.appendChild(size);
+            li.appendChild(remove);
+            list.appendChild(li);
+        });
+        list.hidden = false;
+    }
+    input.addEventListener('change', function() {
+        render(Array.prototype.slice.call(input.files));
+    });
+})();
+
+function openMediaMetaModal(id, alt, title, caption) {
+    document.getElementById('mediaMetaID').value = id;
+    document.getElementById('mediaMetaAlt').value = alt || '';
+    document.getElementById('mediaMetaTitle').value = title || '';
+    document.getElementById('mediaMetaCaption').value = caption || '';
+    document.getElementById('mediaMetaStatus').textContent = '';
+    document.getElementById('mediaMetaModal').classList.add('active');
+}
+function closeMediaMetaModal() {
+    document.getElementById('mediaMetaModal').classList.remove('active');
+}
+function saveMediaMeta() {
+    var id = document.getElementById('mediaMetaID').value;
+    var status = document.getElementById('mediaMetaStatus');
+    var fd = new FormData();
+    fd.append('alt_text', document.getElementById('mediaMetaAlt').value);
+    fd.append('title', document.getElementById('mediaMetaTitle').value);
+    fd.append('caption', document.getElementById('mediaMetaCaption').value);
+    status.textContent = {{jsT . "media.saving"}};
+    fetch('/admin/media/' + id + '/meta', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.error) { status.textContent = {{jsT . "media.save_failed"}} + ': ' + data.error; return; }
+            status.textContent = {{jsT . "media.saved"}};
+            setTimeout(function() {
+                closeMediaMetaModal();
+                window.location.reload();
+            }, 400);
+        })
+        .catch(function() { status.textContent = {{jsT . "media.save_failed"}}; });
+}
+</script>
+{{end}}

@@ -1,0 +1,20 @@
+{{define "footer"}}
+{{$s := .Settings}}
+<footer class="ce-footer">
+    <div class="ce-footer-brand">
+        <strong>{{settingOr $s "company_name" "Civic Estate"}}</strong>
+        <p>{{settingOr $s "company_description" "We help occupiers, owners, and investors compare commercial spaces with clean search workflows and human advisory."}}</p>
+    </div>
+    <div class="ce-footer-links">
+        <a href="{{langPrefixURL .Ctx "/services"}}">Services</a>
+        <a href="{{langPrefixURL .Ctx "/showcase"}}">Listings</a>
+        <a href="{{langPrefixURL .Ctx "/products"}}">Property Types</a>
+        <a href="{{langPrefixURL .Ctx "/contact"}}">Contact</a>
+    </div>
+    <div class="ce-footer-contact">
+        <span>{{settingOr $s "company_email" "hello@civicestate.example"}}</span>
+        <span>{{settingOr $s "company_phone" "+1 212 555 0188"}}</span>
+    </div>
+    <p class="ce-copyright">{{settingOr $s "footer_text" "© 2026 Civic Estate. Commercial space made easier to evaluate."}}</p>
+</footer>
+{{end}}

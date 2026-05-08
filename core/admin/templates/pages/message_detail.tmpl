@@ -1,0 +1,19 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>查看留言</h2>
+    <a href="/admin/messages" class="btn">返回列表</a>
+</div>
+<div class="card">
+    <div class="message-detail">
+        <div class="message-meta">
+            <div class="meta-item"><strong>姓名:</strong> {{.Item.Name}}</div>
+            <div class="meta-item"><strong>邮箱:</strong> {{.Item.Email}}</div>
+            <div class="meta-item"><strong>电话:</strong> {{.Item.Phone}}</div>
+            <div class="meta-item"><strong>时间:</strong> {{formatDate .Item.CreatedAt}}</div>
+        </div>
+        <div class="message-body">
+            {{.Item.Message}}
+        </div>
+    </div>
+</div>
+{{end}}

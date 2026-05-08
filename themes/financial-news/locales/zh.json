@@ -1,0 +1,59 @@
+{
+  "nav_home": "首页",
+  "nav_articles": "新闻",
+  "nav_market": "行情",
+  "nav_analysis": "分析",
+  "nav_about": "关于",
+  "status_trading": "● 交易中",
+
+  "btn_view_all": "查看全部 →",
+  "filter_all": "全部",
+
+  "page_title_articles": "新闻资讯",
+  "page_title_analysis": "深度分析",
+  "page_desc_analysis": "专业分析师团队，深入解读市场趋势",
+  "page_title_market": "行情快讯",
+  "page_desc_market": "实时市场动态，快速掌握行情变化",
+  "page_title_about": "关于 FinNews",
+
+  "section_breaking": "头条",
+  "section_latest_news": "最新快讯",
+  "section_latest_articles": "最新资讯",
+  "section_deep_analysis": "深度分析",
+  "sidebar_categories": "分类",
+  "sidebar_popular_tags": "热门标签",
+  "sidebar_latest_articles": "最新文章",
+
+  "table_header_code": "代码",
+  "table_header_market": "市场",
+  "table_header_title": "标题",
+  "table_header_change": "涨跌幅",
+  "table_header_time": "时间",
+
+  "empty_no_market_data": "暂无行情数据",
+  "empty_no_articles": "暂无文章",
+  "empty_no_analysis": "暂无分析报告",
+
+  "welcome_heading": "欢迎访问 FinNews 财经资讯",
+  "welcome_sub_heading": "专业的财经新闻、实时行情与深度市场分析",
+
+  "footer_site_name": "FinNews",
+  "footer_site_desc": "专业财经资讯平台，实时行情、深度分析、市场洞察。",
+  "footer_quick_links": "快速链接",
+  "footer_link_articles": "新闻资讯",
+  "footer_link_market": "行情快讯",
+  "footer_link_analysis": "深度分析",
+  "footer_disclaimer": "免责声明",
+  "footer_disclaimer_text": "本站内容仅供参考，不构成投资建议。投资有风险，入市需谨慎。",
+
+  "about_intro": "FinNews 是一个基于 <strong>GoPress</strong> 引擎构建的专业财经资讯平台。",
+  "about_mission": "我们致力于为投资者提供及时、准确、深入的财经信息服务，涵盖：",
+  "about_feature_news": "<strong>新闻资讯</strong> — 全球财经新闻实时报道",
+  "about_feature_market": "<strong>行情快讯</strong> — 股票、期货、外汇行情速递",
+  "about_feature_analysis": "<strong>深度分析</strong> — 专业分析师团队的市场研判",
+  "about_tech_title": "技术架构",
+  "about_tech_intro": "本站作为 GoPress 主题引擎的示例站点，展示了 GoPress 的核心能力：",
+  "about_tech_theme": "主题切换 — 无需修改代码，配置文件切换即可",
+  "about_tech_data": "数据驱动 — 所有内容类型由主题动态注册",
+  "about_tech_admin": "后台自适应 — Admin CMS 自动适配当前主题的内容类型"
+}

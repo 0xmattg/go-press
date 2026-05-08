@@ -1,0 +1,42 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>留言列表</h2>
+</div>
+<div class="card">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>姓名</th>
+                <th>邮箱</th>
+                <th>电话</th>
+                <th>时间</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Items}}
+            <tr class="{{if not .IsRead}}unread{{end}}">
+                <td>{{.ID}}</td>
+                <td>{{.Name}}</td>
+                <td>{{.Email}}</td>
+                <td>{{.Phone}}</td>
+                <td>{{formatDate .CreatedAt}}</td>
+                <td>{{if .IsRead}}<span class="badge badge-read">已读</span>{{else}}<span class="badge badge-unread">未读</span>{{end}}</td>
+                <td class="actions">
+                    <a href="/admin/messages/{{.ID}}" class="btn btn-sm">查看</a>
+                    {{if can $.CurrentRole "message" "delete"}}
+                    <form method="POST" action="/admin/messages/{{.ID}}/delete" class="inline-form">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确认删除?')">删除</button>
+                    </form>
+                    {{end}}
+                </td>
+            </tr>
+            {{else}}
+            <tr><td colspan="7" class="empty-msg">暂无留言</td></tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}

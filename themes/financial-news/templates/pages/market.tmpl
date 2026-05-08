@@ -1,0 +1,36 @@
+{{define "content"}}
+<section class="section">
+    <div class="container">
+        <div class="page-header">
+            <h1>{{T $.Ctx "page_title_market"}}</h1>
+            <p class="page-desc">{{T $.Ctx "page_desc_market"}}</p>
+        </div>
+        <div class="market-table-wrap">
+            <table class="market-table">
+                <thead>
+                    <tr>
+                        <th>{{T $.Ctx "table_header_code"}}</th>
+                        <th>{{T $.Ctx "table_header_market"}}</th>
+                        <th>{{T $.Ctx "table_header_title"}}</th>
+                        <th>{{T $.Ctx "table_header_change"}}</th>
+                        <th>{{T $.Ctx "table_header_time"}}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {{range .Updates}}
+                    <tr>
+                        <td class="ticker-cell"><strong>{{.Ticker}}</strong></td>
+                        <td>{{.Market}}</td>
+                        <td>{{.Title}}</td>
+                        <td class="change-cell {{if .PriceChange}}{{if eq (index .PriceChange 0) 43}}up{{else}}down{{end}}{{end}}">{{.PriceChange}}</td>
+                        <td>{{if .PublishedAt}}{{formatDate .PublishedAt}}{{end}}</td>
+                    </tr>
+                {{else}}
+                    <tr><td colspan="5" class="empty-state">{{T $.Ctx "empty_no_market_data"}}</td></tr>
+                {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{{end}}

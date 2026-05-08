@@ -1,0 +1,29 @@
+{{define "content"}}
+{{$s := .Settings}}
+<section class="as-page-hero">
+    <div class="as-container">
+        <div class="as-page-hero-panel">
+            <div>
+                <p class="as-kicker as-kicker-light">Services</p>
+                <h1>{{settingOr $s "services_page_title" "Strategy, creative direction, and production as one operating system."}}</h1>
+                <p>{{settingOr $s "services_page_subtitle" "Every service inherits the prototype rhythm: sparse copy, visible sequence, tactile imagery, and decisive CTAs."}}</p>
+            </div>
+            <img src="{{settingOr $s "subpage_hero_image" "/static/images/atelier-hero.svg"}}" alt="">
+        </div>
+    </div>
+</section>
+<section class="as-section">
+    <div class="as-container as-service-list">
+        {{range .Services}}
+        <article class="as-service-row">
+            <span>0{{.SortOrder}}</span>
+            <div>
+                <h2><a href="{{langPrefixURL $.Ctx (printf "/services/%s" .Slug)}}">{{.Title}}</a></h2>
+                <p>{{if .Excerpt}}{{.Excerpt}}{{else}}{{truncate (stripTags .Description) 170}}{{end}}</p>
+            </div>
+            <a class="as-round-link" href="{{langPrefixURL $.Ctx (printf "/services/%s" .Slug)}}">→</a>
+        </article>
+        {{end}}
+    </div>
+</section>
+{{end}}

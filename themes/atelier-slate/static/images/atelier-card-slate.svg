@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1120" role="img" aria-label="Dark modern material card">
+  <defs>
+    <linearGradient id="slate" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#31383b"/>
+      <stop offset=".5" stop-color="#151719"/>
+      <stop offset="1" stop-color="#e6d2b6"/>
+    </linearGradient>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="2"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="table" tableValues="0 .08"/></feComponentTransfer>
+    </filter>
+  </defs>
+  <rect width="900" height="1120" fill="url(#slate)"/>
+  <rect width="900" height="1120" filter="url(#grain)"/>
+  <path d="M75 763c225-49 454-88 686-117 45-5 74 43 51 82-54 89-149 144-285 166-150 25-301-19-452-131Z" fill="#e8caa4" opacity=".75"/>
+  <text x="82" y="135" font-family="Inter, Arial, sans-serif" font-size="52" font-weight="800" fill="#fff">Nextgen-styled</text>
+  <text x="82" y="198" font-family="Inter, Arial, sans-serif" font-size="24" fill="#fff" opacity=".82">Launch assets with editorial gravity</text>
+  <text x="585" y="1010" font-family="Inter, Arial, sans-serif" font-size="170" font-weight="700" fill="#fff" opacity=".2">02</text>
+</svg>

@@ -1,0 +1,468 @@
+# ============================================================
+# GoPress Seed Data - FloraFi stablecoin demo
+# ============================================================
+
+# ---------- Site Settings ----------
+[[settings]]
+key   = "site_name"
+value = "FloraFi"
+
+[[settings]]
+key   = "site_description"
+value = "A progressive stablecoin ecosystem designed to move value and power real economies."
+
+[[settings]]
+key   = "company_name"
+value = "FloraFi"
+
+[[settings]]
+key   = "company_email"
+value = "hello@florafi.example"
+
+[[settings]]
+key   = "company_phone"
+value = "+1 555 0128"
+
+[[settings]]
+key   = "company_address"
+value = "New York, Singapore, and remote"
+
+[[settings]]
+key   = "company_description"
+value = "FloraFi helps businesses, treasury teams, and developers move stable value with transparent yield and simple digital-dollar rails."
+
+[[settings]]
+key   = "footer_text"
+value = "Built for stability. Designed for growth."
+
+[[settings]]
+key   = "home_logo_text"
+value = "FloraFi"
+
+[[settings]]
+key   = "home_nav_1_text"
+value = "USD Flora"
+
+[[settings]]
+key   = "home_nav_2_text"
+value = "Business"
+
+[[settings]]
+key   = "home_nav_3_text"
+value = "Treasury"
+
+[[settings]]
+key   = "home_nav_4_text"
+value = "Developers"
+
+[[settings]]
+key   = "home_nav_5_text"
+value = "About us"
+
+[[settings]]
+key   = "home_launch_text"
+value = "Launch app"
+
+[[settings]]
+key   = "home_launch_link"
+value = "/contact"
+
+[[settings]]
+key   = "home_hero_image"
+value = "/static/images/florafi-hero-field.png"
+
+[[settings]]
+key   = "home_hero_title"
+value = "Where Money Grows"
+
+[[settings]]
+key   = "home_hero_subtitle"
+value = "A progressive stablecoin ecosystem designed to move value and power real economies."
+
+[[settings]]
+key   = "home_hero_btn_text"
+value = "Try FloraFi"
+
+[[settings]]
+key   = "home_hero_btn_link"
+value = "/products"
+
+[[settings]]
+key   = "home_hero_note"
+value = "Built for stability. Designed for growth."
+
+[[settings]]
+key   = "home_stat_1_label"
+value = "Backed by Real Assets"
+
+[[settings]]
+key   = "home_stat_2_number"
+value = "$320M+"
+
+[[settings]]
+key   = "home_stat_2_label"
+value = "TVL"
+
+[[settings]]
+key   = "home_stat_3_number"
+value = "12.4K+"
+
+[[settings]]
+key   = "home_stat_3_label"
+value = "Holders"
+
+[[settings]]
+key   = "home_stat_4_number"
+value = "2.1M+"
+
+[[settings]]
+key   = "home_stat_4_label"
+value = "Transfers"
+
+[[settings]]
+key   = "home_stat_5_number"
+value = "28+"
+
+[[settings]]
+key   = "home_stat_5_label"
+value = "Countries"
+
+[[settings]]
+key   = "home_intro_kicker"
+value = "Built for growth"
+
+[[settings]]
+key   = "home_intro_title"
+value = "What is USD Flora?"
+
+[[settings]]
+key   = "home_intro_desc"
+value = "USD Flora is a next-generation stablecoin built to grow your capital while keeping it stable, liquid, and secure."
+
+[[settings]]
+key   = "home_intro_link_text"
+value = "Explore USD Flora"
+
+[[settings]]
+key   = "home_feature_1_title"
+value = "Capital that grows"
+
+[[settings]]
+key   = "home_feature_1_desc"
+value = "Earn consistent yield backed by real-world assets and transparent strategies."
+
+[[settings]]
+key   = "home_feature_2_title"
+value = "Always liquid, always stable"
+
+[[settings]]
+key   = "home_feature_2_desc"
+value = "Redeem 1:1 in USD anytime. Built for confidence and consistency."
+
+[[settings]]
+key   = "home_feature_3_title"
+value = "100% hands-free"
+
+[[settings]]
+key   = "home_feature_3_desc"
+value = "No active management. Just deposit and grow while we handle the rest."
+
+[[settings]]
+key   = "home_usecases_kicker"
+value = "Built for everyone"
+
+[[settings]]
+key   = "home_usecases_title"
+value = "Use cases"
+
+[[settings]]
+key   = "home_usecases_desc"
+value = "USD Flora powers real-world applications for businesses, developers, and the future of finance."
+
+[[settings]]
+key   = "home_usecase_1_title"
+value = "Business"
+
+[[settings]]
+key   = "home_usecase_1_desc"
+value = "Unlock new growth opportunities with a stable, yield-generating asset you can trust."
+
+[[settings]]
+key   = "home_usecase_2_title"
+value = "Developers"
+
+[[settings]]
+key   = "home_usecase_2_desc"
+value = "Build the next generation of financial products with USD Flora."
+
+[[settings]]
+key   = "home_cta_title"
+value = "Ready to grow with stability?"
+
+[[settings]]
+key   = "home_cta_btn_text"
+value = "Get started"
+
+[[settings]]
+key   = "home_cta_btn_link"
+value = "/contact"
+
+[[settings]]
+key   = "home_products_label"
+value = "Protocol modules"
+
+[[settings]]
+key   = "home_products_title"
+value = "Explore the FloraFi stack"
+
+[[settings]]
+key   = "home_products_subtitle"
+value = "Demo content is powered by GoPress CMS content types, so operators can manage pages, cards, articles, and media from the admin."
+
+[[settings]]
+key   = "home_products_max"
+value = "3"
+
+[[settings]]
+key   = "home_services_max"
+value = "2"
+
+[[settings]]
+key   = "about_intro_image"
+value = "https://images.unsplash.com/photo-1559526324-593bc073d938?w=900&h=700&fit=crop&q=80"
+
+[[settings]]
+key   = "showcase_layout"
+value = "grid"
+
+# ---------- Categories ----------
+[[categories]]
+name = "Product"
+slug = "product"
+
+[[categories]]
+name = "Treasury"
+slug = "treasury"
+
+[[categories]]
+name = "Developers"
+slug = "developers"
+
+[[categories]]
+name = "Business"
+slug = "business"
+
+# ---------- Tags ----------
+[[tags]]
+name = "Stablecoin"
+slug = "stablecoin"
+
+[[tags]]
+name = "Treasury"
+slug = "treasury-management"
+
+[[tags]]
+name = "Yield"
+slug = "yield"
+
+[[tags]]
+name = "Payments"
+slug = "payments"
+
+[[tags]]
+name = "API"
+slug = "api"
+
+[[tags]]
+name = "Compliance"
+slug = "compliance"
+
+# ============================================================
+# PRODUCTS
+# ============================================================
+
+[[contents]]
+type        = "product"
+title       = "USD Flora Stablecoin"
+slug        = "usd-flora-stablecoin"
+image_url   = "https://images.unsplash.com/photo-1640161704729-cbe966a08476?w=900&h=650&fit=crop&q=80"
+sort_order  = 1
+category    = "product"
+tags        = ["stablecoin", "yield", "treasury-management"]
+excerpt     = "A stable digital dollar designed for liquidity, reserve transparency, and hands-free growth."
+description = "USD Flora is the core stablecoin product: a 1:1 redeemable digital dollar with real-world asset backing, yield-aware treasury operations, and simple account flows."
+content     = """<h3>Overview</h3>
+<p>USD Flora gives customers a stable-value account that can be used for deposits, transfers, redemptions, and treasury operations without asking users to manage complex strategies.</p>
+<h3>Highlights</h3>
+<ul>
+<li>1:1 redemption model with transparent reserve reporting</li>
+<li>Yield-aware treasury operations behind a simple user experience</li>
+<li>Designed for business payments, settlement, and embedded finance</li>
+</ul>"""
+
+[[contents]]
+type        = "product"
+title       = "Flora Treasury Vault"
+slug        = "flora-treasury-vault"
+image_url   = "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=900&h=650&fit=crop&q=80"
+sort_order  = 2
+category    = "treasury"
+tags        = ["treasury-management", "yield", "compliance"]
+excerpt     = "A treasury module for routing idle balances into transparent real-world asset strategies."
+description = "Flora Treasury Vault helps finance teams manage idle balances with clearer reporting, allocation views, and risk-aware yield workflows."
+content     = """<h3>Treasury operations</h3>
+<p>The vault module separates operating balances from growth balances, giving teams a clean view of liquidity, allocation, yield, and redemption planning.</p>
+<h3>Built for finance teams</h3>
+<ul>
+<li>Portfolio and allocation snapshots</li>
+<li>Exportable balance and yield reports</li>
+<li>Operational controls for review workflows</li>
+</ul>"""
+
+[[contents]]
+type        = "product"
+title       = "Flora Pay Rails"
+slug        = "flora-pay-rails"
+image_url   = "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=900&h=650&fit=crop&q=80"
+sort_order  = 3
+category    = "developers"
+tags        = ["payments", "api", "stablecoin"]
+excerpt     = "Payment APIs, webhooks, and transfer primitives for teams building with USD Flora."
+description = "Flora Pay Rails gives developers a clean API surface for deposits, transfers, payouts, balance checks, and transaction-state automation."
+content     = """<h3>Developer-first rails</h3>
+<p>Build stablecoin-powered product flows with a small set of predictable primitives: accounts, balances, transfers, payouts, and webhooks.</p>
+<h3>API surface</h3>
+<ul>
+<li>Account and wallet provisioning</li>
+<li>Transfer and payout APIs</li>
+<li>Webhook events for settlement and reconciliation</li>
+</ul>"""
+
+# ============================================================
+# SERVICES / SOLUTIONS
+# ============================================================
+
+[[contents]]
+type        = "service"
+title       = "Business Growth Accounts"
+slug        = "business-growth-accounts"
+image_url   = "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=900&h=650&fit=crop&q=80"
+sort_order  = 1
+category    = "business"
+tags        = ["stablecoin", "payments"]
+excerpt     = "Let businesses hold stable value, earn transparent yield, and move money with fewer operational steps."
+description = "Business Growth Accounts are designed for merchants, marketplaces, and operators that need a stable store of value with practical settlement workflows."
+content     = """<p>FloraFi helps businesses turn idle digital-dollar balances into a more productive treasury layer while preserving simple access for day-to-day movement.</p>"""
+
+[[contents]]
+type        = "service"
+title       = "Developer Embedded Finance"
+slug        = "developer-embedded-finance"
+image_url   = "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=900&h=650&fit=crop&q=80"
+sort_order  = 2
+category    = "developers"
+tags        = ["api", "payments", "stablecoin"]
+excerpt     = "Add deposits, balances, payouts, and yield-aware stablecoin flows to your own product."
+description = "Developer Embedded Finance gives builders the API primitives and product patterns needed to launch stablecoin-powered features."
+content     = """<p>Use FloraFi APIs to create accounts, show balances, move USD Flora between users, and subscribe to settlement events.</p>"""
+
+[[contents]]
+type        = "service"
+title       = "Treasury Operations"
+slug        = "treasury-operations"
+image_url   = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=900&h=650&fit=crop&q=80"
+sort_order  = 3
+category    = "treasury"
+tags        = ["treasury-management", "yield", "compliance"]
+excerpt     = "Reporting, allocation views, and redemption planning for teams managing stablecoin balances."
+description = "FloraFi treasury workflows give operators clearer visibility into balances, movement, and growth."
+content     = """<p>Finance teams can review balances, monitor flows, and export reports without losing the speed and composability of stablecoin infrastructure.</p>"""
+
+# ============================================================
+# SHOWCASE / USE CASES
+# ============================================================
+
+[[contents]]
+type        = "showcase"
+title       = "Marketplace Seller Payouts"
+slug        = "marketplace-seller-payouts"
+image_url   = "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=900&h=650&fit=crop&q=80"
+sort_order  = 1
+category    = "business"
+tags        = ["payments", "stablecoin"]
+excerpt     = "A marketplace uses USD Flora for faster seller balances and predictable digital-dollar payouts."
+description = "The marketplace keeps operating funds in USD Flora, automates seller balances through API events, and gives finance a clean payout reconciliation flow."
+content     = """<p>This use case demonstrates how a marketplace can keep funds stable while improving payout speed and treasury visibility.</p>"""
+[contents.meta]
+client   = "Northstar Market"
+location = "United States"
+
+[[contents]]
+type        = "showcase"
+title       = "Global Contractor Payroll"
+slug        = "global-contractor-payroll"
+image_url   = "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=900&h=650&fit=crop&q=80"
+sort_order  = 2
+category    = "business"
+tags        = ["payments", "compliance"]
+excerpt     = "A remote-first company simplifies contractor payments with stable settlement rails."
+description = "FloraFi payment flows help the company manage stable balances, automate contractor payout status, and reduce manual reconciliation."
+content     = """<p>Remote teams can use stablecoin rails to simplify contractor payments while keeping internal reporting clear.</p>"""
+[contents.meta]
+client   = "Atlas Remote"
+location = "Global"
+
+[[contents]]
+type        = "showcase"
+title       = "Fintech Savings Prototype"
+slug        = "fintech-savings-prototype"
+image_url   = "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=900&h=650&fit=crop&q=80"
+sort_order  = 3
+category    = "developers"
+tags        = ["api", "yield", "stablecoin"]
+excerpt     = "A fintech team launches a savings-style prototype using USD Flora accounts and transfer APIs."
+description = "The developer team combines account creation, USD Flora balances, and webhook events to ship a stable-value product faster."
+content     = """<p>This use case shows how builders can assemble a stable-value product without building the underlying treasury and payments infrastructure from scratch.</p>"""
+[contents.meta]
+client   = "Cedar Labs"
+location = "Europe"
+
+# ============================================================
+# POSTS
+# ============================================================
+
+[[contents]]
+type        = "post"
+title       = "Why Stablecoin UX Needs to Feel Like Everyday Money"
+slug        = "stablecoin-ux-everyday-money"
+image_url   = "https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=900&h=650&fit=crop&q=80"
+sort_order  = 1
+category    = "product"
+tags        = ["stablecoin", "payments"]
+excerpt     = "Stablecoin products work best when they hide operational complexity and make money movement feel familiar."
+content     = """<p>Stablecoin infrastructure can be complex, but users need a simple mental model: deposit, hold, transfer, redeem, and understand what happened.</p>
+<p>FloraFi is designed around that product principle. It keeps reserve, yield, and settlement details available without forcing every user to become a treasury operator.</p>"""
+
+[[contents]]
+type        = "post"
+title       = "Designing Treasury Views for Digital-Dollar Balances"
+slug        = "designing-treasury-views"
+image_url   = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=900&h=650&fit=crop&q=80"
+sort_order  = 2
+category    = "treasury"
+tags        = ["treasury-management", "yield", "compliance"]
+excerpt     = "Finance teams need allocation, liquidity, and reconciliation views before stablecoin balances can become operational."
+content     = """<p>A treasury product is not only a yield surface. It needs clear balances, allocation history, exportable records, and enough context for internal review.</p>
+<p>FloraFi demo data includes these concepts so teams can model how CMS-managed education pages and product cards connect to the app story.</p>"""
+
+[[contents]]
+type        = "post"
+title       = "Webhook Patterns for Stablecoin Payments"
+slug        = "webhook-patterns-stablecoin-payments"
+image_url   = "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=900&h=650&fit=crop&q=80"
+sort_order  = 3
+category    = "developers"
+tags        = ["api", "payments"]
+excerpt     = "A practical approach to tracking deposits, transfers, redemptions, and payout state changes."
+content     = """<p>Stablecoin payments become easier to operate when product teams subscribe to clear state transitions and reconcile them against internal ledgers.</p>
+<p>Use webhook events for pending, settled, failed, and reversed flows, and keep idempotency keys in every integration path.</p>"""

@@ -1,0 +1,43 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>产品列表</h2>
+    {{if can .CurrentRole "product" "create"}}
+    <a href="/admin/products/new" class="btn btn-primary">新建产品</a>
+    {{end}}
+</div>
+<div class="card">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>标题</th>
+                <th>Slug</th>
+                <th>排序</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Items}}
+            <tr>
+                <td>{{.ID}}</td>
+                <td>{{.Title}}</td>
+                <td><code>{{.Slug}}</code></td>
+                <td>{{.SortOrder}}</td>
+                <td class="actions">
+                    {{if can $.CurrentRole "product" "update"}}
+                    <a href="/admin/products/{{.ID}}/edit" class="btn btn-sm">编辑</a>
+                    {{end}}
+                    {{if can $.CurrentRole "product" "delete"}}
+                    <form method="POST" action="/admin/products/{{.ID}}/delete" class="inline-form">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确认删除此产品?')">删除</button>
+                    </form>
+                    {{end}}
+                </td>
+            </tr>
+            {{else}}
+            <tr><td colspan="5" class="empty-msg">暂无产品</td></tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}

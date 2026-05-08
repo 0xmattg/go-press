@@ -1,0 +1,38 @@
+{{define "content"}}
+{{$s := .Settings}}
+<section class="as-page-hero">
+    <div class="as-container">
+        <div class="as-page-hero-panel">
+            <div>
+                <p class="as-kicker as-kicker-light">Contact</p>
+                <h1>{{settingOr $s "contact_page_title" "Bring the brief. We will shape the system."}}</h1>
+                <p>{{settingOr $s "contact_page_subtitle" "Share your launch goal, timeline, and what already exists. The first response focuses on scope, sequence, and next decisions."}}</p>
+            </div>
+            <img src="{{settingOr $s "subpage_hero_image" "/static/images/atelier-hero.svg"}}" alt="">
+        </div>
+    </div>
+</section>
+<section class="as-section">
+    <div class="as-container as-contact-layout">
+        <form id="contact-form" class="as-contact-form" method="POST" action="{{langPrefixURL $.Ctx "/contact"}}">
+            {{if .Success}}<div class="as-alert as-alert-ok">Message sent. We will reply with next steps.</div>{{end}}
+            {{if .Error}}<div class="as-alert as-alert-error">{{.Error}}</div>{{end}}
+            <label>Name<input id="name" name="name" type="text" required></label>
+            <label>Email<input id="email" name="email" type="email" required></label>
+            <label>Phone<input id="phone" name="phone" type="text"></label>
+            <label>Message<textarea id="message" name="message" rows="6" required></textarea></label>
+            <button class="as-btn as-btn-dark" type="submit">Send Brief <span>↗</span></button>
+        </form>
+        <aside class="as-contact-card">
+            <div class="as-index-line"><span>01</span><span>02 03 04</span></div>
+            <h2>{{settingOr $s "company_name" "Atelier Slate"}}</h2>
+            <p>{{settingOr $s "company_description" "A strategy-led digital studio for brand worlds, product interfaces, and campaign launches."}}</p>
+            <ul>
+                <li>{{settingOr $s "company_email" "hello@atelier.example"}}</li>
+                <li>{{settingOr $s "company_phone" "+1 415 000 0198"}}</li>
+                <li>{{settingOr $s "company_address" "Remote studio · Shanghai / San Francisco"}}</li>
+            </ul>
+        </aside>
+    </div>
+</section>
+{{end}}

@@ -1,0 +1,59 @@
+{
+  "nav_home": "Home",
+  "nav_articles": "News",
+  "nav_market": "Market",
+  "nav_analysis": "Analysis",
+  "nav_about": "About",
+  "status_trading": "● Trading",
+
+  "btn_view_all": "View All →",
+  "filter_all": "All",
+
+  "page_title_articles": "News",
+  "page_title_analysis": "In-Depth Analysis",
+  "page_desc_analysis": "Professional analyst team, in-depth market trend interpretation",
+  "page_title_market": "Market Updates",
+  "page_desc_market": "Real-time market dynamics, stay on top of changes",
+  "page_title_about": "About FinNews",
+
+  "section_breaking": "Breaking",
+  "section_latest_news": "Latest News",
+  "section_latest_articles": "Latest Articles",
+  "section_deep_analysis": "Deep Analysis",
+  "sidebar_categories": "Categories",
+  "sidebar_popular_tags": "Popular Tags",
+  "sidebar_latest_articles": "Latest Articles",
+
+  "table_header_code": "Code",
+  "table_header_market": "Market",
+  "table_header_title": "Title",
+  "table_header_change": "Change",
+  "table_header_time": "Time",
+
+  "empty_no_market_data": "No market data available",
+  "empty_no_articles": "No articles available",
+  "empty_no_analysis": "No analysis reports available",
+
+  "welcome_heading": "Welcome to FinNews",
+  "welcome_sub_heading": "Professional financial news, real-time quotes & in-depth market analysis",
+
+  "footer_site_name": "FinNews",
+  "footer_site_desc": "Professional financial information platform with real-time quotes, in-depth analysis, and market insights.",
+  "footer_quick_links": "Quick Links",
+  "footer_link_articles": "News",
+  "footer_link_market": "Market Updates",
+  "footer_link_analysis": "In-Depth Analysis",
+  "footer_disclaimer": "Disclaimer",
+  "footer_disclaimer_text": "Content on this site is for reference only and does not constitute investment advice. Investing involves risk.",
+
+  "about_intro": "FinNews is a professional financial information platform built on the <strong>GoPress</strong> engine.",
+  "about_mission": "We are committed to providing investors with timely, accurate, and in-depth financial information, covering:",
+  "about_feature_news": "<strong>News</strong> — Real-time global financial news coverage",
+  "about_feature_market": "<strong>Market Updates</strong> — Stock, futures, and forex quotes",
+  "about_feature_analysis": "<strong>In-Depth Analysis</strong> — Professional analyst team market insights",
+  "about_tech_title": "Technology Stack",
+  "about_tech_intro": "This site serves as a demo for the GoPress theme engine, showcasing its core capabilities:",
+  "about_tech_theme": "Theme Switching — Switch via config, no code changes needed",
+  "about_tech_data": "Data-Driven — All content types dynamically registered by themes",
+  "about_tech_admin": "Adaptive Admin — Admin CMS auto-adapts to the current theme's content types"
+}

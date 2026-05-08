@@ -1,0 +1,145 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>{{T . "nav.plugins"}}</h2>
+</div>
+
+
+
+<div class="plugin-grid">
+    {{range .Plugins}}
+    <div class="card plugin-card{{if .Active}} plugin-active{{end}}">
+        <div class="plugin-card-header">
+            <h3>{{.Name}}</h3>
+            <div class="plugin-header-right">
+                <span class="plugin-version">v{{.Version}}</span>
+                {{if .Active}}<span class="badge badge-active">{{T $ "plugin.active"}}</span>{{else}}<span class="badge badge-inactive">{{T $ "plugin.inactive"}}</span>{{end}}
+            </div>
+        </div>
+        <div class="plugin-card-body">
+            <p class="plugin-desc">{{.Description}}</p>
+        </div>
+        <div class="plugin-card-footer">
+            {{if .Active}}
+                {{if .HasSettings}}
+                <a href="/admin/plugins/{{.Slug}}/settings" class="btn btn-sm btn-settings" style="margin-right:0.5rem;">{{T $ "plugin.settings"}}</a>
+                {{end}}
+                <form method="POST" action="/admin/plugins/deactivate" class="inline-form" style="display:inline;">
+                    <input type="hidden" name="name" value="{{.Name}}">
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('{{T $ "confirm.deactivate_plugin" .Name}}')">{{T $ "plugin.deactivate"}}</button>
+                </form>
+            {{else}}
+                <form method="POST" action="/admin/plugins/activate" class="inline-form" style="display:inline;">
+                    <input type="hidden" name="name" value="{{.Name}}">
+                    <button type="submit" class="btn btn-sm btn-primary" onclick="return confirm('{{T $ "confirm.activate_plugin" .Name}}')">{{T $ "plugin.activate"}}</button>
+                </form>
+            {{end}}
+        </div>
+    </div>
+    {{else}}
+    <div class="card"><p class="empty-msg">{{T . "plugin.empty"}}</p></div>
+    {{end}}
+</div>
+
+<style>
+.plugin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.5rem;
+}
+.plugin-card {
+    display: flex;
+    flex-direction: column;
+    border: 2px solid #e2e8f0;
+    transition: border-color 0.2s;
+}
+.plugin-card:hover {
+    border-color: #94a3b8;
+}
+.plugin-active {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6;
+}
+.plugin-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem 0.5rem;
+}
+.plugin-card-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+.plugin-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.plugin-version {
+    font-size: 0.8rem;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+}
+.plugin-card-header .badge-active {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    background: #dcfce7;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+}
+.plugin-card-header .badge-inactive {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #94a3b8;
+    border: 1px solid #e2e8f0;
+}
+.plugin-card-body {
+    padding: 0.5rem 1.25rem;
+    flex: 1;
+}
+.plugin-desc {
+    color: #475569;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0;
+}
+.plugin-card-footer {
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+}
+.btn-sm {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+}
+.btn-danger {
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.btn-danger:hover {
+    background: #dc2626;
+}
+.btn-settings {
+    background: #f8fafc;
+    color: #3b82f6;
+    border: 1px solid #3b82f6;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    line-height: 1.5;
+}
+.btn-settings:hover {
+    background: #3b82f6;
+    color: #fff;
+}
+</style>
+{{end}}

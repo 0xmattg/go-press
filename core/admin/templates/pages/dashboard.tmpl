@@ -1,0 +1,50 @@
+{{define "content"}}
+<div class="stats-grid">
+    {{range .Stats.ContentStats}}
+    <div class="stat-card">
+        <div class="stat-number">{{.Count}}</div>
+        <div class="stat-label">{{adminContentTypeLabel $.AdminLanguage .TypeDef.Name .TypeDef.Label}}</div>
+    </div>
+    {{end}}
+    <div class="stat-card">
+        <div class="stat-number">{{.Stats.MediaCount}}</div>
+        <div class="stat-label">{{T . "dashboard.media_files"}}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{.Stats.UserCount}}</div>
+        <div class="stat-label">{{T . "dashboard.users"}}</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>{{T . "dashboard.recent_activity"}}</h3>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>{{T . "field.time"}}</th>
+                <th>{{T . "dashboard.users"}}</th>
+                <th>{{T . "field.actions"}}</th>
+                <th>{{T . "field.resource"}}</th>
+                <th>{{T . "field.details"}}</th>
+                <th>IP</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Logs}}
+            <tr>
+                <td>{{formatDate .CreatedAt}}</td>
+                <td>{{.Username}}</td>
+                <td>{{.Action}}</td>
+                <td>{{.Resource}}</td>
+                <td>{{truncate .Details 30}}</td>
+                <td>{{.IPAddress}}</td>
+            </tr>
+            {{else}}
+            <tr><td colspan="6" class="empty-msg">{{T . "dashboard.no_activity"}}</td></tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}

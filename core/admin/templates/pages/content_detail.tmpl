@@ -1,0 +1,40 @@
+{{define "content"}}
+<div class="content-header">
+    <div class="content-header-left">
+        <a href="{{.BackURL}}" class="btn btn-secondary btn-back">← {{T . "action.back_to_list"}}</a>
+        <h2>{{.Title}}</h2>
+    </div>
+</div>
+<div class="card">
+    <div class="detail-view">
+        <div class="detail-row">
+            <span class="detail-label">{{T . "content.title"}}</span>
+            <span class="detail-value">{{.Item.Title}}</span>
+        </div>
+        {{if .Item.Content}}
+        <div class="detail-row">
+            <span class="detail-label">{{T . "content.content"}}</span>
+            <span class="detail-value">{{.Item.Content}}</span>
+        </div>
+        {{end}}
+        {{range $field := .TypeDef.MetaFields}}
+        <div class="detail-row">
+            <span class="detail-label">{{adminMetaFieldLabel $ $.TypeName $field.Key $field.Label}}</span>
+            <span class="detail-value">{{metaVal $.Item.Meta $field.Key}}</span>
+        </div>
+        {{end}}
+        <div class="detail-row">
+            <span class="detail-label">{{T . "field.time"}}</span>
+            <span class="detail-value">{{formatDate .Item.CreatedAt}}</span>
+        </div>
+    </div>
+    <div class="form-actions">
+        {{if can .CurrentRole .TypeName "delete"}}
+        <form method="POST" action="/admin/{{.Slug}}/{{.Item.ID}}/delete{{if .BackQuery}}?{{.BackQuery}}{{end}}" class="inline-form">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('{{T . "confirm.delete"}}')">{{T . "action.delete"}}</button>
+        </form>
+        {{end}}
+        <a href="{{.BackURL}}" class="btn">{{T . "action.back"}}</a>
+    </div>
+</div>
+{{end}}

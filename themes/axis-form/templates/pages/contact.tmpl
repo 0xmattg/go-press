@@ -1,0 +1,26 @@
+{{define "content"}}
+{{$s := .Settings}}
+<section class="af-page-hero">
+    <span>Contacts</span>
+    <h1>{{settingOr $s "contact_title" "Tell us about the space you want to shape."}}</h1>
+    <p>{{settingOr $s "contact_subtitle" "Send a note about your site, goals, timeline, and budget. We will respond with next steps."}}</p>
+</section>
+
+<section class="af-contact-grid">
+    <div class="af-contact-card">
+        <h2>{{settingOr $s "company_name" "Axis Form"}}</h2>
+        <p>{{settingOr $s "company_address" "125 Mercer Street, New York, NY"}}</p>
+        <p>{{settingOr $s "company_email" "studio@axisform.example"}}</p>
+        <p>{{settingOr $s "company_phone" "+1 212 555 0188"}}</p>
+    </div>
+    <form class="af-form" method="POST" action="{{langPrefixURL .Ctx "/contact"}}">
+        {{if .Success}}<div class="af-alert success">Message sent. We will be in touch shortly.</div>{{end}}
+        {{if .Error}}<div class="af-alert error">{{.Error}}</div>{{end}}
+        <label>Name<input name="name" required></label>
+        <label>Email<input name="email" type="email" required></label>
+        <label>Phone<input name="phone"></label>
+        <label>Project brief<textarea name="message" rows="6" required></textarea></label>
+        <button class="af-primary-btn" type="submit">Send Inquiry</button>
+    </form>
+</section>
+{{end}}

@@ -1,0 +1,526 @@
+{{define "content"}}
+<div class="content-header">
+    <div style="display:flex; align-items:center; gap:1rem;">
+        <a href="/admin/themes" class="btn btn-secondary" style="display:inline-flex; align-items:center; gap:0.4rem; text-decoration:none;">
+            ← {{X $ "theme.settings.back" "返回主题管理"}}
+        </a>
+        <h2>{{X $ "theme.settings.title" "%s - 主题设置" .ThemeName}}</h2>
+    </div>
+</div>
+
+{{if .Success}}<div class="alert alert-success">{{.Success}}</div>{{end}}
+{{if .Error}}<div class="alert alert-danger">{{.Error}}</div>{{end}}
+
+<form method="POST" action="/admin/themes/{{.ThemeSlug}}/settings" id="themeSettingsForm">
+
+<!-- Tab Navigation -->
+<div class="ts-tabs">
+    <button type="button" class="ts-tab active" data-tab="color">{{X $ "theme.settings.text.002" "配色方案"}}</button>
+    <button type="button" class="ts-tab" data-tab="brand">{{X $ "theme.settings.text.003" "品牌导航"}}</button>
+    <button type="button" class="ts-tab" data-tab="hero">{{X $ "theme.settings.text.149" "Hero 区域"}}</button>
+    <button type="button" class="ts-tab" data-tab="metrics">{{X $ "theme.settings.text.150" "数据指标"}}</button>
+    <button type="button" class="ts-tab" data-tab="features">{{X $ "theme.settings.text.151" "功能特性"}}</button>
+    <button type="button" class="ts-tab" data-tab="steps">{{X $ "theme.settings.text.152" "运作方式"}}</button>
+    <button type="button" class="ts-tab" data-tab="code">{{X $ "theme.settings.text.153" "代码预览"}}</button>
+    <button type="button" class="ts-tab" data-tab="testimonials">{{X $ "theme.settings.text.154" "客户评价"}}</button>
+    <button type="button" class="ts-tab" data-tab="pricing">{{X $ "theme.settings.text.155" "定价方案"}}</button>
+    <button type="button" class="ts-tab" data-tab="cta">CTA & Footer</button>
+</div>
+
+{{$s := .Settings}}
+
+<!-- ============ TAB: Color scheme ============ -->
+<div class="ts-panel active" id="tab-color">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.002" "配色方案"}}</h3>
+    <p class="ts-hint">{{X $ "theme.settings.text.156" "选择主题的主色调渐变方案，保存后前端页面立即切换。影响按钮、渐变文字、orb 光效等所有强调色。"}}</p>
+    <div class="scheme-options">
+        <label class="scheme-option{{if eq .ColorScheme "indigo"}} scheme-selected{{end}}">
+            <input type="radio" name="color_scheme" value="indigo" {{if eq .ColorScheme "indigo"}}checked{{end}}>
+            <div class="scheme-preview scheme-indigo"><div class="scheme-bar"></div><div class="scheme-accent"></div></div>
+            <span class="scheme-label">{{X $ "theme.settings.text.157" "靛紫方案 (默认)"}}</span>
+            <span class="scheme-desc">{{X $ "theme.settings.text.158" "深空底 + 靛紫渐变，适合 AI / SaaS 科技产品"}}</span>
+        </label>
+        <label class="scheme-option{{if eq .ColorScheme "cyan"}} scheme-selected{{end}}">
+            <input type="radio" name="color_scheme" value="cyan" {{if eq .ColorScheme "cyan"}}checked{{end}}>
+            <div class="scheme-preview scheme-cyan"><div class="scheme-bar"></div><div class="scheme-accent"></div></div>
+            <span class="scheme-label">{{X $ "theme.settings.text.036" "青蓝方案"}}</span>
+            <span class="scheme-desc">{{X $ "theme.settings.text.159" "深蓝底 + 青蓝渐变，适合云计算 / 基础设施产品"}}</span>
+        </label>
+        <label class="scheme-option{{if eq .ColorScheme "emerald"}} scheme-selected{{end}}">
+            <input type="radio" name="color_scheme" value="emerald" {{if eq .ColorScheme "emerald"}}checked{{end}}>
+            <div class="scheme-preview scheme-emerald"><div class="scheme-bar"></div><div class="scheme-accent"></div></div>
+            <span class="scheme-label">{{X $ "theme.settings.text.160" "翡翠方案"}}</span>
+            <span class="scheme-desc">{{X $ "theme.settings.text.161" "深绿底 + 翠绿渐变，适合金融科技 / 环保产品"}}</span>
+        </label>
+        <label class="scheme-option{{if eq .ColorScheme "rose"}} scheme-selected{{end}}">
+            <input type="radio" name="color_scheme" value="rose" {{if eq .ColorScheme "rose"}}checked{{end}}>
+            <div class="scheme-preview scheme-rose"><div class="scheme-bar"></div><div class="scheme-accent"></div></div>
+            <span class="scheme-label">{{X $ "theme.settings.text.162" "玫瑰方案"}}</span>
+            <span class="scheme-desc">{{X $ "theme.settings.text.163" "暗底 + 粉红渐变，适合创意 / 设计工具产品"}}</span>
+        </label>
+        <label class="scheme-option{{if eq .ColorScheme "amber"}} scheme-selected{{end}}">
+            <input type="radio" name="color_scheme" value="amber" {{if eq .ColorScheme "amber"}}checked{{end}}>
+            <div class="scheme-preview scheme-amber"><div class="scheme-bar"></div><div class="scheme-accent"></div></div>
+            <span class="scheme-label">{{X $ "theme.settings.text.164" "琥珀方案"}}</span>
+            <span class="scheme-desc">{{X $ "theme.settings.text.165" "暗底 + 橙黄渐变，适合开发者工具 / 游戏产品"}}</span>
+        </label>
+    </div>
+</div>
+
+<!-- ============ TAB: Brand navigation ============ -->
+<div class="ts-panel" id="tab-brand">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.038" "品牌与导航"}}</h3>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.039" "Logo 首字母"}}</label>
+            <input type="text" name="home_logo_glyph" value="{{index $s "home_logo_glyph"}}" placeholder="N" maxlength="2">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.040" "Logo 品牌名"}}</label>
+            <input type="text" name="home_logo_text" value="{{index $s "home_logo_text"}}" placeholder="NovaPulse">
+        </div>
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.041" "Logo 图片链接"}}</label>
+        <p class="ts-hint" style="margin-bottom:0.5rem;">{{X $ "theme.settings.text.042" "设置图片 Logo 后将优先显示。留空则使用首字母 Logo。"}}</p>
+        <div style="display:flex; gap:0.5rem; align-items:flex-start;">
+            <input type="text" id="home_logo_image" name="home_logo_image" value="{{index $s "home_logo_image"}}" placeholder="/uploads/logo.png">
+            <button type="button" class="btn btn-secondary" style="white-space:nowrap;" onclick="openMediaPicker(function(url){ document.getElementById('home_logo_image').value=url; })">{{X $ "theme.settings.select_image" "选择图片"}}</button>
+        </div>
+        {{if index $s "home_logo_image"}}
+        <div style="margin-top:0.5rem;"><img src="{{index $s "home_logo_image"}}" alt="Logo preview" style="max-height:48px; border-radius:6px; border:1px solid #e2e8f0;"></div>
+        {{end}}
+    </div>
+    <h4 style="margin:1.25rem 0 0.75rem; font-size:0.95rem; color:#475569;">{{X $ "theme.settings.text.166" "导航链接"}}</h4>
+    <p class="ts-hint">{{X $ "theme.settings.text.167" "导航为锚点链接，文字可自定义。留空则使用默认值。"}}</p>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.168" "链接 1 文字"}}</label>
+            <input type="text" name="home_nav_1_text" value="{{index $s "home_nav_1_text"}}" placeholder="Features">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.169" "链接 2 文字"}}</label>
+            <input type="text" name="home_nav_2_text" value="{{index $s "home_nav_2_text"}}" placeholder="How It Works">
+        </div>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.170" "链接 3 文字"}}</label>
+            <input type="text" name="home_nav_3_text" value="{{index $s "home_nav_3_text"}}" placeholder="Testimonials">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.171" "链接 4 文字"}}</label>
+            <input type="text" name="home_nav_4_text" value="{{index $s "home_nav_4_text"}}" placeholder="Pricing">
+        </div>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.172" "登录按钮文字"}}</label>
+            <input type="text" name="home_nav_signin_text" value="{{index $s "home_nav_signin_text"}}" placeholder="Sign In">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.173" "注册按钮文字"}}</label>
+            <input type="text" name="home_nav_cta_text" value="{{index $s "home_nav_cta_text"}}" placeholder="Get Started">
+        </div>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.174" "登录按钮链接"}}</label>
+            <input type="text" name="home_nav_signin_link" value="{{index $s "home_nav_signin_link"}}" placeholder="#pricing">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.175" "注册按钮链接"}}</label>
+            <input type="text" name="home_nav_cta_link" value="{{index $s "home_nav_cta_link"}}" placeholder="#pricing">
+        </div>
+    </div>
+</div>
+
+<!-- ============ TAB: Hero section ============ -->
+<div class="ts-panel" id="tab-hero">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.176" "Hero 主视觉区域"}}</h3>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.065" "徽章文字"}}</label>
+        <input type="text" name="home_hero_badge" value="{{index $s "home_hero_badge"}}" placeholder="Now in Public Beta — v2.0">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.177" "标题行 1"}}</label>
+        <input type="text" name="home_hero_title_1" value="{{index $s "home_hero_title_1"}}" placeholder="Build Smarter.">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.178" "标题行 2（渐变高亮）"}}</label>
+        <input type="text" name="home_hero_title_2" value="{{index $s "home_hero_title_2"}}" placeholder="Ship Faster.">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.179" "标题行 3"}}</label>
+        <input type="text" name="home_hero_title_3" value="{{index $s "home_hero_title_3"}}" placeholder="Scale Infinitely.">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.081" "副标题描述"}}</label>
+        <textarea name="home_hero_subtitle" rows="2" placeholder="NovaPulse AI is the enterprise-grade platform...">{{index $s "home_hero_subtitle"}}</textarea>
+    </div>
+    <h4 style="margin:1.25rem 0 0.75rem; font-size:0.95rem; color:#475569;">{{X $ "theme.settings.text.180" "按钮设置"}}</h4>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.181" "主按钮文字"}}</label>
+            <input type="text" name="home_hero_btn1_text" value="{{index $s "home_hero_btn1_text"}}" placeholder="Start Free Trial">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.182" "主按钮链接"}}</label>
+            <input type="text" name="home_hero_btn1_link" value="{{index $s "home_hero_btn1_link"}}" placeholder="#pricing">
+        </div>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.183" "副按钮文字"}}</label>
+            <input type="text" name="home_hero_btn2_text" value="{{index $s "home_hero_btn2_text"}}" placeholder="Watch Demo">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.184" "副按钮链接"}}</label>
+            <input type="text" name="home_hero_btn2_link" value="{{index $s "home_hero_btn2_link"}}" placeholder="#how-it-works">
+        </div>
+    </div>
+</div>
+
+<!-- ============ TAB: Metrics ============ -->
+<div class="ts-panel" id="tab-metrics">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.185" "Hero 数据指标"}}</h3>
+    <p class="ts-hint">{{X $ "theme.settings.text.186" "显示在 Hero 下方的关键数据指标卡片，最多 4 项。"}}</p>
+    {{range $i := seq 4}}
+    <div class="ts-grid-2" style="margin-bottom:0.5rem;">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.dynamic.metric_value" "指标 %d - 数值" (add $i 1)}}</label>
+            <input type="text" name="home_metric_{{add $i 1}}_value" value="{{index $s (printf "home_metric_%d_value" (add $i 1))}}" placeholder="{{X $ "theme.settings.text.220" "如：99.99%"}}">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.dynamic.metric_label" "指标 %d - 标签" (add $i 1)}}</label>
+            <input type="text" name="home_metric_{{add $i 1}}_label" value="{{index $s (printf "home_metric_%d_label" (add $i 1))}}" placeholder="{{X $ "theme.settings.text.221" "如：Uptime"}}">
+        </div>
+    </div>
+    {{end}}
+</div>
+
+<!-- ============ TAB: Features ============ -->
+<div class="ts-panel" id="tab-features">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.187" "功能特性区域"}}</h3>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.188" "区域徽章"}}</label>
+            <input type="text" name="home_features_badge" value="{{index $s "home_features_badge"}}" placeholder="Features">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.075" "最大展示数量"}}</label>
+            <select name="home_features_max">
+                {{$fmax := index $s "home_features_max"}}
+                <option value="">{{X $ "theme.settings.text.189" "全部展示 (默认6)"}}</option>
+                <option value="3" {{if eq $fmax "3"}}selected{{end}}>{{X $ "theme.settings.text.085" "3 个"}}</option>
+                <option value="4" {{if eq $fmax "4"}}selected{{end}}>{{X $ "theme.settings.text.078" "4 个"}}</option>
+                <option value="6" {{if eq $fmax "6"}}selected{{end}}>{{X $ "theme.settings.text.079" "6 个"}}</option>
+                <option value="9" {{if eq $fmax "9"}}selected{{end}}>{{X $ "theme.settings.text.190" "9 个"}}</option>
+            </select>
+        </div>
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.191" "标题（普通部分）"}}</label>
+        <input type="text" name="home_features_title" value="{{index $s "home_features_title"}}" placeholder="Everything You Need to">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.192" "标题（渐变高亮部分）"}}</label>
+        <input type="text" name="home_features_title_highlight" value="{{index $s "home_features_title_highlight"}}" placeholder="Ship ML at Scale">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.081" "副标题描述"}}</label>
+        <textarea name="home_features_subtitle" rows="2" placeholder="From model training to production monitoring...">{{index $s "home_features_subtitle"}}</textarea>
+    </div>
+    <p class="ts-hint" style="margin-top:0.75rem;">{{X $ "theme.settings.text.193" "功能特性内容在「内容管理 → Feature」中管理，按 sort_order 排序。"}}</p>
+</div>
+
+<!-- ============ TAB: How it works ============ -->
+<div class="ts-panel" id="tab-steps">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.194" "运作方式区域 (How It Works)"}}</h3>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.188" "区域徽章"}}</label>
+        <input type="text" name="home_steps_badge" value="{{index $s "home_steps_badge"}}" placeholder="How It Works">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.191" "标题（普通部分）"}}</label>
+        <input type="text" name="home_steps_title" value="{{index $s "home_steps_title"}}" placeholder="From Zero to Production">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.192" "标题（渐变高亮部分）"}}</label>
+        <input type="text" name="home_steps_title_highlight" value="{{index $s "home_steps_title_highlight"}}" placeholder="in Three Steps">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.081" "副标题描述"}}</label>
+        <textarea name="home_steps_subtitle" rows="2" placeholder="No infrastructure expertise required...">{{index $s "home_steps_subtitle"}}</textarea>
+    </div>
+    <p class="ts-hint">{{X $ "theme.settings.text.195" "以下为三个步骤卡片的内容："}}</p>
+    {{range $i := seq 3}}
+    <div class="ts-slide-block">
+        <h4 class="ts-slide-title">{{X $ "theme.settings.dynamic.step" "步骤 %d" (add $i 1)}}</h4>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.053" "标题"}}</label>
+            <input type="text" name="home_step_{{add $i 1}}_title" value="{{index $s (printf "home_step_%d_title" (add $i 1))}}" placeholder="{{X $ "theme.settings.text.222" "步骤标题"}}">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.196" "描述"}}</label>
+            <textarea name="home_step_{{add $i 1}}_desc" rows="2" placeholder="{{X $ "theme.settings.text.223" "步骤描述..."}}">{{index $s (printf "home_step_%d_desc" (add $i 1))}}</textarea>
+        </div>
+    </div>
+    {{end}}
+</div>
+
+<!-- ============ TAB: Code preview ============ -->
+<div class="ts-panel" id="tab-code">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.197" "代码预览区域 (Developer Experience)"}}</h3>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.188" "区域徽章"}}</label>
+        <input type="text" name="home_code_badge" value="{{index $s "home_code_badge"}}" placeholder="Developer Experience">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.177" "标题行 1"}}</label>
+        <input type="text" name="home_code_title" value="{{index $s "home_code_title"}}" placeholder="Deploy a Model">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.178" "标题行 2（渐变高亮）"}}</label>
+        <input type="text" name="home_code_title_highlight" value="{{index $s "home_code_title_highlight"}}" placeholder="in 4 Lines">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.054" "描述文字"}}</label>
+        <textarea name="home_code_desc" rows="2" placeholder="Our CLI and SDK are designed for speed...">{{index $s "home_code_desc"}}</textarea>
+    </div>
+    <h4 style="margin:1.25rem 0 0.75rem; font-size:0.95rem; color:#475569;">{{X $ "theme.settings.text.198" "特性列表（勾选项）"}}</h4>
+    {{range $i := seq 4}}
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.dynamic.feature" "特性 %d" (add $i 1)}}</label>
+        <input type="text" name="home_code_check_{{add $i 1}}" value="{{index $s (printf "home_code_check_%d" (add $i 1))}}" placeholder="{{X $ "theme.settings.text.224" "特性描述..."}}">
+    </div>
+    {{end}}
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.199" "代码文件名"}}</label>
+            <input type="text" name="home_code_filename" value="{{index $s "home_code_filename"}}" placeholder="deploy.py">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.200" "代码内容"}}</label>
+            <p class="ts-hint" style="margin-bottom:0;">{{X $ "theme.settings.text.201" "代码内容在模板文件中管理，如需修改请联系开发者。"}}</p>
+        </div>
+    </div>
+</div>
+
+<!-- ============ TAB: Testimonials ============ -->
+<div class="ts-panel" id="tab-testimonials">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.202" "客户评价区域"}}</h3>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.188" "区域徽章"}}</label>
+        <input type="text" name="home_testimonials_badge" value="{{index $s "home_testimonials_badge"}}" placeholder="Testimonials">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.191" "标题（普通部分）"}}</label>
+        <input type="text" name="home_testimonials_title" value="{{index $s "home_testimonials_title"}}" placeholder="Trusted by">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.192" "标题（渐变高亮部分）"}}</label>
+        <input type="text" name="home_testimonials_title_highlight" value="{{index $s "home_testimonials_title_highlight"}}" placeholder="Industry Leaders">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.081" "副标题描述"}}</label>
+        <textarea name="home_testimonials_subtitle" rows="2" placeholder="See why engineering teams...">{{index $s "home_testimonials_subtitle"}}</textarea>
+    </div>
+    <p class="ts-hint" style="margin-top:0.75rem;">{{X $ "theme.settings.text.203" "客户评价内容在「内容管理 → Testimonial」中管理，按 sort_order 排序。"}}</p>
+</div>
+
+<!-- ============ TAB: Pricing ============ -->
+<div class="ts-panel" id="tab-pricing">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.204" "定价方案区域"}}</h3>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.188" "区域徽章"}}</label>
+        <input type="text" name="home_pricing_badge" value="{{index $s "home_pricing_badge"}}" placeholder="Pricing">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.191" "标题（普通部分）"}}</label>
+        <input type="text" name="home_pricing_title" value="{{index $s "home_pricing_title"}}" placeholder="Simple,">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.192" "标题（渐变高亮部分）"}}</label>
+        <input type="text" name="home_pricing_title_highlight" value="{{index $s "home_pricing_title_highlight"}}" placeholder="Transparent">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.081" "副标题描述"}}</label>
+        <textarea name="home_pricing_subtitle" rows="2" placeholder="Start free, scale as you grow...">{{index $s "home_pricing_subtitle"}}</textarea>
+    </div>
+
+    <p class="ts-hint">{{X $ "theme.settings.text.205" "以下为三档定价方案："}}</p>
+    {{range $i := seq 3}}
+    <div class="ts-slide-block">
+        <h4 class="ts-slide-title">{{X $ "theme.settings.dynamic.plan" "方案 %d" (add $i 1)}}</h4>
+        <div class="ts-grid-2">
+            <div class="ts-field">
+                <label>{{X $ "theme.settings.text.206" "方案名称"}}</label>
+                <input type="text" name="home_pricing_{{add $i 1}}_name" value="{{index $s (printf "home_pricing_%d_name" (add $i 1))}}" placeholder="{{X $ "theme.settings.text.225" "如：Starter / Pro / Enterprise"}}">
+            </div>
+            <div class="ts-field">
+                <label>{{X $ "theme.settings.text.207" "价格"}}</label>
+                <input type="text" name="home_pricing_{{add $i 1}}_price" value="{{index $s (printf "home_pricing_%d_price" (add $i 1))}}" placeholder="{{X $ "theme.settings.text.226" "如：$0 / $299 / Custom"}}">
+            </div>
+        </div>
+        <div class="ts-grid-2">
+            <div class="ts-field">
+                <label>{{X $ "theme.settings.text.208" "价格周期"}}</label>
+                <input type="text" name="home_pricing_{{add $i 1}}_period" value="{{index $s (printf "home_pricing_%d_period" (add $i 1))}}" placeholder="{{X $ "theme.settings.text.227" "如：/month"}}">
+            </div>
+            <div class="ts-field">
+                <label>{{X $ "theme.settings.text.070" "按钮文字"}}</label>
+                <input type="text" name="home_pricing_{{add $i 1}}_cta" value="{{index $s (printf "home_pricing_%d_cta" (add $i 1))}}" placeholder="{{X $ "theme.settings.text.228" "如：Get Started Free"}}">
+            </div>
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.209" "特性列表（每行一项）"}}</label>
+            <textarea name="home_pricing_{{add $i 1}}_features" rows="4" placeholder="10,000 predictions/month&#10;1 model deployment&#10;Community support">{{index $s (printf "home_pricing_%d_features" (add $i 1))}}</textarea>
+        </div>
+    </div>
+    {{end}}
+    <p class="ts-hint">{{X $ "theme.settings.text.210" "第 2 档方案自动标记为「Most Popular」高亮显示。"}}</p>
+</div>
+
+<!-- ============ TAB: CTA & Footer ============ -->
+<div class="ts-panel" id="tab-cta">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.119" "底部 CTA 行动号召"}}</h3>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.177" "标题行 1"}}</label>
+        <input type="text" name="home_cta_title" value="{{index $s "home_cta_title"}}" placeholder="Ready to Accelerate">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.178" "标题行 2（渐变高亮）"}}</label>
+        <input type="text" name="home_cta_title_highlight" value="{{index $s "home_cta_title_highlight"}}" placeholder="Your AI Pipeline?">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.211" "副标题"}}</label>
+        <textarea name="home_cta_subtitle" rows="2" placeholder="Join 500+ engineering teams...">{{index $s "home_cta_subtitle"}}</textarea>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.181" "主按钮文字"}}</label>
+            <input type="text" name="home_cta_btn1_text" value="{{index $s "home_cta_btn1_text"}}" placeholder="Get Started Free">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.182" "主按钮链接"}}</label>
+            <input type="text" name="home_cta_btn1_link" value="{{index $s "home_cta_btn1_link"}}" placeholder="#pricing">
+        </div>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.183" "副按钮文字"}}</label>
+            <input type="text" name="home_cta_btn2_text" value="{{index $s "home_cta_btn2_text"}}" placeholder="Talk to Sales">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.184" "副按钮链接"}}</label>
+            <input type="text" name="home_cta_btn2_link" value="{{index $s "home_cta_btn2_link"}}" placeholder="#">
+        </div>
+    </div>
+
+    <h3 class="ts-section-title" style="margin-top:2rem;">{{X $ "theme.settings.text.212" "Footer 页脚"}}</h3>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.213" "品牌描述"}}</label>
+        <textarea name="home_footer_desc" rows="2" placeholder="Enterprise-grade AI infrastructure...">{{index $s "home_footer_desc"}}</textarea>
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.214" "版权文字"}}</label>
+        <input type="text" name="home_footer_copyright" value="{{index $s "home_footer_copyright"}}" placeholder="© 2026 NovaPulse AI. All rights reserved.">
+    </div>
+    <h4 style="margin:1.25rem 0 0.75rem; font-size:0.95rem; color:#475569;">{{X $ "theme.settings.text.215" "Footer 栏目标题"}}</h4>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.216" "栏目 1 标题"}}</label>
+            <input type="text" name="home_footer_col1_title" value="{{index $s "home_footer_col1_title"}}" placeholder="Product">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.217" "栏目 2 标题"}}</label>
+            <input type="text" name="home_footer_col2_title" value="{{index $s "home_footer_col2_title"}}" placeholder="Company">
+        </div>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.218" "栏目 3 标题"}}</label>
+            <input type="text" name="home_footer_col3_title" value="{{index $s "home_footer_col3_title"}}" placeholder="Resources">
+        </div>
+        <div class="ts-field">
+            <label></label>
+            <p class="ts-hint">{{X $ "theme.settings.text.219" "栏目下的具体链接在模板文件中管理。"}}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Save Bar -->
+<div class="ts-save-bar">
+    <button type="submit" class="btn btn-primary">{{X $ "theme.settings.save" "保存设置"}}</button>
+    <a href="/admin/themes" class="btn btn-secondary" style="text-decoration:none;">{{X $ "theme.settings.cancel" "取消"}}</a>
+</div>
+
+</form>
+
+<style>
+.ts-tabs { display:flex; gap:0; border-bottom:2px solid #e2e8f0; margin-bottom:0; overflow-x:auto; background:#fff; border-radius:8px 8px 0 0; }
+.ts-tab { padding:0.85rem 1.25rem; border:none; background:none; cursor:pointer; font-size:0.88rem; font-weight:500; color:#64748b; white-space:nowrap; border-bottom:2px solid transparent; margin-bottom:-2px; transition:color .2s,border-color .2s; }
+.ts-tab:hover { color:#1e293b; }
+.ts-tab.active { color:#3b82f6; border-bottom-color:#3b82f6; font-weight:600; }
+.ts-panel { display:none; background:#fff; padding:1.5rem; border-radius:0 0 8px 8px; border:1px solid #e2e8f0; border-top:none; }
+.ts-panel.active { display:block; }
+.ts-section-title { margin:0 0 0.5rem; font-size:1.05rem; font-weight:600; color:#1e293b; }
+.ts-hint { color:#64748b; font-size:0.85rem; margin-bottom:1.25rem; line-height:1.5; }
+.ts-field { margin-bottom:1rem; }
+.ts-field label { display:block; margin-bottom:0.35rem; font-size:0.85rem; font-weight:500; color:#374151; }
+.ts-field input[type="text"],.ts-field textarea,.ts-field select { width:100%; padding:0.55rem 0.75rem; border:1px solid #d1d5db; border-radius:6px; font-size:0.88rem; transition:border-color .2s; font-family:inherit; box-sizing:border-box; }
+.ts-field input:focus,.ts-field textarea:focus,.ts-field select:focus { outline:none; border-color:#3b82f6; box-shadow:0 0 0 2px rgba(59,130,246,0.15); }
+.ts-field textarea { resize:vertical; }
+.ts-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.ts-slide-block { border:1px solid #e5e7eb; border-radius:8px; padding:1.25rem; margin-bottom:1rem; background:#fafbfc; }
+.ts-slide-title { margin:0 0 1rem; font-size:0.95rem; font-weight:600; color:#475569; }
+.ts-save-bar { padding:1rem 1.5rem; background:#fff; border:1px solid #e2e8f0; border-top:none; border-radius:0 0 8px 8px; display:flex; gap:0.75rem; margin-top:-1px; }
+
+/* Color scheme preview options */
+.scheme-options { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:1rem; }
+.scheme-option { display:flex; flex-direction:column; border:2px solid #e2e8f0; border-radius:10px; padding:1rem; cursor:pointer; transition:border-color .2s,box-shadow .2s; }
+.scheme-option:hover { border-color:#94a3b8; }
+.scheme-selected { border-color:#3b82f6; box-shadow:0 0 0 1px #3b82f6; }
+.scheme-option input[type="radio"] { display:none; }
+.scheme-preview { height:55px; border-radius:6px; position:relative; overflow:hidden; margin-bottom:0.6rem; }
+.scheme-preview .scheme-bar { position:absolute; top:0; left:0; right:0; height:18px; }
+.scheme-preview .scheme-accent { position:absolute; bottom:8px; left:10px; width:70px; height:22px; border-radius:4px; }
+.scheme-indigo { background:#06061a; }
+.scheme-indigo .scheme-bar { background:#1a1a3e; }
+.scheme-indigo .scheme-accent { background:linear-gradient(135deg,#6366f1,#a855f7); }
+.scheme-cyan { background:#061a2a; }
+.scheme-cyan .scheme-bar { background:#0c2d4a; }
+.scheme-cyan .scheme-accent { background:linear-gradient(135deg,#06b6d4,#0ea5e9); }
+.scheme-emerald { background:#061a14; }
+.scheme-emerald .scheme-bar { background:#0c3326; }
+.scheme-emerald .scheme-accent { background:linear-gradient(135deg,#10b981,#059669); }
+.scheme-rose { background:#1a0610; }
+.scheme-rose .scheme-bar { background:#330c1f; }
+.scheme-rose .scheme-accent { background:linear-gradient(135deg,#f43f5e,#e11d48); }
+.scheme-amber { background:#1a1006; }
+.scheme-amber .scheme-bar { background:#33200c; }
+.scheme-amber .scheme-accent { background:linear-gradient(135deg,#f59e0b,#d97706); }
+.scheme-label { font-weight:600; font-size:0.92rem; margin-bottom:0.2rem; }
+.scheme-desc { font-size:0.8rem; color:#64748b; line-height:1.4; }
+
+@media (max-width: 768px) { .ts-grid-2 { grid-template-columns:1fr; } .ts-tabs { flex-wrap:wrap; } }
+</style>
+
+<script>
+document.querySelectorAll('.ts-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.ts-tab').forEach(function(t){ t.classList.remove('active'); });
+        document.querySelectorAll('.ts-panel').forEach(function(p){ p.classList.remove('active'); });
+        this.classList.add('active');
+        document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+    });
+});
+document.querySelectorAll('.scheme-option input[type="radio"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('.scheme-option').forEach(function(opt){ opt.classList.remove('scheme-selected'); });
+        this.closest('.scheme-option').classList.add('scheme-selected');
+    });
+});
+</script>
+{{end}}

@@ -1,0 +1,49 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>{{T . "nav.users"}}</h2>
+    {{if can .CurrentRole "user" "create"}}
+    <a href="/admin/users/new" class="btn btn-primary">{{T . "user.new"}}</a>
+    {{end}}
+</div>
+<div class="card">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>{{T . "field.username"}}</th>
+                <th>{{T . "field.email"}}</th>
+                <th>{{T . "field.display_name"}}</th>
+                <th>{{T . "field.role"}}</th>
+                <th>{{T . "field.status"}}</th>
+                <th>{{T . "user.last_login"}}</th>
+                <th>{{T . "field.actions"}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Items}}
+            <tr>
+                <td>{{.ID}}</td>
+                <td>{{.Username}}</td>
+                <td>{{.Email}}</td>
+                <td>{{.DisplayName}}</td>
+                <td>{{roleDisplayFor $ .Role}}</td>
+                <td>{{if .IsActive}}<span class="badge badge-active">{{T $ "user.enabled"}}</span>{{else}}<span class="badge badge-inactive">{{T $ "user.inactive"}}</span>{{end}}</td>
+                <td>{{if .LastLoginAt}}{{formatDate .LastLoginAt}}{{else}}-{{end}}</td>
+                <td class="actions">
+                    {{if can $.CurrentRole "user" "update"}}
+                    <a href="/admin/users/{{.ID}}/edit" class="btn btn-sm">{{T $ "action.edit"}}</a>
+                    {{end}}
+                    {{if can $.CurrentRole "user" "delete"}}
+                    <form method="POST" action="/admin/users/{{.ID}}/delete" class="inline-form">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('{{T $ "confirm.delete_user"}}')">{{T $ "action.delete"}}</button>
+                    </form>
+                    {{end}}
+                </td>
+            </tr>
+            {{else}}
+            <tr><td colspan="8" class="empty-msg">{{T . "user.no_users"}}</td></tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}

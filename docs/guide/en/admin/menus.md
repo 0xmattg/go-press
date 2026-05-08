@@ -1,0 +1,43 @@
+# Menu Management
+
+GoPress includes a menu system with named locations, hierarchical items, language-aware assignment, and admin visual management.
+
+## Concepts
+
+| Concept | Description |
+|---|---|
+| Menu | A named collection of menu items. |
+| Menu item | A link entry that can point to content, taxonomy, custom URL, or another target. |
+| Location | A theme-registered slot such as `header` or `footer`. |
+| Assignment | A mapping from location, and optionally language, to a menu. |
+
+## Theme Locations
+
+Themes register menu locations in `theme.toml`:
+
+```toml
+[[menu_locations]]
+name = "header"
+label = "Header Navigation"
+
+[[menu_locations]]
+name = "footer"
+label = "Footer Navigation"
+```
+
+The admin displays the active theme's registered locations and lets users assign menus to them.
+
+## Rendering
+
+Themes call `menuByLocation` in templates. Core resolves the correct menu for the current location and, when multilingual support is active, the current language.
+
+```gotemplate
+{{range menuByLocation .Ctx "header"}}
+  <a href="{{.URL}}">{{.Title}}</a>
+{{end}}
+```
+
+## Multilingual Menus
+
+The multilingual plugin can assign different menus per language and translate menu item labels. The theme still renders by location; the plugin changes resolution through the core menu hook.
+

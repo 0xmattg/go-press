@@ -1,0 +1,1097 @@
+{{define "content"}}
+<div class="content-header">
+    <div style="display:flex; align-items:center; gap:1rem;">
+        <a href="/admin/plugins" class="btn btn-secondary" style="display:inline-flex; align-items:center; gap:0.4rem; text-decoration:none;">
+            ← {{X $ "plugin.settings.back" "返回插件管理"}}
+        </a>
+        <h2>{{X $ "plugin.settings.title" "%s - 插件设置" .PluginName}}</h2>
+    </div>
+</div>
+
+<form method="POST" action="/admin/plugins/{{.PluginSlug}}/settings" id="pluginSettingsForm">
+
+<!-- Tab Navigation -->
+<div class="ts-tabs">
+    <button type="button" class="ts-tab active" data-tab="languages">{{X $ "plugin.settings.tab.languages" "语言管理"}}</button>
+    <button type="button" class="ts-tab" data-tab="translations">{{X $ "plugin.settings.tab.translations" "翻译管理"}}</button>
+    <button type="button" class="ts-tab" data-tab="settings">{{X $ "plugin.settings.tab.settings" "基本设置"}}</button>
+    <button type="button" class="ts-tab" data-tab="help">{{X $ "plugin.settings.tab.help" "使用帮助"}}</button>
+</div>
+
+<!-- ============ TAB: Language management ============ -->
+<div class="ts-panel active" id="tab-languages">
+    <h3 class="ts-section-title">{{X $ "plugin.multilang.ui.001" "已启用的语言"}}</h3>
+    <p class="ts-hint">{{X $ "plugin.multilang.ui.002" "管理站点支持的语言列表。默认语言的URL不带前缀，其他语言URL自动添加前缀（如 /en/products/...）。"}}</p>
+
+    <div class="ml-lang-table">
+        <table class="ml-table">
+            <thead>
+                <tr>
+                    <th>{{X $ "plugin.multilang.ui.003" "语言代码"}}</th>
+                    <th>{{X $ "plugin.multilang.ui.004" "名称"}}</th>
+                    <th>{{X $ "plugin.multilang.ui.005" "旗标"}}</th>
+                    <th>{{X $ "plugin.multilang.ui.006" "默认"}}</th>
+                    <th>{{X $ "plugin.multilang.ui.007" "排序"}}</th>
+                    <th>{{X $ "plugin.multilang.ui.008" "状态"}}</th>
+                </tr>
+            </thead>
+            <tbody id="langRows">
+                {{$settings := .Settings}}
+                {{$defaultLang := .DefaultLang}}
+                {{range $idx, $lang := .Languages}}
+                <tr>
+                    <td>{{$lang.Code}}<input type="hidden" name="plugin_multi-language_lang_{{$idx}}_code" value="{{$lang.Code}}"></td>
+                    <td>{{$lang.Flag}} {{$lang.Name}}<input type="hidden" name="plugin_multi-language_lang_{{$idx}}_name" value="{{$lang.Name}}"><input type="hidden" name="plugin_multi-language_lang_{{$idx}}_flag" value="{{$lang.Flag}}"></td>
+                    <td>{{$lang.Flag}}</td>
+                    <td><input type="radio" name="plugin_multi-language_default_lang" value="{{$lang.Code}}" {{if $lang.IsDefault}}checked{{end}}></td>
+                    <td><input type="number" name="plugin_multi-language_lang_{{$idx}}_sort" value="{{$lang.SortOrder}}" style="width:60px; padding:0.2rem 0.4rem; border:1px solid #d1d5db; border-radius:4px;"></td>
+                    <td><select name="plugin_multi-language_lang_{{$idx}}_active" style="padding:0.2rem 0.4rem; border:1px solid #d1d5db; border-radius:4px;"><option value="true" {{if $lang.Active}}selected{{end}}>{{X $ "plugin.multilang.ui.009" "启用"}}</option><option value="false" {{if not $lang.Active}}selected{{end}}>{{X $ "plugin.multilang.ui.010" "禁用"}}</option></select></td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="ml-add-lang" style="margin-top:1.5rem;">
+        <h4 style="margin-bottom:0.75rem;">{{X $ "plugin.multilang.ui.011" "添加新语言"}}</h4>
+        <div style="display:flex; gap:0.75rem; align-items:flex-end; flex-wrap:wrap;">
+            <div class="form-group" style="margin:0;">
+                <label>{{X $ "plugin.multilang.ui.003" "语言代码"}}</label>
+                <select id="newLangCode" style="width:200px; padding:0.4rem 0.6rem; border:1px solid #d1d5db; border-radius:6px;">
+                    <option value="">{{X $ "plugin.multilang.ui.012" "选择语言..."}}</option>
+                    <option value="en">en - English</option>
+                    <option value="zh">zh - 中文</option>
+                    <option value="ja">ja - 日本語</option>
+                    <option value="ko">ko - 한국어</option>
+                    <option value="fr">fr - Français</option>
+                    <option value="de">de - Deutsch</option>
+                    <option value="es">es - Español</option>
+                    <option value="pt">pt - Português</option>
+                    <option value="ru">ru - Русский</option>
+                    <option value="ar">ar - العربية</option>
+                    <option value="th">th - ไทย</option>
+                    <option value="vi">vi - Tiếng Việt</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label>{{X $ "plugin.multilang.ui.013" "显示名称"}}</label>
+                <input type="text" id="newLangName" placeholder="English" style="width:140px; padding:0.4rem 0.6rem; border:1px solid #d1d5db; border-radius:6px;">
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label>{{X $ "plugin.multilang.ui.014" "旗标 Emoji"}}</label>
+                <input type="text" id="newLangFlag" placeholder="🇬🇧" style="width:60px; padding:0.4rem 0.6rem; border:1px solid #d1d5db; border-radius:6px;">
+            </div>
+            <button type="button" class="btn btn-sm btn-primary" onclick="addLanguageRow()" style="height:36px;">{{X $ "plugin.multilang.ui.015" "添加"}}</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============ TAB: Translation management ============ -->
+<div class="ts-panel" id="tab-translations">
+
+<!-- Sub-tab Navigation -->
+<div class="ml-subtabs">
+    <button type="button" class="ml-subtab active" data-subtab="content-trans">{{X $ "plugin.multilang.ui.016" "内容翻译"}}</button>
+    <button type="button" class="ml-subtab" data-subtab="menu-trans">{{X $ "plugin.multilang.ui.017" "菜单翻译"}}</button>
+    <button type="button" class="ml-subtab" data-subtab="string-trans">{{X $ "plugin.multilang.ui.018" "字符串翻译"}}</button>
+    <button type="button" class="ml-subtab" data-subtab="option-trans">{{X $ "plugin.multilang.ui.019" "主题设置翻译"}}</button>
+</div>
+
+<!-- Sub-tab: Content translations -->
+<div class="ml-subtab-panel active" id="subtab-content-trans">
+    <h3 class="ts-section-title">{{X $ "plugin.multilang.ui.020" "内容翻译管理"}}</h3>
+    <p class="ts-hint">{{X $ "plugin.multilang.ui.021" "查看所有内容的翻译状态，点击 ➕ 克隆内容到目标语言创建翻译，点击 ✏️ 编辑已有翻译。"}}</p>
+
+    {{if .ContentItems}}
+    <!-- Filter by content type -->
+    <div style="margin-bottom:1rem; display:flex; gap:0.75rem; align-items:center;">
+        <label style="font-weight:600; color:#475569; font-size:0.9rem;">{{X $ "plugin.multilang.ui.022" "筛选类型："}}</label>
+        <select id="translationTypeFilter" onchange="filterTranslationTable()" style="padding:0.4rem 0.8rem; border:1px solid #d1d5db; border-radius:6px; font-size:0.9rem;">
+            <option value="">{{X $ "plugin.multilang.ui.023" "全部"}}</option>
+            {{range .ContentTypes}}
+            <option value="{{.Name}}">{{adminContentTypeLabel $.AdminLanguage .Name .Label}}</option>
+            {{end}}
+        </select>
+    </div>
+
+    <div class="ml-trans-table-wrap">
+        <table class="ml-table ml-trans-table">
+            <thead>
+                <tr>
+                    <th style="width:60px;">ID</th>
+                    <th style="width:80px;">{{X $ "plugin.multilang.ui.024" "类型"}}</th>
+                    <th>{{X $ "plugin.multilang.ui.025" "标题"}}</th>
+                    <th style="width:80px;">{{X $ "plugin.multilang.ui.008" "状态"}}</th>
+                    {{range .Languages}}
+                    <th style="width:80px; text-align:center;">{{.Flag}} {{.Code}}</th>
+                    {{end}}
+                </tr>
+            </thead>
+            <tbody>
+                {{$langs := .Languages}}
+                {{$defaultLang := .DefaultLang}}
+                {{range .ContentItems}}
+                <tr data-type="{{.Type}}">
+                    <td>{{.ID}}</td>
+                    <td><span class="ml-type-badge">{{adminContentTypeLabel $.AdminLanguage .Type .TypeLabel}}</span></td>
+                    <td>
+                        <a href="{{.EditURL}}" class="ml-content-link">{{.Title}}</a>
+                        <span class="ml-slug-text">/{{.Slug}}</span>
+                    </td>
+                    <td><span class="ml-status ml-status-{{.Status}}">{{.Status}}</span></td>
+                    {{$view := .}}
+                    {{range $langs}}
+                        {{$transID := index $view.Translations .Code}}
+                        <td style="text-align:center;">
+                            {{if $transID}}
+                                {{if eq $transID $view.ID}}
+                                    <span class="ml-trans-self" title="{{X $ "plugin.multilang.ui.026" "当前内容 (%s)" .Code}}">●</span>
+                                {{else}}
+                                    <a href="/admin/{{$view.AdminSlug}}/{{$transID}}{{if $view.HasArchive}}/edit{{end}}" class="ml-trans-edit" title="{{X $ "plugin.multilang.ui.027" "编辑 %s 翻译 (ID:%d)" .Code $transID}}">✏️</a>
+                                {{end}}
+                            {{else}}
+                                <button type="button" class="ml-trans-add" title="{{X $ "plugin.multilang.ui.028" "创建 %s 翻译" .Name}}"
+                                    onclick="createTranslation({{$view.ID}}, '{{.Code}}', '{{.Name}}')">➕</button>
+                            {{end}}
+                        </td>
+                    {{end}}
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+    {{else}}
+    <div class="ml-empty-state">
+        <p>{{X $ "plugin.multilang.ui.029" "暂无内容。请先在 "}}<a href="/admin/content">{{X $ "plugin.multilang.ui.101" "内容管理"}}</a>{{X $ "plugin.multilang.ui.030" " 中创建内容，然后回到此处管理翻译。"}}</p>
+    </div>
+    {{end}}
+</div><!-- /subtab-content-trans -->
+
+<!-- Sub-tab: Menu translations -->
+<div class="ml-subtab-panel" id="subtab-menu-trans">
+    <h3 class="ts-section-title">{{X $ "plugin.multilang.ui.031" "菜单语言分配"}}</h3>
+    <p class="ts-hint">{{X $ "plugin.multilang.ui.032" "为每个菜单显示位置分配不同语言的菜单。切换语言时，系统会自动显示对应的菜单。"}}</p>
+
+    {{if .MenuLocations}}
+    <div id="menuAssignmentArea">
+        {{$langs := .Languages}}
+        {{$allMenus := .AllMenus}}
+
+        {{range .MenuLocations}}
+        <div class="ml-loc-card">
+            <div class="ml-loc-header">
+                <span class="ml-loc-icon">📍</span>
+                <span class="ml-loc-name">{{.Location}}</span>
+                {{if .Label}}<span class="ml-loc-label">{{.Label}}</span>{{end}}
+            </div>
+            <div class="ml-loc-body">
+                {{$loc := .}}
+                {{range $langs}}
+                <div class="ml-loc-row">
+                    <span class="ml-loc-lang">{{.Flag}} {{.Name}}</span>
+                    <select data-field="loc_{{$loc.Location}}_{{.Code}}" class="ml-loc-select">
+                        <option value="">{{X $ "plugin.multilang.ui.033" "-- 未分配 --"}}</option>
+                        {{$assignedID := index $loc.Menus .Code}}
+                        {{range $allMenus}}
+                        <option value="{{.ID}}" {{if and $assignedID (eq .ID $assignedID)}}selected{{end}}>{{.Name}}{{if .Location}} ({{.Location}}){{end}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                {{end}}
+            </div>
+        </div>
+        {{end}}
+
+        <div style="margin-top:1.5rem;">
+            <button type="button" class="ml-btn ml-btn-primary" onclick="saveMenuAssignment()">{{X $ "plugin.multilang.ui.034" "保存菜单分配"}}</button>
+        </div>
+    </div>
+
+    <div class="ml-help-section" style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid #e2e8f0;">
+        <h4 style="font-size:0.95rem;">💡 {{X $ "plugin.multilang.ui.033" "使用说明"}}</h4>
+        <ul style="font-size:0.85rem; color:#64748b; line-height:1.8;">
+            <li>{{X $ "plugin.multilang.ui.036" "菜单显示位置由当前主题注册（如 header、footer 等）"}}</li>
+            <li>{{X $ "plugin.multilang.ui.037" "在 "}}<a href="/admin/menus">{{X $ "plugin.multilang.ui.102" "菜单管理"}}</a>{{X $ "plugin.multilang.ui.038" " 中为每种语言创建对应的菜单"}}</li>
+            <li>{{X $ "plugin.multilang.ui.039" "回到此处，为每个位置的每种语言选择正确的菜单后点击\"保存菜单分配\""}}</li>
+            <li>{{X $ "plugin.multilang.ui.040" "切换语言时，系统自动显示该语言对应的菜单，并为本地链接添加语言前缀"}}</li>
+        </ul>
+    </div>
+
+    {{else}}
+    <div class="ml-empty-state">
+        <p>{{X $ "plugin.multilang.ui.041" "当前主题尚未注册菜单位置。请检查主题是否调用了 "}}<code>RegisterMenuLocation</code>。</p>
+    </div>
+    {{end}}
+</div><!-- /subtab-menu-trans -->
+
+<!-- Sub-tab: String translations -->
+<div class="ml-subtab-panel" id="subtab-string-trans">
+    <h3 class="ts-section-title">{{X $ "plugin.multilang.ui.042" "字符串翻译管理"}}</h3>
+    <p class="ts-hint">{{X $ "plugin.multilang.ui.043" "管理主题中的 UI 字符串翻译。默认值来自主题 locale 文件，填写覆盖值可通过数据库覆盖。清空输入框则恢复使用文件默认值。"}}</p>
+
+    {{if .StringKeys}}
+    <div style="margin-bottom:1rem; display:flex; gap:0.75rem; align-items:center;">
+        <label style="font-weight:600; color:#475569; font-size:0.9rem;">{{X $ "plugin.multilang.ui.044" "搜索："}}</label>
+        <input type="text" id="stringKeyFilter" placeholder="{{X $ "plugin.multilang.ui.045" "输入关键字搜索..."}}" oninput="filterStringTable()" style="padding:0.4rem 0.8rem; border:1px solid #d1d5db; border-radius:6px; font-size:0.9rem; width:300px;">
+        <span id="stringKeyCount" style="font-size:0.8rem; color:#94a3b8;"></span>
+    </div>
+
+    <div class="ml-trans-table-wrap" style="max-height:600px; overflow-y:auto;">
+        <table class="ml-table ml-string-table">
+            <thead>
+                <tr>
+                    <th style="width:200px; position:sticky; top:0; z-index:1;">Key</th>
+                    {{range .Languages}}
+                    <th style="min-width:220px; position:sticky; top:0; z-index:1;">{{.Flag}} {{.Name}} ({{.Code}})</th>
+                    {{end}}
+                </tr>
+            </thead>
+            <tbody>
+                {{$langs := .Languages}}
+                {{range .StringKeys}}
+                <tr data-skey="{{.Name}}">
+                    <td><code class="ml-str-key">{{.Name}}</code></td>
+                    {{$view := .}}
+                    {{range $langs}}
+                        {{$def := index $view.Defaults .Code}}
+                        {{$ov := index $view.Overrides .Code}}
+                        <td>
+                            <div class="ml-str-default" title="{{X $ "plugin.multilang.ui.046" "文件默认值"}}">{{if $def}}{{$def}}{{else}}<span style="color:#94a3b8;">—</span>{{end}}</div>
+                            <input type="text" name="st_{{.Code}}:{{$view.Name}}" value="{{$ov.Value}}" placeholder="{{X $ "plugin.multilang.ui.047" "使用默认值"}}" class="ml-str-input">
+                        </td>
+                    {{end}}
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+
+    <div style="margin-top:1.5rem;">
+        <button type="button" class="ml-btn ml-btn-primary" onclick="saveStringTranslations()">{{X $ "plugin.multilang.ui.048" "保存字符串翻译"}}</button>
+    </div>
+    {{else}}
+    <div class="ml-empty-state">
+        <p>{{X $ "plugin.multilang.ui.049" "当前主题尚未提供 locale 文件。请在主题 "}}<code>locales/</code>{{X $ "plugin.multilang.ui.050" " 目录中添加 JSON 翻译文件。"}}</p>
+    </div>
+    {{end}}
+</div><!-- /subtab-string-trans -->
+
+<!-- Sub-tab: Theme setting translations -->
+<div class="ml-subtab-panel" id="subtab-option-trans">
+    <h3 class="ts-section-title">{{X $ "plugin.multilang.ui.019" "主题设置翻译"}}</h3>
+    <p class="ts-hint">{{X $ "plugin.multilang.ui.052" "管理主题设置中可翻译的文案（标题、描述、按钮文字等）。默认语言的值来自主题设置页面，这里填写其他语言的翻译。"}}</p>
+
+    {{if .OptionSections}}
+    {{$ndLangs := .NonDefaultLangs}}
+    {{$defaultLang := .DefaultLang}}
+    {{$sectionMap := .OptionsBySection}}
+
+    {{range .OptionSections}}
+    {{$section := .}}
+    {{$items := index $sectionMap $section}}
+    <div class="ml-opt-section">
+        <h4 class="ml-opt-section-title">{{$section}}</h4>
+        <div class="ml-trans-table-wrap">
+            <table class="ml-table ml-opt-table">
+                <thead>
+                    <tr>
+                        <th style="width:180px;">{{X $ "plugin.multilang.ui.053" "字段"}}</th>
+                        <th style="min-width:180px;">{{X $ "plugin.multilang.ui.054" "默认值 (%s)" $defaultLang}}</th>
+                        {{range $ndLangs}}
+                        <th style="min-width:220px;">{{.Flag}} {{.Name}} ({{.Code}})</th>
+                        {{end}}
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range $items}}
+                    <tr>
+                        <td>
+                            <code class="ml-str-key">{{.Label}}</code>
+                            <div style="font-size:0.7rem; color:#94a3b8; margin-top:2px;">{{.Key}}</div>
+                        </td>
+                        <td>
+                            <div class="ml-str-default">{{if .DefaultValue}}{{.DefaultValue}}{{else}}<span style="color:#94a3b8;">—</span>{{end}}</div>
+                        </td>
+                        {{$view := .}}
+                        {{range $ndLangs}}
+                            {{$ov := index $view.Overrides .Code}}
+                            <td>
+                                <input type="text" name="ot_{{.Code}}:{{$view.Key}}" value="{{$ov.Value}}" placeholder="{{X $ "plugin.multilang.ui.047" "使用默认值"}}" class="ml-str-input">
+                            </td>
+                        {{end}}
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {{end}}
+
+    <div style="margin-top:1.5rem;">
+        <button type="button" class="ml-btn ml-btn-primary" onclick="saveOptionTranslations()">{{X $ "plugin.multilang.ui.055" "保存主题设置翻译"}}</button>
+    </div>
+    {{else}}
+    <div class="ml-empty-state">
+        <p>{{X $ "plugin.multilang.ui.056" "当前主题尚未注册可翻译的设置字段。主题需要在 Setup() 中调用 "}}<code>option.RegisterTranslatable()</code>。</p>
+    </div>
+    {{end}}
+</div><!-- /subtab-option-trans -->
+
+</div><!-- /tab-translations -->
+
+<!-- ============ TAB: Basic settings ============ -->
+<div class="ts-panel" id="tab-settings">
+    <h3 class="ts-section-title">{{X $ "plugin.multilang.ui.057" "多语言设置"}}</h3>
+
+    <div class="form-group" style="margin-bottom:1.5rem;">
+        <label>{{X $ "plugin.multilang.ui.058" "URL 模式"}}</label>
+        <p class="ts-hint">{{X $ "plugin.multilang.ui.059" "当前使用语言前缀模式。默认语言不带前缀，其他语言URL格式为 /en/path..."}}</p>
+        <div class="ml-url-example">
+            <div class="ml-url-row">
+                <span class="ml-url-label">{{X $ "plugin.multilang.ui.060" "默认语言 (zh):"}}</span>
+                <code>/products/hepa-ulpa-filters</code>
+            </div>
+            <div class="ml-url-row">
+                <span class="ml-url-label">English (en):</span>
+                <code>/en/products/hepa-ulpa-filters</code>
+            </div>
+            <div class="ml-url-row">
+                <span class="ml-url-label">{{X $ "plugin.multilang.ui.061" "日本語 (ja):"}}</span>
+                <code>/ja/products/hepa-ulpa-filters</code>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:1.5rem;">
+        <label>{{X $ "plugin.multilang.ui.062" "浏览器语言自动检测"}}</label>
+        <select name="plugin_multi-language_auto_detect" style="padding:0.4rem 0.8rem; border:1px solid #d1d5db; border-radius:6px;">
+            {{$autoDetect := settingOr .Settings "plugin_multi-language_auto_detect" "true"}}
+            <option value="true" {{if eq $autoDetect "true"}}selected{{end}}>{{X $ "plugin.multilang.ui.063" "启用 (根据 Accept-Language 头自动选择)"}}</option>
+            <option value="false" {{if eq $autoDetect "false"}}selected{{end}}>{{X $ "plugin.multilang.ui.064" "禁用 (始终使用默认语言)"}}</option>
+        </select>
+    </div>
+</div>
+
+<!-- ============ TAB: Help ============ -->
+<div class="ts-panel" id="tab-help">
+    <h3 class="ts-section-title">{{X $ "plugin.multilang.ui.065" "WPML-like 多语言使用指南"}}</h3>
+
+    <div class="ml-help-section">
+        <h4>🔗 {{X $ "plugin.multilang.ui.066" "内容翻译"}}</h4>
+        <p>{{X $ "plugin.multilang.ui.067" "每篇内容可以有多个语言版本，通过翻译组 (trid) 关联。每个语言版本是独立的 Content 记录，有自己的标题、内容、slug。"}}</p>
+        <ul>
+            <li>{{X $ "plugin.multilang.ui.068" "内容编辑页面会显示翻译状态面板（即将推出）"}}</li>
+            <li>{{X $ "plugin.multilang.ui.069" "点击「添加翻译」可以克隆当前内容到目标语言"}}</li>
+            <li>{{X $ "plugin.multilang.ui.070" "翻译后的内容有独立的 URL："}}<code>/en/products/hepa-filters</code></li>
+        </ul>
+    </div>
+
+    <div class="ml-help-section">
+        <h4>🌐 {{X $ "plugin.multilang.ui.071" "URL 结构"}}</h4>
+        <table class="ml-table" style="max-width:600px;">
+            <thead><tr><th>{{X $ "plugin.multilang.ui.072" "情况"}}</th><th>{{X $ "plugin.multilang.ui.073" "URL 格式"}}</th></tr></thead>
+            <tbody>
+                <tr><td>{{X $ "plugin.multilang.ui.074" "默认语言 (zh)"}}</td><td><code>/products/hepa-filters</code></td></tr>
+                <tr><td>English</td><td><code>/en/products/hepa-filters</code></td></tr>
+                <tr><td>Japanese</td><td><code>/ja/products/hepa-filters</code></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="ml-help-section">
+        <h4>🔧 {{X $ "plugin.multilang.ui.075" "模板函数"}}</h4>
+        <table class="ml-table" style="max-width:700px;">
+            <thead><tr><th>{{X $ "plugin.multilang.ui.076" "函数"}}</th><th>{{X $ "plugin.multilang.ui.077" "用途"}}</th></tr></thead>
+            <tbody>
+                <tr><td><code>{{"{{"}}T .Ctx "welcome"{{"}}"}}</code></td><td>{{X $ "plugin.multilang.ui.078" "翻译 UI 字符串（核心 i18n 提供）"}}</td></tr>
+                <tr><td><code>{{"{{"}}currentLang .Ctx{{"}}"}}</code></td><td>{{X $ "plugin.multilang.ui.079" "获取当前请求的语言代码（核心 i18n 提供）"}}</td></tr>
+                <tr><td><code>{{"{{"}}langPrefixURL .Ctx "/products/slug"{{"}}"}}</code></td><td>{{X $ "plugin.multilang.ui.080" "生成带语言前缀的 URL（核心 i18n 提供）"}}</td></tr>
+                <tr><td><code>{{"{{"}}renderHook "header.nav.after" .{{"}}"}}</code></td><td>{{X $ "plugin.multilang.ui.081" "主题导航尾部插槽；本插件启用时会在这里渲染语言切换器。"}}</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="ml-help-section">
+        <h4>📋 {{X $ "plugin.multilang.ui.082" "数据表结构"}}</h4>
+        <p>{{X $ "plugin.multilang.ui.083" "插件使用 4 张独立表："}}</p>
+        <ul>
+            <li><code>gp_plgn_multilang_translations</code> — {{X $ "plugin.multilang.ui.084" "内容翻译关联表 (trid 链接)"}}</li>
+            <li><code>gp_plgn_multilang_languages</code> — {{X $ "plugin.multilang.ui.085" "启用的语言列表"}}</li>
+            <li><code>gp_plgn_multilang_string_translations</code> — {{X $ "plugin.multilang.ui.086" "UI 字符串翻译"}}</li>
+            <li><code>gp_plgn_multilang_menu_translations</code> — {{X $ "plugin.multilang.ui.087" "菜单翻译关联表"}}</li>
+        </ul>
+    </div>
+</div>
+
+<!-- Save Button -->
+<div class="ts-footer">
+    <button type="submit" class="btn btn-primary">{{X . "plugin.settings.save" "保存设置"}}</button>
+</div>
+
+</form>
+
+<style>
+/* --- Tab System --- */
+.ts-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 0;
+    flex-wrap: wrap;
+}
+.ts-tab {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    background: none;
+    color: #64748b;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.2s, border-color 0.2s;
+}
+.ts-tab:hover { color: #334155; }
+.ts-tab.active {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+    font-weight: 600;
+}
+.ts-panel {
+    display: none;
+    padding: 2rem;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+}
+.ts-panel.active { display: block; }
+/* --- Sub-tabs (inside translation panel) --- */
+.ml-subtabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 1.5rem;
+}
+.ml-subtab {
+    padding: 0.5rem 1.25rem;
+    border: none;
+    background: none;
+    color: #64748b;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.2s, border-color 0.2s;
+}
+.ml-subtab:hover { color: #334155; }
+.ml-subtab.active {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+    font-weight: 600;
+}
+.ml-subtab-panel { display: none; }
+.ml-subtab-panel.active { display: block; }
+.ml-loc-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+.ml-loc-header {
+    background: #f8fafc;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.ml-loc-icon { font-size: 1.1rem; }
+.ml-loc-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #1e293b;
+}
+.ml-loc-label {
+    font-size: 0.8rem;
+    color: #64748b;
+    background: #e2e8f0;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+}
+.ml-loc-body { padding: 0.75rem 1rem; }
+.ml-loc-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.4rem 0;
+}
+.ml-loc-row + .ml-loc-row { border-top: 1px solid #f1f5f9; }
+.ml-loc-lang {
+    min-width: 120px;
+    font-size: 0.9rem;
+    color: #475569;
+}
+.ml-loc-select {
+    flex: 1;
+    max-width: 300px;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    background: #fff;
+}
+.ml-loc-select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.1);
+}
+.ml-btn {
+    display: inline-block;
+    padding: 0.5rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-weight: 500;
+}
+.ml-btn-primary {
+    background: #2563eb;
+    color: #fff;
+}
+.ml-btn-primary:hover { background: #1d4ed8; }
+.ts-section-title {
+    font-size: 1.15rem;
+    margin: 0 0 0.5rem 0;
+    color: #1e293b;
+}
+.ts-hint {
+    color: #64748b;
+    font-size: 0.85rem;
+    margin-bottom: 1.25rem;
+}
+.ts-footer {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* --- Language Table --- */
+.ml-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+.ml-table th {
+    background: #f8fafc;
+    padding: 0.6rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #475569;
+    border-bottom: 2px solid #e2e8f0;
+}
+.ml-table td {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+}
+.ml-table tr:hover td {
+    background: #f8fafc;
+}
+
+/* --- URL Example --- */
+.ml-url-example {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+}
+.ml-url-row {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.3rem 0;
+}
+.ml-url-label {
+    color: #64748b;
+    font-size: 0.85rem;
+    min-width: 140px;
+}
+.ml-url-row code {
+    background: #e2e8f0;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+/* --- Help Section --- */
+.ml-help-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+.ml-help-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+.ml-help-section h4 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.05rem;
+    color: #1e293b;
+}
+.ml-help-section p {
+    color: #475569;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+.ml-help-section ul {
+    color: #475569;
+    font-size: 0.9rem;
+    line-height: 1.8;
+    padding-left: 1.25rem;
+}
+.ml-help-section code {
+    background: #f1f5f9;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    color: #1e293b;
+}
+
+/* --- Translation Table --- */
+.ml-trans-table-wrap {
+    overflow-x: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+.ml-trans-table {
+    margin: 0;
+    border: none;
+}
+.ml-trans-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.ml-type-badge {
+    display: inline-block;
+    background: #eff6ff;
+    color: #2563eb;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.ml-content-link {
+    color: #1e293b;
+    text-decoration: none;
+    font-weight: 500;
+}
+.ml-content-link:hover {
+    color: #2563eb;
+    text-decoration: underline;
+}
+.ml-slug-text {
+    display: block;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+.ml-status {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.ml-status-published { background: #dcfce7; color: #166534; }
+.ml-status-draft { background: #fef3c7; color: #92400e; }
+.ml-status-archived { background: #f1f5f9; color: #475569; }
+.ml-status-trash { background: #fee2e2; color: #991b1b; }
+.ml-trans-self {
+    color: #2563eb;
+    font-size: 1.1rem;
+    cursor: default;
+}
+.ml-trans-edit {
+    text-decoration: none;
+    font-size: 1rem;
+    transition: transform 0.15s;
+    display: inline-block;
+}
+.ml-trans-edit:hover {
+    transform: scale(1.2);
+}
+.ml-trans-add {
+    background: none;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 0.15rem 0.4rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.15s, border-color 0.15s;
+}
+.ml-trans-add:hover {
+    background: #eff6ff;
+    border-color: #93c5fd;
+}
+.ml-empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #64748b;
+}
+.ml-empty-state a {
+    color: #2563eb;
+}
+
+/* --- String Translation Table --- */
+.ml-str-key {
+    font-size: 0.78rem;
+    word-break: break-all;
+    background: #f1f5f9;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    color: #1e293b;
+}
+.ml-str-default {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 4px;
+    line-height: 1.4;
+    max-height: 2.8em;
+    overflow: hidden;
+}
+.ml-str-input {
+    width: 100%;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    background: #fff;
+    box-sizing: border-box;
+}
+.ml-str-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.1);
+}
+.ml-str-input:not(:placeholder-shown) {
+    border-color: #22c55e;
+    background: #f0fdf4;
+}
+/* --- Option Translation Section --- */
+.ml-opt-section {
+    margin-bottom: 2rem;
+}
+.ml-opt-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+    text-transform: capitalize;
+    margin: 0 0 0.75rem 0;
+    padding: 0.5rem 0.75rem;
+    background: #f8fafc;
+    border-left: 3px solid #2563eb;
+    border-radius: 0 4px 4px 0;
+}
+</style>
+
+<script>
+// --- Tab state persistence (avoid jumping back to first tab after save/reload) ---
+var ML_TAB_KEY = 'mlAdminTab';
+var ML_SUBTAB_KEY = 'mlAdminSubtab';
+var mlText = {
+    saveFailed: {{toJSON (X $ "plugin.multilang.js.save_failed" "保存失败")}},
+    languageRequired: {{toJSON (X $ "plugin.multilang.js.language_required" "请填写语言代码和名称")}},
+    createTranslationTitle: {{toJSON (X $ "plugin.multilang.js.create_translation" "创建翻译")}},
+    publishNow: {{toJSON (X $ "plugin.multilang.js.publish_now" "立即发布翻译（默认为草稿）")}},
+    cancel: {{toJSON (X $ "plugin.multilang.js.cancel" "取消")}},
+    confirmCreate: {{toJSON (X $ "plugin.multilang.js.confirm_create" "确认创建")}},
+    cloneTo: {{toJSON (X $ "plugin.multilang.js.clone_to" "将克隆当前内容到 %s (%s)。")}},
+    createFailed: {{toJSON (X $ "plugin.multilang.js.create_failed" "创建翻译失败")}},
+    visibleCount: {{toJSON (X $ "plugin.multilang.js.visible_count" "显示 %d / %d 条")}},
+    totalTranslations: {{toJSON (X $ "plugin.multilang.js.total_translations" "%d 条翻译")}}
+};
+
+function mlFormat(template) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return args.reduce(function(out, value) {
+        return out.replace(/%[sdv]/, String(value));
+    }, template);
+}
+
+function mlActivateTab(tabName) {
+    if (!tabName) return;
+    var btn = document.querySelector('.ts-tab[data-tab="' + tabName + '"]');
+    var panel = document.getElementById('tab-' + tabName);
+    if (!btn || !panel) return;
+    document.querySelectorAll('.ts-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.ts-panel').forEach(function(p) { p.classList.remove('active'); });
+    btn.classList.add('active');
+    panel.classList.add('active');
+}
+
+function mlActivateSubtab(subName) {
+    if (!subName) return;
+    var btn = document.querySelector('.ml-subtab[data-subtab="' + subName + '"]');
+    var panel = document.getElementById('subtab-' + subName);
+    if (!btn || !panel) return;
+    document.querySelectorAll('.ml-subtab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.ml-subtab-panel').forEach(function(p) { p.classList.remove('active'); });
+    btn.classList.add('active');
+    panel.classList.add('active');
+}
+
+// Tab switching
+document.querySelectorAll('.ts-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+        mlActivateTab(tab.dataset.tab);
+        try { sessionStorage.setItem(ML_TAB_KEY, tab.dataset.tab); } catch (e) {}
+    });
+});
+
+// Sub-tab switching
+document.querySelectorAll('.ml-subtab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+        mlActivateSubtab(tab.dataset.subtab);
+        try { sessionStorage.setItem(ML_SUBTAB_KEY, tab.dataset.subtab); } catch (e) {}
+    });
+});
+
+// Restore tab/subtab from sessionStorage on load (so save+reload stays put)
+(function() {
+    try {
+        var t = sessionStorage.getItem(ML_TAB_KEY);
+        var s = sessionStorage.getItem(ML_SUBTAB_KEY);
+        if (t) mlActivateTab(t);
+        if (s) mlActivateSubtab(s);
+    } catch (e) {}
+})();
+
+// Menu assignment: collect all selects and POST via fetch
+function saveMenuAssignment() {
+    var form = new FormData();
+    var selects = document.querySelectorAll('#menuAssignmentArea select[data-field]');
+    selects.forEach(function(sel) {
+        form.append(sel.getAttribute('data-field'), sel.value);
+    });
+    fetch('/admin/plugins/multi-language/menu-translate', {
+        method: 'POST',
+        body: form
+    }).then(function(resp) {
+        if (resp.redirected) {
+            window.location.href = resp.url;
+        } else {
+            window.location.reload();
+        }
+    }).catch(function(err) {
+        alert(mlText.saveFailed + ': ' + err.message);
+    });
+}
+
+// Language row management
+var langData = {
+    'en': { name: 'English', flag: '🇬🇧' },
+    'zh': { name: '中文', flag: '🇨🇳' },
+    'ja': { name: '日本語', flag: '🇯🇵' },
+    'ko': { name: '한국어', flag: '🇰🇷' },
+    'fr': { name: 'Français', flag: '🇫🇷' },
+    'de': { name: 'Deutsch', flag: '🇩🇪' },
+    'es': { name: 'Español', flag: '🇪🇸' },
+    'pt': { name: 'Português', flag: '🇵🇹' },
+    'ru': { name: 'Русский', flag: '🇷🇺' },
+    'ar': { name: 'العربية', flag: '🇸🇦' },
+    'th': { name: 'ไทย', flag: '🇹🇭' },
+    'vi': { name: 'Tiếng Việt', flag: '🇻🇳' }
+};
+
+// Auto-fill name and flag when language code is selected
+document.getElementById('newLangCode').addEventListener('change', function() {
+    var code = this.value;
+    if (langData[code]) {
+        document.getElementById('newLangName').value = langData[code].name;
+        document.getElementById('newLangFlag').value = langData[code].flag;
+    }
+});
+
+function addLanguageRow() {
+    var code = document.getElementById('newLangCode').value;
+    var name = document.getElementById('newLangName').value;
+    var flag = document.getElementById('newLangFlag').value;
+    if (!code || !name) {
+        alert(mlText.languageRequired);
+        return;
+    }
+    var tbody = document.getElementById('langRows');
+    var idx = tbody.children.length;
+    var row = document.createElement('tr');
+    row.innerHTML = '<td>' + code + '<input type="hidden" name="plugin_multi-language_lang_' + idx + '_code" value="' + code + '"></td>'
+        + '<td>' + flag + ' ' + name + '<input type="hidden" name="plugin_multi-language_lang_' + idx + '_name" value="' + name + '">'
+        + '<input type="hidden" name="plugin_multi-language_lang_' + idx + '_flag" value="' + flag + '"></td>'
+        + '<td>' + flag + '</td>'
+        + '<td><input type="radio" name="plugin_multi-language_default_lang" value="' + code + '"></td>'
+        + '<td><input type="number" name="plugin_multi-language_lang_' + idx + '_sort" value="' + idx + '" style="width:60px; padding:0.2rem 0.4rem; border:1px solid #d1d5db; border-radius:4px;"></td>'
+        + '<td><select name="plugin_multi-language_lang_' + idx + '_active" style="padding:0.2rem 0.4rem; border:1px solid #d1d5db; border-radius:4px;"><option value="true" selected>{{X $ "plugin.multilang.ui.009" "启用"}}</option><option value="false">{{X $ "plugin.multilang.ui.010" "禁用"}}</option></select></td>';
+    tbody.appendChild(row);
+
+    // Reset inputs
+    document.getElementById('newLangCode').value = '';
+    document.getElementById('newLangName').value = '';
+    document.getElementById('newLangFlag').value = '';
+}
+
+// Load existing languages into the table on page load
+(function() {
+    // Languages are now rendered server-side from the database.
+    // This IIFE only initializes the settings map for other tab usage.
+    var settings = {};
+    {{range $key, $val := .Settings}}
+    settings["{{$key}}"] = "{{$val}}";
+    {{end}}
+    window._pluginSettings = settings;
+})();
+
+// Content translation table filter by type
+function filterTranslationTable() {
+    var filter = document.getElementById('translationTypeFilter').value;
+    var rows = document.querySelectorAll('.ml-trans-table tbody tr[data-type]');
+    rows.forEach(function(row) {
+        if (!filter || row.dataset.type === filter) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+// Create translation via fetch (avoid nested form issue) — opens a modal
+// so the admin can choose whether to publish the cloned translation directly.
+function createTranslation(contentID, targetLang, langName) {
+    var modal = document.getElementById('mlTranslateModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'mlTranslateModal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999;';
+        modal.innerHTML = ''
+            + '<div style="background:#fff;border-radius:8px;min-width:360px;max-width:90vw;padding:24px;box-shadow:0 12px 40px rgba(0,0,0,.25);">'
+            + '  <h3 style="margin:0 0 12px 0;font-size:16px;">' + mlText.createTranslationTitle + '</h3>'
+            + '  <p id="mlTranslateMsg" style="margin:0 0 16px 0;color:#374151;font-size:14px;line-height:1.5;"></p>'
+            + '  <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#111827;cursor:pointer;margin-bottom:18px;">'
+            + '    <input type="checkbox" id="mlTranslatePublish" style="width:16px;height:16px;">'
+            + '    <span>' + mlText.publishNow + '</span>'
+            + '  </label>'
+            + '  <div style="display:flex;gap:8px;justify-content:flex-end;">'
+            + '    <button type="button" id="mlTranslateCancel" class="btn btn-secondary">' + mlText.cancel + '</button>'
+            + '    <button type="button" id="mlTranslateConfirm" class="btn btn-primary">' + mlText.confirmCreate + '</button>'
+            + '  </div>'
+            + '</div>';
+        document.body.appendChild(modal);
+    }
+    var msg = modal.querySelector('#mlTranslateMsg');
+    var pub = modal.querySelector('#mlTranslatePublish');
+    pub.checked = false;
+    msg.textContent = mlFormat(mlText.cloneTo, langName, targetLang);
+    modal.style.display = 'flex';
+
+    function close() {
+        modal.style.display = 'none';
+        modal.querySelector('#mlTranslateCancel').onclick = null;
+        modal.querySelector('#mlTranslateConfirm').onclick = null;
+    }
+
+    modal.querySelector('#mlTranslateCancel').onclick = close;
+    modal.querySelector('#mlTranslateConfirm').onclick = function() {
+        var publish = pub.checked ? '1' : '0';
+        close();
+        var form = new FormData();
+        form.append('content_id', contentID);
+        form.append('target_lang', targetLang);
+        form.append('publish', publish);
+        fetch('/admin/plugins/multi-language/translate', {
+            method: 'POST',
+            body: form
+        }).then(function(resp) {
+            if (resp.redirected) {
+                window.location.href = resp.url;
+            } else {
+                window.location.reload();
+            }
+        }).catch(function(err) {
+            alert(mlText.createFailed + ': ' + err.message);
+        });
+    };
+}
+
+// String translation save via fetch
+function saveStringTranslations() {
+    var form = new FormData();
+    var inputs = document.querySelectorAll('.ml-string-table input[name^="st_"]');
+    inputs.forEach(function(input) {
+        form.append(input.name, input.value);
+    });
+    fetch('/admin/plugins/multi-language/string-translate', {
+        method: 'POST',
+        body: form
+    }).then(function(resp) {
+        if (resp.redirected) {
+            window.location.href = resp.url;
+        } else {
+            window.location.reload();
+        }
+    }).catch(function(err) {
+        alert(mlText.saveFailed + ': ' + err.message);
+    });
+}
+
+// String translation search filter
+function filterStringTable() {
+    var filter = document.getElementById('stringKeyFilter').value.toLowerCase();
+    var rows = document.querySelectorAll('.ml-string-table tbody tr');
+    var visible = 0;
+    rows.forEach(function(row) {
+        var key = (row.dataset.skey || '').toLowerCase();
+        var text = row.textContent.toLowerCase();
+        if (!filter || key.indexOf(filter) !== -1 || text.indexOf(filter) !== -1) {
+            row.style.display = '';
+            visible++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    var countEl = document.getElementById('stringKeyCount');
+    if (countEl) {
+        countEl.textContent = filter ? mlFormat(mlText.visibleCount, visible, rows.length) : mlFormat(mlText.totalTranslations, rows.length);
+    }
+}
+// Init string key count
+(function() {
+    var rows = document.querySelectorAll('.ml-string-table tbody tr');
+    var countEl = document.getElementById('stringKeyCount');
+    if (countEl && rows.length) {
+        countEl.textContent = mlFormat(mlText.totalTranslations, rows.length);
+    }
+})();
+
+// Option translation save via fetch
+function saveOptionTranslations() {
+    var form = new FormData();
+    var inputs = document.querySelectorAll('.ml-opt-table input[name^="ot_"]');
+    inputs.forEach(function(input) {
+        form.append(input.name, input.value);
+    });
+    fetch('/admin/plugins/multi-language/option-translate', {
+        method: 'POST',
+        body: form
+    }).then(function(resp) {
+        if (resp.redirected) {
+            window.location.href = resp.url;
+        } else {
+            window.location.reload();
+        }
+    }).catch(function(err) {
+        alert(mlText.saveFailed + ': ' + err.message);
+    });
+}
+</script>
+{{end}}

@@ -1,0 +1,28 @@
+{{define "content"}}
+<section class="as-page-hero">
+    <div class="as-container">
+        <div class="as-page-hero-panel">
+            <div>
+                <p class="as-kicker as-kicker-light">{{.TaxonomyType}}</p>
+                <h1>{{.TermName}}</h1>
+                <p>{{.Total}} items collected under this editorial signal.</p>
+            </div>
+            <img src="/static/images/atelier-hero.svg" alt="">
+        </div>
+    </div>
+</section>
+<section class="as-section">
+    <div class="as-container as-service-list">
+        {{range .Items}}
+        <article class="as-service-row">
+            <span>{{.TypeLabel}}</span>
+            <div>
+                <h2><a href="{{langPrefixURL $.Ctx .DetailURL}}">{{.Title}}</a></h2>
+                <p>{{.Excerpt}}</p>
+            </div>
+            <a class="as-round-link" href="{{langPrefixURL $.Ctx .DetailURL}}">→</a>
+        </article>
+        {{end}}
+    </div>
+</section>
+{{end}}

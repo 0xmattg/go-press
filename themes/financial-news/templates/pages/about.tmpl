@@ -1,0 +1,27 @@
+{{define "content"}}
+<section class="section">
+    <div class="container">
+        <div class="about-page">
+            <h1>{{T $.Ctx "page_title_about"}}</h1>
+            <div class="about-content">
+                <p>{{safeHTML (T $.Ctx "about_intro")}}</p>
+                <p>{{T $.Ctx "about_mission"}}</p>
+                <ul>
+                    <li>{{safeHTML (T $.Ctx "about_feature_news")}}</li>
+                    <li>{{safeHTML (T $.Ctx "about_feature_market")}}</li>
+                    <li>{{safeHTML (T $.Ctx "about_feature_analysis")}}</li>
+                </ul>
+                <div class="tech-stack">
+                    <h3>{{T $.Ctx "about_tech_title"}}</h3>
+                    <p>{{T $.Ctx "about_tech_intro"}}</p>
+                    <ul>
+                        <li>{{T $.Ctx "about_tech_theme"}}</li>
+                        <li>{{T $.Ctx "about_tech_data"}}</li>
+                        <li>{{T $.Ctx "about_tech_admin"}}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{{end}}

@@ -1,0 +1,146 @@
+site_name: GoPress Docs
+site_description: GoPress is a modern content management framework and CMS engine written in Go
+site_url: https://doc.gopress.xyz/
+repo_url: https://github.com/0xlostpixel/go-press
+repo_name: 0xlostpixel/go-press
+edit_uri: edit/dev/docs/guide/
+
+docs_dir: docs/guide
+
+not_in_nav: |
+  SUMMARY.md
+  en/SUMMARY.md
+  zh-CN/SUMMARY.md
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.sections
+    - navigation.tabs
+    - navigation.top
+    - navigation.tracking
+    - content.code.copy
+    - content.action.edit
+    - search.suggest
+    - search.highlight
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+extra:
+  alternate:
+    - name: English
+      link: /en/
+      lang: en
+    - name: 简体中文
+      link: /zh-CN/
+      lang: zh-CN
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - footnotes
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+plugins:
+  - search:
+      lang:
+        - zh
+        - en
+
+nav:
+  - Home: index.md
+  - English:
+      - Overview: en/README.md
+      - Getting Started:
+          - Installation: en/getting-started/installation.md
+          - Configuration: en/getting-started/configuration.md
+      - Architecture:
+          - Overview and Startup Flow: en/architecture/overview.md
+          - Engine Core: en/architecture/engine-core.md
+          - URL and SEO: en/architecture/url-seo.md
+          - Caching and i18n: en/architecture/caching-and-i18n.md
+          - Content Scope API: en/architecture/content-scope.md
+          - Hook System: en/architecture/hooks.md
+      - Admin:
+          - Admin Overview: en/admin/overview.md
+          - Admin Extension Points: en/admin/extension-points.md
+          - Menu Management: en/admin/menus.md
+      - Theme Development:
+          - Theme System Overview: en/themes/overview.md
+          - Creating Themes: en/themes/creating-themes.md
+          - SEO Integration: en/themes/seo-integration.md
+          - Image Integration: en/themes/image-pipeline.md
+          - Media Variants: en/themes/media-variants.md
+      - Plugin Development:
+          - Plugin System Overview: en/plugins/overview.md
+          - Creating Plugins: en/plugins/creating-plugins.md
+          - Multilingual Plugin: en/plugins/multilang.md
+          - SEO Extras: en/plugins/seo-extras.md
+          - Code Snippets: en/plugins/code-snippets.md
+      - Reference:
+          - Project Structure: en/reference/project-structure.md
+          - Database Prefixes: en/reference/database-prefix.md
+          - REST API and Swagger: en/reference/rest-api.md
+          - Technology Stack and Performance: en/reference/tech-stack.md
+          - Roadmap and Contributions: en/reference/roadmap.md
+  - 简体中文:
+      - 介绍: zh-CN/README.md
+      - 快速开始:
+          - 安装与运行: zh-CN/getting-started/installation.md
+          - 配置文件: zh-CN/getting-started/configuration.md
+      - 架构:
+          - 总览与启动流程: zh-CN/architecture/overview.md
+          - 引擎核心: zh-CN/architecture/engine-core.md
+          - URL 与 SEO: zh-CN/architecture/url-seo.md
+          - 缓存与 i18n: zh-CN/architecture/caching-and-i18n.md
+          - Content Scope API: zh-CN/architecture/content-scope.md
+          - Hook 系统: zh-CN/architecture/hooks.md
+      - 后台管理:
+          - 功能总览: zh-CN/admin/overview.md
+          - 后台扩展点: zh-CN/admin/extension-points.md
+          - 菜单管理: zh-CN/admin/menus.md
+      - 主题开发:
+          - 主题系统总览: zh-CN/themes/overview.md
+          - 创建主题: zh-CN/themes/creating-themes.md
+          - SEO 接入规范: zh-CN/themes/seo-integration.md
+          - 图片接入规范: zh-CN/themes/image-pipeline.md
+          - 媒体变体管线: zh-CN/themes/media-variants.md
+      - 插件开发:
+          - 插件系统总览: zh-CN/plugins/overview.md
+          - 创建插件: zh-CN/plugins/creating-plugins.md
+          - 多语言插件: zh-CN/plugins/multilang.md
+          - SEO Extras 插件: zh-CN/plugins/seo-extras.md
+          - Code Snippets 插件: zh-CN/plugins/code-snippets.md
+      - 参考资料:
+          - 项目结构: zh-CN/reference/project-structure.md
+          - 数据库表前缀: zh-CN/reference/database-prefix.md
+          - REST API 与 Swagger: zh-CN/reference/rest-api.md
+          - 技术栈与性能: zh-CN/reference/tech-stack.md
+          - 路线图与贡献: zh-CN/reference/roadmap.md

@@ -1,0 +1,65 @@
+{{define "content"}}
+<div class="content-header">
+    <div style="display:flex; align-items:center; gap:1rem;">
+        <a href="/admin/plugins" class="btn btn-secondary" style="display:inline-flex; align-items:center; gap:0.4rem; text-decoration:none;">
+            ← {{X . "plugin.settings.back" "返回插件管理"}}
+        </a>
+        <h2>{{X . "plugin.settings.title" "%s - 插件设置" .PluginName}}</h2>
+    </div>
+</div>
+
+<form method="POST" action="/admin/plugins/{{.PluginSlug}}/settings" id="codeSnippetsForm">
+
+<div class="card" style="padding:1.25rem 1.5rem; margin-bottom:1rem; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;">
+    <p style="margin:0; color:#475569; font-size:0.9rem; line-height:1.6;">
+        {{X $ "plugin.codesnippets.ui.001" "在三个标准位置注入任意 HTML / JavaScript 片段，主题不需要任何修改。典型用途："}}
+        <strong>Google Analytics</strong> / <strong>Google Tag Manager</strong> /
+        <strong>{{X $ "plugin.codesnippets.ui.002" "站点验证 meta 标签"}}</strong>
+        {{X $ "plugin.codesnippets.ui.011" "（Cloudflare、百度、Google Search Console 等）"}} /
+        <strong>{{X $ "plugin.codesnippets.ui.003" "第三方客服与追踪脚本"}}</strong>.
+        {{X $ "plugin.codesnippets.ui.004" "留空对应字段即不注入。保存后立即对所有页面生效（页面缓存会被清空）。"}}
+    </p>
+</div>
+
+<!-- ============ head slot ============ -->
+<div class="card" style="padding:1.25rem 1.5rem; margin-bottom:1rem;">
+    <h3 style="margin:0 0 0.25rem; font-size:1.05rem;">{{X $ "plugin.codesnippets.ui.005" "<head> 末尾"}}</h3>
+    <p style="margin:0 0 0.75rem; color:#64748b; font-size:0.85rem;">
+        {{X $ "plugin.codesnippets.ui.006" "在 </head> 前插入。适合：站点验证 meta、第三方 CSS、preconnect、Google Analytics 主代码（gtag.js）、GTM 脚本。"}}
+    </p>
+    <textarea name="plugin_code-snippets_head" id="snippet-head" rows="8" spellcheck="false"
+        style="width:100%; font-family:'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size:13px; padding:0.6rem 0.75rem; border:1px solid #d1d5db; border-radius:6px; background:#0f172a; color:#e2e8f0; resize:vertical;"
+        placeholder="&lt;!-- Google tag (gtag.js) --&gt;&#10;&lt;script async src=&quot;https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX&quot;&gt;&lt;/script&gt;&#10;&lt;script&gt;&#10;  window.dataLayer = window.dataLayer || [];&#10;  function gtag(){dataLayer.push(arguments);}&#10;  gtag('js', new Date());&#10;  gtag('config', 'G-XXXXXXXXXX');&#10;&lt;/script&gt;">{{index .Settings "plugin_code-snippets_head"}}</textarea>
+</div>
+
+<!-- ============ body open slot ============ -->
+<div class="card" style="padding:1.25rem 1.5rem; margin-bottom:1rem;">
+    <h3 style="margin:0 0 0.25rem; font-size:1.05rem;">{{X $ "plugin.codesnippets.ui.007" "<body> 开头"}}</h3>
+    <p style="margin:0 0 0.75rem; color:#64748b; font-size:0.85rem;">
+        {{X $ "plugin.codesnippets.ui.008" "在 <body> 之后立即插入。适合：GTM 的 <noscript> iframe、A/B 测试 bootstrap、首屏可见的全站公告条。"}}
+    </p>
+    <textarea name="plugin_code-snippets_body_open" id="snippet-body-open" rows="6" spellcheck="false"
+        style="width:100%; font-family:'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size:13px; padding:0.6rem 0.75rem; border:1px solid #d1d5db; border-radius:6px; background:#0f172a; color:#e2e8f0; resize:vertical;"
+        placeholder="&lt;!-- Google Tag Manager (noscript) --&gt;&#10;&lt;noscript&gt;&lt;iframe src=&quot;https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX&quot; height=&quot;0&quot; width=&quot;0&quot; style=&quot;display:none;visibility:hidden&quot;&gt;&lt;/iframe&gt;&lt;/noscript&gt;">{{index .Settings "plugin_code-snippets_body_open"}}</textarea>
+</div>
+
+<!-- ============ body end slot ============ -->
+<div class="card" style="padding:1.25rem 1.5rem; margin-bottom:1rem;">
+    <h3 style="margin:0 0 0.25rem; font-size:1.05rem;">{{X $ "plugin.codesnippets.ui.009" "</body> 前"}}</h3>
+    <p style="margin:0 0 0.75rem; color:#64748b; font-size:0.85rem;">
+        {{X $ "plugin.codesnippets.ui.010" "在 </body> 前、所有主题脚本之后插入。适合：延迟加载的客服 / 聊天 widget、第三方追踪、热力图（Hotjar、Microsoft Clarity 等）。"}}
+    </p>
+    <textarea name="plugin_code-snippets_footer" id="snippet-footer" rows="8" spellcheck="false"
+        style="width:100%; font-family:'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size:13px; padding:0.6rem 0.75rem; border:1px solid #d1d5db; border-radius:6px; background:#0f172a; color:#e2e8f0; resize:vertical;"
+        placeholder="&lt;!-- Microsoft Clarity --&gt;&#10;&lt;script type=&quot;text/javascript&quot;&gt;&#10;  (function(c,l,a,r,i,t,y){...})(window, document, &quot;clarity&quot;, &quot;script&quot;, &quot;XXXXXXXXXX&quot;);&#10;&lt;/script&gt;">{{index .Settings "plugin_code-snippets_footer"}}</textarea>
+</div>
+
+<div class="form-actions" style="margin-top:1.5rem;">
+    <button type="submit" class="btn btn-primary">{{X . "plugin.settings.save" "保存设置"}}</button>
+    <span style="margin-left:1rem; color:#64748b; font-size:0.85rem;">
+        ⚠️ {{X . "plugin.settings.warning" "注入的代码以原样输出（不会被转义），请确保来源可信。"}}
+    </span>
+</div>
+
+</form>
+{{end}}

@@ -1,0 +1,19 @@
+{
+  "plugin.name": "Code Snippets",
+  "plugin.description": "WPCode-style snippet injection for adding arbitrary HTML/JS before </head>, after <body>, and before </body>; useful for Google Analytics, GTM, verification meta tags, and third-party tracking scripts.",
+  "plugin.settings.back": "Back to Plugins",
+  "plugin.settings.title": "%s - Plugin Settings",
+  "plugin.settings.save": "Save Settings",
+  "plugin.settings.warning": "Injected code is output as-is and is not escaped. Use trusted sources only.",
+  "plugin.codesnippets.ui.001": "Inject arbitrary HTML / JavaScript snippets into three standard locations without modifying theme files. Typical uses:",
+  "plugin.codesnippets.ui.002": "site verification meta tags",
+  "plugin.codesnippets.ui.003": "third-party support and tracking scripts",
+  "plugin.codesnippets.ui.004": "Leave a field empty to skip that injection point. Changes apply to all pages after saving, and page cache will be cleared.",
+  "plugin.codesnippets.ui.005": "End of <head>",
+  "plugin.codesnippets.ui.006": "Inserted before </head>. Useful for verification meta tags, third-party CSS, preconnect, Google Analytics gtag.js, and GTM scripts.",
+  "plugin.codesnippets.ui.007": "Start of <body>",
+  "plugin.codesnippets.ui.008": "Inserted immediately after <body>. Useful for GTM noscript iframes, A/B test bootstraps, and visible site-wide announcement bars.",
+  "plugin.codesnippets.ui.009": "Before </body>",
+  "plugin.codesnippets.ui.010": "Inserted before </body>, after theme scripts. Useful for deferred chat widgets, third-party tracking, and heatmaps such as Hotjar or Microsoft Clarity.",
+  "plugin.codesnippets.ui.011": "(Cloudflare, Baidu, Google Search Console, etc.)"
+}

@@ -1,0 +1,28 @@
+{{define "content"}}
+{{$s := .Settings}}
+<section class="ce-page-hero">
+    <span>About Us</span>
+    <h1>{{settingOr $s "about_banner_title" "Commercial real estate search with a calmer operating model."}}</h1>
+    <p>{{settingOr $s "about_banner_subtitle" "Civic Estate helps occupiers, landlords, and investors move from scattered listings to a confident shortlist."}}</p>
+</section>
+
+<section class="ce-split">
+    <div class="ce-split-media">
+        {{responsiveImage (settingOr $s "about_intro_image" "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200&h=900&fit=crop&q=82") "Commercial real estate advisory team" "" "(max-width: 768px) 100vw, 50vw" "lazy"}}
+    </div>
+    <div class="ce-split-copy">
+        <span class="ce-kicker">{{settingOr $s "about_intro_label" "How We Work"}}</span>
+        <h2>{{settingOr $s "about_intro_title" "We turn property noise into a clear decision path."}}</h2>
+        <p>{{settingOr $s "about_intro_p1" "Our work starts with business constraints: location logic, staff access, lease term, budget guardrails, build-out needs, and growth plans."}}</p>
+        <p>{{settingOr $s "about_intro_p2" "Then we structure the search, compare options, coordinate tours, and help teams understand the cost and operational impact of each space."}}</p>
+        <a class="ce-primary-btn ce-inline" href="{{langPrefixURL .Ctx "/contact"}}">{{settingOr $s "about_intro_btn_text" "Request Advisory"}}</a>
+    </div>
+</section>
+
+<section class="ce-dark-band">
+    <div><strong>{{settingOr $s "about_stat_1_number" "1.8M"}}</strong><span>{{settingOr $s "about_stat_1_label" "Sq ft tracked across office and retail inventory"}}</span></div>
+    <div><strong>{{settingOr $s "about_stat_2_number" "420+"}}</strong><span>{{settingOr $s "about_stat_2_label" "Listings reviewed for fit, pricing, and timing"}}</span></div>
+    <div><strong>{{settingOr $s "about_stat_3_number" "96%"}}</strong><span>{{settingOr $s "about_stat_3_label" "Searches narrowed to a shortlist within two weeks"}}</span></div>
+    <div><strong>{{settingOr $s "about_stat_4_number" "18"}}</strong><span>{{settingOr $s "about_stat_4_label" "Metro markets represented in our advisory network"}}</span></div>
+</section>
+{{end}}

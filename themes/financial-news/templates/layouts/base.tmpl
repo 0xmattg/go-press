@@ -1,0 +1,27 @@
+{{define "base"}}<!DOCTYPE html>
+<html lang="{{currentLang .Ctx}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} | {{settingOr .Settings "site_name" "FinNews"}}</title>
+    {{with seoHeadFor .}}{{.}}{{else}}<meta name="description" content="{{settingOr $.Settings "site_description" "Financial news, market analysis, and investment insights."}}">{{end}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css?v=1">
+    {{renderHook "theme.head.end" .}}
+</head>
+<body>
+    {{renderHook "theme.body.open" .}}
+    {{template "header" .}}
+
+    <main class="main-content">
+        {{template "content" .}}
+    </main>
+
+    {{template "footer" .}}
+
+    <script src="/static/js/main.js"></script>
+    {{renderHook "theme.footer.end" .}}
+</body>
+</html>{{end}}

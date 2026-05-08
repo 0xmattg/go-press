@@ -1,0 +1,418 @@
+# ============================================================
+# GoPress Seed Data — NovaPulse AI Landing Page
+# ============================================================
+
+# ---------- Site Settings ----------
+[[settings]]
+key   = "site_name"
+value = "NovaPulse AI"
+
+[[settings]]
+key   = "site_description"
+value = "Enterprise-grade platform for deploying, monitoring, and scaling machine learning models in production."
+
+[[settings]]
+key   = "company_email"
+value = "hello@novapulse.ai"
+
+[[settings]]
+key   = "company_phone"
+value = "+1 (415) 555-0199"
+
+[[settings]]
+key   = "social_x"
+value = "https://x.com/novapulse"
+
+[[settings]]
+key   = "social_github"
+value = "https://github.com/novapulse"
+
+[[settings]]
+key   = "footer_text"
+value = "© 2026 NovaPulse AI. All rights reserved."
+
+# ---------- Theme Settings ----------
+[[settings]]
+key   = "theme_color_scheme"
+value = "indigo"
+
+[[settings]]
+key   = "home_logo_glyph"
+value = "N"
+
+[[settings]]
+key   = "home_logo_text"
+value = "NovaPulse"
+
+[[settings]]
+key   = "home_nav_1_text"
+value = "Features"
+
+[[settings]]
+key   = "home_nav_2_text"
+value = "How It Works"
+
+[[settings]]
+key   = "home_nav_3_text"
+value = "Testimonials"
+
+[[settings]]
+key   = "home_nav_4_text"
+value = "Pricing"
+
+[[settings]]
+key   = "home_nav_signin_text"
+value = "Sign In"
+
+[[settings]]
+key   = "home_nav_signin_link"
+value = "#pricing"
+
+[[settings]]
+key   = "home_nav_cta_text"
+value = "Get Started"
+
+[[settings]]
+key   = "home_nav_cta_link"
+value = "#pricing"
+
+[[settings]]
+key   = "home_hero_badge"
+value = "Now in Public Beta — v2.0"
+
+[[settings]]
+key   = "home_hero_title_1"
+value = "Build Smarter."
+
+[[settings]]
+key   = "home_hero_title_2"
+value = "Ship Faster."
+
+[[settings]]
+key   = "home_hero_title_3"
+value = "Scale Infinitely."
+
+[[settings]]
+key   = "home_hero_subtitle"
+value = "NovaPulse AI is the enterprise-grade platform for deploying, monitoring, and scaling machine learning models in production — from prototype to planet-scale."
+
+[[settings]]
+key   = "home_hero_btn1_text"
+value = "Start Free Trial"
+
+[[settings]]
+key   = "home_hero_btn1_link"
+value = "#pricing"
+
+[[settings]]
+key   = "home_hero_btn2_text"
+value = "Watch Demo"
+
+[[settings]]
+key   = "home_hero_btn2_link"
+value = "#how-it-works"
+
+[[settings]]
+key   = "home_metric_1_value"
+value = "99.99%"
+
+[[settings]]
+key   = "home_metric_1_label"
+value = "Uptime"
+
+[[settings]]
+key   = "home_metric_2_value"
+value = "<2ms"
+
+[[settings]]
+key   = "home_metric_2_label"
+value = "Latency"
+
+[[settings]]
+key   = "home_metric_3_value"
+value = "500+"
+
+[[settings]]
+key   = "home_metric_3_label"
+value = "Enterprise Clients"
+
+[[settings]]
+key   = "home_metric_4_value"
+value = "47B+"
+
+[[settings]]
+key   = "home_metric_4_label"
+value = "Daily Predictions"
+
+[[settings]]
+key   = "home_features_badge"
+value = "Features"
+
+[[settings]]
+key   = "home_features_title"
+value = "Everything You Need to"
+
+[[settings]]
+key   = "home_features_title_highlight"
+value = "Ship ML at Scale"
+
+[[settings]]
+key   = "home_features_subtitle"
+value = "From model training to production monitoring, NovaPulse covers the complete ML lifecycle."
+
+[[settings]]
+key   = "home_steps_badge"
+value = "How It Works"
+
+[[settings]]
+key   = "home_steps_title"
+value = "From Zero to Production"
+
+[[settings]]
+key   = "home_steps_title_highlight"
+value = "in Three Steps"
+
+[[settings]]
+key   = "home_steps_subtitle"
+value = "No infrastructure expertise required. Connect, deploy, and scale with confidence."
+
+[[settings]]
+key   = "home_step_1_title"
+value = "Connect"
+
+[[settings]]
+key   = "home_step_1_desc"
+value = "Link your data sources and model registry. We support all major frameworks — PyTorch, TensorFlow, JAX, ONNX, and more."
+
+[[settings]]
+key   = "home_step_2_title"
+value = "Deploy"
+
+[[settings]]
+key   = "home_step_2_desc"
+value = "Push to production with blue-green and canary deployment strategies. Zero-downtime rollback included. One command, every time."
+
+[[settings]]
+key   = "home_step_3_title"
+value = "Scale"
+
+[[settings]]
+key   = "home_step_3_desc"
+value = "Auto-scale from prototype traffic to millions of requests per second. Kubernetes-native, cost-optimized, globally distributed."
+
+[[settings]]
+key   = "home_code_badge"
+value = "Developer Experience"
+
+[[settings]]
+key   = "home_code_title"
+value = "Deploy a Model"
+
+[[settings]]
+key   = "home_code_title_highlight"
+value = "in 4 Lines"
+
+[[settings]]
+key   = "home_code_desc"
+value = "Our CLI and SDK are designed for speed. No YAML hell, no config nightmares — just ship."
+
+[[settings]]
+key   = "home_code_check_1"
+value = "Auto-containerisation — no Dockerfile needed"
+
+[[settings]]
+key   = "home_code_check_2"
+value = "Built-in A/B testing and traffic splitting"
+
+[[settings]]
+key   = "home_code_check_3"
+value = "Real-time logs and metrics out of the box"
+
+[[settings]]
+key   = "home_code_check_4"
+value = "Works with any Python framework"
+
+[[settings]]
+key   = "home_code_filename"
+value = "deploy.py"
+
+[[settings]]
+key   = "home_testimonials_badge"
+value = "Testimonials"
+
+[[settings]]
+key   = "home_testimonials_title"
+value = "Trusted by"
+
+[[settings]]
+key   = "home_testimonials_title_highlight"
+value = "Industry Leaders"
+
+[[settings]]
+key   = "home_testimonials_subtitle"
+value = "See why engineering teams at the world's most innovative companies choose NovaPulse."
+
+[[settings]]
+key   = "home_pricing_badge"
+value = "Pricing"
+
+[[settings]]
+key   = "home_pricing_title"
+value = "Simple,"
+
+[[settings]]
+key   = "home_pricing_title_highlight"
+value = "Transparent"
+
+[[settings]]
+key   = "home_pricing_subtitle"
+value = "Start free, scale as you grow. No hidden fees, no surprises."
+
+[[settings]]
+key   = "home_cta_title"
+value = "Ready to Accelerate"
+
+[[settings]]
+key   = "home_cta_title_highlight"
+value = "Your AI Pipeline?"
+
+[[settings]]
+key   = "home_cta_subtitle"
+value = "Join 500+ engineering teams already shipping ML at light speed."
+
+[[settings]]
+key   = "home_cta_btn1_text"
+value = "Get Started Free"
+
+[[settings]]
+key   = "home_cta_btn1_link"
+value = "#pricing"
+
+[[settings]]
+key   = "home_cta_btn2_text"
+value = "Talk to Sales"
+
+[[settings]]
+key   = "home_cta_btn2_link"
+value = "#"
+
+[[settings]]
+key   = "home_footer_desc"
+value = "Enterprise-grade AI infrastructure for teams that ship fast and scale fearlessly."
+
+[[settings]]
+key   = "home_footer_col1_title"
+value = "Product"
+
+[[settings]]
+key   = "home_footer_col2_title"
+value = "Company"
+
+[[settings]]
+key   = "home_footer_col3_title"
+value = "Resources"
+
+[[settings]]
+key   = "home_footer_copyright"
+value = "© 2026 NovaPulse AI. All rights reserved."
+
+# ============================================================
+# FEATURES  (type = "feature")
+# ============================================================
+
+[[contents]]
+type        = "feature"
+title       = "Neural Compute Engine"
+slug        = "neural-compute-engine"
+sort_order  = 1
+excerpt     = "Custom hardware-accelerated inference delivering sub-millisecond response times across GPU, TPU, and custom silicon."
+content     = "<p>Our inference runtime is built from the ground up for production workloads. Automatic batching, dynamic quantisation, and kernel fusion reduce latency by 10× compared to stock serving frameworks. Supports NVIDIA A100/H100, Google TPU v5, and AWS Inferentia.</p>"
+[contents.meta]
+icon = "compute"
+
+[[contents]]
+type        = "feature"
+title       = "Auto-Scaling Mesh"
+slug        = "auto-scaling-mesh"
+sort_order  = 2
+excerpt     = "Kubernetes-native auto-scaling from zero to millions of requests per second. Scale-to-zero when idle — pay only for what you use."
+content     = "<p>Built on an intelligent mesh layer that monitors queue depth, latency percentiles, and GPU utilisation in real time. Scales horizontally across availability zones with sub-second reaction time. Cold-start optimised with pre-warmed model pools.</p>"
+[contents.meta]
+icon = "scale"
+
+[[contents]]
+type        = "feature"
+title       = "Model Observatory"
+slug        = "model-observatory"
+sort_order  = 3
+excerpt     = "Real-time model performance dashboards, data drift detection, and automated retraining triggers — all in one pane of glass."
+content     = "<p>Track accuracy, latency, throughput, and feature importance in real time. Built-in statistical tests (PSI, KS, Jensen-Shannon) detect data and concept drift before it impacts your users. Trigger retraining pipelines automatically or with one click.</p>"
+[contents.meta]
+icon = "monitor"
+
+[[contents]]
+type        = "feature"
+title       = "Edge Deployment"
+slug        = "edge-deployment"
+sort_order  = 4
+excerpt     = "Push models to 200+ edge locations worldwide with one command. Sub-10ms inference at the network edge, globally."
+content     = "<p>Our edge runtime compiles models into optimised WASM or native binaries that run on Cloudflare Workers, AWS Lambda@Edge, or your own edge hardware. Automatic A/B routing and rollback included. Perfect for real-time recommendation, fraud detection, and content personalisation.</p>"
+[contents.meta]
+icon = "edge"
+
+[[contents]]
+type        = "feature"
+title       = "Data Fabric"
+slug        = "data-fabric"
+sort_order  = 5
+excerpt     = "Unified data access layer connecting warehouses, lakes, and streams — without moving data. Feature stores built in."
+content     = "<p>NovaPulse Data Fabric provides a single SQL-like interface to Snowflake, BigQuery, Databricks, Kafka, and S3. Built-in feature store with point-in-time correctness ensures training-serving consistency. No ETL pipelines required.</p>"
+[contents.meta]
+icon = "data"
+
+[[contents]]
+type        = "feature"
+title       = "Zero-Trust Security"
+slug        = "zero-trust-security"
+sort_order  = 6
+excerpt     = "End-to-end encryption, SOC 2 Type II certified, HIPAA-ready infrastructure with granular RBAC and audit logging."
+content     = "<p>Every API call is authenticated, authorised, and encrypted. Model weights are encrypted at rest (AES-256) and in transit (TLS 1.3). Fine-grained RBAC with team-based access control. Full audit trail for every deployment, prediction, and configuration change.</p>"
+[contents.meta]
+icon = "security"
+
+# ============================================================
+# TESTIMONIALS  (type = "testimonial")
+# ============================================================
+
+[[contents]]
+type        = "testimonial"
+title       = "Sarah Chen"
+slug        = "sarah-chen"
+sort_order  = 1
+content     = "NovaPulse reduced our ML deployment time from weeks to minutes. The auto-scaling alone saved us $2M annually in infrastructure costs. It's the platform we wish we'd had five years ago."
+excerpt     = "Reduced ML deployment time from weeks to minutes."
+[contents.meta]
+role    = "VP Engineering"
+company = "Meridian Labs"
+
+[[contents]]
+type        = "testimonial"
+title       = "Marcus Wright"
+slug        = "marcus-wright"
+sort_order  = 2
+content     = "The observability tooling is genuinely best-in-class. We caught model drift before it impacted our customers — twice. The ROI was evident within the first month of deployment."
+excerpt     = "Best-in-class observability tooling."
+[contents.meta]
+role    = "CTO"
+company = "DataForge"
+
+[[contents]]
+type        = "testimonial"
+title       = "Yuki Tanaka"
+slug        = "yuki-tanaka"
+sort_order  = 3
+content     = "We evaluated five platforms before choosing NovaPulse. It was the only one that met our latency requirements at scale while keeping the developer experience delightfully simple."
+excerpt     = "The only platform that met our latency requirements at scale."
+[contents.meta]
+role    = "Head of AI"
+company = "TechNova"

@@ -1,0 +1,107 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>{{adminContentTypeLabel .AdminLanguage .TypeName .TypeDef.LabelPlural}}</h2>
+    {{if .TypeDef.HasArchive}}
+    {{if can .CurrentRole .TypeName "create"}}
+    <a href="/admin/{{.Slug}}/new{{if .BackQuery}}?{{.BackQuery}}{{end}}" class="btn btn-primary">{{T . "content.new" (adminContentTypeLabel .AdminLanguage .TypeName .TypeDef.Label)}}</a>
+    {{end}}
+    {{end}}
+</div>
+<div class="content-list-toolbar">
+    {{if .Tabs}}
+    <div class="content-list-tabs" role="tablist">
+        {{range .Tabs}}
+        <a href="{{.URL}}" class="content-list-tab{{if .Active}} active{{end}}" role="tab">
+            <span>{{.Label}}</span>
+            {{if gt .Count 0}}<span class="tab-count">{{.Count}}</span>{{end}}
+        </a>
+        {{end}}
+    </div>
+    {{end}}
+    <div class="content-list-search" role="search" data-content-list-search>
+        <input type="search" placeholder="{{T . "content.search_by_title"}}" class="content-list-search-input" aria-label="{{T . "content.search_by_title"}}" data-search-input>
+        <button type="button" class="btn btn-secondary content-list-search-btn" aria-label="{{T . "action.search"}}" data-search-commit>
+            <svg viewBox="0 0 20 20" fill="none" width="16" height="16" aria-hidden="true">
+                <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="2"/>
+                <path d="M14 14l3.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </button>
+    </div>
+</div>
+<div class="card">
+    <table class="data-table content-list-table{{if hasSupport .TypeDef.Supports "sort_order"}} sortable-list{{end}}"
+           {{if hasSupport .TypeDef.Supports "sort_order"}}data-reorder-url="/admin/{{.Slug}}/reorder"{{end}}>
+        <thead>
+            <tr>
+                {{if hasSupport .TypeDef.Supports "sort_order"}}<th class="drag-col" title="{{T . "content.drag_to_sort"}}"></th>{{end}}
+                <th>ID</th>
+                <th>{{T . "content.title"}}</th>
+                <th>{{T . "content.status"}}</th>
+                {{if hasSupport .TypeDef.Supports "sort_order"}}
+                <th>{{T . "content.sort_order"}}</th>
+                {{end}}
+                <th>{{T . "content.author"}}</th>
+                {{range .TypeDef.MetaFields}}
+                <th>{{.Label}}</th>
+                {{end}}
+                {{range .TaxDefs}}
+                <th>{{.Label}}</th>
+                {{end}}
+                {{if hasSupport .TypeDef.Supports "publish_date"}}
+                <th>{{T . "content.publish_at"}}</th>
+                {{end}}
+                {{if not (hasSupport .TypeDef.Supports "publish_date")}}
+                <th>{{T . "content.created_at"}}</th>
+                {{end}}
+                <th>{{T . "content.updated_at"}}</th>
+                <th>{{T . "field.actions"}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range $item := .Items}}
+            <tr {{if hasSupport $.TypeDef.Supports "sort_order"}}data-id="{{$item.ID}}" draggable="true"{{end}}>
+                {{if hasSupport $.TypeDef.Supports "sort_order"}}<td class="drag-handle" title="{{T $ "content.drag_to_sort"}}">⋮⋮</td>{{end}}
+                <td>{{$item.ID}}</td>
+                <td class="title-cell" data-title="{{$item.Title}}"><a href="{{if $.TypeDef.Rewrite.Slug}}/{{$.TypeDef.Rewrite.Slug}}/{{$item.Slug}}{{else}}/{{$.TypeName}}/{{$item.Slug}}{{end}}" target="_blank" class="content-title-link">{{$item.Title}}</a></td>
+                <td><span class="badge badge-{{$item.Status}}">{{if eq $item.Status "published"}}{{T $ "content.status.published"}}{{else if eq $item.Status "draft"}}{{T $ "content.status.draft"}}{{else if eq $item.Status "archived"}}{{T $ "content.status.archived"}}{{else}}{{$item.Status}}{{end}}</span></td>
+                {{if hasSupport $.TypeDef.Supports "sort_order"}}
+                <td class="sort-order-cell">{{$item.SortOrder}}</td>
+                {{end}}
+                <td>{{$item.AuthorName}}</td>
+                {{range $field := $.TypeDef.MetaFields}}
+                <td>{{metaVal $item.Meta $field.Key}}</td>
+                {{end}}
+                {{range $tax := $.TaxDefs}}
+                <td>{{firstTaxName $item.Taxonomies $tax.Name}}</td>
+                {{end}}
+                {{if hasSupport $.TypeDef.Supports "publish_date"}}
+                <td>{{if $item.PublishedAt}}{{formatDate $item.PublishedAt}}{{else}}<span class="badge badge-draft">{{T $ "content.status.draft"}}</span>{{end}}</td>
+                {{end}}
+                {{if not (hasSupport $.TypeDef.Supports "publish_date")}}
+                <td>{{formatDate $item.CreatedAt}}</td>
+                {{end}}
+                <td><span title="{{formatDate $item.UpdatedAt}}">{{timeAgo $.AdminLanguage $item.UpdatedAt}}</span></td>
+                <td class="actions">
+                    {{if $.TypeDef.HasArchive}}
+                    {{if can $.CurrentRole $.TypeName "update"}}
+                    <a href="/admin/{{$.Slug}}/{{$item.ID}}/edit{{if $.BackQuery}}?{{$.BackQuery}}{{end}}" class="btn btn-sm">{{T $ "action.edit"}}</a>
+                    {{end}}
+                    {{else}}
+                    {{if can $.CurrentRole $.TypeName "read"}}
+                    <a href="/admin/{{$.Slug}}/{{$item.ID}}{{if $.BackQuery}}?{{$.BackQuery}}{{end}}" class="btn btn-sm">{{T $ "action.view"}}</a>
+                    {{end}}
+                    {{end}}
+                    {{if can $.CurrentRole $.TypeName "delete"}}
+                    <form method="POST" action="/admin/{{$.Slug}}/{{$item.ID}}/delete{{if $.BackQuery}}?{{$.BackQuery}}{{end}}" class="inline-form">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('{{T $ "confirm.delete"}}')">{{T $ "action.delete"}}</button>
+                    </form>
+                    {{end}}
+                </td>
+            </tr>
+            {{else}}
+            <tr><td colspan="20" class="empty-msg">{{T . "content.empty" (adminContentTypeLabel .AdminLanguage .TypeName .TypeDef.Label)}}</td></tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}

@@ -1,0 +1,28 @@
+{{define "content"}}
+<section class="tt-page-hero">
+    <span>Journal</span>
+    <h1>Notes for travelers who like the details handled.</h1>
+    <p>Short field notes on packing, seasonal timing, mountain routes, local transport, and slower ways to explore.</p>
+</section>
+
+<section class="tt-blog-layout">
+    <div class="tt-blog-list">
+        {{range .Posts}}
+        <article class="tt-blog-card">
+            <a class="tt-card-media" href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 92vw, 34vw" "lazy"}}{{end}}</a>
+            <div>
+                <time>{{formatDateTime .PublishedAt}}</time>
+                <h2><a href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{.Title}}</a></h2>
+                <p>{{truncate .Excerpt 170}}</p>
+            </div>
+        </article>
+        {{end}}
+    </div>
+    <aside class="tt-sidebar">
+        <h3>Categories</h3>
+        {{range .Categories}}<a href="{{langPrefixURL $.Ctx (printf "/category/%s" .Slug)}}">{{.Name}}</a>{{end}}
+        <h3>Tags</h3>
+        <div class="tt-tags">{{range .Tags}}<a href="{{langPrefixURL $.Ctx (printf "/tag/%s" .Slug)}}">{{.Name}}</a>{{end}}</div>
+    </aside>
+</section>
+{{end}}

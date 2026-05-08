@@ -1,0 +1,147 @@
+package theme
+
+import (
+	"html/template"
+	"strings"
+	"time"
+
+	"go-press/core/menu"
+
+	"github.com/gin-gonic/gin"
+)
+
+// CommonFuncMap returns template functions shared across all themes.
+// Themes can extend this with their own functions via TemplateFuncs().
+func CommonFuncMap() template.FuncMap {
+	return template.FuncMap{
+		"formatDate": func(t *time.Time) string {
+			if t == nil {
+				return ""
+			}
+			return t.Format("Jan 2, 2006")
+		},
+		"formatDateTime": func(t *time.Time) string {
+			if t == nil {
+				return ""
+			}
+			return t.Format("2006-01-02 15:04")
+		},
+		"truncate": func(s string, n int) string {
+			runes := []rune(s)
+			if len(runes) <= n {
+				return s
+			}
+			return string(runes[:n]) + "..."
+		},
+		"safeHTML": func(s string) template.HTML {
+			return template.HTML(s)
+		},
+		"lower": strings.ToLower,
+		"upper": strings.ToUpper,
+		"settingOr": func(m map[string]string, key, def string) string {
+			if m != nil {
+				if v, ok := m[key]; ok && v != "" {
+					return v
+				}
+			}
+			return def
+		},
+		"responsiveImage": func(src, alt, className, sizes, loading string) template.HTML {
+			return renderResponsiveImage(nil, src, alt, imageAttrs{
+				Class:   className,
+				Sizes:   sizes,
+				Loading: loading,
+			})
+		},
+		"responsiveImagePriority": func(src, alt, className, sizes string) template.HTML {
+			return renderResponsiveImage(nil, src, alt, imageAttrs{
+				Class:         className,
+				Sizes:         sizes,
+				Loading:       "eager",
+				FetchPriority: "high",
+			})
+		},
+		"responsiveImagePreload": func(src, sizes string) template.HTML {
+			return renderResponsivePreload(nil, src, sizes)
+		},
+		"T": func(c *gin.Context, msgID string) string {
+			return msgID
+		},
+		"currentLang": func(c *gin.Context) string {
+			return "en"
+		},
+		"langPrefixURL": func(c *gin.Context, path string) string {
+			return path
+		},
+		"renderHook": func(name string, data interface{}) template.HTML {
+			return ""
+		},
+		"seoHeadFor": func(data interface{}) template.HTML {
+			return ""
+		},
+		"menuByLocation": func(location string) *menu.Menu {
+			return nil
+		},
+		"seq": func(n int) []int {
+			s := make([]int, n)
+			for i := range s {
+				s[i] = i + 1
+			}
+			return s
+		},
+		"timeAgo": func(t *time.Time) string {
+			if t == nil {
+				return ""
+			}
+			d := time.Since(*t)
+			switch {
+			case d < time.Minute:
+				return "刚刚"
+			case d < time.Hour:
+				m := int(d.Minutes())
+				return strings.TrimRight(strings.TrimRight(
+					time.Duration(m).String(), "0"), ".") + " 分钟前"
+			case d < 24*time.Hour:
+				h := int(d.Hours())
+				return strings.TrimRight(strings.TrimRight(
+					time.Duration(h).String(), "0"), ".") + " 小时前"
+			default:
+				return t.Format("01-02 15:04")
+			}
+		},
+		// isMenuActive determines whether a menu URL matches the active page,
+		// tolerating an optional 2-letter language prefix (e.g. /zh/blog).
+		// Common to multiple themes — kept here so headers/footers can use it
+		// uniformly.
+		"isMenuActive": func(activePage, url string) bool {
+			if activePage == "" || url == "" {
+				return false
+			}
+			url = strings.TrimRight(url, "/")
+			if url == "" {
+				return activePage == "home"
+			}
+			path := strings.TrimPrefix(url, "/")
+			parts := strings.SplitN(path, "/", 3)
+			seg := parts[0]
+			if len(seg) == 2 && len(parts) > 1 {
+				seg = parts[1]
+			}
+			if seg == "" || (len(parts[0]) == 2 && len(parts) == 1) {
+				return activePage == "home"
+			}
+			return seg == activePage
+		},
+	}
+}
+
+// MergeFuncMap merges multiple FuncMaps, later maps override earlier ones.
+func MergeFuncMap(maps ...template.FuncMap) template.FuncMap {
+	result := make(template.FuncMap)
+	for _, m := range maps {
+		for k, v := range m {
+			result[k] = v
+		}
+	}
+	return result
+}

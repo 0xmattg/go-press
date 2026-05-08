@@ -1,0 +1,36 @@
+{{define "content"}}
+{{$s := .Settings}}
+<section class="as-page-hero">
+    <div class="as-container">
+        <div class="as-page-hero-panel">
+            <div>
+                <p class="as-kicker as-kicker-light">{{settingOr $s "about_intro_label" "About"}}</p>
+                <h1>{{settingOr $s "about_banner_title" "A compact digital atelier for high-pressure launches."}}</h1>
+                <p>{{settingOr $s "about_banner_subtitle" "We combine strategy, interface design, campaign production, and content systems in one precise studio model."}}</p>
+            </div>
+            <img src="{{settingOr $s "about_intro_image" "/static/images/atelier-card-wood.svg"}}" alt="">
+        </div>
+    </div>
+</section>
+<section class="as-section">
+    <div class="as-container">
+        <div class="as-white-stage as-about-stage">
+            <p class="as-kicker">{{settingOr $s "about_intro_label" "Who we are"}}</p>
+            <h2>{{settingOr $s "about_intro_title" "We translate founder vision into digital systems that feel inevitable."}}</h2>
+            <div class="as-two-col-text">
+                <p>{{settingOr $s "about_intro_p1" "Atelier Slate works like a small guild: strategy sets the frame, design gives the work gravity, and production turns the system into pages, campaigns, posts, decks, and launch assets."}}</p>
+                <p>{{settingOr $s "about_intro_p2" "The visual language is disciplined rather than loud: black image surfaces, white cards, sequence marks, round controls, and tactile materials that keep technology grounded."}}</p>
+            </div>
+        </div>
+        <div class="as-principles">
+            {{range $i := seq 4}}
+            <article>
+                <span>0{{$i}}</span>
+                <h3>{{settingOr $s (printf "about_principle_%d_title" $i) "Editorial clarity"}}</h3>
+                <p>{{settingOr $s (printf "about_principle_%d_desc" $i) "Every page earns its space with concise hierarchy, sharp media, and visible next actions."}}</p>
+            </article>
+            {{end}}
+        </div>
+    </div>
+</section>
+{{end}}

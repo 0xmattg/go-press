@@ -1,0 +1,50 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>{{.Title}}</h2>
+    <a href="/admin/users" class="btn">{{T . "action.back_to_list"}}</a>
+</div>
+<div class="card">
+    <form method="POST" action="/admin/users/{{if .Item}}{{.Item.ID}}/edit{{else}}new{{end}}">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="username">{{T . "field.username"}} *</label>
+                <input type="text" id="username" name="username" value="{{if .Item}}{{.Item.Username}}{{end}}" required {{if .Item}}readonly{{end}}>
+            </div>
+            <div class="form-group">
+                <label for="email">{{T . "field.email"}} *</label>
+                <input type="email" id="email" name="email" value="{{if .Item}}{{.Item.Email}}{{end}}" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="display_name">{{T . "field.display_name"}}</label>
+                <input type="text" id="display_name" name="display_name" value="{{if .Item}}{{.Item.DisplayName}}{{end}}">
+            </div>
+            <div class="form-group">
+                <label for="role">{{T . "field.role"}} *</label>
+                <select id="role" name="role" required>
+                    {{range .Roles}}
+                    <option value="{{.}}" {{if and $.Item (eq $.Item.Role .)}}selected{{end}}>{{roleDisplayFor $ .}}</option>
+                    {{end}}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="password">{{T . "field.password"}} {{if .Item}}{{T . "form.password_edit_hint"}}{{else}}*{{end}}</label>
+            <input type="password" id="password" name="password" {{if not .Item}}required{{end}} minlength="6">
+        </div>
+        {{if .Item}}
+        <div class="form-group">
+            <label class="checkbox-label">
+                <input type="checkbox" name="is_active" {{if .Item.IsActive}}checked{{end}}>
+                {{T . "user.active"}}
+            </label>
+        </div>
+        {{end}}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{{T . "action.save"}}</button>
+            <a href="/admin/users" class="btn">{{T . "action.cancel"}}</a>
+        </div>
+    </form>
+</div>
+{{end}}

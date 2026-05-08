@@ -1,0 +1,418 @@
+{{define "content"}}
+<div class="content-header">
+    <div style="display:flex; align-items:center; gap:1rem;">
+        <a href="/admin/menus" class="btn btn-secondary" style="display:inline-flex; align-items:center; gap:0.4rem; text-decoration:none;">← {{T . "action.back_to_list"}}</a>
+        <h2>{{T . "menu.edit_title" .Menu.Name}}</h2>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 340px 1fr; gap: 1.5rem;">
+    <!-- Left: Add items panel -->
+    <div>
+        <!-- Menu settings -->
+        <div class="card" style="margin-bottom: 1rem;">
+            <div class="card-body">
+                <h3 style="margin-bottom: 1rem;">{{T . "menu.menu_settings"}}</h3>
+                <form method="POST" action="/admin/menus/{{.Menu.ID}}/edit">
+                    <div class="form-group">
+                        <label for="menu-name">{{T . "menu.menu_name"}}</label>
+                        <input type="text" id="menu-name" name="name" class="form-control" value="{{.Menu.Name}}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="menu-location">{{T . "field.location"}}</label>
+                        <select id="menu-location" name="location" class="form-control">
+                            <option value="">{{T . "menu.no_assignment"}}</option>
+                            {{range .Locations}}
+                            <option value="{{.Name}}" {{if eq .Name $.Menu.Location}}selected{{end}}>{{.Label}} ({{.Name}})</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%;">{{T . "action.save_settings"}}</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Add custom link -->
+        <div class="card" style="margin-bottom: 1rem;">
+            <div class="card-body">
+                <h3 style="margin-bottom: 1rem;">{{T . "menu.add_custom_link"}}</h3>
+                <div class="form-group">
+                    <label for="custom-title">{{T . "field.title"}}</label>
+                    <input type="text" id="custom-title" class="form-control" placeholder="{{T . "menu.item_title_placeholder"}}">
+                </div>
+                <div class="form-group">
+                    <label for="custom-url">URL</label>
+                    <input type="text" id="custom-url" class="form-control" placeholder="https:// or /" value="/">
+                </div>
+                <div class="form-group">
+                    <label for="custom-target">{{T . "menu.open_target"}}</label>
+                    <select id="custom-target" class="form-control">
+                        <option value="_self">{{T . "menu.current_window"}}</option>
+                        <option value="_blank">{{T . "menu.new_window"}}</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-primary" style="width:100%;" onclick="addCustomLink()">{{T . "action.add_to_menu"}}</button>
+            </div>
+        </div>
+
+        <!-- Add from content -->
+        <div class="card">
+            <div class="card-body">
+                <h3 style="margin-bottom: 1rem;">{{T . "menu.add_from_content"}}</h3>
+                {{range $type, $items := .ContentItems}}
+                <div style="margin-bottom: 0.8rem;">
+                    <strong style="display:block; margin-bottom:0.4rem;">{{$type}}</strong>
+                    <div style="max-height:200px; overflow-y:auto; border:1px solid #e5e7eb; border-radius:6px; padding:0.5rem;">
+                        {{range $items}}
+                        <label style="display:flex; align-items:center; gap:0.5rem; padding:0.25rem 0; cursor:pointer;">
+                            <input type="checkbox" class="content-item-cb" data-title="{{.Title}}" data-url="{{.URL}}" data-content-id="{{.ID}}">
+                            <span style="font-size:0.9rem;">{{.Title}}</span>
+                        </label>
+                        {{end}}
+                    </div>
+                </div>
+                {{else}}
+                <p style="color: #9ca3af; font-size: 0.9rem;">{{T . "menu.empty_content"}}</p>
+                {{end}}
+                <button type="button" class="btn btn-primary" style="width:100%; margin-top:0.5rem;" onclick="addContentItems()">{{T . "action.add_to_menu"}}</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Menu items editor -->
+    <div>
+        <div class="card">
+            <div class="card-body">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <h3 style="margin:0;">{{T . "menu.menu_structure"}}</h3>
+                    <button type="button" class="btn btn-primary" onclick="saveMenuItems()">{{T . "action.save_menu_items"}}</button>
+                </div>
+                <p style="color:#6b7280; font-size:0.85rem; margin-bottom:1rem;">{{T . "menu.structure_help"}}</p>
+
+                <div id="menu-items-container">
+                    <!-- Menu items rendered by JS -->
+                </div>
+
+                <div id="menu-empty-msg" style="text-align:center; padding:3rem; color:#9ca3af; display:none;">
+                    {{T . "menu.empty"}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.menu-item {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    cursor: move;
+    transition: box-shadow 0.15s;
+}
+.menu-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.menu-item.dragging { opacity: 0.5; }
+.menu-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    user-select: none;
+}
+.menu-item-header .item-title { font-weight: 500; }
+.menu-item-header .item-type { font-size: 0.8rem; color: #9ca3af; }
+.menu-item-body {
+    display: none;
+    padding: 0.8rem 1rem;
+    border-top: 1px solid #e5e7eb;
+    background: #fafafa;
+}
+.menu-item-body.open { display: block; }
+.menu-item-body .form-group { margin-bottom: 0.6rem; }
+.menu-item-body .form-group label { font-size: 0.85rem; margin-bottom: 0.2rem; }
+.menu-item-body .form-group input,
+.menu-item-body .form-group select { font-size: 0.9rem; padding: 0.35rem 0.5rem; }
+.menu-item-children {
+    margin-left: 2rem;
+}
+.drop-indicator {
+    height: 3px;
+    background: #3b82f6;
+    border-radius: 2px;
+    margin: 0.2rem 0;
+    display: none;
+}
+</style>
+
+<script>
+(function() {
+    const MENU_ID = {{.Menu.ID}};
+    let menuItems = {{.MenuItemsJSON}};
+    let nextTempId = 10000;
+    const i18n = {
+        content: {{jsT . "menu.content"}},
+        customLink: {{jsT . "menu.custom_link"}},
+        title: {{jsT . "field.title"}},
+        openTarget: {{jsT . "menu.open_target"}},
+        currentWindow: {{jsT . "menu.current_window"}},
+        newWindow: {{jsT . "menu.new_window"}},
+        removeItem: {{jsT . "menu.remove_item"}},
+        titleRequired: {{jsT . "error.menu_title_required"}},
+        urlRequired: {{jsT . "error.menu_url_required"}},
+        itemsSaved: {{jsT . "menu.items_saved"}},
+        saveFailedPrefix: {{jsT . "error.save_failed_prefix"}},
+        unknownError: {{jsT . "error.unknown"}}
+    };
+
+    function showToast(msg, type) {
+        // Remove existing toast
+        const old = document.getElementById('menu-toast');
+        if (old) old.remove();
+        const cls = type === 'error' ? 'alert alert-error' : 'alert alert-success';
+        const div = document.createElement('div');
+        div.id = 'menu-toast';
+        div.className = cls;
+        div.style.cssText = 'margin:0 0 1rem 0;';
+        div.textContent = msg;
+        const container = document.querySelector('.admin-content');
+        container.insertBefore(div, container.firstChild);
+        if (type !== 'error') {
+            setTimeout(() => { if (div.parentNode) div.remove(); }, 3000);
+        }
+    }
+
+    // Build tree from flat list
+    function buildTree(flat) {
+        const map = {};
+        const roots = [];
+        flat.forEach(item => { map[item.id] = {...item, children: []}; });
+        flat.forEach(item => {
+            if (item.parentId && map[item.parentId]) {
+                map[item.parentId].children.push(map[item.id]);
+            } else {
+                roots.push(map[item.id]);
+            }
+        });
+        return roots;
+    }
+
+    // Flatten tree to sorted flat list (for saving) — uses nested children format
+    function flattenTree(tree, parentId) {
+        const result = [];
+        tree.forEach((item, idx) => {
+            const node = {
+                title: item.title,
+                url: item.url,
+                target: item.target || '_self',
+                content_id: item.contentId || null,
+                sort_order: idx,
+                children: []
+            };
+            if (item.children && item.children.length > 0) {
+                node.children = flattenTree(item.children, null);
+            }
+            result.push(node);
+        });
+        return result;
+    }
+
+    function renderItems() {
+        const container = document.getElementById('menu-items-container');
+        const emptyMsg = document.getElementById('menu-empty-msg');
+        const tree = buildTree(menuItems);
+
+        if (tree.length === 0) {
+            container.innerHTML = '';
+            emptyMsg.style.display = 'block';
+            return;
+        }
+        emptyMsg.style.display = 'none';
+        container.innerHTML = renderLevel(tree);
+        attachDragEvents();
+    }
+
+    function renderLevel(items) {
+        let html = '';
+        items.forEach((item, idx) => {
+            html += renderItem(item);
+            if (item.children && item.children.length > 0) {
+                html += '<div class="menu-item-children">' + renderLevel(item.children) + '</div>';
+            }
+        });
+        return html;
+    }
+
+    function renderItem(item) {
+        const typeLabel = item.contentId ? i18n.content : i18n.customLink;
+        return `
+        <div class="menu-item" draggable="true" data-id="${item.id}">
+            <div class="menu-item-header" onclick="toggleItemBody(this)">
+                <span>
+                    <span class="item-title">${escapeHtml(item.title)}</span>
+                    <span class="item-type"> — ${typeLabel}</span>
+                </span>
+                <span style="font-size:0.8rem; color:#9ca3af;">▼</span>
+            </div>
+            <div class="menu-item-body">
+                <div class="form-group">
+                    <label>${i18n.title}</label>
+                    <input type="text" class="form-control item-title-input" value="${escapeHtml(item.title)}" onchange="updateItem(${item.id}, 'title', this.value)">
+                </div>
+                <div class="form-group">
+                    <label>URL</label>
+                    <input type="text" class="form-control item-url-input" value="${escapeHtml(item.url)}" onchange="updateItem(${item.id}, 'url', this.value)">
+                </div>
+                <div class="form-group">
+                    <label>${i18n.openTarget}</label>
+                    <select class="form-control" onchange="updateItem(${item.id}, 'target', this.value)">
+                        <option value="_self" ${item.target === '_self' ? 'selected' : ''}>${i18n.currentWindow}</option>
+                        <option value="_blank" ${item.target === '_blank' ? 'selected' : ''}>${i18n.newWindow}</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeItem(${item.id})">${i18n.removeItem}</button>
+            </div>
+        </div>`;
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    window.toggleItemBody = function(header) {
+        const body = header.nextElementSibling;
+        body.classList.toggle('open');
+    };
+
+    window.updateItem = function(id, field, value) {
+        const item = menuItems.find(i => i.id === id);
+        if (item) item[field] = value;
+    };
+
+    window.removeItem = function(id) {
+        menuItems = menuItems.filter(i => i.id !== id);
+        // Re-parent children of removed item
+        menuItems.forEach(i => {
+            if (i.parentId === id) i.parentId = null;
+        });
+        renderItems();
+    };
+
+    window.addCustomLink = function() {
+        const title = document.getElementById('custom-title').value.trim();
+        const url = document.getElementById('custom-url').value.trim();
+        const target = document.getElementById('custom-target').value;
+        if (!title) { alert(i18n.titleRequired); return; }
+        if (!url) { alert(i18n.urlRequired); return; }
+
+        menuItems.push({
+            id: nextTempId++,
+            parentId: null,
+            title: title,
+            url: url,
+            target: target,
+            contentId: null,
+            sortOrder: menuItems.length
+        });
+        renderItems();
+        document.getElementById('custom-title').value = '';
+        document.getElementById('custom-url').value = '/';
+    };
+
+    window.addContentItems = function() {
+        const checkboxes = document.querySelectorAll('.content-item-cb:checked');
+        checkboxes.forEach(cb => {
+            menuItems.push({
+                id: nextTempId++,
+                parentId: null,
+                title: cb.dataset.title,
+                url: cb.dataset.url,
+                target: '_self',
+                contentId: parseInt(cb.dataset.contentId) || null,
+                sortOrder: menuItems.length
+            });
+            cb.checked = false;
+        });
+        renderItems();
+    };
+
+    window.saveMenuItems = function() {
+        const tree = buildTree(menuItems);
+        const flat = flattenTree(tree, null);
+
+        fetch('/admin/menus/' + MENU_ID + '/items', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(flat)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showToast(i18n.itemsSaved, 'success');
+            } else {
+                showToast(i18n.saveFailedPrefix + (data.error || i18n.unknownError), 'error');
+            }
+        })
+        .catch(err => showToast(i18n.saveFailedPrefix + err.message, 'error'));
+    };
+
+    // Simple drag/drop reorder
+    let dragSrcEl = null;
+
+    function attachDragEvents() {
+        document.querySelectorAll('.menu-item').forEach(el => {
+            el.addEventListener('dragstart', handleDragStart);
+            el.addEventListener('dragover', handleDragOver);
+            el.addEventListener('drop', handleDrop);
+            el.addEventListener('dragend', handleDragEnd);
+        });
+    }
+
+    function handleDragStart(e) {
+        dragSrcEl = this;
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', this.dataset.id);
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        if (dragSrcEl === this) return;
+
+        const dragId = parseInt(e.dataTransfer.getData('text/plain'));
+        const dropId = parseInt(this.dataset.id);
+
+        // Simple reorder: move drag item before drop item
+        const dragIdx = menuItems.findIndex(i => i.id === dragId);
+        const dropIdx = menuItems.findIndex(i => i.id === dropId);
+        if (dragIdx < 0 || dropIdx < 0) return;
+
+        const [item] = menuItems.splice(dragIdx, 1);
+        // If dropping on a child container area (right side), make it a child
+        const rect = this.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left;
+        if (offsetX > 40) {
+            item.parentId = dropId;
+        } else {
+            item.parentId = menuItems[dropIdx] ? menuItems[dropIdx].parentId : null;
+        }
+        menuItems.splice(dropIdx, 0, item);
+        renderItems();
+    }
+
+    function handleDragEnd() {
+        this.classList.remove('dragging');
+        dragSrcEl = null;
+    }
+
+    // Initial render
+    renderItems();
+})();
+</script>
+{{end}}

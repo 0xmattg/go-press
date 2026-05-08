@@ -1,0 +1,56 @@
+{{define "footer"}}
+<footer class="as-footer">
+    <div class="as-container">
+        <section class="as-footer-cta">
+            <img src="{{settingOr .Settings "footer_cta_image" "/static/images/atelier-hero.svg"}}" alt="" loading="lazy">
+            <div>
+                <p class="as-kicker">{{settingOr .Settings "footer_cta_label" "Next brief"}}</p>
+                <h2>{{settingOr .Settings "footer_cta_title" "Digital products, creative systems, and immersive launches."}}</h2>
+                <a class="as-btn as-btn-light" href="{{langPrefixURL $.Ctx "/contact"}}">{{settingOr .Settings "footer_cta_button" "Start Today"}} <span>↗</span></a>
+            </div>
+        </section>
+        <div class="as-footer-grid">
+            <div>
+                <div class="as-footer-brand">
+                    {{$combined := eq (settingOr .Settings "home_logo_combined" "") "1"}}
+                    {{$footerCombined := settingOr .Settings "home_logo_combined_footer_image" ""}}
+                    {{$headerCombined := settingOr .Settings "home_logo_combined_image" ""}}
+                    {{$combinedImage := $footerCombined}}
+                    {{if not $combinedImage}}{{$combinedImage = $headerCombined}}{{end}}
+                    {{if and $combined $combinedImage}}
+                    <img class="as-brand-combined" src="{{$combinedImage}}" alt="{{settingOr .Settings "home_logo_text" "Atelier Slate"}}">
+                    {{else}}
+                    <span class="as-brand-mark">{{settingOr .Settings "home_logo_glyph" "A"}}</span>
+                    <span>{{settingOr .Settings "home_logo_text" "Atelier Slate"}}</span>
+                    {{end}}
+                </div>
+                <p>{{settingOr .Settings "company_description" "A digital guild for founders who need strategy, design, content, and launch systems to move as one."}}</p>
+                {{$socialLinks := socialLinks .Settings}}
+                {{if $socialLinks}}
+                <div class="as-social">
+                    {{range $socialLinks}}
+                    <a href="{{.URL}}" {{if .External}}target="_blank" rel="noopener"{{end}} {{if .Title}}title="{{.Title}}"{{end}} aria-label="{{.Label}}">{{.Icon}}</a>
+                    {{end}}
+                </div>
+                {{end}}
+            </div>
+            <div>
+                <h3>{{T $.Ctx "footer_section_contact"}}</h3>
+                <p>{{settingOr .Settings "company_email" "hello@atelier.example"}}</p>
+                <p>{{settingOr .Settings "company_phone" "+1 415 000 0198"}}</p>
+                <p>{{settingOr .Settings "company_address" "Remote studio · Shanghai / San Francisco"}}</p>
+            </div>
+            <div>
+                <h3>{{T $.Ctx "footer_section_latest_news"}}</h3>
+                {{range .RecentPosts}}
+                <a class="as-footer-link" href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{.Title}}</a>
+                {{end}}
+            </div>
+        </div>
+        <div class="as-footer-bottom">
+            <span>{{settingOr .Settings "footer_text" "© 2026 Atelier Slate. All rights reserved."}}</span>
+            <span>01 / 04</span>
+        </div>
+    </div>
+</footer>
+{{end}}

@@ -1,0 +1,41 @@
+{{define "content"}}
+<section class="ff-page-hero ff-page-hero-contact" style="--hero-bg:url('https://images.unsplash.com/photo-1556761175-b413da4baf72?w=1600&h=820&fit=crop&q=82');">
+    <span class="ff-hero-ghost">CONTACT</span>
+    <div class="ff-page-hero-inner">
+        <span class="ff-kicker">{{T $.Ctx "page_label_contact"}}</span>
+        <h1>{{T $.Ctx "page_title_contact"}}</h1>
+        <span class="ff-hero-rule"></span>
+        <p>Talk to FloraFi about treasury, payments, and developer integrations.</p>
+        <div class="ff-breadcrumb"><a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a><span>/</span><span>{{T $.Ctx "page_title_contact"}}</span></div>
+    </div>
+</section>
+
+<section class="ff-section">
+    <div class="ff-contact-grid">
+        <aside class="ff-contact-side">
+            <div class="ff-side-card ff-contact-card"><span class="ff-card-icon">◎</span><h3>{{T $.Ctx "contact_card_address"}}</h3><p>{{.Settings.company_address}}</p></div>
+            <div class="ff-side-card ff-contact-card"><span class="ff-card-icon">◇</span><h3>{{T $.Ctx "contact_card_email"}}</h3><p>{{.Settings.company_email}}</p></div>
+            <div class="ff-side-card ff-contact-card"><span class="ff-card-icon">↔</span><h3>{{T $.Ctx "contact_card_phone"}}</h3><p>{{.Settings.company_phone}}</p></div>
+        </aside>
+
+        <div class="ff-form-card">
+            <span class="ff-kicker">{{T $.Ctx "btn_send_message"}}</span>
+            <h2>Start the conversation</h2>
+            <p>Share your use case and the FloraFi team will follow up with the most relevant workflow.</p>
+
+            {{if .Success}}<div class="ff-alert ff-alert-success">{{T $.Ctx "msg_contact_success"}}</div>{{end}}
+            {{if .Error}}<div class="ff-alert ff-alert-error">{{.Error}}</div>{{end}}
+
+            <form action="/contact" method="POST" class="ff-contact-form" id="contact-form">
+                <div class="ff-form-row">
+                    <label for="name">{{T $.Ctx "form_label_name"}}<input type="text" id="name" name="name" required maxlength="100" placeholder="{{T $.Ctx "form_placeholder_name"}}"></label>
+                    <label for="email">{{T $.Ctx "form_label_email"}}<input type="email" id="email" name="email" required maxlength="255" placeholder="{{T $.Ctx "form_placeholder_email"}}"></label>
+                </div>
+                <label for="phone">{{T $.Ctx "form_label_phone"}}<input type="tel" id="phone" name="phone" maxlength="50" placeholder="{{T $.Ctx "form_placeholder_phone"}}"></label>
+                <label for="message">{{T $.Ctx "form_label_message"}}<textarea id="message" name="message" rows="6" required maxlength="2000" placeholder="{{T $.Ctx "form_placeholder_message"}}"></textarea></label>
+                <button type="submit" class="ff-pill-btn">{{T $.Ctx "btn_send_message"}} <span>→</span></button>
+            </form>
+        </div>
+    </div>
+</section>
+{{end}}

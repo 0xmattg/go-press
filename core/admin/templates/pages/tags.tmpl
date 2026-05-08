@@ -1,0 +1,63 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>标签管理</h2>
+</div>
+
+{{if can .CurrentRole "tag" "create"}}
+<div class="card">
+    <div class="card-header"><h3>新建标签</h3></div>
+    <form method="POST" action="/admin/tags" class="inline-create-form">
+        <div class="form-row">
+            <div class="form-group">
+                <input type="text" name="name" placeholder="标签名称" required>
+            </div>
+            <div class="form-group">
+                <input type="text" name="slug" placeholder="slug" required>
+            </div>
+            <button type="submit" class="btn btn-primary">添加</button>
+        </div>
+    </form>
+</div>
+{{end}}
+
+<div class="card">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>名称</th>
+                <th>Slug</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Items}}
+            <tr>
+                <td>{{.ID}}</td>
+                <td>
+                    {{if can $.CurrentRole "tag" "update"}}
+                    <form method="POST" action="/admin/tags/{{.ID}}/edit" class="inline-edit-form">
+                        <input type="text" name="name" value="{{.Name}}" class="inline-input">
+                        <input type="text" name="slug" value="{{.Slug}}" class="inline-input">
+                        <button type="submit" class="btn btn-sm">保存</button>
+                    </form>
+                    {{else}}
+                    {{.Name}}
+                    {{end}}
+                </td>
+                <td>{{if not (can $.CurrentRole "tag" "update")}}<code>{{.Slug}}</code>{{end}}</td>
+                <td class="actions">
+                    {{if can $.CurrentRole "tag" "delete"}}
+                    <form method="POST" action="/admin/tags/{{.ID}}/delete" class="inline-form">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确认删除?')">删除</button>
+                    </form>
+                    {{end}}
+                </td>
+            </tr>
+            {{else}}
+            <tr><td colspan="4" class="empty-msg">暂无标签</td></tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}

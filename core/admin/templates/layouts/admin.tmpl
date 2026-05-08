@@ -1,0 +1,138 @@
+{{define "admin"}}<!DOCTYPE html>
+<html lang="{{.AdminLanguage}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - {{.SiteName}} CMS</title>
+    <link rel="stylesheet" href="/static/admin/css/admin.css?v=42">
+</head>
+<body class="admin-body">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="/admin/" class="brand-link">
+                <span class="brand-title" title="{{.SiteName}}">{{.SiteName}}</span>
+            </a>
+        </div>
+        <nav class="sidebar-nav">
+            {{range .MenuItems}}
+                {{if .Section}}
+                    <div class="nav-section">
+                        <span class="nav-section-label">{{.Section}}</span>
+                    </div>
+                {{else}}
+                    <a href="{{.URL}}" class="nav-link{{if eq $.Active .Active}} active{{end}}">
+                        <span class="nav-icon">{{safeHTML .Icon}}</span>
+                        <span class="nav-label">{{.Label}}</span>
+                    </a>
+                {{end}}
+            {{end}}
+        </nav>
+        <div class="sidebar-version">GoPress v{{.GoPressVersion}}</div>
+    </aside>
+
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+            <div class="topbar-title">{{.Title}}</div>
+            <div class="topbar-user">
+                <span class="user-name">{{.CurrentUser}}</span>
+                <span class="user-role">({{roleDisplayFor . .CurrentRole}})</span>
+                <a href="/" class="topbar-link" target="_blank">{{T . "topbar.view_site"}}</a>
+                <a href="/admin/logout" class="topbar-link logout">{{T . "topbar.logout"}}</a>
+            </div>
+        </header>
+
+        {{if .Success}}
+        <div class="alert alert-success">{{.Success}}</div>
+        {{end}}
+        {{if .Error}}
+        <div class="alert alert-error">{{.Error}}</div>
+        {{end}}
+
+        <div class="admin-content">
+            {{template "content" .}}
+        </div>
+    </main>
+
+    <div class="admin-progress-overlay" id="adminProgressOverlay" hidden aria-live="polite" aria-busy="true">
+        <div class="admin-progress-card" role="status" aria-labelledby="adminProgressTitle">
+            <div class="admin-progress-title" id="adminProgressTitle">{{T . "progress.working_title"}}</div>
+            <div class="admin-progress-message" id="adminProgressMessage">{{T . "progress.working_message"}}</div>
+            <div class="admin-progress-track" aria-hidden="true">
+                <div class="admin-progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Media Picker Modal (global) -->
+    <div class="modal-overlay" id="mediaPickerModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3>{{T . "action.pick"}}</h3>
+                <button type="button" class="modal-close" onclick="closeMediaPicker()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-upload-bar">
+                    <label class="btn btn-sm btn-primary" style="cursor:pointer">
+                        {{T . "action.upload_new_image"}}
+                        <input type="file" id="modalUploadInput" accept="image/*" style="display:none" onchange="modalUploadFile(this)">
+                    </label>
+                    <span class="upload-status" id="modalUploadStatus"></span>
+                </div>
+                <div class="media-picker-grid" id="mediaPickerGrid">
+                    <div class="media-picker-loading">{{T . "status.loading"}}</div>
+                </div>
+                <div class="media-picker-pagination" id="mediaPickerPagination" aria-label="{{T . "nav.media"}}"></div>
+                <div id="mediaPickerMetaPanel" style="display:none; margin-top:1rem; padding:0.75rem; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px;">
+                    <div style="font-size:0.85rem; font-weight:600; color:#475569; margin-bottom:0.5rem;">{{T . "media.edit_image_info"}}</div>
+                    <div class="form-group" style="margin-bottom:0.5rem;">
+                        <label style="font-size:0.8rem;">Alt Text <span style="color:#94a3b8; font-weight:normal;">({{T . "media.alt_help"}})</span></label>
+                        <input type="text" id="mediaPickerAlt" class="form-control" style="font-size:0.85rem;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0.5rem;">
+                        <label style="font-size:0.8rem;">Title</label>
+                        <input type="text" id="mediaPickerTitle" class="form-control" style="font-size:0.85rem;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label style="font-size:0.8rem;">Caption <span style="color:#94a3b8; font-weight:normal;">({{T . "media.caption_help"}})</span></label>
+                        <textarea id="mediaPickerCaption" class="form-control" rows="2" style="font-size:0.85rem;"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn" onclick="closeMediaPicker()">{{T . "action.cancel"}}</button>
+                <button type="button" class="btn btn-primary" id="mediaPickerConfirm" disabled onclick="confirmMediaPicker()">{{T . "action.pick"}}</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    window.GoPressAdminI18n = {
+        noMatches: {{jsT . "status.no_matches"}},
+        orderSaved: {{jsT . "status.order_saved"}},
+        orderSaveFailed: {{jsT . "status.order_save_failed"}},
+        loading: {{jsT . "status.loading"}},
+        loadFailed: {{jsT . "status.load_failed"}},
+        featured: {{jsT . "media.featured"}},
+        remove: {{jsT . "action.remove"}},
+        setFeatured: {{jsT . "content.set_featured_image"}},
+        addImage: {{jsT . "content.add_image"}},
+        uploadFailed: {{jsT . "media.upload_failed"}},
+        uploadSuccess: {{jsT . "media.upload_success"}},
+        uploading: {{jsT . "media.uploading"}},
+        emptyUploadFirst: {{jsT . "media.empty_upload_first"}},
+        totalImages: {{jsT . "media.total_images"}},
+        pageInfo: {{jsT . "media.page_info"}},
+        previousPage: {{jsT . "action.previous_page"}},
+        nextPage: {{jsT . "action.next_page"}},
+        sitemapGenerating: {{jsT . "sitemap.generating"}},
+        sitemapGenerated: {{jsT . "sitemap.generated"}},
+        generateSitemap: {{jsT . "action.generate_sitemap"}},
+        requestFailed: {{jsT . "error.request_failed"}},
+        progressWorkingTitle: {{jsT . "progress.working_title"}},
+        progressWorkingMessage: {{jsT . "progress.working_message"}}
+    };
+    </script>
+    <script src="/static/admin/js/admin.js?v=11"></script>
+</body>
+</html>{{end}}

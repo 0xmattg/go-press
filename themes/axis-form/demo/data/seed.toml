@@ -1,0 +1,530 @@
+# ============================================================
+# GoPress Seed Data - Axis Form architecture studio demo
+# ============================================================
+
+# ---------- Site Settings ----------
+[[settings]]
+key   = "site_name"
+value = "Axis Form"
+
+[[settings]]
+key   = "site_description"
+value = "Architecture, interiors, planning, and project management for enduring modern spaces."
+
+[[settings]]
+key   = "company_name"
+value = "Axis Form"
+
+[[settings]]
+key   = "company_email"
+value = "studio@axisform.example"
+
+[[settings]]
+key   = "company_phone"
+value = "+1 212 555 0188"
+
+[[settings]]
+key   = "company_address"
+value = "125 Mercer Street, New York, NY"
+
+[[settings]]
+key   = "company_description"
+value = "Axis Form designs modern architecture and interiors with a restrained visual language, careful material choices, and practical delivery discipline."
+
+[[settings]]
+key   = "footer_text"
+value = "© 2026 Axis Form. Architecture designed to endure."
+
+[[settings]]
+key   = "home_logo_text"
+value = "Axis Form"
+
+[[settings]]
+key   = "home_logo_image"
+value = ""
+
+[[settings]]
+key   = "nav_about"
+value = "About Us"
+
+[[settings]]
+key   = "nav_services"
+value = "Our Services"
+
+[[settings]]
+key   = "nav_showcase"
+value = "Portfolio"
+
+[[settings]]
+key   = "nav_process"
+value = "Process"
+
+[[settings]]
+key   = "nav_contact"
+value = "Contacts"
+
+[[settings]]
+key   = "home_hero_title"
+value = "Designing Spaces That Inspire & Endure"
+
+[[settings]]
+key   = "home_hero_subtitle"
+value = "We transform visions into timeless architecture, blending innovative design with functional excellence."
+
+[[settings]]
+key   = "home_hero_btn_text"
+value = "Schedule a Free Consultation"
+
+[[settings]]
+key   = "home_hero_btn_link"
+value = "/contact"
+
+[[settings]]
+key   = "home_about_title"
+value = "About Company"
+
+[[settings]]
+key   = "home_about_desc"
+value = "At Axis Form, we believe that architecture is more than just buildings; it is about creating environments that enhance human experience."
+
+[[settings]]
+key   = "home_stat_1_number"
+value = "25+"
+
+[[settings]]
+key   = "home_stat_1_label"
+value = "Years of Excellence in Architecture & Design"
+
+[[settings]]
+key   = "home_stat_2_number"
+value = "500+"
+
+[[settings]]
+key   = "home_stat_2_label"
+value = "Projects Successfully Completed"
+
+[[settings]]
+key   = "home_stat_3_number"
+value = "98%"
+
+[[settings]]
+key   = "home_stat_3_label"
+value = "Our Client Retention Rate"
+
+[[settings]]
+key   = "home_stat_4_number"
+value = "15+"
+
+[[settings]]
+key   = "home_stat_4_label"
+value = "Countries with Our Projects"
+
+[[settings]]
+key   = "home_services_title"
+value = "Services we provide"
+
+[[settings]]
+key   = "home_services_max"
+value = "4"
+
+[[settings]]
+key   = "home_showcase_title"
+value = "Our Portfolio of Pioneering Design"
+
+[[settings]]
+key   = "home_showcase_subtitle"
+value = "Explore our selected works that demonstrate our commitment to design excellence, innovation, and client satisfaction."
+
+[[settings]]
+key   = "home_showcase_btn"
+value = "See More Projects"
+
+[[settings]]
+key   = "home_showcases_max"
+value = "4"
+
+[[settings]]
+key   = "about_banner_title"
+value = "Architecture that makes everyday space feel considered."
+
+[[settings]]
+key   = "about_banner_subtitle"
+value = "Axis Form is a studio for homes, hospitality, and workplace environments shaped by restraint, materiality, and long-term use."
+
+[[settings]]
+key   = "about_intro_image"
+value = "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1200&h=900&fit=crop&q=82"
+
+[[settings]]
+key   = "about_intro_label"
+value = "Studio Ethos"
+
+[[settings]]
+key   = "about_intro_title"
+value = "We design quiet spaces with strong intent."
+
+[[settings]]
+key   = "about_intro_p1"
+value = "Our work begins with listening: to clients, sites, light, climate, budgets, and the routines that define how spaces are used."
+
+[[settings]]
+key   = "about_intro_p2"
+value = "From concept studies to construction administration, we keep every decision aligned with atmosphere, function, and durability."
+
+[[settings]]
+key   = "about_intro_btn_text"
+value = "Start a Conversation"
+
+[[settings]]
+key   = "about_stat_1_number"
+value = "25+"
+
+[[settings]]
+key   = "about_stat_1_label"
+value = "Years shaping residences and hospitality spaces"
+
+[[settings]]
+key   = "about_stat_2_number"
+value = "500+"
+
+[[settings]]
+key   = "about_stat_2_label"
+value = "Projects completed from concept to handover"
+
+[[settings]]
+key   = "about_stat_3_number"
+value = "98%"
+
+[[settings]]
+key   = "about_stat_3_label"
+value = "Client retention across multi-phase work"
+
+[[settings]]
+key   = "about_stat_4_number"
+value = "15+"
+
+[[settings]]
+key   = "about_stat_4_label"
+value = "Countries represented in our project archive"
+
+[[settings]]
+key   = "contact_title"
+value = "Tell us about the space you want to shape."
+
+[[settings]]
+key   = "contact_subtitle"
+value = "Send a note about your site, goals, timeline, and budget. We will respond with next steps."
+
+# ---------- Categories ----------
+[[categories]]
+name = "Residential Architecture"
+slug = "cat-residential-architecture"
+
+[[categories]]
+name = "Hospitality Design"
+slug = "cat-hospitality-design"
+
+[[categories]]
+name = "Workplace Design"
+slug = "cat-workplace-design"
+
+[[categories]]
+name = "Studio Notes"
+slug = "cat-studio-notes"
+
+# ---------- Tags ----------
+[[tags]]
+name = "Modern Homes"
+slug = "tag-modern-homes"
+
+[[tags]]
+name = "Interiors"
+slug = "tag-interiors"
+
+[[tags]]
+name = "Urban Planning"
+slug = "tag-urban-planning"
+
+[[tags]]
+name = "Materials"
+slug = "tag-materials"
+
+[[tags]]
+name = "Delivery"
+slug = "tag-delivery"
+
+# ============================================================
+# PROCESS MODULES
+# ============================================================
+
+[[contents]]
+type        = "product"
+title       = "Discovery Brief"
+slug        = "discovery-brief"
+image_url   = "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1000&h=720&fit=crop&q=82"
+sort_order  = 1
+category    = "cat-studio-notes"
+tags        = ["tag-delivery", "tag-modern-homes"]
+excerpt     = "We map site constraints, client rituals, budget, timeline, and the emotional tone the space should carry."
+description = "Discovery Brief turns early ambition into a clear design foundation."
+content     = """<h3>Purpose</h3>
+<p>The first phase gathers the site story, spatial ambitions, approvals path, budget frame, and operational needs that will shape every later decision.</p>
+<h3>Deliverables</h3>
+<ul>
+<li>Client interview and site-read summary</li>
+<li>Project goals, risks, and approval assumptions</li>
+<li>Early program, area, and budget outline</li>
+</ul>"""
+
+[[contents]]
+type        = "product"
+title       = "Concept Design"
+slug        = "concept-design"
+image_url   = "https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=1000&h=720&fit=crop&q=82"
+sort_order  = 2
+category    = "cat-residential-architecture"
+tags        = ["tag-modern-homes", "tag-materials"]
+excerpt     = "Mass, light, circulation, and atmosphere are tested through restrained visual studies and practical options."
+description = "Concept Design establishes the architecture's spatial direction."
+content     = """<h3>Design direction</h3>
+<p>We test volume, material mood, facade rhythm, daylight, landscape transitions, and interior sequence before the project becomes fixed.</p>
+<h3>Outputs</h3>
+<ul>
+<li>Concept plans, sketches, and reference boards</li>
+<li>Key spatial and material options</li>
+<li>Review-ready design narrative</li>
+</ul>"""
+
+[[contents]]
+type        = "product"
+title       = "Design Development"
+slug        = "design-development"
+image_url   = "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=1000&h=720&fit=crop&q=82"
+sort_order  = 3
+category    = "cat-workplace-design"
+tags        = ["tag-interiors", "tag-materials"]
+excerpt     = "The selected concept becomes coordinated drawings, material palettes, lighting logic, and buildable detail."
+description = "Design Development gives the project its technical and material clarity."
+content     = """<h3>Coordination</h3>
+<p>Architecture, interiors, structure, services, lighting, and procurement are aligned so the design can be priced, reviewed, and built with confidence.</p>
+<h3>Focus areas</h3>
+<ul>
+<li>Detailed plans, elevations, and sections</li>
+<li>Material, fixture, and lighting schedules</li>
+<li>Coordination with consultants and makers</li>
+</ul>"""
+
+[[contents]]
+type        = "product"
+title       = "Delivery & Handover"
+slug        = "delivery-handover"
+image_url   = "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1000&h=720&fit=crop&q=82"
+sort_order  = 4
+category    = "cat-studio-notes"
+tags        = ["tag-delivery", "tag-urban-planning"]
+excerpt     = "Site reviews, contractor coordination, and closeout documentation keep the finished space true to the design."
+description = "Delivery & Handover protects design intent through construction."
+content     = """<h3>On site</h3>
+<p>During construction we help teams resolve field questions, review progress, and maintain alignment between craft, cost, and schedule.</p>
+<h3>Handover</h3>
+<ul>
+<li>Site observation notes and review records</li>
+<li>Material and finish verification</li>
+<li>Closeout package and future-care guidance</li>
+</ul>"""
+
+# ============================================================
+# SERVICES
+# ============================================================
+
+[[contents]]
+type        = "service"
+title       = "Arch Design"
+slug        = "arch-design"
+image_url   = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&h=760&fit=crop&q=84"
+sort_order  = 1
+category    = "cat-residential-architecture"
+tags        = ["tag-modern-homes", "tag-materials"]
+excerpt     = "From initial concept development and schematic design to complete architectural documentation."
+description = "Arch Design covers residential, hospitality, and workplace architecture from early feasibility through coordinated documentation."
+content     = """<p>Our architecture service balances proportion, daylight, structure, landscape, and long-term use. Each project is designed as a complete sequence rather than a collection of decorative moments.</p>
+<p>We create concept studies, planning diagrams, permit-ready drawings, facade strategies, and coordinated detail packages for builders and client teams.</p>"""
+
+[[contents]]
+type        = "service"
+title       = "Interior Design"
+slug        = "interior-design"
+image_url   = "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=900&h=650&fit=crop&q=82"
+sort_order  = 2
+category    = "cat-hospitality-design"
+tags        = ["tag-interiors", "tag-materials"]
+excerpt     = "Creating cohesive interior spaces that reflect your style, routines, and operational needs."
+description = "Interior Design turns architecture into lived atmosphere through materiality, lighting, furniture, and tactile detail."
+content     = """<p>We design interiors that feel calm, practical, and highly resolved. The work includes spatial planning, finish palettes, furniture strategy, lighting coordination, and millwork design.</p>
+<p>For hospitality and residential clients, we focus on spaces that age well and support repeated daily use without losing their visual discipline.</p>"""
+
+[[contents]]
+type        = "service"
+title       = "Urban Planning"
+slug        = "urban-planning"
+image_url   = "https://images.unsplash.com/photo-1494526585095-c41746248156?w=900&h=650&fit=crop&q=82"
+sort_order  = 3
+category    = "cat-residential-architecture"
+tags        = ["tag-urban-planning", "tag-modern-homes"]
+excerpt     = "Designing the spaces between buildings and outdoors so architecture belongs to its site."
+description = "Urban Planning connects individual buildings to landscape, movement, access, public edges, and neighborhood scale."
+content     = """<p>We study arrival, privacy, landscape thresholds, circulation, and shared outdoor space so each project can sit naturally within a broader context.</p>
+<p>The output can include site frameworks, access studies, placemaking concepts, and planning narratives for approval teams.</p>"""
+
+[[contents]]
+type        = "service"
+title       = "Project Management"
+slug        = "project-management"
+image_url   = "https://images.unsplash.com/photo-1552664730-d307ca884978?w=900&h=650&fit=crop&q=82"
+sort_order  = 4
+category    = "cat-workplace-design"
+tags        = ["tag-delivery", "tag-interiors"]
+excerpt     = "Overseeing and controlling the entire construction process with clear reviews and practical coordination."
+description = "Project Management keeps design intent, cost, schedule, procurement, and site questions moving as one aligned workflow."
+content     = """<p>We coordinate with client representatives, consultants, makers, and contractors to reduce uncertainty through the build phase.</p>
+<p>Our role includes schedule reviews, meeting notes, issue tracking, procurement coordination, and design intent checks during construction.</p>"""
+
+# ============================================================
+# PORTFOLIO
+# ============================================================
+
+[[contents]]
+type        = "showcase"
+title       = "New York Office"
+slug        = "new-york-office"
+image_url   = "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1000&h=760&fit=crop&q=82"
+sort_order  = 1
+category    = "cat-workplace-design"
+tags        = ["tag-interiors", "tag-delivery"]
+excerpt     = "A warm workplace interior organized around focus rooms, soft meeting zones, and a quiet material palette."
+description = "Axis Form reworked a compact office floor into a sequence of focused work rooms, lounge thresholds, and client-facing meeting spaces."
+content     = """<p>The workplace needed to feel composed without becoming sterile. We used dark metal, warm timber, soft upholstery, and planted thresholds to create useful variation across a modest footprint.</p>
+<p>Planning emphasized sightline control, acoustic privacy, and a flexible front-of-house area that can shift between presentations and informal gatherings.</p>"""
+[contents.meta]
+client   = "Mercer Studio"
+location = "New York, United States"
+
+[[contents]]
+type        = "showcase"
+title       = "Commercial Restaurant"
+slug        = "commercial-restaurant"
+image_url   = "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=1000&h=760&fit=crop&q=82"
+sort_order  = 2
+category    = "cat-hospitality-design"
+tags        = ["tag-interiors", "tag-materials"]
+excerpt     = "A layered restaurant interior with soft lighting, intimate tables, and a disciplined hospitality flow."
+description = "The restaurant pairs functional service planning with a cinematic dining room atmosphere."
+content     = """<p>The brief called for an interior that could handle busy service while preserving an intimate evening mood. We designed circulation, lighting, and seating as one continuous operating system.</p>
+<p>Custom millwork, warm stone, dark steel, and low-glare fixtures create a hospitality environment that feels refined without being fragile.</p>"""
+[contents.meta]
+client   = "Rook House"
+location = "Chicago, United States"
+
+[[contents]]
+type        = "showcase"
+title       = "Hotel Rooms"
+slug        = "hotel-rooms"
+image_url   = "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=1000&h=760&fit=crop&q=82"
+sort_order  = 3
+category    = "cat-hospitality-design"
+tags        = ["tag-interiors", "tag-materials"]
+excerpt     = "Compact guest rooms shaped by tactile materials, efficient storage, and warm evening light."
+description = "A boutique hotel room package designed for comfort, repeatability, and simple maintenance."
+content     = """<p>The rooms use a compact material palette: textured wall finishes, warm timber, linen upholstery, and focused task lighting. Every element was selected for guest comfort and operational durability.</p>
+<p>We coordinated headboards, storage, lighting, and bathroom thresholds to create a calm arrival sequence within a tight footprint.</p>"""
+[contents.meta]
+client   = "Northline Hotel"
+location = "Austin, United States"
+
+[[contents]]
+type        = "showcase"
+title       = "Private House"
+slug        = "private-house"
+image_url   = "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?w=1000&h=760&fit=crop&q=82"
+sort_order  = 4
+category    = "cat-residential-architecture"
+tags        = ["tag-modern-homes", "tag-materials"]
+excerpt     = "A modern home with deep overhangs, framed woodland views, and quiet indoor-outdoor transitions."
+description = "A private residence designed around privacy, landscape, and the changing quality of light through the day."
+content     = """<p>The house sits low against its wooded site, using deep roof lines and dark exterior planes to frame the landscape. Interior rooms open gradually, revealing views without sacrificing privacy.</p>
+<p>Material choices were kept restrained: stone, glass, timber, and dark metal details that can sit comfortably with the surrounding trees.</p>"""
+[contents.meta]
+client   = "Private Client"
+location = "Hudson Valley, United States"
+
+[[contents]]
+type        = "showcase"
+title       = "Courtyard Gallery"
+slug        = "courtyard-gallery"
+image_url   = "https://images.unsplash.com/photo-1518005020951-eccb494ad742?w=1000&h=760&fit=crop&q=82"
+sort_order  = 5
+category    = "cat-workplace-design"
+tags        = ["tag-urban-planning", "tag-materials"]
+excerpt     = "A small cultural workspace organized around a planted courtyard and flexible exhibition rooms."
+description = "A gallery and studio hybrid where outdoor space becomes the project's organizing device."
+content     = """<p>The courtyard creates daylight, orientation, and a quiet pause between gallery rooms. The building edges are simple so art, planting, and visitors carry the atmosphere.</p>
+<p>Flexible rooms support exhibitions, workshops, client previews, and internal studio sessions without extensive reconfiguration.</p>"""
+[contents.meta]
+client   = "Arcade Gallery"
+location = "Lisbon, Portugal"
+
+[[contents]]
+type        = "showcase"
+title       = "Woodland Villa"
+slug        = "woodland-villa"
+image_url   = "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=1000&h=760&fit=crop&q=82"
+sort_order  = 6
+category    = "cat-residential-architecture"
+tags        = ["tag-modern-homes", "tag-interiors"]
+excerpt     = "A quiet retreat where expansive glazing, soft interiors, and landscape paths work as one experience."
+description = "A residential retreat that combines a strong architectural silhouette with understated interiors."
+content     = """<p>The villa is designed as a sequence of framed views and protected outdoor rooms. Large glass walls bring the landscape close while deep roof edges protect the interior from glare.</p>
+<p>Inside, low furniture, neutral textiles, and tactile surfaces let the surrounding site remain the main visual event.</p>"""
+[contents.meta]
+client   = "Private Client"
+location = "British Columbia, Canada"
+
+# ============================================================
+# JOURNAL
+# ============================================================
+
+[[contents]]
+type        = "post"
+title       = "Designing Homes Around Daily Rituals"
+slug        = "designing-homes-around-daily-rituals"
+image_url   = "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=1000&h=720&fit=crop&q=82"
+sort_order  = 1
+category    = "cat-studio-notes"
+tags        = ["tag-modern-homes", "tag-interiors"]
+excerpt     = "Enduring homes begin with routine: arrival, light, cooking, quiet, storage, work, gathering, and retreat."
+content     = """<p>Residential design becomes stronger when the first conversation is not about style, but about daily rituals. The most useful homes make repeated actions feel natural and calm.</p>
+<p>At Axis Form we map mornings, work hours, hosting patterns, storage needs, and evening transitions before choosing a formal direction. This keeps the final architecture tied to lived behavior.</p>"""
+
+[[contents]]
+type        = "post"
+title       = "Material Palettes for Warm Minimalism"
+slug        = "material-palettes-for-warm-minimalism"
+image_url   = "https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=1000&h=720&fit=crop&q=82"
+sort_order  = 2
+category    = "cat-studio-notes"
+tags        = ["tag-materials", "tag-interiors"]
+excerpt     = "Warm minimalism depends on texture, proportion, and light rather than empty rooms or decorative excess."
+content     = """<p>Minimal spaces can feel generous when materials do more than fill a specification sheet. Grain, weave, stone movement, patina, and indirect light create atmosphere without clutter.</p>
+<p>The discipline is in choosing fewer surfaces and letting them work harder across touch, reflection, durability, and maintenance.</p>"""
+
+[[contents]]
+type        = "post"
+title       = "Why Project Management Belongs in Design"
+slug        = "why-project-management-belongs-in-design"
+image_url   = "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1000&h=720&fit=crop&q=82"
+sort_order  = 3
+category    = "cat-studio-notes"
+tags        = ["tag-delivery", "tag-urban-planning"]
+excerpt     = "Design intent survives construction when coordination, cost checks, and site decisions are treated as part of design work."
+content     = """<p>A beautiful concept can lose coherence if delivery is treated as a separate administrative phase. Site questions, procurement substitutions, schedule pressure, and budget choices all reshape the final space.</p>
+<p>That is why Axis Form keeps project management close to design leadership. The point is not control for its own sake; it is clarity for everyone building the work.</p>"""

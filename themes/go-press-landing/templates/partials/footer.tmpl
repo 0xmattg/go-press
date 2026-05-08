@@ -1,0 +1,54 @@
+{{define "footer"}}
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <a href="/" class="nav-logo">
+                    {{if settingOr .Settings "home_logo_image" ""}}
+                    {{responsiveImage (settingOr .Settings "home_logo_image" "") (settingOr .Settings "home_logo_text" "NovaPulse") "logo-img" "180px" "lazy"}}
+                    {{else}}
+                    <span class="logo-glyph">{{settingOr .Settings "home_logo_glyph" "N"}}</span>
+                    {{end}}
+                    <span class="logo-text">{{settingOr .Settings "home_logo_text" "NovaPulse"}}</span>
+                </a>
+                <p class="footer-desc">{{settingOr .Settings "home_footer_desc" "Enterprise-grade AI infrastructure for teams that ship fast and scale fearlessly."}}</p>
+            </div>
+            <div class="footer-col">
+                <h4>{{settingOr .Settings "home_footer_col1_title" "Product"}}</h4>
+                <ul>
+                    <li><a href="#features">{{settingOr .Settings "home_nav_1_text" "Features"}}</a></li>
+                    <li><a href="#pricing">{{settingOr .Settings "home_nav_4_text" "Pricing"}}</a></li>
+                    <li><a href="#how-it-works">{{settingOr .Settings "home_nav_2_text" "How It Works"}}</a></li>
+                    <li><a href="#">Changelog</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>{{settingOr .Settings "home_footer_col2_title" "Company"}}</h4>
+                <ul>
+                    <li><a href="#">About</a></li>
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Careers</a></li>
+                    <li><a href="#">Press</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>{{settingOr .Settings "home_footer_col3_title" "Resources"}}</h4>
+                <ul>
+                    <li><a href="#">Documentation</a></li>
+                    <li><a href="#">API Reference</a></li>
+                    <li><a href="#">Status</a></li>
+                    <li><a href="#">Support</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>{{settingOr .Settings "home_footer_copyright" "© 2026 NovaPulse AI. All rights reserved."}}</p>
+            <div class="footer-legal">
+                <a href="#">Privacy</a>
+                <a href="#">Terms</a>
+                <a href="#">Cookies</a>
+            </div>
+        </div>
+    </div>
+</footer>
+{{end}}

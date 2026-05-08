@@ -1,0 +1,22 @@
+{{define "content"}}
+<section class="af-detail-hero">
+    <span>Portfolio</span>
+    <h1>{{.Showcase.Title}}</h1>
+    <p>{{if .Showcase.Location}}{{.Showcase.Location}}{{else}}Selected architectural work by Axis Form.{{end}}</p>
+</section>
+
+<section class="af-detail-layout">
+    <article class="af-detail-card">
+        {{if .Showcase.ImageURL}}<div class="af-detail-media">{{responsiveImagePriority .Showcase.ImageURL .Showcase.Title "" "(max-width: 768px) 100vw, 62vw"}}</div>{{end}}
+        <div class="af-meta-row">
+            {{if .Showcase.Client}}<span><strong>Client</strong>{{.Showcase.Client}}</span>{{end}}
+            {{if .Showcase.Location}}<span><strong>Location</strong>{{.Showcase.Location}}</span>{{end}}
+        </div>
+        <div class="af-richtext">{{safeHTML .Showcase.Description}}</div>
+    </article>
+    <aside class="af-detail-aside">
+        <h3>Related projects</h3>
+        {{range .Related}}<a href="{{langPrefixURL $.Ctx (printf "/showcase/%s" .Slug)}}">{{.Title}} <span>→</span></a>{{end}}
+    </aside>
+</section>
+{{end}}

@@ -1,0 +1,41 @@
+{{define "content"}}
+<section class="ff-page-hero ff-page-hero-products" style="--hero-bg:url('{{if .Product.ImageURL}}{{.Product.ImageURL}}{{else}}https://images.unsplash.com/photo-1640161704729-cbe966a08476?w=1600&h=820&fit=crop&q=82{{end}}');">
+    <span class="ff-hero-ghost">PRODUCT</span>
+    <div class="ff-page-hero-inner">
+        <span class="ff-kicker">{{T $.Ctx "page_label_product_details"}}</span>
+        <h1>{{.Product.Title}}</h1>
+        <span class="ff-hero-rule"></span>
+        <p>{{if .Product.Excerpt}}{{.Product.Excerpt}}{{else}}{{truncate (stripTags .Product.Description) 140}}{{end}}</p>
+        <div class="ff-breadcrumb"><a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a><span>/</span><a href="{{langPrefixURL $.Ctx "/products"}}">{{T $.Ctx "page_title_products"}}</a><span>/</span><span>{{.Product.Title}}</span></div>
+    </div>
+</section>
+
+<section class="ff-section">
+    <div class="ff-detail-shell">
+        <div class="ff-detail-media">
+            {{if .Product.ImageURL}}<img src="{{.Product.ImageURL}}" alt="{{.Product.Title}}">{{else}}<span class="ff-card-icon">◇</span>{{end}}
+        </div>
+        <article class="ff-detail-content">
+            <span class="ff-kicker">FloraFi module</span>
+            <h2>{{.Product.Title}}</h2>
+            <div class="ff-richtext">{{safeHTML .Product.Description}}</div>
+            {{if .Tags}}<div class="ff-chip-cloud">{{range .Tags}}<a href="{{langPrefixURL $.Ctx (printf "/tag/%s" .Slug)}}">{{.Name}}</a>{{end}}</div>{{end}}
+            <div class="ff-action-row">
+                <a class="ff-pill-btn" href="{{langPrefixURL $.Ctx "/contact"}}">{{T $.Ctx "btn_get_quote"}} <span>→</span></a>
+                <a class="ff-outline-btn" href="{{langPrefixURL $.Ctx "/products"}}">{{T $.Ctx "btn_back_products"}}</a>
+            </div>
+        </article>
+    </div>
+</section>
+
+{{if .Related}}
+<section class="ff-section ff-section-tint">
+    <div class="ff-section-heading"><span class="ff-kicker">{{T $.Ctx "section_may_like"}}</span><h2>{{T $.Ctx "section_other_products"}}</h2></div>
+    <div class="ff-product-grid">
+        {{range .Related}}
+        <a class="ff-product-card" href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}"><div class="ff-product-media">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="ff-card-icon">◇</span>{{end}}</div><div class="ff-product-body"><h3>{{.Title}}</h3><p>{{truncate .Excerpt 120}}</p><span class="ff-card-arrow">{{T $.Ctx "btn_view_details"}} →</span></div></a>
+        {{end}}
+    </div>
+</section>
+{{end}}
+{{end}}

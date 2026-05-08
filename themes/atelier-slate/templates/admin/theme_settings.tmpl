@@ -1,0 +1,888 @@
+{{define "content"}}
+<div class="content-header">
+    <div style="display:flex; align-items:center; gap:1rem;">
+        <a href="/admin/themes" class="btn btn-secondary" style="display:inline-flex; align-items:center; gap:0.4rem; text-decoration:none;">
+            ← {{X $ "theme.settings.back" "返回主题管理"}}
+        </a>
+        <h2>{{X $ "theme.settings.title" "%s - 主题设置" .ThemeName}}</h2>
+    </div>
+</div>
+
+<form method="POST" action="/admin/themes/{{.ThemeSlug}}/settings" id="themeSettingsForm">
+
+<!-- Tab Navigation -->
+<div class="ts-tabs">
+    <button type="button" class="ts-tab active" data-tab="company">{{X $ "theme.settings.text.001" "公司信息"}}</button>
+    <button type="button" class="ts-tab" data-tab="color">{{X $ "theme.settings.text.002" "配色方案"}}</button>
+    <button type="button" class="ts-tab" data-tab="brand">{{X $ "theme.settings.text.003" "品牌导航"}}</button>
+    <button type="button" class="ts-tab" data-tab="hero">{{X $ "theme.settings.text.004" "Hero 轮播"}}</button>
+    <button type="button" class="ts-tab" data-tab="about">{{X $ "theme.settings.text.005" "公司简介"}}</button>
+    <button type="button" class="ts-tab" data-tab="stats">{{X $ "theme.settings.text.006" "数据统计"}}</button>
+    <button type="button" class="ts-tab" data-tab="products">{{X $ "theme.settings.text.007" "产品展示"}}</button>
+    <button type="button" class="ts-tab" data-tab="services">{{X $ "theme.settings.text.008" "服务展示"}}</button>
+    <button type="button" class="ts-tab" data-tab="showcase-page">{{X $ "theme.settings.text.009" "项目页"}}</button>
+    <button type="button" class="ts-tab" data-tab="partners">{{X $ "theme.settings.text.010" "合作伙伴"}}</button>
+    <button type="button" class="ts-tab" data-tab="cta">{{X $ "theme.settings.text.011" "CTA 行动号召"}}</button>
+    <button type="button" class="ts-tab" data-tab="about-page">{{X $ "theme.settings.text.012" "关于页"}}</button>
+</div>
+
+<!-- ============ TAB: Company information ============ -->
+{{$s := .Settings}}
+<div class="ts-panel active" id="tab-company">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.013" "公司基本信息"}}</h3>
+    <p class="ts-hint">{{X $ "theme.settings.text.014" "这些信息用于网站页脚、联系页面和 SEO 元数据。"}}</p>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.015" "公司名称"}}</label>
+            <input type="text" name="company_name" value="{{index $s "company_name"}}" placeholder="{{X $ "theme.settings.text.120" "如：Atelier Slate"}}">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.016" "公司邮箱"}}</label>
+            <input type="email" name="company_email" value="{{index $s "company_email"}}" placeholder="info@example.com">
+        </div>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.017" "公司电话"}}</label>
+            <input type="text" name="company_phone" value="{{index $s "company_phone"}}" placeholder="+86-xxx-xxxx-xxxx">
+        </div>
+        <div class="ts-field">
+            <label>WhatsApp</label>
+            <input type="text" name="company_whatsapp" value="{{index $s "company_whatsapp"}}" placeholder="{{X $ "theme.settings.text.121" "+86 xxx xxxx xxxx（含国家码，留空则不显示）"}}">
+        </div>
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.018" "公司地址"}}</label>
+        <input type="text" name="company_address" value="{{index $s "company_address"}}" placeholder="{{X $ "theme.settings.text.018" "公司地址"}}">
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.005" "公司简介"}}</label>
+            <input type="text" name="company_description" value="{{index $s "company_description"}}" placeholder="{{X $ "theme.settings.text.122" "一句话描述公司"}}">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.019" "公司年份"}}</label>
+            <input type="text" name="company_year" value="{{index $s "company_year"}}" placeholder="2003">
+        </div>
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.020" "页脚文案"}}</label>
+        <input type="text" name="footer_text" value="{{index $s "footer_text"}}" placeholder="© 2003-2026 Company Name. All rights reserved.">
+    </div>
+    <h4 style="margin:1.5rem 0 0.75rem; font-size:0.95rem; color:#475569;">{{X $ "theme.settings.text.021" "社交媒体链接"}}</h4>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>LinkedIn</label>
+            <input type="url" name="social_linkedin" value="{{index $s "social_linkedin"}}" placeholder="https://linkedin.com/company/...">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.022" "微信链接/二维码"}}</label>
+            <input type="text" name="social_wechat" value="{{index $s "social_wechat"}}" placeholder="{{X $ "theme.settings.text.123" "微信号或二维码地址"}}">
+        </div>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>Facebook</label>
+            <input type="url" name="social_facebook" value="{{index $s "social_facebook"}}" placeholder="https://facebook.com/...">
+        </div>
+        <div class="ts-field">
+            <label>X / Twitter</label>
+            <input type="url" name="social_x" value="{{index $s "social_x"}}" placeholder="https://x.com/...">
+        </div>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>YouTube</label>
+            <input type="url" name="social_youtube" value="{{index $s "social_youtube"}}" placeholder="https://youtube.com/...">
+        </div>
+        <div class="ts-field">
+            <label>GitHub</label>
+            <input type="url" name="social_github" value="{{index $s "social_github"}}" placeholder="https://github.com/...">
+        </div>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>Slack</label>
+            <input type="url" name="social_slack" value="{{index $s "social_slack"}}" placeholder="https://...slack.com/...">
+        </div>
+        <div class="ts-field">
+            <label>Discord</label>
+            <input type="url" name="social_discord" value="{{index $s "social_discord"}}" placeholder="https://discord.gg/...">
+        </div>
+    </div>
+</div>
+
+<!-- ============ TAB: Color scheme ============ -->
+<div class="ts-panel" id="tab-color">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.002" "配色方案"}}</h3>
+    <p class="ts-hint">{{X $ "theme.settings.text.023" "选择主题的配色方案，保存后前端页面将立即切换。"}}</p>
+    <div class="scheme-options">
+        <label class="scheme-option{{if eq .ColorScheme "orange"}} scheme-selected{{end}}">
+            <input type="radio" name="color_scheme" value="orange" {{if eq .ColorScheme "orange"}}checked{{end}}>
+            <div class="scheme-preview scheme-orange"><div class="scheme-bar"></div><div class="scheme-accent"></div></div>
+            <span class="scheme-label">{{X $ "theme.settings.text.024" "橙色方案"}}</span>
+            <span class="scheme-desc">{{X $ "theme.settings.text.025" "深蓝底 + 橙色强调，适合通用工业、建筑行业"}}</span>
+        </label>
+        <label class="scheme-option{{if eq .ColorScheme "blue"}} scheme-selected{{end}}">
+            <input type="radio" name="color_scheme" value="blue" {{if eq .ColorScheme "blue"}}checked{{end}}>
+            <div class="scheme-preview scheme-blue"><div class="scheme-bar"></div><div class="scheme-accent"></div></div>
+            <span class="scheme-label">{{X $ "theme.settings.text.026" "蓝色方案"}}</span>
+            <span class="scheme-desc">{{X $ "theme.settings.text.027" "深蓝底 + 蓝色强调，适合 SaaS、AI、B2B 产品团队"}}</span>
+        </label>
+        <label class="scheme-option{{if eq .ColorScheme "mono"}} scheme-selected{{end}}">
+            <input type="radio" name="color_scheme" value="mono" {{if eq .ColorScheme "mono"}}checked{{end}}>
+            <div class="scheme-preview scheme-mono"><div class="scheme-bar"></div><div class="scheme-accent"></div></div>
+            <span class="scheme-label">{{X $ "theme.settings.text.028" "黑白方案"}}</span>
+            <span class="scheme-desc">{{X $ "theme.settings.text.029" "纯黑底 + 银灰强调，极简编辑感，适合科技、媒体、艺术"}}</span>
+        </label>
+        <label class="scheme-option{{if eq .ColorScheme "violet"}} scheme-selected{{end}}">
+            <input type="radio" name="color_scheme" value="violet" {{if eq .ColorScheme "violet"}}checked{{end}}>
+            <div class="scheme-preview scheme-violet"><div class="scheme-bar"></div><div class="scheme-accent"></div></div>
+            <span class="scheme-label">{{X $ "theme.settings.text.030" "紫黑方案"}}</span>
+            <span class="scheme-desc">{{X $ "theme.settings.text.031" "深紫黑 + 紫色强调，神秘高端，适合奢侈品、AI、加密科技"}}</span>
+        </label>
+        <label class="scheme-option{{if eq .ColorScheme "emerald"}} scheme-selected{{end}}">
+            <input type="radio" name="color_scheme" value="emerald" {{if eq .ColorScheme "emerald"}}checked{{end}}>
+            <div class="scheme-preview scheme-emerald"><div class="scheme-bar"></div><div class="scheme-accent"></div></div>
+            <span class="scheme-label">{{X $ "theme.settings.text.032" "墨绿方案"}}</span>
+            <span class="scheme-desc">{{X $ "theme.settings.text.033" "深森绿 + 翡翠强调，自然现代，适合环保、健康、可持续"}}</span>
+        </label>
+        <label class="scheme-option{{if eq .ColorScheme "crimson"}} scheme-selected{{end}}">
+            <input type="radio" name="color_scheme" value="crimson" {{if eq .ColorScheme "crimson"}}checked{{end}}>
+            <div class="scheme-preview scheme-crimson"><div class="scheme-bar"></div><div class="scheme-accent"></div></div>
+            <span class="scheme-label">{{X $ "theme.settings.text.034" "深红方案"}}</span>
+            <span class="scheme-desc">{{X $ "theme.settings.text.035" "近黑底 + 红色强调，适合活动、媒体、时尚和高辨识度发布页"}}</span>
+        </label>
+        <label class="scheme-option{{if eq .ColorScheme "cyan"}} scheme-selected{{end}}">
+            <input type="radio" name="color_scheme" value="cyan" {{if eq .ColorScheme "cyan"}}checked{{end}}>
+            <div class="scheme-preview scheme-cyan"><div class="scheme-bar"></div><div class="scheme-accent"></div></div>
+            <span class="scheme-label">{{X $ "theme.settings.text.036" "青蓝方案"}}</span>
+            <span class="scheme-desc">{{X $ "theme.settings.text.037" "深墨蓝 + 电子青强调，未来科技感，适合金融、SaaS、IoT"}}</span>
+        </label>
+    </div>
+</div>
+
+<!-- ============ TAB: Brand navigation ============ -->
+<div class="ts-panel" id="tab-brand">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.038" "品牌与导航"}}</h3>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.039" "Logo 首字母"}}</label>
+            <input type="text" name="home_logo_glyph" value="{{index $s "home_logo_glyph"}}" placeholder="H" maxlength="2">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.040" "Logo 品牌名"}}</label>
+            <input type="text" name="home_logo_text" value="{{index $s "home_logo_text"}}" placeholder="Atelier Slate">
+        </div>
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.041" "Logo 图片链接"}}</label>
+        <p class="ts-hint" style="margin-bottom:0.5rem;">{{X $ "theme.settings.text.042" "设置图片 Logo 后将优先显示。留空则使用首字母 Logo。"}}</p>
+        <div style="display:flex; gap:0.5rem; align-items:flex-start;">
+            <input type="text" id="home_logo_image" name="home_logo_image" value="{{index $s "home_logo_image"}}" placeholder="/uploads/logo.png">
+            <button type="button" class="btn btn-secondary" style="white-space:nowrap;" onclick="openMediaPicker(function(url){ document.getElementById('home_logo_image').value=url; })">{{X $ "theme.settings.select_image" "选择图片"}}</button>
+        </div>
+        {{if index $s "home_logo_image"}}
+        <div style="margin-top:0.5rem;"><img src="{{index $s "home_logo_image"}}" alt="Logo preview" style="max-height:48px; border-radius:6px; border:1px solid #e2e8f0;"></div>
+        {{end}}
+    </div>
+    <div class="ts-field">
+        <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+            <input type="checkbox" name="home_logo_combined" value="1" {{if eq (index $s "home_logo_combined") "1"}}checked{{end}}>
+            <span>{{X $ "theme.settings.text.043" "合并显示 Logo 及品牌名（使用一张长条 Logo 替代）"}}</span>
+        </label>
+        <input type="hidden" name="home_logo_combined" value="0">
+
+        <p class="ts-hint" style="margin-top:0.5rem;">{{X $ "theme.settings.text.044" "勾选后，导航栏将只显示下方的长条 Logo 图片，原\"首字母 + 品牌名\"两栏不再渲染。适合 Logo 图片本身已包含品牌名称的情况。"}}</p>
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.045" "合并 Logo 图片链接"}}</label>
+        <p class="ts-hint" style="margin-bottom:0.5rem;">{{X $ "theme.settings.text.046" "推荐尺寸：高度 ≤ 32px 的横向长条图（PNG / SVG，背景透明）。仅当上方\"合并显示\"勾选时生效。"}}</p>
+        <div style="display:flex; gap:0.5rem; align-items:flex-start;">
+            <input type="text" id="home_logo_combined_image" name="home_logo_combined_image" value="{{index $s "home_logo_combined_image"}}" placeholder="/uploads/logo-full.png">
+            <button type="button" class="btn btn-secondary" style="white-space:nowrap;" onclick="openMediaPicker(function(url){ document.getElementById('home_logo_combined_image').value=url; })">{{X $ "theme.settings.select_image" "选择图片"}}</button>
+        </div>
+        {{if index $s "home_logo_combined_image"}}
+        <div style="margin-top:0.5rem;"><img src="{{index $s "home_logo_combined_image"}}" alt="Combined logo preview" style="max-height:48px; border-radius:6px; border:1px solid #e2e8f0;"></div>
+        {{end}}
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.047" "合并 Logo 图片链接（Footer 专用）"}}</label>
+        <p class="ts-hint" style="margin-bottom:0.5rem;">{{X $ "theme.settings.text.048" "Footer 背景通常较深，可在此单独上传一张反白版本的长条 Logo 用于页脚。留空则 Footer 复用上方导航栏的合并 Logo。"}}</p>
+        <div style="display:flex; gap:0.5rem; align-items:flex-start;">
+            <input type="text" id="home_logo_combined_footer_image" name="home_logo_combined_footer_image" value="{{index $s "home_logo_combined_footer_image"}}" placeholder="/uploads/logo-full-white.png">
+            <button type="button" class="btn btn-secondary" style="white-space:nowrap;" onclick="openMediaPicker(function(url){ document.getElementById('home_logo_combined_footer_image').value=url; })">{{X $ "theme.settings.select_image" "选择图片"}}</button>
+        </div>
+        {{if index $s "home_logo_combined_footer_image"}}
+        <div style="margin-top:0.5rem;"><img src="{{index $s "home_logo_combined_footer_image"}}" alt="Footer combined logo preview" style="max-height:48px; border-radius:6px; border:1px solid #e2e8f0; background:#0f172a; padding:6px 10px;"></div>
+        {{end}}
+    </div>
+</div>
+
+<!-- ============ TAB: Hero carousel ============ -->
+<div class="ts-panel" id="tab-hero">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.049" "Hero 轮播图设置"}}</h3>
+    <p class="ts-hint">{{X $ "theme.settings.text.050" "最多 3 张轮播图，每张可设置标签、标题、描述、背景图和按钮。"}}</p>
+
+    {{range $i := seq 3}}
+    <div class="ts-slide-block">
+        <h4 class="ts-slide-title">{{X $ "theme.settings.dynamic.slide" "轮播图 %d" (add $i 1)}}</h4>
+        <div class="ts-grid-2">
+            <div class="ts-field">
+                <label>{{X $ "theme.settings.text.051" "标签文字"}}</label>
+                <input type="text" name="home_hero_{{add $i 1}}_label" value="{{index $s (printf "home_hero_%d_label" (add $i 1))}}" placeholder="{{X $ "theme.settings.text.124" "如：Digital guild / Strategy + Design"}}">
+            </div>
+            <div class="ts-field">
+                <label>{{X $ "theme.settings.text.052" "背景图片 URL"}}</label>
+                <input type="text" name="home_hero_{{add $i 1}}_image" value="{{index $s (printf "home_hero_%d_image" (add $i 1))}}" placeholder="https://...">
+            </div>
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.053" "标题"}}</label>
+            <input type="text" name="home_hero_{{add $i 1}}_title" value="{{index $s (printf "home_hero_%d_title" (add $i 1))}}" placeholder="{{X $ "theme.settings.text.125" "主标题文字"}}">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.054" "描述文字"}}</label>
+            <textarea name="home_hero_{{add $i 1}}_desc" rows="2" placeholder="{{X $ "theme.settings.text.126" "简要描述..."}}">{{index $s (printf "home_hero_%d_desc" (add $i 1))}}</textarea>
+        </div>
+        <div class="ts-grid-2">
+            <div class="ts-field">
+                <label>{{X $ "theme.settings.text.055" "按钮1 文字"}}</label>
+                <input type="text" name="home_hero_{{add $i 1}}_btn1_text" value="{{index $s (printf "home_hero_%d_btn1_text" (add $i 1))}}" placeholder="Get a Quote">
+            </div>
+            <div class="ts-field">
+                <label>{{X $ "theme.settings.text.056" "按钮1 链接"}}</label>
+                <input type="text" name="home_hero_{{add $i 1}}_btn1_link" value="{{index $s (printf "home_hero_%d_btn1_link" (add $i 1))}}" placeholder="/contact">
+            </div>
+        </div>
+        <div class="ts-grid-2">
+            <div class="ts-field">
+                <label>{{X $ "theme.settings.text.057" "按钮2 文字"}}</label>
+                <input type="text" name="home_hero_{{add $i 1}}_btn2_text" value="{{index $s (printf "home_hero_%d_btn2_text" (add $i 1))}}" placeholder="Our Products">
+            </div>
+            <div class="ts-field">
+                <label>{{X $ "theme.settings.text.058" "按钮2 链接"}}</label>
+                <input type="text" name="home_hero_{{add $i 1}}_btn2_link" value="{{index $s (printf "home_hero_%d_btn2_link" (add $i 1))}}" placeholder="/products">
+            </div>
+        </div>
+    </div>
+    {{end}}
+</div>
+
+<!-- ============ TAB: Company profile ============ -->
+<div class="ts-panel" id="tab-about">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.059" "公司简介区域"}}</h3>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.060" "区域标签"}}</label>
+            <input type="text" name="home_about_label" value="{{index $s "home_about_label"}}" placeholder="About Our Company">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.061" "图片 URL"}}</label>
+            <input type="text" name="home_about_image" value="{{index $s "home_about_image"}}" placeholder="https://...">
+        </div>
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.062" "图片跳转链接"}}</label>
+        <input type="text" name="home_about_image_link" value="{{index $s "home_about_image_link"}}" placeholder="{{X $ "theme.settings.text.127" "/products 或 /services/experience-design"}}">
+        <p class="ts-hint">{{X $ "theme.settings.text.063" "留空则图片不可点击。可填写产品、服务、项目或任意站内页面链接。"}}</p>
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.053" "标题"}}</label>
+        <input type="text" name="home_about_title" value="{{index $s "home_about_title"}}" placeholder="Empowering visionary founders from day one">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.054" "描述文字"}}</label>
+        <textarea name="home_about_desc" rows="3" placeholder="{{X $ "theme.settings.text.128" "公司简介内容..."}}">{{index $s "home_about_desc"}}</textarea>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.064" "徽章数字"}}</label>
+            <input type="text" name="home_about_badge_number" value="{{index $s "home_about_badge_number"}}" placeholder="20+">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.065" "徽章文字"}}</label>
+            <input type="text" name="home_about_badge_text" value="{{index $s "home_about_badge_text"}}" placeholder="Years Experience">
+        </div>
+    </div>
+    <h4 style="margin:1.25rem 0 0.75rem; font-size:0.95rem; color:#475569;">{{X $ "theme.settings.text.066" "特色亮点（勾选列表）"}}</h4>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.067" "亮点 1"}}</label>
+        <input type="text" name="home_about_feature_1" value="{{index $s "home_about_feature_1"}}" placeholder="Strategy-led creative systems">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.068" "亮点 2"}}</label>
+        <input type="text" name="home_about_feature_2" value="{{index $s "home_about_feature_2"}}" placeholder="Launch-ready digital production">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.069" "亮点 3"}}</label>
+        <input type="text" name="home_about_feature_3" value="{{index $s "home_about_feature_3"}}" placeholder="Global Project Delivery">
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.070" "按钮文字"}}</label>
+            <input type="text" name="home_about_btn_text" value="{{index $s "home_about_btn_text"}}" placeholder="Discover More">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.071" "按钮链接"}}</label>
+            <input type="text" name="home_about_btn_link" value="{{index $s "home_about_btn_link"}}" placeholder="/about">
+        </div>
+    </div>
+</div>
+
+<!-- ============ TAB: Statistics ============ -->
+<div class="ts-panel" id="tab-stats">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.072" "数据统计区域"}}</h3>
+    <p class="ts-hint">{{X $ "theme.settings.text.073" "展示在深色背景条上的关键数据指标，最多 4 项。"}}</p>
+    {{range $i := seq 4}}
+    <div class="ts-grid-2" style="margin-bottom:0.5rem;">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.dynamic.stat_number" "统计 %d - 数字" (add $i 1)}}</label>
+            <input type="text" name="home_stat_{{add $i 1}}_number" value="{{index $s (printf "home_stat_%d_number" (add $i 1))}}" placeholder="{{X $ "theme.settings.text.129" "如：20+"}}">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.dynamic.stat_label" "统计 %d - 标签" (add $i 1)}}</label>
+            <input type="text" name="home_stat_{{add $i 1}}_label" value="{{index $s (printf "home_stat_%d_label" (add $i 1))}}" placeholder="{{X $ "theme.settings.text.130" "如：Years Experience"}}">
+        </div>
+    </div>
+    {{end}}
+</div>
+
+<!-- ============ TAB: Product showcase ============ -->
+<div class="ts-panel" id="tab-products">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.074" "产品展示区域"}}</h3>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.060" "区域标签"}}</label>
+            <input type="text" name="home_products_label" value="{{index $s "home_products_label"}}" placeholder="Our Products">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.075" "最大展示数量"}}</label>
+            <select name="home_products_max">
+                {{$pmax := index $s "home_products_max"}}
+                <option value="">{{X $ "theme.settings.text.076" "全部展示"}}</option>
+                <option value="2" {{if eq $pmax "2"}}selected{{end}}>{{X $ "theme.settings.text.077" "2 个"}}</option>
+                <option value="4" {{if eq $pmax "4"}}selected{{end}}>{{X $ "theme.settings.text.078" "4 个"}}</option>
+                <option value="6" {{if eq $pmax "6"}}selected{{end}}>{{X $ "theme.settings.text.079" "6 个"}}</option>
+                <option value="8" {{if eq $pmax "8"}}selected{{end}}>{{X $ "theme.settings.text.080" "8 个"}}</option>
+            </select>
+        </div>
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.053" "标题"}}</label>
+        <input type="text" name="home_products_title" value="{{index $s "home_products_title"}}" placeholder="Launch-ready systems for every visible touchpoint">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.081" "副标题描述"}}</label>
+        <textarea name="home_products_subtitle" rows="2" placeholder="{{X $ "theme.settings.text.131" "副标题..."}}">{{index $s "home_products_subtitle"}}</textarea>
+    </div>
+    <h4 style="margin:1.25rem 0 0.75rem; font-size:0.95rem; color:#475569;">{{X $ "theme.settings.text.082" "产品排序说明"}}</h4>
+    <p class="ts-hint">{{X $ "theme.settings.text.083" "产品按后台内容管理中的排序值（sort_order）升序展示。如需调整展示顺序，请在「产品管理」中修改各产品的排序值。"}}</p>
+</div>
+
+<!-- ============ TAB: Service showcase ============ -->
+<div class="ts-panel" id="tab-services">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.084" "服务展示区域"}}</h3>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.060" "区域标签"}}</label>
+            <input type="text" name="home_services_label" value="{{index $s "home_services_label"}}" placeholder="What We Offer">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.075" "最大展示数量"}}</label>
+            <select name="home_services_max">
+                {{$smax := index $s "home_services_max"}}
+                <option value="">{{X $ "theme.settings.text.076" "全部展示"}}</option>
+                <option value="2" {{if eq $smax "2"}}selected{{end}}>{{X $ "theme.settings.text.077" "2 个"}}</option>
+                <option value="3" {{if eq $smax "3"}}selected{{end}}>{{X $ "theme.settings.text.085" "3 个"}}</option>
+                <option value="4" {{if eq $smax "4"}}selected{{end}}>{{X $ "theme.settings.text.078" "4 个"}}</option>
+                <option value="6" {{if eq $smax "6"}}selected{{end}}>{{X $ "theme.settings.text.079" "6 个"}}</option>
+            </select>
+        </div>
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.053" "标题"}}</label>
+        <input type="text" name="home_services_title" value="{{index $s "home_services_title"}}" placeholder="Strategy, creative direction, and production">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.081" "副标题描述"}}</label>
+        <textarea name="home_services_subtitle" rows="2" placeholder="{{X $ "theme.settings.text.131" "副标题..."}}">{{index $s "home_services_subtitle"}}</textarea>
+    </div>
+    <p class="ts-hint" style="margin-top:0.75rem;">{{X $ "theme.settings.text.086" "服务按后台内容管理中的排序值（sort_order）升序展示。如需调整展示顺序，请在「服务管理」中修改各服务的排序值。"}}</p>
+</div>
+
+<!-- ============ TAB: Showcase page ============ -->
+<div class="ts-panel" id="tab-showcase-page">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.087" "项目页 (/showcase) 布局"}}</h3>
+    <p class="ts-hint">{{X $ "theme.settings.text.088" "这里只影响 Atelier Slate 主题的项目展示页。默认网格布局保持兼容；交错浮层布局适合大图案例展示。"}}</p>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.089" "展示布局"}}</label>
+            {{$showcaseLayout := settingOr $s "showcase_layout" "grid"}}
+            <select name="showcase_layout">
+                <option value="grid" {{if eq $showcaseLayout "grid"}}selected{{end}}>{{X $ "theme.settings.text.090" "经典三列卡片"}}</option>
+                <option value="mosaic" {{if eq $showcaseLayout "mosaic"}}selected{{end}}>{{X $ "theme.settings.text.091" "交错大图 + 浮层说明卡"}}</option>
+            </select>
+        </div>
+    </div>
+    <p class="ts-hint" style="margin-top:0.75rem;">{{X $ "theme.settings.text.092" "项目案例按后台「案例管理」中的排序值（sort_order）升序展示，可在案例管理列表中拖拽调整顺序。"}}</p>
+</div>
+
+<!-- ============ TAB: Partners ============ -->
+<div class="ts-panel" id="tab-partners">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.093" "合作伙伴 / 客户 Logo 展示"}}</h3>
+    <p class="ts-hint">
+        {{X $ "theme.settings.text.094" "在首页「服务」与「CTA」之间展示一排合作伙伴 Logo。默认灰度显示，鼠标悬停变彩色。最多 24 个槽位，留空的槽位不会展示。"}}<br>
+        {{X $ "theme.settings.text.095" "展示模式按数量自动切换：≤6 个居中静态展示；7–12 个单行无限滚动；13 个以上分为两行反向滚动。"}}
+    </p>
+
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.096" "区域标签（小字）"}}</label>
+            <input type="text" name="home_partners_label" value="{{index $s "home_partners_label"}}" placeholder="Partners">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.075" "最大展示数量"}}</label>
+            <select name="home_partners_max">
+                {{$ptmax := index $s "home_partners_max"}}
+                <option value="">{{X $ "theme.settings.text.076" "全部展示"}}</option>
+                <option value="4" {{if eq $ptmax "4"}}selected{{end}}>{{X $ "theme.settings.text.078" "4 个"}}</option>
+                <option value="6" {{if eq $ptmax "6"}}selected{{end}}>{{X $ "theme.settings.text.097" "6 个（静态）"}}</option>
+                <option value="8" {{if eq $ptmax "8"}}selected{{end}}>{{X $ "theme.settings.text.080" "8 个"}}</option>
+                <option value="10" {{if eq $ptmax "10"}}selected{{end}}>{{X $ "theme.settings.text.098" "10 个"}}</option>
+                <option value="12" {{if eq $ptmax "12"}}selected{{end}}>{{X $ "theme.settings.text.099" "12 个（单行滚动）"}}</option>
+                <option value="16" {{if eq $ptmax "16"}}selected{{end}}>{{X $ "theme.settings.text.100" "16 个"}}</option>
+                <option value="20" {{if eq $ptmax "20"}}selected{{end}}>{{X $ "theme.settings.text.101" "20 个"}}</option>
+                <option value="24" {{if eq $ptmax "24"}}selected{{end}}>{{X $ "theme.settings.text.102" "24 个（双行滚动）"}}</option>
+            </select>
+        </div>
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.103" "主标题"}}</label>
+        <input type="text" name="home_partners_title" value="{{index $s "home_partners_title"}}" placeholder="Trusted by leading companies">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.081" "副标题描述"}}</label>
+        <textarea name="home_partners_subtitle" rows="2" placeholder="{{X $ "theme.settings.text.131" "副标题..."}}">{{index $s "home_partners_subtitle"}}</textarea>
+    </div>
+
+    {{range $i := seq 24}}
+    {{$idx := add $i 1}}
+    {{$imgKey := printf "home_partners_%d_image" $idx}}
+    {{$nameKey := printf "home_partners_%d_name" $idx}}
+    {{$linkKey := printf "home_partners_%d_link" $idx}}
+    {{$imgVal := index $s $imgKey}}
+    <div class="ts-slide-block">
+        <h4 class="ts-slide-title">{{X $ "theme.settings.dynamic.partner" "合作伙伴 %d" $idx}}</h4>
+        <div class="ts-grid-2">
+            <div class="ts-field">
+                <label>{{X $ "theme.settings.text.015" "公司名称"}}</label>
+                <input type="text" name="{{$nameKey}}" value="{{index $s $nameKey}}" placeholder="{{X $ "theme.settings.text.132" "如：Rolls-Royce"}}">
+            </div>
+            <div class="ts-field">
+                <label>{{X $ "theme.settings.text.104" "跳转链接（可选）"}}</label>
+                <input type="text" name="{{$linkKey}}" value="{{index $s $linkKey}}" placeholder="{{X $ "theme.settings.text.133" "https://... 留空则不可点击"}}">
+            </div>
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.105" "Logo 图片 URL"}}</label>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+                <input type="text" id="{{$imgKey}}" name="{{$imgKey}}" value="{{$imgVal}}" placeholder="/uploads/logos/xxx.png">
+                <button type="button" class="btn btn-secondary" style="white-space:nowrap;" onclick="openMediaPicker(function(url){ document.getElementById('{{$imgKey}}').value=url; })">{{X $ "theme.settings.select_image" "选择图片"}}</button>
+            </div>
+            {{if $imgVal}}
+            <div style="margin-top:0.5rem;"><img src="{{$imgVal}}" alt="Logo preview" style="max-height:40px; padding:6px 10px; border-radius:4px; border:1px solid #e2e8f0; background:#fff;"></div>
+            {{end}}
+        </div>
+    </div>
+    {{end}}
+</div>
+
+<!-- ============ TAB: CTA ============ -->
+<div class="ts-panel" id="tab-cta">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.106" "CTA 行动号召区域"}}</h3>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.060" "区域标签"}}</label>
+        <input type="text" name="home_cta_label" value="{{index $s "home_cta_label"}}" placeholder="Ready To Start?">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.053" "标题"}}</label>
+        <input type="text" name="home_cta_title" value="{{index $s "home_cta_title"}}" placeholder="Have a Experience Project for Us?">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.054" "描述文字"}}</label>
+        <textarea name="home_cta_desc" rows="2" placeholder="{{X $ "theme.settings.text.134" "描述..."}}">{{index $s "home_cta_desc"}}</textarea>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.055" "按钮1 文字"}}</label>
+            <input type="text" name="home_cta_btn1_text" value="{{index $s "home_cta_btn1_text"}}" placeholder="Contact Us Today">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.056" "按钮1 链接"}}</label>
+            <input type="text" name="home_cta_btn1_link" value="{{index $s "home_cta_btn1_link"}}" placeholder="/contact">
+        </div>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.057" "按钮2 文字"}}</label>
+            <input type="text" name="home_cta_btn2_text" value="{{index $s "home_cta_btn2_text"}}" placeholder="View Our Work">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.058" "按钮2 链接"}}</label>
+            <input type="text" name="home_cta_btn2_link" value="{{index $s "home_cta_btn2_link"}}" placeholder="/showcase">
+        </div>
+    </div>
+</div>
+
+<!-- ============ TAB: About page ============ -->
+<div class="ts-panel" id="tab-about-page">
+    <h3 class="ts-section-title">{{X $ "theme.settings.text.107" "关于页 (/about) 内容配置"}}</h3>
+    <p class="ts-hint">{{X $ "theme.settings.text.108" "配置「关于我们」页面的所有文案和图片。留空将使用默认内容。"}}</p>
+
+    <!-- Page banner -->
+    <h4 style="margin:1.25rem 0 0.75rem; font-size:0.95rem; color:#475569;">{{X $ "theme.settings.text.109" "页面横幅"}}</h4>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.110" "横幅标题"}}</label>
+            <input type="text" name="about_banner_title" value="{{index $s "about_banner_title"}}" placeholder="About Atelier Slate">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.111" "横幅副标题"}}</label>
+            <input type="text" name="about_banner_subtitle" value="{{index $s "about_banner_subtitle"}}" placeholder="A compact digital atelier for high-pressure launches">
+        </div>
+    </div>
+
+    <!-- ——— Who We Are ——— -->
+    <h4 style="margin:1.5rem 0 0.75rem; font-size:0.95rem; color:#475569;">{{X $ "theme.settings.text.112" "公司简介区块（Who We Are）"}}</h4>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.060" "区域标签"}}</label>
+            <input type="text" name="about_intro_label" value="{{index $s "about_intro_label"}}" placeholder="Who We Are">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.113" "区域标题"}}</label>
+            <input type="text" name="about_intro_title" value="{{index $s "about_intro_title"}}" placeholder="We Are Committed To Superior Quality">
+        </div>
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.061" "图片 URL"}}</label>
+        <div style="display:flex; gap:0.5rem; align-items:flex-start;">
+            <input type="text" id="about_intro_image" name="about_intro_image" value="{{index $s "about_intro_image"}}" placeholder="https://...">
+            <button type="button" class="btn btn-secondary" style="white-space:nowrap;" onclick="openMediaPicker(function(url){ document.getElementById('about_intro_image').value=url; })">{{X $ "theme.settings.select_image" "选择图片"}}</button>
+        </div>
+        {{if index $s "about_intro_image"}}
+        <div style="margin-top:0.5rem;"><img src="{{index $s "about_intro_image"}}" alt="Preview" style="max-height:80px; border-radius:6px; border:1px solid #e2e8f0;"></div>
+        {{end}}
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.064" "徽章数字"}}</label>
+            <input type="text" name="about_intro_badge_number" value="{{index $s "about_intro_badge_number"}}" placeholder="20+">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.065" "徽章文字"}}</label>
+            <input type="text" name="about_intro_badge_text" value="{{index $s "about_intro_badge_text"}}" placeholder="Years">
+        </div>
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.114" "正文第一段"}}</label>
+        <textarea name="about_intro_p1" rows="3" placeholder="{{X $ "theme.settings.text.135" "公司介绍第一段..."}}">{{index $s "about_intro_p1"}}</textarea>
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.115" "正文第二段"}}</label>
+        <textarea name="about_intro_p2" rows="3" placeholder="{{X $ "theme.settings.text.136" "公司介绍第二段..."}}">{{index $s "about_intro_p2"}}</textarea>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.070" "按钮文字"}}</label>
+            <input type="text" name="about_intro_btn_text" value="{{index $s "about_intro_btn_text"}}" placeholder="Get In Touch">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.071" "按钮链接"}}</label>
+            <input type="text" name="about_intro_btn_link" value="{{index $s "about_intro_btn_link"}}" placeholder="/contact">
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <h4 style="margin:1.5rem 0 0.75rem; font-size:0.95rem; color:#475569;">{{X $ "theme.settings.text.116" "数据统计（深色背景条，最多 4 项）"}}</h4>
+    {{range $i := seq 4}}
+    <div class="ts-grid-2" style="margin-bottom:0.5rem;">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.dynamic.stat_number" "统计 %d - 数字" (add $i 1)}}</label>
+            <input type="text" name="about_stat_{{add $i 1}}_number" value="{{index $s (printf "about_stat_%d_number" (add $i 1))}}" placeholder="{{X $ "theme.settings.text.129" "如：20+"}}">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.dynamic.stat_label" "统计 %d - 标签" (add $i 1)}}</label>
+            <input type="text" name="about_stat_{{add $i 1}}_label" value="{{index $s (printf "about_stat_%d_label" (add $i 1))}}" placeholder="{{X $ "theme.settings.text.130" "如：Years Experience"}}">
+        </div>
+    </div>
+    {{end}}
+
+    <!-- Core principles -->
+    <h4 style="margin:1.5rem 0 0.75rem; font-size:0.95rem; color:#475569;">{{X $ "theme.settings.text.117" "核心原则（Principles，最多 5 条）"}}</h4>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.060" "区域标签"}}</label>
+            <input type="text" name="about_principles_label" value="{{index $s "about_principles_label"}}" placeholder="Our Process">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.113" "区域标题"}}</label>
+            <input type="text" name="about_principles_title" value="{{index $s "about_principles_title"}}" placeholder="Our Guiding Principles">
+        </div>
+    </div>
+    {{range $i := seq 5}}
+    <div class="ts-slide-block">
+        <h4 class="ts-slide-title">{{X $ "theme.settings.dynamic.principle" "原则 %d" (add $i 1)}}</h4>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.053" "标题"}}</label>
+            <input type="text" name="about_principle_{{add $i 1}}_title" value="{{index $s (printf "about_principle_%d_title" (add $i 1))}}" placeholder="{{X $ "theme.settings.text.137" "原则标题"}}">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.054" "描述文字"}}</label>
+            <textarea name="about_principle_{{add $i 1}}_desc" rows="2" placeholder="{{X $ "theme.settings.text.138" "原则描述..."}}">{{index $s (printf "about_principle_%d_desc" (add $i 1))}}</textarea>
+        </div>
+    </div>
+    {{end}}
+
+    <!-- Industry experience -->
+    <h4 style="margin:1.5rem 0 0.75rem; font-size:0.95rem; color:#475569;">{{X $ "theme.settings.text.118" "行业经验（Expertise，最多 4 张卡片）"}}</h4>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.060" "区域标签"}}</label>
+            <input type="text" name="about_exp_label" value="{{index $s "about_exp_label"}}" placeholder="Expertise">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.113" "区域标题"}}</label>
+            <input type="text" name="about_exp_title" value="{{index $s "about_exp_title"}}" placeholder="Launch Experience">
+        </div>
+    </div>
+    {{range $i := seq 4}}
+    <div class="ts-slide-block">
+        <h4 class="ts-slide-title">{{X $ "theme.settings.dynamic.experience" "经验 %d" (add $i 1)}}</h4>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.053" "标题"}}</label>
+            <input type="text" name="about_exp_{{add $i 1}}_title" value="{{index $s (printf "about_exp_%d_title" (add $i 1))}}" placeholder="{{X $ "theme.settings.text.139" "经验标题"}}">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.054" "描述文字"}}</label>
+            <textarea name="about_exp_{{add $i 1}}_desc" rows="2" placeholder="{{X $ "theme.settings.text.140" "经验描述..."}}">{{index $s (printf "about_exp_%d_desc" (add $i 1))}}</textarea>
+        </div>
+    </div>
+    {{end}}
+
+    <!-- ——— CTA ——— -->
+    <h4 style="margin:1.5rem 0 0.75rem; font-size:0.95rem; color:#475569;">{{X $ "theme.settings.text.119" "底部 CTA 行动号召"}}</h4>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.053" "标题"}}</label>
+        <input type="text" name="about_cta_title" value="{{index $s "about_cta_title"}}" placeholder="Ready to Start Your Project?">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.054" "描述文字"}}</label>
+        <textarea name="about_cta_desc" rows="2" placeholder="{{X $ "theme.settings.text.141" "CTA 描述..."}}">{{index $s "about_cta_desc"}}</textarea>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.070" "按钮文字"}}</label>
+            <input type="text" name="about_cta_btn_text" value="{{index $s "about_cta_btn_text"}}" placeholder="Get a Free Quote">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.071" "按钮链接"}}</label>
+            <input type="text" name="about_cta_btn_link" value="{{index $s "about_cta_btn_link"}}" placeholder="/contact">
+        </div>
+    </div>
+</div>
+
+<!-- Save Bar -->
+<div class="ts-save-bar">
+    <button type="submit" class="btn btn-primary">{{X $ "theme.settings.save" "保存设置"}}</button>
+    <a href="/admin/themes" class="btn btn-secondary" style="text-decoration:none;">{{X $ "theme.settings.cancel" "取消"}}</a>
+</div>
+
+</form>
+
+<style>
+/* Theme Settings Tabs */
+.ts-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 0;
+    overflow-x: auto;
+    background: #fff;
+    border-radius: 8px 8px 0 0;
+}
+.ts-tab {
+    padding: 0.85rem 1.25rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #64748b;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.2s, border-color 0.2s;
+}
+.ts-tab:hover { color: #1e293b; }
+.ts-tab.active {
+    color: #3b82f6;
+    border-bottom-color: #3b82f6;
+    font-weight: 600;
+}
+.ts-panel {
+    display: none;
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 0 0 8px 8px;
+    border: 1px solid #e2e8f0;
+    border-top: none;
+}
+.ts-panel.active { display: block; }
+.ts-section-title {
+    margin: 0 0 0.5rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+.ts-hint {
+    color: #64748b;
+    font-size: 0.85rem;
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+}
+.ts-field {
+    margin-bottom: 1rem;
+}
+.ts-field label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #374151;
+}
+.ts-field input[type="text"],
+.ts-field input[type="email"],
+.ts-field input[type="url"],
+.ts-field textarea,
+.ts-field select {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    transition: border-color 0.2s;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+.ts-field input:focus,
+.ts-field textarea:focus,
+.ts-field select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
+}
+.ts-field textarea { resize: vertical; }
+.ts-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+.ts-slide-block {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    background: #fafbfc;
+}
+.ts-slide-title {
+    margin: 0 0 1rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #475569;
+}
+.ts-save-bar {
+    padding: 1rem 1.5rem;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    display: flex;
+    gap: 0.75rem;
+    margin-top: -1px;
+}
+
+/* Color scheme options */
+.scheme-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+}
+.scheme-option {
+    display: flex;
+    flex-direction: column;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.scheme-option:hover { border-color: #94a3b8; }
+.scheme-selected { border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
+.scheme-option input[type="radio"] { display: none; }
+.scheme-preview {
+    height: 55px; border-radius: 6px;
+    position: relative; overflow: hidden; margin-bottom: 0.6rem;
+}
+.scheme-preview .scheme-bar { position: absolute; top:0; left:0; right:0; height:18px; }
+.scheme-preview .scheme-accent { position: absolute; bottom:8px; left:10px; width:70px; height:22px; border-radius:4px; }
+.scheme-orange { background:#0f1b2d; }
+.scheme-orange .scheme-bar { background:#1a2d4a; }
+.scheme-orange .scheme-accent { background:#f7941d; }
+.scheme-blue { background:#0c2d5a; }
+.scheme-blue .scheme-bar { background:#14407a; }
+.scheme-blue .scheme-accent { background:#2e8bc0; }
+.scheme-mono { background:#1a1a1a; }
+.scheme-mono .scheme-bar { background:#2a2a2a; }
+.scheme-mono .scheme-accent { background:#000000; }
+.scheme-violet { background:#1a0b2e; }
+.scheme-violet .scheme-bar { background:#2a1a4e; }
+.scheme-violet .scheme-accent { background:#8b5cf6; }
+.scheme-emerald { background:#0f2922; }
+.scheme-emerald .scheme-bar { background:#1c4239; }
+.scheme-emerald .scheme-accent { background:#10b981; }
+.scheme-crimson { background:#1a0a0a; }
+.scheme-crimson .scheme-bar { background:#2a1414; }
+.scheme-crimson .scheme-accent { background:#ef4444; }
+.scheme-cyan { background:#061827; }
+.scheme-cyan .scheme-bar { background:#0e2a3a; }
+.scheme-cyan .scheme-accent { background:#06b6d4; }
+.scheme-label { font-weight:600; font-size:0.92rem; margin-bottom:0.2rem; }
+.scheme-desc { font-size:0.8rem; color:#64748b; line-height:1.4; }
+
+@media (max-width: 768px) {
+    .ts-grid-2 { grid-template-columns: 1fr; }
+    .ts-tabs { flex-wrap: wrap; }
+}
+</style>
+
+<script>
+// Tab switching
+document.querySelectorAll('.ts-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.ts-tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.ts-panel').forEach(function(p) { p.classList.remove('active'); });
+        this.classList.add('active');
+        document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+    });
+});
+// Color scheme selection
+document.querySelectorAll('.scheme-option input[type="radio"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('.scheme-option').forEach(function(opt) { opt.classList.remove('scheme-selected'); });
+        this.closest('.scheme-option').classList.add('scheme-selected');
+    });
+});
+</script>
+{{end}}

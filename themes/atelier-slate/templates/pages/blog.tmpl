@@ -1,0 +1,37 @@
+{{define "content"}}
+{{$s := .Settings}}
+<section class="as-page-hero">
+    <div class="as-container">
+        <div class="as-page-hero-panel">
+            <div>
+                <p class="as-kicker as-kicker-light">Journal</p>
+                <h1>{{settingOr $s "blog_page_title" "Notes on launches, interfaces, and brand momentum."}}</h1>
+                <p>{{settingOr $s "blog_page_subtitle" "Short field notes from strategy, design systems, content production, and founder storytelling."}}</p>
+            </div>
+            <img src="{{settingOr $s "subpage_hero_image" "/static/images/atelier-hero.svg"}}" alt="">
+        </div>
+    </div>
+</section>
+<section class="as-section">
+    <div class="as-container as-blog-layout">
+        <div class="as-blog-list">
+            {{range .Posts}}
+            <article class="as-post-row">
+                <a class="as-post-thumb" href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "260px" "lazy"}}{{end}}</a>
+                <div>
+                    <p>{{if .PublishedAt}}{{formatDate .PublishedAt}}{{end}} {{if .Category.Name}}/ {{.Category.Name}}{{end}}</p>
+                    <h2><a href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{.Title}}</a></h2>
+                    <span>{{if .Excerpt}}{{truncate .Excerpt 180}}{{else}}{{truncate (stripTags .Content) 180}}{{end}}</span>
+                </div>
+            </article>
+            {{end}}
+        </div>
+        <aside class="as-side-panel">
+            <h3>Categories</h3>
+            {{range .Categories}}<a href="{{langPrefixURL $.Ctx (printf "/category/%s" .Slug)}}">{{.Name}}</a>{{end}}
+            <h3>Tags</h3>
+            <div class="as-tags">{{range .Tags}}<a href="{{langPrefixURL $.Ctx (printf "/tag/%s" .Slug)}}">{{.Name}}</a>{{end}}</div>
+        </aside>
+    </div>
+</section>
+{{end}}

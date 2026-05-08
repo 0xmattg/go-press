@@ -1,0 +1,26 @@
+{{define "content"}}
+{{$s := .Settings}}
+<section class="ce-page-hero">
+    <span>Contact</span>
+    <h1>{{settingOr $s "contact_title" "Tell us what kind of commercial space you need."}}</h1>
+    <p>{{settingOr $s "contact_subtitle" "Share your preferred location, size, timeline, budget, and operating requirements. We will respond with next steps."}}</p>
+</section>
+
+<section class="ce-contact-grid">
+    <div class="ce-contact-card">
+        <h2>{{settingOr $s "company_name" "Civic Estate"}}</h2>
+        <p>{{settingOr $s "company_address" "220 Market Street, Chicago, IL"}}</p>
+        <p>{{settingOr $s "company_email" "hello@civicestate.example"}}</p>
+        <p>{{settingOr $s "company_phone" "+1 212 555 0188"}}</p>
+    </div>
+    <form class="ce-form" method="POST" action="{{langPrefixURL .Ctx "/contact"}}">
+        {{if .Success}}<div class="ce-alert success">Message sent. We will be in touch shortly.</div>{{end}}
+        {{if .Error}}<div class="ce-alert error">{{.Error}}</div>{{end}}
+        <label>Name<input name="name" required></label>
+        <label>Email<input name="email" type="email" required></label>
+        <label>Phone<input name="phone"></label>
+        <label>Search brief<textarea name="message" rows="6" required></textarea></label>
+        <button class="ce-primary-btn" type="submit">Send Inquiry</button>
+    </form>
+</section>
+{{end}}

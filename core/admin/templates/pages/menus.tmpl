@@ -1,0 +1,101 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>{{T . "nav.menus"}}</h2>
+</div>
+
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-body">
+        <h3 style="margin-bottom: 1rem;">{{T . "menu.create_new"}}</h3>
+        <form method="POST" action="/admin/menus">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+                <div class="form-group" style="flex:1; min-width:200px;">
+                    <label for="name">{{T . "menu.menu_name"}}</label>
+                    <input type="text" id="name" name="name" class="form-control" required>
+                </div>
+                <div class="form-group" style="width:220px;">
+                    <label for="location">{{T . "field.location"}}</label>
+                    <select id="location" name="location" class="form-control">
+                        <option value="">{{T . "menu.no_assignment"}}</option>
+                        {{range .Locations}}
+                        <option value="{{.Name}}">{{.Label}} ({{.Name}})</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">{{T . "action.create_menu"}}</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h3 style="margin-bottom: 1rem;">{{T . "menu.all_menus"}}</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>{{T . "menu.menu_name"}}</th>
+                    <th>{{T . "field.location"}}</th>
+                    <th>{{T . "field.menu_items_count"}}</th>
+                    <th>{{T . "field.actions"}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Menus}}
+                <tr>
+                    <td>{{.ID}}</td>
+                    <td><a href="/admin/menus/{{.ID}}/edit">{{.Name}}</a></td>
+                    <td>
+                        {{if .Location}}
+                            <span class="badge badge-active">{{.Location}}</span>
+                        {{else}}
+                            <span class="badge">{{T $ "menu.no_assignment"}}</span>
+                        {{end}}
+                    </td>
+                    <td>{{len .Items}}</td>
+                    <td>
+                        <a href="/admin/menus/{{.ID}}/edit" class="btn btn-sm btn-primary">{{T $ "action.edit"}}</a>
+                        <form method="POST" action="/admin/menus/{{.ID}}/delete" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('{{T $ "confirm.delete_menu"}}')">{{T $ "action.delete"}}</button>
+                        </form>
+                    </td>
+                </tr>
+                {{else}}
+                <tr>
+                    <td colspan="5" class="empty-msg">{{T . "menu.empty_menus"}}</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 1.5rem;">
+    <div class="card-body">
+        <h3 style="margin-bottom: 0.5rem;">{{T . "menu.locations_registered"}}</h3>
+        <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 1rem;">{{T . "menu.locations_help"}}</p>
+        {{if .Locations}}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>{{T . "menu.location_identifier"}}</th>
+                    <th>{{T . "menu.location_description"}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Locations}}
+                <tr>
+                    <td><code>{{.Name}}</code></td>
+                    <td>{{.Label}}</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+        {{else}}
+        <p style="color: #9ca3af;">{{T . "menu.empty_locations"}}</p>
+        {{end}}
+    </div>
+</div>
+{{end}}

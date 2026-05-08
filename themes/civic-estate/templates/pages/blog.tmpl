@@ -1,0 +1,28 @@
+{{define "content"}}
+<section class="ce-page-hero">
+    <span>Market Notes</span>
+    <h1>Field notes on leases, demand, and commercial space decisions.</h1>
+    <p>Short articles for teams comparing neighborhoods, layouts, budgets, and timing before a property search.</p>
+</section>
+
+<section class="ce-blog-layout">
+    <div class="ce-blog-list">
+        {{range .Posts}}
+        <article class="ce-blog-card">
+            <a class="ce-card-media" href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 36vw" "lazy"}}{{end}}</a>
+            <div>
+                <time>{{formatDateTime .PublishedAt}}</time>
+                <h2><a href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{.Title}}</a></h2>
+                <p>{{truncate .Excerpt 170}}</p>
+            </div>
+        </article>
+        {{end}}
+    </div>
+    <aside class="ce-sidebar">
+        <h3>Categories</h3>
+        {{range .Categories}}<a href="{{langPrefixURL $.Ctx (printf "/category/%s" .Slug)}}">{{.Name}}</a>{{end}}
+        <h3>Tags</h3>
+        <div class="ce-tags">{{range .Tags}}<a href="{{langPrefixURL $.Ctx (printf "/tag/%s" .Slug)}}">{{.Name}}</a>{{end}}</div>
+    </aside>
+</section>
+{{end}}

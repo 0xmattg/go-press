@@ -1,0 +1,24 @@
+{{define "footer"}}
+{{$s := .Settings}}
+{{$logoImage := index $s "home_logo_image"}}
+<footer class="af-footer">
+    <div class="af-footer-brand">
+        <div class="af-footer-brand-heading">
+            {{if $logoImage}}<img class="af-brand-logo" src="{{$logoImage}}" alt="" aria-hidden="true">{{end}}
+            <strong>{{settingOr $s "company_name" "Axis Form"}}</strong>
+        </div>
+        <p>{{settingOr $s "company_description" "We design modern architecture and interiors that balance clarity, comfort, and long-term value."}}</p>
+    </div>
+    <div class="af-footer-links">
+        <a href="{{langPrefixURL .Ctx "/services"}}">Services</a>
+        <a href="{{langPrefixURL .Ctx "/showcase"}}">Portfolio</a>
+        <a href="{{langPrefixURL .Ctx "/products"}}">Process</a>
+        <a href="{{langPrefixURL .Ctx "/contact"}}">Contact</a>
+    </div>
+    <div class="af-footer-contact">
+        <span>{{settingOr $s "company_email" "studio@axisform.example"}}</span>
+        <span>{{settingOr $s "company_phone" "+1 212 555 0188"}}</span>
+    </div>
+    <p class="af-copyright">{{settingOr $s "footer_text" "© 2026 Axis Form. Architecture designed to endure."}}</p>
+</footer>
+{{end}}

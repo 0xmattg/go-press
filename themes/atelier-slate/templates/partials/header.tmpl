@@ -1,0 +1,39 @@
+{{define "header"}}
+<header class="as-header" id="site-header">
+    <div class="as-container as-nav-shell">
+        <a class="as-brand" href="{{langPrefixURL $.Ctx "/"}}" aria-label="{{settingOr .Settings "home_logo_text" "Atelier Slate"}}">
+            {{$combined := eq (settingOr .Settings "home_logo_combined" "") "1"}}
+            {{$combinedImage := settingOr .Settings "home_logo_combined_image" ""}}
+            {{if and $combined $combinedImage}}
+                <img class="as-brand-combined" src="{{$combinedImage}}" alt="{{settingOr .Settings "home_logo_text" "Atelier Slate"}}">
+            {{else}}
+                {{$logoImage := settingOr .Settings "home_logo_image" ""}}
+                {{if $logoImage}}
+                    <img class="as-brand-image" src="{{$logoImage}}" alt="{{settingOr .Settings "home_logo_text" "Atelier Slate"}}">
+                {{else}}
+                    <span class="as-brand-mark">{{settingOr .Settings "home_logo_glyph" "A"}}</span>
+                {{end}}
+                <span>{{settingOr .Settings "home_logo_text" "Atelier Slate"}}</span>
+            {{end}}
+        </a>
+        <button class="as-nav-toggle" id="nav-toggle" aria-label="Toggle navigation"><span></span><span></span></button>
+        <nav class="as-nav" id="primary-nav" aria-label="Primary navigation">
+            {{$headerMenu := menuByLocation "header"}}
+            {{if $headerMenu}}
+                {{range $headerMenu.Items}}
+                <a href="{{.URL}}" class="{{if isMenuActive $.ActivePage .URL}}active{{end}}" {{if eq .Target "_blank"}}target="_blank" rel="noopener"{{end}}>{{.Title}}</a>
+                {{end}}
+            {{else}}
+                <a href="{{langPrefixURL $.Ctx "/"}}" class="{{if eq .ActivePage "home"}}active{{end}}">{{T $.Ctx "nav_home"}}</a>
+                <a href="{{langPrefixURL $.Ctx "/services"}}" class="{{if eq .ActivePage "services"}}active{{end}}">{{T $.Ctx "nav_services"}}</a>
+                <a href="{{langPrefixURL $.Ctx "/products"}}" class="{{if eq .ActivePage "products"}}active{{end}}">{{T $.Ctx "nav_products"}}</a>
+                <a href="{{langPrefixURL $.Ctx "/showcase"}}" class="{{if eq .ActivePage "showcase"}}active{{end}}">{{T $.Ctx "nav_projects"}}</a>
+                <a href="{{langPrefixURL $.Ctx "/blog"}}" class="{{if eq .ActivePage "blog"}}active{{end}}">{{T $.Ctx "nav_news"}}</a>
+                <a href="{{langPrefixURL $.Ctx "/about"}}" class="{{if eq .ActivePage "about"}}active{{end}}">{{T $.Ctx "nav_about"}}</a>
+            {{end}}
+            {{renderHook "header.nav.after" .}}
+        </nav>
+        <a class="as-nav-cta" href="{{langPrefixURL $.Ctx (settingOr .Settings "home_cta_link" "/contact")}}">{{settingOr .Settings "home_cta_text" "Start Today"}} <span>↗</span></a>
+    </div>
+</header>
+{{end}}

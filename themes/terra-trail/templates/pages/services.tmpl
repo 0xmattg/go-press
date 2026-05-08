@@ -1,0 +1,21 @@
+{{define "content"}}
+<section class="tt-page-hero">
+    <span>Transport</span>
+    <h1>Every transfer is part of the experience.</h1>
+    <p>Planes, trains, buses, and local rides arranged around comfort, timing, and the rhythm of each destination.</p>
+</section>
+
+<section class="tt-transport-page">
+    {{range $i, $svc := .Services}}
+    <a class="tt-transport-large {{if eq $i 0}}active{{end}}" href="{{langPrefixURL $.Ctx (printf "/services/%s" $svc.Slug)}}">
+        <i>{{if eq $i 0}}✈{{else if eq $i 1}}▣{{else if eq $i 2}}▤{{else}}⌁{{end}}</i>
+        <div>
+            <small>{{printf "Step %02d" (add $i 1)}}</small>
+            <h2>{{$svc.Title}}</h2>
+            <p>{{truncate $svc.Excerpt 170}}</p>
+        </div>
+        <span>↗</span>
+    </a>
+    {{end}}
+</section>
+{{end}}

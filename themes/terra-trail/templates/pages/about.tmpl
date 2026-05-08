@@ -1,0 +1,28 @@
+{{define "content"}}
+{{$s := .Settings}}
+<section class="tt-page-hero">
+    <span>About Us</span>
+    <h1>{{settingOr $s "about_banner_title" "We make remote adventures feel calm, clear, and human."}}</h1>
+    <p>{{settingOr $s "about_banner_subtitle" "TerraTrail curates mountain journeys with local guides, flexible transport, and enough detail to make every day feel simple."}}</p>
+</section>
+
+<section class="tt-split">
+    <div class="tt-split-media">
+        {{responsiveImage (settingOr $s "about_intro_image" "https://images.unsplash.com/photo-1527631746610-bca00a040d60?w=1200&h=900&fit=crop&q=82") "Travel guide planning a trip" "" "(max-width: 768px) 100vw, 48vw" "lazy"}}
+    </div>
+    <div class="tt-split-copy">
+        <span class="tt-kicker">{{settingOr $s "about_intro_label" "How We Work"}}</span>
+        <h2>{{settingOr $s "about_intro_title" "Curated routes, local care, and fewer travel unknowns."}}</h2>
+        <p>{{settingOr $s "about_intro_p1" "We start with the traveler: pace, comfort, weather window, group size, and the kind of landscapes that make the trip worth remembering."}}</p>
+        <p>{{settingOr $s "about_intro_p2" "Then we pair packages, guides, stays, and transport into an itinerary that still leaves room for wonder."}}</p>
+        <a class="tt-primary-btn tt-inline" href="{{langPrefixURL .Ctx "/contact"}}">{{settingOr $s "about_intro_btn_text" "Plan With Us"}}</a>
+    </div>
+</section>
+
+<section class="tt-stats-band">
+    <div><strong>{{settingOr $s "about_stat_1_number" "135+"}}</strong><span>{{settingOr $s "about_stat_1_label" "Guide collaborations"}}</span></div>
+    <div><strong>{{settingOr $s "about_stat_2_number" "42"}}</strong><span>{{settingOr $s "about_stat_2_label" "Mountain routes curated"}}</span></div>
+    <div><strong>{{settingOr $s "about_stat_3_number" "98%"}}</strong><span>{{settingOr $s "about_stat_3_label" "Traveler satisfaction"}}</span></div>
+    <div><strong>{{settingOr $s "about_stat_4_number" "18"}}</strong><span>{{settingOr $s "about_stat_4_label" "Countries supported"}}</span></div>
+</section>
+{{end}}

@@ -1,0 +1,58 @@
+[theme]
+name = "Civic Estate"
+version = "1.0.0"
+description = "A commercial real-estate search and advisory theme for GoPress."
+author = "GoPress Team"
+
+# Content types supported by the theme.
+[[content_types]]
+name = "product"
+label = "物业类型"
+label_plural = "物业类型"
+supports = ["title", "content", "excerpt", "thumbnail", "sort_order"]
+taxonomies = ["category", "tag"]
+has_archive = true
+rewrite_slug = "products"
+menu_icon = "blocks"
+menu_order = 1
+
+[[content_types]]
+name = "service"
+label = "经纪服务"
+label_plural = "经纪服务"
+supports = ["title", "content", "excerpt", "thumbnail", "sort_order"]
+taxonomies = ["category", "tag"]
+has_archive = true
+rewrite_slug = "services"
+menu_icon = "edit"
+menu_order = 2
+
+[[content_types]]
+name = "showcase"
+label = "房源案例"
+label_plural = "房源案例"
+supports = ["title", "content", "excerpt", "thumbnail", "sort_order"]
+taxonomies = ["category", "tag"]
+has_archive = true
+rewrite_slug = "showcase"
+menu_icon = "collection"
+menu_order = 3
+
+[[content_types.meta_fields]]
+key = "client"
+label = "业主/客户"
+type = "string"
+
+[[content_types.meta_fields]]
+key = "location"
+label = "城市/商圈"
+type = "string"
+
+# Menu locations supported by the theme.
+[[menu_locations]]
+name = "header"
+label = "顶部导航"
+
+[[menu_locations]]
+name = "footer"
+label = "底部导航"

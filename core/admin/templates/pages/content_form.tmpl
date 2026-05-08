@@ -1,0 +1,141 @@
+{{define "content"}}
+<div class="content-header">
+    <div class="content-header-left">
+        <a href="{{.BackURL}}" class="btn btn-secondary btn-back">← {{T . "action.back_to_list"}}</a>
+        <h2>{{.Title}}</h2>
+    </div>
+</div>
+<div class="card">
+    <form method="POST" action="/admin/{{.Slug}}/{{if .Item}}{{.Item.ID}}/edit{{else}}new{{end}}{{if .BackQuery}}?{{.BackQuery}}{{end}}" id="contentForm">
+        <div class="form-group">
+            <label for="title">{{T . "content.title"}} *</label>
+            <input type="text" id="title" name="title" value="{{if .Item}}{{.Item.Title}}{{end}}" required>
+        </div>
+        <div class="form-group">
+            <label for="slug">Slug *</label>
+            <div class="slug-permalink-wrapper">
+                <span class="permalink-prefix">{{if .TypeDef.Rewrite.Slug}}/{{.TypeDef.Rewrite.Slug}}/{{else}}/{{.TypeName}}/{{end}}</span>
+                <input type="text" id="slug" name="slug" value="{{if .Item}}{{.Item.Slug}}{{end}}" required>
+            </div>
+            {{if .Item}}
+            {{$base := printf "/%s/%s" (or .TypeDef.Rewrite.Slug .TypeName) .Item.Slug}}
+            {{$full := printf "%s%s" .PermalinkPrefix $base}}
+            <small class="permalink-display">{{T . "content.permalink"}} <a href="{{$full}}" target="_blank">{{$full}}</a></small>
+            {{end}}
+        </div>
+
+        {{if hasSupport .TypeDef.Supports "excerpt"}}
+        <div class="form-group">
+            <label for="excerpt">{{T . "content.excerpt"}}</label>
+            <textarea id="excerpt" name="excerpt" rows="3">{{if .Item}}{{.Item.Excerpt}}{{end}}</textarea>
+        </div>
+        {{end}}
+
+        {{if hasSupport .TypeDef.Supports "content"}}
+        <div class="form-group">
+            <label for="content">{{T . "content.content"}}</label>
+            <textarea id="content" name="content" rows="12" class="rich-editor">{{if .Item}}{{.Item.Content}}{{end}}</textarea>
+        </div>
+        {{end}}
+
+        {{if hasSupport .TypeDef.Supports "thumbnail"}}
+        <div class="form-group">
+            <label>{{T . "content.image_management"}} <small style="color:#888">({{T . "content.image_help"}})</small></label>
+            <div class="image-pool-wrapper">
+                <div class="image-pool-grid" id="imagePoolGrid">
+                    <!-- JS renders all image cards here -->
+                </div>
+                <div class="image-actions" style="margin-top: 10px">
+                    <button type="button" class="btn btn-sm" onclick="addImageToPool()">{{T . "content.add_image_from_media"}}</button>
+                    <label class="btn btn-sm btn-primary" style="cursor:pointer">
+                        {{T . "action.upload_image"}}
+                        <input type="file" accept="image/*" style="display:none" onchange="uploadImageToPool(this)" multiple>
+                    </label>
+                </div>
+                <input type="hidden" id="image_url" name="image_url" value="{{if .Item}}{{.Item.ImageURL}}{{end}}">
+                <input type="hidden" id="gallery_images" name="gallery_images" value="{{if .Item}}{{metaVal .Item.Meta "gallery_images"}}{{end}}">
+            </div>
+        </div>
+        {{end}}
+
+        {{if hasSupport .TypeDef.Supports "sort_order"}}
+        <div class="form-group">
+            <label for="sort_order">{{T . "content.sort_order"}}</label>
+            <input type="number" id="sort_order" name="sort_order" value="{{if .Item}}{{.Item.SortOrder}}{{else}}0{{end}}">
+        </div>
+        {{end}}
+
+        <div class="form-group">
+            <label for="status">{{T . "content.archive_status"}}</label>
+            <select id="status" name="status" style="padding:0.4rem 0.8rem; border:1px solid #d1d5db; border-radius:6px;">
+                <option value="published" {{if .Item}}{{if eq .Item.Status "published"}}selected{{end}}{{else}}selected{{end}}>{{T . "content.status.published"}}</option>
+                <option value="draft" {{if .Item}}{{if eq .Item.Status "draft"}}selected{{end}}{{end}}>{{T . "content.status.draft"}}</option>
+                <option value="archived" {{if .Item}}{{if eq .Item.Status "archived"}}selected{{end}}{{end}}>{{T . "content.status.archived"}}</option>
+            </select>
+        </div>
+
+        {{if hasSupport .TypeDef.Supports "publish_date"}}
+        <div class="form-group">
+            <label for="published_at">{{T . "content.publish_at"}}</label>
+            <input type="datetime-local" id="published_at" name="published_at" value="{{if .Item}}{{formatDateInput .Item.PublishedAt}}{{end}}">
+            <small>{{T . "content.publish_at_help"}}</small>
+        </div>
+        {{end}}
+
+        {{range $field := .TypeDef.MetaFields}}
+        <div class="form-group">
+            <label for="{{$field.Key}}">{{adminMetaFieldLabel $ $.TypeName $field.Key $field.Label}}</label>
+            {{if eq $field.Type "text"}}
+            <textarea id="{{$field.Key}}" name="{{$field.Key}}" rows="4">{{if $.Item}}{{metaVal $.Item.Meta $field.Key}}{{end}}</textarea>
+            {{else if eq $field.Type "int"}}
+            <input type="number" id="{{$field.Key}}" name="{{$field.Key}}" value="{{if $.Item}}{{metaVal $.Item.Meta $field.Key}}{{else}}{{$field.Default}}{{end}}">
+            {{else if eq $field.Type "bool"}}
+            <input type="checkbox" id="{{$field.Key}}" name="{{$field.Key}}" value="true" {{if $.Item}}{{if eq (metaVal $.Item.Meta $field.Key) "true"}}checked{{end}}{{end}}>
+            {{else if eq $field.Type "select"}}
+            <select id="{{$field.Key}}" name="{{$field.Key}}">
+                <option value="">{{T $ "content.select"}}</option>
+                {{range $field.Options}}
+                <option value="{{.}}" {{if $.Item}}{{if eq (metaVal $.Item.Meta $field.Key) .}}selected{{end}}{{end}}>{{.}}</option>
+                {{end}}
+            </select>
+            {{else}}
+            <input type="text" id="{{$field.Key}}" name="{{$field.Key}}" value="{{if $.Item}}{{metaVal $.Item.Meta $field.Key}}{{else}}{{$field.Default}}{{end}}">
+            {{end}}
+        </div>
+        {{end}}
+
+        {{/* Plugin extension slot — meta boxes contributed by plugins (e.g. seo-extras). */}}
+        {{renderHook "admin.content_form.fields" .Item .TypeDef}}
+
+        {{range $tf := .TaxForms}}
+        <div class="form-group">
+            <label>{{$tf.TaxDef.Label}}</label>
+            {{if $tf.TaxDef.Hierarchical}}
+            <select name="{{$tf.TaxDef.Name}}_id">
+                <option value="">{{T $ "content.select"}}</option>
+                {{range $item := $tf.AllItems}}
+                <option value="{{$item.ID}}" {{if eq $tf.SelectedID $item.ID}}selected{{end}}>{{$item.Name}}</option>
+                {{end}}
+            </select>
+            {{else}}
+            <div class="checkbox-group">
+                {{range $item := $tf.AllItems}}
+                <label class="checkbox-label">
+                    <input type="checkbox" name="{{$tf.TaxDef.Name}}_ids" value="{{$item.ID}}" {{if hasKey $tf.SelectedMap $item.ID}}checked{{end}}>
+                    {{$item.Name}}
+                </label>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+        {{end}}
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{{T . "action.save"}}</button>
+            <a href="{{.BackURL}}" class="btn">{{T . "action.cancel"}}</a>
+        </div>
+    </form>
+</div>
+
+<!-- Media Picker Modal -->
+{{end}}

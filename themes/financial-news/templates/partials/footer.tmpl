@@ -1,0 +1,27 @@
+{{define "footer"}}
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h4>{{T $.Ctx "footer_site_name"}}</h4>
+                <p>{{T $.Ctx "footer_site_desc"}}</p>
+            </div>
+            <div class="footer-col">
+                <h4>{{T $.Ctx "footer_quick_links"}}</h4>
+                <ul>
+                    <li><a href="/articles">{{T $.Ctx "footer_link_articles"}}</a></li>
+                    <li><a href="/market">{{T $.Ctx "footer_link_market"}}</a></li>
+                    <li><a href="/analysis">{{T $.Ctx "footer_link_analysis"}}</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>{{T $.Ctx "footer_disclaimer"}}</h4>
+                <p class="disclaimer">{{T $.Ctx "footer_disclaimer_text"}}</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 FinNews. Powered by <strong>GoPress</strong>.</p>
+        </div>
+    </div>
+</footer>
+{{end}}

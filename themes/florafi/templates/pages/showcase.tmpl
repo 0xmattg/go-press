@@ -1,0 +1,37 @@
+{{define "content"}}
+<section class="ff-page-hero ff-page-hero-showcase" style="--hero-bg:url('https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1600&h=820&fit=crop&q=82');">
+    <span class="ff-hero-ghost">USE CASES</span>
+    <div class="ff-page-hero-inner">
+        <span class="ff-kicker">{{T $.Ctx "section_portfolio"}}</span>
+        <h1>{{T $.Ctx "page_title_projects"}}</h1>
+        <span class="ff-hero-rule"></span>
+        <p>Examples of stablecoin growth, treasury, and developer workflows.</p>
+        <div class="ff-breadcrumb"><a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a><span>/</span><span>{{T $.Ctx "page_title_projects"}}</span></div>
+    </div>
+</section>
+
+<section class="ff-section">
+    <div class="ff-section-heading">
+        <span class="ff-kicker">{{T $.Ctx "section_portfolio"}}</span>
+        <h2>{{T $.Ctx "section_valuable_works"}}</h2>
+        <p>Selected implementations that show how stable value moves across product, treasury, and operations.</p>
+    </div>
+    <div class="ff-case-grid">
+        {{range .Showcases}}
+        <a class="ff-case-card" href="{{langPrefixURL $.Ctx (printf "/showcase/%s" .Slug)}}">
+            <div class="ff-case-media">
+                {{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="ff-card-icon">◎</span>{{end}}
+            </div>
+            <div class="ff-case-body">
+                <h3>{{.Title}}</h3>
+                <p>{{truncate (stripTags .Description) 132}}</p>
+                <div class="ff-case-meta">
+                    {{if .Client}}<span><strong>{{T $.Ctx "label_client"}}:</strong> {{.Client}}</span>{{end}}
+                    {{if .Location}}<span><strong>{{T $.Ctx "label_location"}}:</strong> {{.Location}}</span>{{end}}
+                </div>
+            </div>
+        </a>
+        {{end}}
+    </div>
+</section>
+{{end}}

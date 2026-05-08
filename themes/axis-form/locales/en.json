@@ -1,0 +1,14 @@
+{
+  "nav_about": "About Us",
+  "nav_services": "Our Services",
+  "nav_showcase": "Portfolio",
+  "nav_process": "Process",
+  "nav_contact": "Contacts",
+  "label_client": "Client",
+  "label_location": "Location",
+  "sidebar_categories": "Categories",
+  "sidebar_tags": "Tags",
+  "archive_label_category": "Category",
+  "archive_label_tag": "Tag",
+  "archive_items_found": "items found"
+}

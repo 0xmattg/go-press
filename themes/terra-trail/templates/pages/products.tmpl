@@ -1,0 +1,24 @@
+{{define "content"}}
+<section class="tt-page-hero">
+    <span>Tour Packages</span>
+    <h1>Choose a mountain escape that already feels planned.</h1>
+    <p>Curated routes, stays, meals, guide support, and transport details for travelers who want the journey to feel effortless.</p>
+</section>
+
+<section class="tt-card-grid tt-package-list">
+    {{range $i, $p := .Products}}
+    <a class="tt-package-card" href="{{langPrefixURL $.Ctx (printf "/products/%s" $p.Slug)}}">
+        <div class="tt-card-media">
+            {{if $p.ImageURL}}{{responsiveImage $p.ImageURL $p.Title "" "(max-width: 768px) 90vw, 30vw" "lazy"}}{{end}}
+            <em>{{printf "%02d" (add $i 1)}}</em>
+        </div>
+        <div class="tt-package-copy">
+            <div class="tt-card-title-row"><h2>{{$p.Title}}</h2><span>★ 5.5</span></div>
+            <strong>$456.80</strong>
+            <p>{{truncate $p.Excerpt 150}}</p>
+            <small>Booking</small>
+        </div>
+    </a>
+    {{end}}
+</section>
+{{end}}

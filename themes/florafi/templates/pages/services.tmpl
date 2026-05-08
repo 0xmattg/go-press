@@ -1,0 +1,54 @@
+{{define "content"}}
+<section class="ff-page-hero ff-page-hero-services" style="--hero-bg:url('https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=1600&h=820&fit=crop&q=82');">
+    <span class="ff-hero-ghost">BUSINESS</span>
+    <div class="ff-page-hero-inner">
+        <span class="ff-kicker">{{T $.Ctx "page_label_services"}}</span>
+        <h1>{{T $.Ctx "page_title_services"}}</h1>
+        <span class="ff-hero-rule"></span>
+        <p>Operational playbooks for businesses, treasury teams, and builders.</p>
+        <div class="ff-breadcrumb"><a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a><span>/</span><span>{{T $.Ctx "page_title_services"}}</span></div>
+    </div>
+</section>
+
+<section class="ff-section">
+    <div class="ff-layout-with-sidebar">
+        <div>
+            <div class="ff-section-heading ff-section-heading-left">
+                <span class="ff-kicker">{{T $.Ctx "section_what_offer"}}</span>
+                <h2>{{T $.Ctx "section_professional_services"}}</h2>
+                <p>Use FloraFi to add stable yield, settlement, and programmable money movement to existing workflows.</p>
+            </div>
+            <div class="ff-list-stack">
+                {{range .Services}}
+                <a class="ff-list-card" href="{{langPrefixURL $.Ctx (printf "/services/%s" .Slug)}}">
+                    <div class="ff-list-media">
+                        {{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="ff-card-icon">♧</span>{{end}}
+                    </div>
+                    <div class="ff-list-body">
+                        <span class="ff-card-eyebrow">Workflow</span>
+                        <h3>{{.Title}}</h3>
+                        <p class="ff-strong-copy">{{if .Excerpt}}{{.Excerpt}}{{else}}{{truncate (stripTags .Description) 120}}{{end}}</p>
+                        <p>{{truncate (stripTags .Description) 190}}</p>
+                        <span class="ff-outline-chip">{{T $.Ctx "btn_learn_more"}}</span>
+                    </div>
+                </a>
+                {{end}}
+            </div>
+        </div>
+        <aside class="ff-sidebar">
+            <div class="ff-side-card">
+                <h3>{{T $.Ctx "section_recent_articles"}}</h3>
+                {{range .RecentPosts}}
+                <a class="ff-side-link" href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}"><span>{{.Title}}</span><small>{{formatDate .PublishedAt}}</small></a>
+                {{end}}
+            </div>
+            <div class="ff-side-card">
+                <h3>{{T $.Ctx "sidebar_tags"}}</h3>
+                <div class="ff-chip-cloud">
+                    {{range .Tags}}<a href="{{langPrefixURL $.Ctx (printf "/tag/%s" .Slug)}}">{{.Name}}</a>{{end}}
+                </div>
+            </div>
+        </aside>
+    </div>
+</section>
+{{end}}

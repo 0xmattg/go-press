@@ -1,0 +1,262 @@
+{{define "content"}}
+{{$s := .Settings}}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-slider" id="hero-slider">
+        <div class="hero-slide active">
+            {{responsiveImagePriority (settingOr $s "home_hero_1_image" "https://images.unsplash.com/photo-1584677123573-7446380b6d69?w=1600&h=900&fit=crop&q=80") (settingOr $s "home_hero_1_title" "Cleanroom Construction & HEPA Filter Systems") "hero-image" "100vw"}}
+            <div class="hero-overlay"></div>
+            <div class="container">
+                <span class="hero-label">{{settingOr $s "home_hero_1_label" "Cleanroom Engineering Experts"}}</span>
+                <h1>{{settingOr $s "home_hero_1_title" "Cleanroom Construction & HEPA Filter Systems"}}</h1>
+                <p>{{settingOr $s "home_hero_1_desc" "Professional turnkey cleanroom solutions from design to installation, serving pharmaceutical, food, and tech industries globally since 2003."}}</p>
+                <div class="hero-btns">
+                    <a href="{{settingOr $s "home_hero_1_btn1_link" "/contact"}}" class="btn btn-primary btn-lg">{{settingOr $s "home_hero_1_btn1_text" "Get a Quote"}}</a>
+                    <a href="{{settingOr $s "home_hero_1_btn2_link" "/products"}}" class="btn btn-outline btn-lg">{{settingOr $s "home_hero_1_btn2_text" "Our Products"}}</a>
+                </div>
+            </div>
+        </div>
+        <div class="hero-slide">
+            {{responsiveImage (settingOr $s "home_hero_2_image" "https://images.unsplash.com/photo-1513828583688-c52646db42da?w=1600&h=900&fit=crop&q=80") (settingOr $s "home_hero_2_title" "ISO-Certified Air Purification Solutions") "hero-image" "100vw" "lazy"}}
+            <div class="hero-overlay"></div>
+            <div class="container">
+                <span class="hero-label">{{settingOr $s "home_hero_2_label" "ISO-Certified Quality"}}</span>
+                <h1>{{settingOr $s "home_hero_2_title" "ISO-Certified Air Purification Solutions"}}</h1>
+                <p>{{settingOr $s "home_hero_2_desc" "High-efficiency filters, laminar flow hoods, air showers, and complete purification equipment manufactured in Wuxi, China."}}</p>
+                <div class="hero-btns">
+                    <a href="{{settingOr $s "home_hero_2_btn1_link" "/services"}}" class="btn btn-primary btn-lg">{{settingOr $s "home_hero_2_btn1_text" "Our Services"}}</a>
+                    <a href="{{settingOr $s "home_hero_2_btn2_link" "/about"}}" class="btn btn-outline btn-lg">{{settingOr $s "home_hero_2_btn2_text" "Learn More"}}</a>
+                </div>
+            </div>
+        </div>
+        <div class="hero-slide">
+            {{responsiveImage (settingOr $s "home_hero_3_image" "https://images.unsplash.com/photo-1559744339-9ea435c9b2b4?w=1600&h=900&fit=crop&q=80") (settingOr $s "home_hero_3_title" "Precision Engineering for Critical Environments") "hero-image" "100vw" "lazy"}}
+            <div class="hero-overlay"></div>
+            <div class="container">
+                <span class="hero-label">{{settingOr $s "home_hero_3_label" "120+ Professionals"}}</span>
+                <h1>{{settingOr $s "home_hero_3_title" "Precision Engineering for Critical Environments"}}</h1>
+                <p>{{settingOr $s "home_hero_3_desc" "Over 120 skilled professionals delivering Class 100 to Class 300,000 cleanroom systems with strict quality standards."}}</p>
+                <div class="hero-btns">
+                    <a href="{{settingOr $s "home_hero_3_btn1_link" "/showcase"}}" class="btn btn-primary btn-lg">{{settingOr $s "home_hero_3_btn1_text" "View Projects"}}</a>
+                    <a href="{{settingOr $s "home_hero_3_btn2_link" "/contact"}}" class="btn btn-outline btn-lg">{{settingOr $s "home_hero_3_btn2_text" "Contact Us"}}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="hero-dots" id="hero-dots"></div>
+    <div class="hero-accent-strip"></div>
+</section>
+
+<!-- About Preview -->
+<section class="section">
+    <div class="container">
+        <div class="about-section">
+            <div class="about-image-wrap">
+                {{$aboutImage := settingOr $s "home_about_image" "https://images.unsplash.com/photo-1581092160607-ee67df9c8ed8?w=800&h=600&fit=crop&q=80"}}
+                {{$aboutImageLink := settingOr $s "home_about_image_link" ""}}
+                {{if $aboutImageLink}}
+                <a href="{{$aboutImageLink}}" class="about-image-link" aria-label="{{settingOr $s "home_about_title" "We Are The Leader In Cleanroom Engineering"}}">
+                    {{responsiveImage $aboutImage "Hurricane Techs Cleanroom" "" "(max-width: 768px) 100vw, 50vw" "lazy"}}
+                </a>
+                {{else}}
+                {{responsiveImage $aboutImage "Hurricane Techs Cleanroom" "" "(max-width: 768px) 100vw, 50vw" "lazy"}}
+                {{end}}
+                <div class="about-badge">
+                    <span class="badge-number">{{settingOr $s "home_about_badge_number" "20+"}}</span>
+                    <span class="badge-text">{{settingOr $s "home_about_badge_text" "Years Experience"}}</span>
+                </div>
+            </div>
+            <div class="about-content">
+                <div class="section-header">
+                    <span class="section-label">{{settingOr $s "home_about_label" "About Our Company"}}</span>
+                    <h2>{{settingOr $s "home_about_title" "We Are The Leader In Cleanroom Engineering"}}</h2>
+                </div>
+                <p>{{settingOr $s "home_about_desc" "Wuxi Hurricane Purification Technology Equipment Co., Ltd., founded in 2003, specializes in the design, production, installation, and testing of air purification projects from Class 100 to Class 300,000."}}</p>
+                <div class="about-features">
+                    <div class="about-feature-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        {{settingOr $s "home_about_feature_1" "ISO9001 Certified Manufacturing"}}
+                    </div>
+                    <div class="about-feature-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        {{settingOr $s "home_about_feature_2" "Turnkey Cleanroom Solutions"}}
+                    </div>
+                    <div class="about-feature-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        {{settingOr $s "home_about_feature_3" "Global Project Delivery"}}
+                    </div>
+                </div>
+                <a href="{{settingOr $s "home_about_btn_link" "/about"}}" class="btn btn-primary">{{settingOr $s "home_about_btn_text" "Discover More"}}</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Counter -->
+<div class="stats-band">
+<div class="diag-cut-dark"></div>
+<section class="section section-dark" style="margin: 0; z-index:1; padding-top:60px; padding-bottom:60px;">
+    <span class="geo-watermark">Hurricane</span>
+    <div class="container">
+        <div class="stats-row">
+            <div class="stat-item">
+                <span class="stat-number">{{settingOr $s "home_stat_1_number" "20+"}}</span>
+                <span class="stat-label">{{settingOr $s "home_stat_1_label" "Years Experience"}}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{settingOr $s "home_stat_2_number" "120+"}}</span>
+                <span class="stat-label">{{settingOr $s "home_stat_2_label" "Team Members"}}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{settingOr $s "home_stat_3_number" "500+"}}</span>
+                <span class="stat-label">{{settingOr $s "home_stat_3_label" "Projects Delivered"}}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{settingOr $s "home_stat_4_number" "ISO"}}</span>
+                <span class="stat-label">{{settingOr $s "home_stat_4_label" "9001 Certified"}}</span>
+            </div>
+        </div>
+    </div>
+</section>
+<div class="diag-cut-light"></div>
+</div>
+
+<!-- Products Preview -->
+<section class="section" style="padding-top:80px;">
+    <span class="geo-watermark">Products</span>
+    <div class="container">
+        <div class="section-header centered">
+            <span class="section-label">{{settingOr $s "home_products_label" "Our Products"}}</span>
+            <h2>{{settingOr $s "home_products_title" "Premium Cleanroom Equipment"}}</h2>
+            <p>{{settingOr $s "home_products_subtitle" "High-quality cleanroom and air purification equipment manufactured in Wuxi, China"}}</p>
+        </div>
+        <div class="product-geo-grid">
+            {{range .Products}}
+            {{$purl := langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}
+            <div class="geo-card">
+                {{if .ImageURL}}
+                <a href="{{$purl}}" class="card-image">
+                    {{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}
+                </a>
+                {{else}}
+                <a href="{{$purl}}" class="card-image" style="background:var(--light);display:flex;align-items:center;justify-content:center;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8m-4-4h8"/></svg>
+                </a>
+                {{end}}
+                <div class="card-body">
+                    <h3>{{.Title}}</h3>
+                    <p>{{if .Excerpt}}{{truncate .Excerpt 120}}{{else}}{{truncate (stripTags .Description) 120}}{{end}}</p>
+                    <a href="{{$purl}}" class="card-link">{{T $.Ctx "btn_learn_more"}} &rarr;</a>
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+</section>
+
+<!-- Services Preview -->
+<div class="chevron-divider-dark"></div>
+<section class="section section-dark" style="padding-top:60px;">
+    <span class="geo-watermark">Services</span>
+    <div class="container">
+        <div class="section-header centered">
+            <span class="section-label">{{settingOr $s "home_services_label" "What We Offer"}}</span>
+            <h2>{{settingOr $s "home_services_title" "Professional Engineering Services"}}</h2>
+            <p>{{settingOr $s "home_services_subtitle" "End-to-end cleanroom solutions from consultation to installation"}}</p>
+        </div>
+        <div class="card-grid">
+            {{range .Services}}
+            <div class="card card-dark">
+                {{if .ImageURL}}
+                <a href="{{langPrefixURL $.Ctx (printf "/services/%s" .Slug)}}" class="card-image card-image-dark">
+                    {{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 50vw" "lazy"}}
+                </a>
+                {{else}}
+                <a href="{{langPrefixURL $.Ctx (printf "/services/%s" .Slug)}}" class="card-image card-image-dark" style="background:rgba(255,255,255,0.04);height:200px;display:flex;align-items:center;justify-content:center;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                </a>
+                {{end}}
+                <div class="card-body">
+                    <h3>{{.Title}}</h3>
+                    <p>{{if .Excerpt}}{{truncate .Excerpt 120}}{{else}}{{truncate (stripTags .Description) 120}}{{end}}</p>
+                    <a href="{{langPrefixURL $.Ctx (printf "/services/%s" .Slug)}}" class="card-link">{{T $.Ctx "btn_read_more"}}</a>
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+</section>
+<div class="chevron-divider-reverse"></div>
+
+<!-- Partners / Trusted-By Strip -->
+{{if .Partners}}
+{{$pcount := len .Partners}}
+<section class="section partners-section">
+    <div class="container">
+        <div class="section-header centered">
+            <span class="section-label">{{settingOr $s "home_partners_label" "Partners"}}</span>
+            <h2>{{settingOr $s "home_partners_title" "Trusted by leading companies"}}</h2>
+            <p>{{settingOr $s "home_partners_subtitle" "From global brands to regional leaders — they rely on us for cleanroom solutions, HEPA filtration, and contamination-control engineering."}}</p>
+        </div>
+    </div>
+    {{if gt $pcount 12}}
+    <!-- Two-row marquee, opposite directions -->
+    <div class="container">
+        <div class="partners-marquee partners-marquee--two-row" aria-label="Trusted partners">
+            <div class="partners-marquee-track">
+                {{range $pass := seq 2}}{{range $.PartnersTop}}
+                {{if .Link}}<a class="partner-logo" href="{{.Link}}" target="_blank" rel="noopener" {{if .Name}}aria-label="{{.Name}}" title="{{.Name}}"{{end}}>{{if .Name}}{{responsiveImage .ImageURL .Name "" "160px" "lazy"}}{{else}}{{responsiveImage .ImageURL "Partner logo" "" "160px" "lazy"}}{{end}}</a>
+                {{else}}<span class="partner-logo" {{if .Name}}title="{{.Name}}"{{end}}>{{if .Name}}{{responsiveImage .ImageURL .Name "" "160px" "lazy"}}{{else}}{{responsiveImage .ImageURL "Partner logo" "" "160px" "lazy"}}{{end}}</span>{{end}}
+                {{end}}{{end}}
+            </div>
+            <div class="partners-marquee-track partners-marquee-track--reverse">
+                {{range $pass := seq 2}}{{range $.PartnersBottom}}
+                {{if .Link}}<a class="partner-logo" href="{{.Link}}" target="_blank" rel="noopener" {{if .Name}}aria-label="{{.Name}}" title="{{.Name}}"{{end}}>{{if .Name}}{{responsiveImage .ImageURL .Name "" "160px" "lazy"}}{{else}}{{responsiveImage .ImageURL "Partner logo" "" "160px" "lazy"}}{{end}}</a>
+                {{else}}<span class="partner-logo" {{if .Name}}title="{{.Name}}"{{end}}>{{if .Name}}{{responsiveImage .ImageURL .Name "" "160px" "lazy"}}{{else}}{{responsiveImage .ImageURL "Partner logo" "" "160px" "lazy"}}{{end}}</span>{{end}}
+                {{end}}{{end}}
+            </div>
+        </div>
+    </div>
+    {{else if gt $pcount 6}}
+    <!-- Single-row marquee -->
+    <div class="container">
+        <div class="partners-marquee" aria-label="Trusted partners">
+            <div class="partners-marquee-track">
+                {{range $pass := seq 2}}{{range $.Partners}}
+                {{if .Link}}<a class="partner-logo" href="{{.Link}}" target="_blank" rel="noopener" {{if .Name}}aria-label="{{.Name}}" title="{{.Name}}"{{end}}>{{if .Name}}{{responsiveImage .ImageURL .Name "" "160px" "lazy"}}{{else}}{{responsiveImage .ImageURL "Partner logo" "" "160px" "lazy"}}{{end}}</a>
+                {{else}}<span class="partner-logo" {{if .Name}}title="{{.Name}}"{{end}}>{{if .Name}}{{responsiveImage .ImageURL .Name "" "160px" "lazy"}}{{else}}{{responsiveImage .ImageURL "Partner logo" "" "160px" "lazy"}}{{end}}</span>{{end}}
+                {{end}}{{end}}
+            </div>
+        </div>
+    </div>
+    {{else}}
+    <!-- Static centered grid (≤6 logos) -->
+    <div class="container">
+        <div class="partners-grid">
+            {{range .Partners}}
+            {{if .Link}}<a class="partner-logo" href="{{.Link}}" target="_blank" rel="noopener" {{if .Name}}aria-label="{{.Name}}" title="{{.Name}}"{{end}}>{{if .Name}}{{responsiveImage .ImageURL .Name "" "160px" "lazy"}}{{else}}{{responsiveImage .ImageURL "Partner logo" "" "160px" "lazy"}}{{end}}</a>
+            {{else}}<span class="partner-logo" {{if .Name}}title="{{.Name}}"{{end}}>{{if .Name}}{{responsiveImage .ImageURL .Name "" "160px" "lazy"}}{{else}}{{responsiveImage .ImageURL "Partner logo" "" "160px" "lazy"}}{{end}}</span>{{end}}
+            {{end}}
+        </div>
+    </div>
+    {{end}}
+</section>
+{{end}}
+
+<!-- CTA Section -->
+<section class="section cta-section text-center" style="padding-top:60px;">
+    <span class="geo-accent-left"></span>
+    <span class="geo-watermark">Contact</span>
+    <div class="container">
+        <span class="section-label" style="color:var(--accent);padding-left:0;">
+            {{settingOr $s "home_cta_label" "Ready To Start?"}}
+        </span>
+        <h2>{{settingOr $s "home_cta_title" "Have a Cleanroom Project for Us?"}}</h2>
+        <p>{{settingOr $s "home_cta_desc" "From concept to completion — we design, build, and deliver certified clean environments for critical industries."}}</p>
+        <div>
+            <a href="{{settingOr $s "home_cta_btn1_link" "/contact"}}" class="btn btn-primary btn-lg">{{settingOr $s "home_cta_btn1_text" "Contact Us Today"}}</a>
+            <a href="{{settingOr $s "home_cta_btn2_link" "/showcase"}}" class="btn btn-outline btn-lg">{{settingOr $s "home_cta_btn2_text" "View Our Work"}}</a>
+        </div>
+    </div>
+</section>
+{{end}}

@@ -1,0 +1,101 @@
+{{define "content"}}
+{{$s := .Settings}}
+<div class="content-header">
+    <div style="display:flex; align-items:center; gap:1rem;">
+        <a href="/admin/themes" class="btn btn-secondary" style="display:inline-flex; align-items:center; gap:.4rem; text-decoration:none;">← {{X $ "theme.settings.back" "返回主题管理"}}</a>
+        <h2>{{X $ "theme.settings.title" "%s - 主题设置" .ThemeName}}</h2>
+    </div>
+</div>
+
+<form method="POST" action="/admin/themes/{{.ThemeSlug}}/settings" class="ce-settings-form">
+    <section class="ce-admin-card">
+        <h3>{{X $ "theme.settings.text.038" "品牌与导航"}}</h3>
+        <div class="ce-admin-grid">
+            <label>{{X $ "theme.settings.text.015" "公司名称"}}<input name="company_name" value="{{index $s "company_name"}}" placeholder="Civic Estate"></label>
+            <label>{{X $ "theme.settings.text.229" "Logo 文本"}}<input name="home_logo_text" value="{{index $s "home_logo_text"}}" placeholder="Civic Estate"></label>
+            <label>{{X $ "theme.settings.text.230" "About 导航"}}<input name="nav_about" value="{{index $s "nav_about"}}" placeholder="About"></label>
+            <label>{{X $ "theme.settings.text.250" "Types 导航"}}<input name="nav_process" value="{{index $s "nav_process"}}" placeholder="Types"></label>
+            <label>{{X $ "theme.settings.text.251" "Areas 导航"}}<input name="nav_showcase" value="{{index $s "nav_showcase"}}" placeholder="Areas"></label>
+            <label>{{X $ "theme.settings.text.231" "Services 导航"}}<input name="nav_services" value="{{index $s "nav_services"}}" placeholder="Services"></label>
+            <label>{{X $ "theme.settings.text.252" "Market Notes 导航"}}<input name="nav_blog" value="{{index $s "nav_blog"}}" placeholder="Market Notes"></label>
+            <label>{{X $ "theme.settings.text.234" "Contact 导航"}}<input name="nav_contact" value="{{index $s "nav_contact"}}" placeholder="Contact"></label>
+        </div>
+    </section>
+
+    <section class="ce-admin-card">
+        <h3>{{X $ "theme.settings.text.235" "首页 Hero"}}</h3>
+        <label>{{X $ "theme.settings.text.236" "Hero 图片 URL"}}<input name="home_hero_image" value="{{index $s "home_hero_image"}}" placeholder="https://images.unsplash.com/..."></label>
+        <div class="ce-admin-grid">
+            <label>{{X $ "theme.settings.text.103" "主标题"}}<input name="home_hero_title" value="{{index $s "home_hero_title"}}" placeholder="Find Premium Commercial Properties"></label>
+            <label>{{X $ "theme.settings.text.070" "按钮文字"}}<input name="home_hero_btn_text" value="{{index $s "home_hero_btn_text"}}" placeholder="Search"></label>
+            <label>{{X $ "theme.settings.text.071" "按钮链接"}}<input name="home_hero_btn_link" value="{{index $s "home_hero_btn_link"}}" placeholder="/showcase"></label>
+        </div>
+        <label>{{X $ "theme.settings.text.211" "副标题"}}<textarea name="home_hero_subtitle" rows="3">{{index $s "home_hero_subtitle"}}</textarea></label>
+        <div class="ce-admin-grid">
+            <label>{{X $ "theme.settings.text.253" "搜索框文案"}}<input name="home_search_placeholder" value="{{index $s "home_search_placeholder"}}" placeholder="Downtown offices, retail corridors, flex space"></label>
+            <label>{{X $ "theme.settings.text.254" "搜索按钮"}}<input name="home_search_button" value="{{index $s "home_search_button"}}" placeholder="Search Now"></label>
+            <label>{{X $ "theme.settings.text.255" "筛选 1"}}<input name="home_filter_1" value="{{index $s "home_filter_1"}}" placeholder="Central"></label>
+            <label>{{X $ "theme.settings.text.256" "筛选 2"}}<input name="home_filter_2" value="{{index $s "home_filter_2"}}" placeholder="Now"></label>
+            <label>{{X $ "theme.settings.text.257" "筛选 3"}}<input name="home_filter_3" value="{{index $s "home_filter_3"}}" placeholder="Commercial"></label>
+            <label>{{X $ "theme.settings.text.258" "筛选 4"}}<input name="home_filter_4" value="{{index $s "home_filter_4"}}" placeholder="$45/sf"></label>
+        </div>
+    </section>
+
+    <section class="ce-admin-card">
+        <h3>{{X $ "theme.settings.text.237" "首页简介与指标"}}</h3>
+        <label>{{X $ "theme.settings.text.238" "简介标题"}}<input name="home_about_title" value="{{index $s "home_about_title"}}" placeholder="For every commercial move"></label>
+        <label>{{X $ "theme.settings.text.239" "简介文字"}}<textarea name="home_about_desc" rows="3">{{index $s "home_about_desc"}}</textarea></label>
+        <div class="ce-admin-grid">
+            {{range $i := seq 4}}
+            <label>{{X $ "theme.settings.dynamic.metric_number_i" "指标 %d 数字" $i}}<input name="home_stat_{{$i}}_number" value="{{index $s (printf "home_stat_%d_number" $i)}}"></label>
+            <label>{{X $ "theme.settings.dynamic.metric_label_i" "指标 %d 标签" $i}}<input name="home_stat_{{$i}}_label" value="{{index $s (printf "home_stat_%d_label" $i)}}"></label>
+            {{end}}
+        </div>
+    </section>
+
+    <section class="ce-admin-card">
+        <h3>{{X $ "theme.settings.text.240" "内容区标题"}}</h3>
+        <div class="ce-admin-grid">
+            <label>{{X $ "theme.settings.text.259" "物业卡片区标题"}}<input name="home_products_title" value="{{index $s "home_products_title"}}" placeholder="For every commercial move"></label>
+            <label>{{X $ "theme.settings.text.241" "服务区标题"}}<input name="home_services_title" value="{{index $s "home_services_title"}}" placeholder="Commercial services we provide"></label>
+            <label>{{X $ "theme.settings.text.260" "房源区标题"}}<input name="home_showcase_title" value="{{index $s "home_showcase_title"}}" placeholder="Featured spaces and market areas"></label>
+            <label>{{X $ "theme.settings.text.261" "房源区按钮"}}<input name="home_showcase_btn" value="{{index $s "home_showcase_btn"}}" placeholder="View More Listings"></label>
+        </div>
+        <label>{{X $ "theme.settings.text.262" "房源区说明"}}<textarea name="home_showcase_subtitle" rows="3">{{index $s "home_showcase_subtitle"}}</textarea></label>
+        <div class="ce-admin-grid">
+            <label>{{X $ "theme.settings.text.263" "底部搜索标题"}}<input name="home_nearby_title" value="{{index $s "home_nearby_title"}}" placeholder="Search Offices & Retail Spaces Near You"></label>
+            <label>{{X $ "theme.settings.text.264" "底部搜索按钮"}}<input name="home_nearby_btn" value="{{index $s "home_nearby_btn"}}" placeholder="View Report"></label>
+            <label>{{X $ "theme.settings.text.265" "底部搜索指标"}}<input name="home_nearby_metric" value="{{index $s "home_nearby_metric"}}" placeholder="0.02"></label>
+            <label>{{X $ "theme.settings.text.266" "底部搜索指标说明"}}<input name="home_nearby_label" value="{{index $s "home_nearby_label"}}" placeholder="Median vacancy shift across tracked corridors"></label>
+        </div>
+        <label>{{X $ "theme.settings.text.267" "底部搜索说明"}}<textarea name="home_nearby_desc" rows="3">{{index $s "home_nearby_desc"}}</textarea></label>
+    </section>
+
+    <section class="ce-admin-card">
+        <h3>{{X $ "theme.settings.text.245" "关于页与联系信息"}}</h3>
+        <label>{{X $ "theme.settings.text.246" "关于页大图"}}<input name="about_intro_image" value="{{index $s "about_intro_image"}}" placeholder="https://images.unsplash.com/..."></label>
+        <div class="ce-admin-grid">
+            <label>{{X $ "theme.settings.text.247" "邮箱"}}<input name="company_email" value="{{index $s "company_email"}}" placeholder="hello@civicestate.example"></label>
+            <label>{{X $ "theme.settings.text.248" "电话"}}<input name="company_phone" value="{{index $s "company_phone"}}" placeholder="+1 312 555 0148"></label>
+            <label>{{X $ "theme.settings.text.249" "地址"}}<input name="company_address" value="{{index $s "company_address"}}" placeholder="220 Market Street, Chicago"></label>
+            <label>{{X $ "theme.settings.text.020" "页脚文案"}}<input name="footer_text" value="{{index $s "footer_text"}}" placeholder="© 2026 Civic Estate."></label>
+        </div>
+        <label>{{X $ "theme.settings.text.005" "公司简介"}}<input name="company_description" value="{{index $s "company_description"}}" placeholder="Commercial property search and advisory firm."></label>
+    </section>
+
+    <div class="form-actions" style="margin-top:1rem;">
+        <button type="submit" class="btn btn-primary">{{X $ "theme.settings.save" "保存设置"}}</button>
+        <a href="/admin/themes" class="btn btn-secondary">{{X $ "theme.settings.cancel" "取消"}}</a>
+    </div>
+</form>
+
+<style>
+.ce-settings-form { max-width: 1100px; }
+.ce-admin-card { margin: 0 0 1rem; padding: 1.25rem; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; }
+.ce-admin-card h3 { margin: 0 0 1rem; }
+.ce-admin-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.ce-admin-card label { display: grid; gap: .4rem; margin-bottom: 1rem; color: #475569; font-weight: 600; }
+.ce-admin-card input, .ce-admin-card textarea { width: 100%; border: 1px solid #d1d5db; border-radius: 8px; padding: .65rem .75rem; font: inherit; }
+@media (max-width: 760px) { .ce-admin-grid { grid-template-columns: 1fr; } }
+</style>
+{{end}}

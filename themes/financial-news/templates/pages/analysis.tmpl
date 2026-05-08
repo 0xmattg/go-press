@@ -1,0 +1,33 @@
+{{define "content"}}
+<section class="section">
+    <div class="container">
+        <div class="page-header">
+            <h1>{{T $.Ctx "page_title_analysis"}}</h1>
+            <p class="page-desc">{{T $.Ctx "page_desc_analysis"}}</p>
+        </div>
+        <div class="analysis-list">
+        {{range .Analyses}}
+            <article class="analysis-card-full">
+                <div class="analysis-card-body">
+                    <div class="analysis-meta">
+                        {{if .Category.Name}}<span class="badge">{{.Category.Name}}</span>{{end}}
+                        {{if .Rating}}<span class="badge badge-rating">{{.Rating}}</span>{{end}}
+                    </div>
+                    <h2>{{.Title}}</h2>
+                    <p>{{truncate .Excerpt 200}}</p>
+                    <div class="analysis-footer">
+                        {{if .Analyst}}<span class="analyst">📝 {{.Analyst}}</span>{{end}}
+                        {{if .PublishedAt}}<time>{{formatDate .PublishedAt}}</time>{{end}}
+                    </div>
+                </div>
+                {{if .ImageURL}}
+                {{responsiveImage .ImageURL .Title "analysis-card-image" "(max-width: 768px) 100vw, 240px" "lazy"}}
+                {{end}}
+            </article>
+        {{else}}
+            <p class="empty-state">{{T $.Ctx "empty_no_analysis"}}</p>
+        {{end}}
+        </div>
+    </div>
+</section>
+{{end}}

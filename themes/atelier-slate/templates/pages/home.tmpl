@@ -1,0 +1,141 @@
+{{define "content"}}
+{{$s := .Settings}}
+<section class="as-hero">
+    <div class="as-container">
+        <div class="as-hero-panel">
+            <img class="as-hero-image" src="{{settingOr $s "home_hero_1_image" "/static/images/atelier-hero.svg"}}" alt="{{settingOr $s "home_hero_1_title" "Strategic creativity for launch-ready brands"}}">
+            <div class="as-hero-shade"></div>
+            <div class="as-hero-content">
+                <p class="as-kicker as-kicker-light">{{settingOr $s "home_hero_1_label" "Digital guild / Strategy + Design"}}</p>
+                <h1>{{settingOr $s "home_hero_1_title" "We build campaign systems with strategic creativity and visual conviction."}}</h1>
+                <p>{{settingOr $s "home_hero_1_desc" "Brand worlds, product narratives, and digital experiences for founders who need launch work that feels sharp from day one."}}</p>
+                <div class="as-actions">
+                    <a class="as-btn as-btn-light" href="{{langPrefixURL $.Ctx (settingOr $s "home_hero_1_btn1_link" "/contact")}}">{{settingOr $s "home_hero_1_btn1_text" "Start Today"}} <span>↗</span></a>
+                    <a class="as-btn as-btn-ghost" href="{{langPrefixURL $.Ctx (settingOr $s "home_hero_1_btn2_link" "/showcase")}}">{{settingOr $s "home_hero_1_btn2_text" "View Work"}}</a>
+                </div>
+            </div>
+            <div class="as-floating-note">
+                <span>01</span>
+                <strong>{{settingOr $s "home_hero_note_title" "Designing in Solution"}}</strong>
+                <small>{{settingOr $s "home_hero_note_text" "Narrative, UI, content, and launch assets."}}</small>
+            </div>
+            <div class="as-watermark">Of-Brief</div>
+            {{$socialLinks := socialLinks $s}}
+            {{if $socialLinks}}
+            <div class="as-hero-notch">
+                <div class="as-hero-social-dock" aria-label="Social links">
+                    {{range $socialLinks}}
+                    <a href="{{.URL}}" {{if .External}}target="_blank" rel="noopener"{{end}} {{if .Title}}title="{{.Title}}"{{end}} aria-label="{{.Label}}">{{.Icon}}</a>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+</section>
+
+<section class="as-section as-intro">
+    <div class="as-container as-split">
+        <div class="as-index-block">
+            <div class="as-index-line"><span>01</span><span>02 03 04</span></div>
+            <p>{{settingOr $s "home_intro_micro" "We create intuitive and visually engaging digital experiences that enhance user interaction and satisfaction."}}</p>
+            <h2>{{settingOr $s "home_about_title" "Empowering visionary founders from day one"}}</h2>
+            <a class="as-btn as-btn-dark" href="{{langPrefixURL $.Ctx "/about"}}">{{settingOr $s "home_about_btn_text" "Start Today"}} <span>↗</span></a>
+        </div>
+        <div class="as-feature-area">
+            <div class="as-feature-cards">
+                <article class="as-tall-card">
+                    <img src="{{settingOr $s "home_card_1_image" "/static/images/atelier-card-wood.svg"}}" alt="">
+                    <div>
+                        <p>Vision-provider</p>
+                        <h3>{{settingOr $s "home_card_1_title" "Beautiful vision oriented"}}</h3>
+                        <a href="{{langPrefixURL $.Ctx "/services"}}">Learn More <span>↗</span></a>
+                    </div>
+                    <b>01</b>
+                </article>
+                <article class="as-tall-card">
+                    <img src="{{settingOr $s "home_card_2_image" "/static/images/atelier-card-slate.svg"}}" alt="">
+                    <div>
+                        <p>Nextgen-styled</p>
+                        <h3>{{settingOr $s "home_card_2_title" "Modern launch systems"}}</h3>
+                        <a href="{{langPrefixURL $.Ctx "/products"}}">Learn More <span>↗</span></a>
+                    </div>
+                    <b>02</b>
+                </article>
+            </div>
+            <div class="as-card-controls" aria-label="Featured card controls">
+                <button type="button" aria-label="Previous">←</button>
+                <button type="button" aria-label="Next">→</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="as-section">
+    <div class="as-container">
+        <div class="as-white-stage">
+            <p class="as-kicker">{{settingOr $s "home_services_label" "Featured"}}</p>
+            <h2>{{settingOr $s "home_services_title" "We are a team of designers, strategists, and innovators dedicated to exceptional digital experiences."}}</h2>
+            <div class="as-video-row">
+                <div class="as-media-strip">
+                    <img src="{{settingOr $s "home_about_image" "/static/images/atelier-hero.svg"}}" alt="">
+                    <span>"Can't imagine without that"</span>
+                    <button type="button" aria-label="Play">▶</button>
+                </div>
+                <aside class="as-audio-card">
+                    <p>{{settingOr $s "home_quote_label" "Woodmetal"}}</p>
+                    <h3>{{settingOr $s "home_quote_name" "Ryan Said"}}</h3>
+                    <span>{{settingOr $s "home_quote_text" "Digital-first agency. Studio craft recommended."}}</span>
+                </aside>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="as-section as-metrics">
+    <div class="as-container">
+        <div class="as-metric-list">
+            <div><p>{{settingOr $s "home_stat_1_desc" "By making your digital marketing agency website look professional, you can increase trust."}}</p><strong>{{settingOr $s "home_stat_1_number" "12+"}}</strong><span>{{settingOr $s "home_stat_1_label" "Years of Service"}}</span></div>
+            <div><p>{{settingOr $s "home_stat_2_desc" "Cross-functional strategy, design, content, and web production under one studio roof."}}</p><strong>{{settingOr $s "home_stat_2_number" "80+"}}</strong><span>{{settingOr $s "home_stat_2_label" "Team Members"}}</span></div>
+            <div><p>{{settingOr $s "home_stat_3_desc" "Product launches, campaign sites, and content systems shipped for growth-stage teams."}}</p><strong>{{settingOr $s "home_stat_3_number" "3K+"}}</strong><span>{{settingOr $s "home_stat_3_label" "Assets Delivered"}}</span></div>
+        </div>
+    </div>
+</section>
+
+<section class="as-section">
+    <div class="as-container">
+        <div class="as-section-head">
+            <div>
+                <p class="as-kicker">{{settingOr $s "home_products_label" "Products"}}</p>
+                <h2>{{settingOr $s "home_products_title" "Launch-ready systems for every visible touchpoint"}}</h2>
+            </div>
+            <a class="as-round-link" href="{{langPrefixURL $.Ctx "/products"}}">→</a>
+        </div>
+        <div class="as-card-grid">
+            {{range .Products}}
+            <article class="as-content-card">
+                <a href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}" class="as-card-media">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{end}}</a>
+                <div class="as-card-body">
+                    <span>0{{.SortOrder}}</span>
+                    <h3><a href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}">{{.Title}}</a></h3>
+                    <p>{{if .Excerpt}}{{truncate .Excerpt 120}}{{else}}{{truncate (stripTags .Description) 120}}{{end}}</p>
+                </div>
+            </article>
+            {{end}}
+        </div>
+    </div>
+</section>
+
+<section class="as-section">
+    <div class="as-container as-split as-split-reverse">
+        <div class="as-index-block as-index-card">
+            <div class="as-index-line"><span>01</span><span>02 03 04</span></div>
+            <h2>{{settingOr $s "home_showcase_title" "We specialize in designing and crafting high-quality digital products that blend strategy and aesthetics."}}</h2>
+            <a class="as-round-link" href="{{langPrefixURL $.Ctx "/showcase"}}">→</a>
+        </div>
+        <div class="as-crop-image">
+            <img src="{{settingOr $s "home_showcase_image" "/static/images/atelier-card-wood.svg"}}" alt="">
+        </div>
+    </div>
+</section>
+{{end}}

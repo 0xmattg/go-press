@@ -1,0 +1,144 @@
+{{define "content"}}
+{{$s := .Settings}}
+
+<section class="ff-hero" style="--hero-bg:url('{{settingOr $s "home_hero_image" "/static/images/florafi-hero-field.png"}}');">
+    <div class="ff-hero-copy">
+        <h1>{{settingOr $s "home_hero_title" "Where Money Grows"}}</h1>
+        <p>{{settingOr $s "home_hero_subtitle" "A progressive stablecoin ecosystem designed to move value and power real economies."}}</p>
+        <a class="ff-pill-btn" href="{{settingOr $s "home_hero_btn_link" "/products"}}">
+            {{settingOr $s "home_hero_btn_text" "Try FloraFi"}}
+            <span aria-hidden="true">→</span>
+        </a>
+        <div class="ff-hero-note">{{settingOr $s "home_hero_note" "Built for stability. Designed for growth."}}</div>
+    </div>
+
+    <div class="ff-hero-art" aria-hidden="true">
+        <div class="ff-coin">
+            <div class="ff-coin-face">
+                <span class="ff-coin-cut ff-coin-cut-a"></span>
+                <span class="ff-coin-cut ff-coin-cut-b"></span>
+                <span class="ff-coin-core"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="ff-hero-stats" aria-label="FloraFi network metrics">
+        <div class="ff-stat">
+            <span class="ff-stat-icon">◇</span>
+            <strong>{{settingOr $s "home_stat_1_label" "Backed by Real Assets"}}</strong>
+        </div>
+        <div class="ff-stat">
+            <span class="ff-stat-icon">♙</span>
+            <strong>{{settingOr $s "home_stat_2_number" "$320M+"}}</strong>
+            <small>{{settingOr $s "home_stat_2_label" "TVL"}}</small>
+        </div>
+        <div class="ff-stat">
+            <span class="ff-stat-icon">✽</span>
+            <strong>{{settingOr $s "home_stat_3_number" "12.4K+"}}</strong>
+            <small>{{settingOr $s "home_stat_3_label" "Holders"}}</small>
+        </div>
+        <div class="ff-stat">
+            <span class="ff-stat-icon">↔</span>
+            <strong>{{settingOr $s "home_stat_4_number" "2.1M+"}}</strong>
+            <small>{{settingOr $s "home_stat_4_label" "Transfers"}}</small>
+        </div>
+        <div class="ff-stat">
+            <span class="ff-stat-icon">◎</span>
+            <strong>{{settingOr $s "home_stat_5_number" "28+"}}</strong>
+            <small>{{settingOr $s "home_stat_5_label" "Countries"}}</small>
+        </div>
+    </div>
+</section>
+
+<section class="ff-intro">
+    <div class="ff-section-lead">
+        <span>{{settingOr $s "home_intro_kicker" "Built for growth"}}</span>
+        <h2>{{settingOr $s "home_intro_title" "What is USD Flora?"}}</h2>
+        <p>{{settingOr $s "home_intro_desc" "USD Flora is a next-generation stablecoin built to grow your capital while keeping it stable, liquid, and secure."}}</p>
+        <a class="ff-text-link" href="{{langPrefixURL $.Ctx "/products"}}">{{settingOr $s "home_intro_link_text" "Explore USD Flora"}} <span>→</span></a>
+    </div>
+
+    <div class="ff-feature-grid">
+        <article class="ff-feature-card">
+            <span class="ff-card-icon">♧</span>
+            <h3>{{settingOr $s "home_feature_1_title" "Capital that grows"}}</h3>
+            <p>{{settingOr $s "home_feature_1_desc" "Earn consistent yield backed by real-world assets and transparent strategies."}}</p>
+            <a href="{{langPrefixURL $.Ctx "/products"}}">→</a>
+        </article>
+        <article class="ff-feature-card">
+            <span class="ff-card-icon">◇</span>
+            <h3>{{settingOr $s "home_feature_2_title" "Always liquid, always stable"}}</h3>
+            <p>{{settingOr $s "home_feature_2_desc" "Redeem 1:1 in USD anytime. Built for confidence and consistency."}}</p>
+            <a href="{{langPrefixURL $.Ctx "/services"}}">→</a>
+        </article>
+        <article class="ff-feature-card">
+            <span class="ff-card-icon">▣</span>
+            <h3>{{settingOr $s "home_feature_3_title" "100% hands-free"}}</h3>
+            <p>{{settingOr $s "home_feature_3_desc" "No active management. Just deposit and grow while we handle the rest."}}</p>
+            <a href="{{langPrefixURL $.Ctx "/showcase"}}">→</a>
+        </article>
+    </div>
+</section>
+
+<section class="ff-usecases">
+    <div class="ff-usecases-head">
+        <div>
+            <span>{{settingOr $s "home_usecases_kicker" "Built for everyone"}}</span>
+            <h2>{{settingOr $s "home_usecases_title" "Use cases"}}</h2>
+        </div>
+        <p>{{settingOr $s "home_usecases_desc" "USD Flora powers real-world applications for businesses, developers, and the future of finance."}}</p>
+    </div>
+
+    <div class="ff-usecase-grid">
+        <a class="ff-usecase-card ff-usecase-business" href="{{langPrefixURL $.Ctx "/services"}}">
+            <div>
+                <h3>{{settingOr $s "home_usecase_1_title" "Business"}}</h3>
+                <p>{{settingOr $s "home_usecase_1_desc" "Unlock new growth opportunities with a stable, yield-generating asset you can trust."}}</p>
+                <span>{{settingOr $s "home_usecase_1_link" "Learn more"}} →</span>
+            </div>
+        </a>
+        <a class="ff-usecase-card ff-usecase-dev" href="{{langPrefixURL $.Ctx "/blog"}}">
+            <div>
+                <h3>{{settingOr $s "home_usecase_2_title" "Developers"}}</h3>
+                <p>{{settingOr $s "home_usecase_2_desc" "Build the next generation of financial products with USD Flora."}}</p>
+                <span>{{settingOr $s "home_usecase_2_link" "Learn more"}} →</span>
+            </div>
+        </a>
+    </div>
+
+    <div class="ff-bottom-cta">
+        <div class="ff-cta-title">
+            <span class="ff-card-icon">♧</span>
+            <strong>{{settingOr $s "home_cta_title" "Ready to grow with stability?"}}</strong>
+        </div>
+        <a class="ff-pill-btn" href="{{settingOr $s "home_cta_btn_link" "/contact"}}">{{settingOr $s "home_cta_btn_text" "Get started"}} <span>→</span></a>
+        <div class="ff-mini-stats">
+            <span><strong>{{settingOr $s "home_stat_2_number" "$320M+"}}</strong><small>Total Value Locked</small></span>
+            <span><strong>{{settingOr $s "home_stat_3_number" "12.4K+"}}</strong><small>Holders</small></span>
+            <span><strong>{{settingOr $s "home_stat_4_number" "2.1M+"}}</strong><small>Transfers</small></span>
+            <span><strong>{{settingOr $s "home_stat_5_number" "28+"}}</strong><small>Countries</small></span>
+        </div>
+    </div>
+</section>
+
+{{if .Products}}
+<section class="ff-cms-strip">
+    <div class="ff-usecases-head">
+        <div>
+            <span>{{settingOr $s "home_products_label" "Protocol modules"}}</span>
+            <h2>{{settingOr $s "home_products_title" "Explore the FloraFi stack"}}</h2>
+        </div>
+        <p>{{settingOr $s "home_products_subtitle" "Demo content is powered by GoPress CMS content types, so operators can manage pages, cards, articles, and media from the admin."}}</p>
+    </div>
+    <div class="ff-cms-grid">
+        {{range .Products}}
+        <a class="ff-cms-card" href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}">
+            {{if .ImageURL}}<div class="ff-cms-media">{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}</div>{{end}}
+            <h3>{{.Title}}</h3>
+            <p>{{if .Excerpt}}{{truncate .Excerpt 120}}{{else}}{{truncate (stripTags .Description) 120}}{{end}}</p>
+        </a>
+        {{end}}
+    </div>
+</section>
+{{end}}
+{{end}}

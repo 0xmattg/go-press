@@ -1,0 +1,22 @@
+{{define "content"}}
+<section class="af-page-hero">
+    <span>Portfolio</span>
+    <h1>Selected spaces with atmosphere and restraint.</h1>
+    <p>Residences, restaurants, offices, and hospitality interiors designed around daily use and memorable arrival.</p>
+</section>
+
+<section class="af-showcase-grid">
+    {{range $i, $item := .Showcases}}
+    <a class="af-showcase-card" href="{{langPrefixURL $.Ctx (printf "/showcase/%s" $item.Slug)}}">
+        <div class="af-card-media">
+            {{if $item.ImageURL}}{{responsiveImage $item.ImageURL $item.Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{end}}
+        </div>
+        <div>
+            <h2>{{$item.Title}}</h2>
+            <p>{{truncate (stripTags $item.Description) 120}}</p>
+            {{if $item.Location}}<span>{{$item.Location}}</span>{{end}}
+        </div>
+    </a>
+    {{end}}
+</section>
+{{end}}

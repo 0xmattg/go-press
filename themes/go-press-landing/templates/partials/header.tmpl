@@ -1,0 +1,35 @@
+{{define "header"}}
+<header class="site-header" id="site-header">
+    <nav class="nav-container">
+        <a href="/" class="nav-logo">
+            {{if settingOr .Settings "home_logo_image" ""}}
+            {{responsiveImage (settingOr .Settings "home_logo_image" "") (settingOr .Settings "home_logo_text" "NovaPulse") "logo-img" "180px" "eager"}}
+            {{else}}
+            <span class="logo-glyph">{{settingOr .Settings "home_logo_glyph" "N"}}</span>
+            {{end}}
+            <span class="logo-text">{{settingOr .Settings "home_logo_text" "NovaPulse"}}</span>
+        </a>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+            <span></span><span></span><span></span>
+        </button>
+        <ul class="nav-links" id="nav-links">
+            {{$headerMenu := menuByLocation "header"}}
+            {{if $headerMenu}}
+                {{range $headerMenu.Items}}
+                <li><a href="{{.URL}}" {{if eq .Target "_blank"}}target="_blank" rel="noopener"{{end}}>{{.Title}}</a></li>
+                {{end}}
+            {{else}}
+            <li><a href="#features">{{settingOr .Settings "home_nav_1_text" "Features"}}</a></li>
+            <li><a href="#how-it-works">{{settingOr .Settings "home_nav_2_text" "How It Works"}}</a></li>
+            <li><a href="#testimonials">{{settingOr .Settings "home_nav_3_text" "Testimonials"}}</a></li>
+            <li><a href="#pricing">{{settingOr .Settings "home_nav_4_text" "Pricing"}}</a></li>
+            {{end}}
+            {{renderHook "header.nav.after" .}}
+        </ul>
+        <div class="nav-actions">
+            <a href="{{settingOr .Settings "home_nav_signin_link" "#pricing"}}" class="btn btn-ghost">{{settingOr .Settings "home_nav_signin_text" "Sign In"}}</a>
+            <a href="{{settingOr .Settings "home_nav_cta_link" "#pricing"}}" class="btn btn-primary btn-sm">{{settingOr .Settings "home_nav_cta_text" "Get Started"}}</a>
+        </div>
+    </nav>
+</header>
+{{end}}

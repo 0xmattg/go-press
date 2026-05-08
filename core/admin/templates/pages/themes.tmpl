@@ -1,0 +1,177 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>{{T . "nav.themes"}}</h2>
+</div>
+
+<div class="theme-grid">
+    {{range .Themes}}
+    <div class="card theme-card{{if .Active}} theme-active{{end}}">
+        <div class="theme-card-header">
+            <h3>{{.Name}}</h3>
+            <div class="theme-header-right">
+                <span class="theme-version">v{{.Version}}</span>
+                {{if .Active}}<span class="badge badge-active">{{T $ "theme.active"}}</span>{{end}}
+            </div>
+        </div>
+        <div class="theme-card-body">
+            <p class="theme-desc">{{.Description}}</p>
+            <div class="theme-meta">
+                <span><strong>{{T $ "theme.author"}}</strong> {{.Author}}</span>
+                <span><strong>{{T $ "theme.identifier"}}</strong> {{.Slug}}</span>
+            </div>
+        </div>
+        <div class="theme-card-footer">
+            {{if .Active}}
+                {{if .HasSettings}}
+                <a href="/admin/themes/{{.Slug}}/settings" class="btn btn-sm" style="text-decoration:none;">{{T $ "action.theme_settings"}}</a>
+                {{end}}
+                {{if .HasDemoData}}
+                    {{if .DemoImported}}
+                        <button class="btn btn-secondary btn-sm" disabled title="{{T $ "theme.demo_imported"}}">
+                            <span class="demo-check">✓</span> {{T $ "theme.demo_imported"}}
+                        </button>
+                    {{else}}
+                        <form method="POST" action="/admin/themes/demo-import" class="inline-form" style="margin-left:auto;"
+                              data-admin-progress
+                              data-progress-title="{{T $ "progress.demo_import_title"}}"
+                              data-progress-message="{{T $ "progress.demo_import_message"}}">
+                            <input type="hidden" name="theme" value="{{.Slug}}">
+                            <button type="submit" class="btn btn-accent btn-sm"
+                                    onclick="return confirm('{{T $ "confirm.import_demo_data" .Name}}')">
+                                {{T $ "action.import_demo_data"}}
+                            </button>
+                        </form>
+                    {{end}}
+                {{end}}
+            {{else}}
+                <form method="POST" action="/admin/themes/switch" class="inline-form">
+                    <input type="hidden" name="theme" value="{{.Slug}}">
+                    <button type="submit" class="btn btn-primary" onclick="return confirm('{{T $ "confirm.switch_theme" .Name}}')">{{T $ "action.enable_theme"}}</button>
+                </form>
+            {{end}}
+        </div>
+    </div>
+    {{else}}
+    <div class="card"><p class="empty-msg">{{T . "theme.empty"}}</p></div>
+    {{end}}
+</div>
+
+<style>
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.5rem;
+}
+.theme-card {
+    display: flex;
+    flex-direction: column;
+    border: 2px solid #e2e8f0;
+    transition: border-color 0.2s;
+}
+.theme-card:hover {
+    border-color: #94a3b8;
+}
+.theme-active {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6;
+}
+.theme-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem 0.5rem;
+}
+.theme-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.theme-card-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+.theme-version {
+    color: #64748b;
+    font-size: 0.85rem;
+}
+.theme-card-body {
+    padding: 0 1.25rem;
+    flex: 1;
+}
+.theme-desc {
+    color: #475569;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+.theme-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 0.5rem;
+}
+.theme-card-footer {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.btn-accent {
+    background: #10b981;
+    color: #fff;
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+}
+.btn-accent:hover {
+    background: #059669;
+}
+.btn-sm {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.82rem;
+}
+.btn-secondary[disabled] {
+    background: #e2e8f0;
+    color: #94a3b8;
+    border: 1px solid #cbd5e1;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    cursor: not-allowed;
+}
+.demo-check {
+    color: #10b981;
+    font-weight: bold;
+}
+.btn-theme-settings {
+    background: #6366f1;
+    color: #fff;
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+    display: inline-flex;
+    align-items: center;
+}
+.btn-theme-settings:hover {
+    background: #4f46e5;
+    color: #fff;
+}
+.badge-active {
+    background: #dcfce7;
+    color: #16a34a;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+</style>
+{{end}}

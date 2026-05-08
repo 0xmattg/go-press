@@ -1,0 +1,22 @@
+{{define "content"}}
+<section class="tt-page-hero">
+    <span>Destinations</span>
+    <h1>Explore places that make the route worth remembering.</h1>
+    <p>Mountain valleys, lake roads, volcanic trails, and local guide notes collected for flexible trip planning.</p>
+</section>
+
+<section class="tt-showcase-grid">
+    {{range $i, $item := .Showcases}}
+    <a class="tt-showcase-card" href="{{langPrefixURL $.Ctx (printf "/showcase/%s" $item.Slug)}}">
+        <div class="tt-card-media">
+            {{if $item.ImageURL}}{{responsiveImage $item.ImageURL $item.Title "" "(max-width: 768px) 92vw, 30vw" "lazy"}}{{end}}
+        </div>
+        <div>
+            <small>{{if $item.Location}}{{$item.Location}}{{else}}Destination{{end}}</small>
+            <h2>{{$item.Title}}</h2>
+            <p>{{truncate (stripTags $item.Description) 132}}</p>
+        </div>
+    </a>
+    {{end}}
+</section>
+{{end}}

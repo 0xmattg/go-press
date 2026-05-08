@@ -1,0 +1,89 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>{{adminTaxonomyLabel .AdminLanguage .TaxType .TaxDef.LabelPlural}}</h2>
+</div>
+
+{{if can .CurrentRole .TaxType "create"}}
+<div class="card">
+    <div class="card-header"><h3>{{T . "taxonomy.new" (adminTaxonomyLabel .AdminLanguage .TaxType .TaxDef.Label)}}</h3></div>
+    <form method="POST" action="/admin/{{.Slug}}" class="inline-create-form">
+        <div class="form-row">
+            <div class="form-group">
+                <input type="text" name="name" placeholder="{{T . "taxonomy.name_placeholder" (adminTaxonomyLabel .AdminLanguage .TaxType .TaxDef.Label)}}" required>
+            </div>
+            <div class="form-group">
+                <input type="text" name="slug" placeholder="slug" required>
+            </div>
+            <button type="submit" class="btn btn-primary">{{T . "action.add"}}</button>
+        </div>
+    </form>
+</div>
+{{end}}
+
+<div class="card">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>{{T . "field.name"}}</th>
+                <th>Slug</th>
+                <th>{{T . "field.actions"}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Items}}
+            <tr>
+                <td>{{.ID}}</td>
+                {{if can $.CurrentRole $.TaxType "update"}}
+                <td>
+                    <input
+                        type="text"
+                        name="name"
+                        value="{{.Name}}"
+                        class="inline-input"
+                        form="tax-edit-{{$.TaxType}}-{{.ID}}">
+                    <a href="/{{$.TaxType}}/{{.Slug}}" target="_blank" class="tax-link-icon" title="{{T $ "topbar.view_site"}}">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </a>
+                </td>
+                <td>
+                    <input
+                        type="text"
+                        name="slug"
+                        value="{{.Slug}}"
+                        class="inline-input"
+                        form="tax-edit-{{$.TaxType}}-{{.ID}}">
+                </td>
+                <td class="actions">
+                    <form
+                        method="POST"
+                        action="/admin/{{$.Slug}}/{{.ID}}/edit"
+                        class="inline-form"
+                        id="tax-edit-{{$.TaxType}}-{{.ID}}">
+                        <button type="submit" class="btn btn-sm">{{T $ "action.save"}}</button>
+                    </form>
+                    {{if can $.CurrentRole $.TaxType "delete"}}
+                    <form method="POST" action="/admin/{{$.Slug}}/{{.ID}}/delete" class="inline-form">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('{{T $ "confirm.delete"}}')">{{T $ "action.delete"}}</button>
+                    </form>
+                    {{end}}
+                </td>
+                {{else}}
+                <td><a href="/{{$.TaxType}}/{{.Slug}}" target="_blank" class="content-title-link">{{.Name}}</a></td>
+                <td><code>{{.Slug}}</code></td>
+                <td class="actions">
+                    {{if can $.CurrentRole $.TaxType "delete"}}
+                    <form method="POST" action="/admin/{{$.Slug}}/{{.ID}}/delete" class="inline-form">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('{{T $ "confirm.delete"}}')">{{T $ "action.delete"}}</button>
+                    </form>
+                    {{end}}
+                </td>
+                {{end}}
+            </tr>
+            {{else}}
+            <tr><td colspan="4" class="empty-msg">{{T . "taxonomy.empty" (adminTaxonomyLabel .AdminLanguage .TaxType .TaxDef.Label)}}</td></tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}

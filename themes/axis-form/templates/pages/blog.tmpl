@@ -1,0 +1,28 @@
+{{define "content"}}
+<section class="af-page-hero">
+    <span>Journal</span>
+    <h1>Notes on materials, planning, and enduring spaces.</h1>
+    <p>Short essays from the studio on how thoughtful architecture becomes useful, calm, and memorable.</p>
+</section>
+
+<section class="af-blog-layout">
+    <div class="af-blog-list">
+        {{range .Posts}}
+        <article class="af-blog-card">
+            <a class="af-card-media" href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 36vw" "lazy"}}{{end}}</a>
+            <div>
+                <time>{{formatDateTime .PublishedAt}}</time>
+                <h2><a href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{.Title}}</a></h2>
+                <p>{{truncate .Excerpt 170}}</p>
+            </div>
+        </article>
+        {{end}}
+    </div>
+    <aside class="af-sidebar">
+        <h3>Categories</h3>
+        {{range .Categories}}<a href="{{langPrefixURL $.Ctx (printf "/category/%s" .Slug)}}">{{.Name}}</a>{{end}}
+        <h3>Tags</h3>
+        <div class="af-tags">{{range .Tags}}<a href="{{langPrefixURL $.Ctx (printf "/tag/%s" .Slug)}}">{{.Name}}</a>{{end}}</div>
+    </aside>
+</section>
+{{end}}

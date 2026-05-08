@@ -1,0 +1,23 @@
+{{define "content"}}
+<section class="af-page-hero">
+    <span>Our Services</span>
+    <h1>Disciplined design services for complete environments.</h1>
+    <p>Architecture, interiors, planning, and project management are coordinated as one continuous design conversation.</p>
+</section>
+
+<section class="af-service-list">
+    {{range $i, $svc := .Services}}
+    <a class="af-service-card" href="{{langPrefixURL $.Ctx (printf "/services/%s" $svc.Slug)}}">
+        <div class="af-card-media">
+            {{if $svc.ImageURL}}{{responsiveImage $svc.ImageURL $svc.Title "" "(max-width: 768px) 100vw, 40vw" "lazy"}}{{end}}
+            <span>{{printf "%02d" (add $i 1)}}</span>
+        </div>
+        <div>
+            <h2>{{$svc.Title}}</h2>
+            <p>{{truncate $svc.Excerpt 160}}</p>
+            <em>Explore service →</em>
+        </div>
+    </a>
+    {{end}}
+</section>
+{{end}}

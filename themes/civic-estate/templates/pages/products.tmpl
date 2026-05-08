@@ -1,0 +1,17 @@
+{{define "content"}}
+<section class="ce-page-hero">
+    <span>Property Types</span>
+    <h1>Choose the right commercial format before you tour.</h1>
+    <p>Compare the market behavior, fit-out needs, lease logic, and operating tradeoffs behind each major asset category.</p>
+</section>
+
+<section class="ce-card-grid ce-process-grid">
+    {{range $i, $p := .Products}}
+    <a class="ce-process-card" href="{{langPrefixURL $.Ctx (printf "/products/%s" $p.Slug)}}">
+        <span>{{printf "%02d" (add $i 1)}}</span>
+        <h2>{{$p.Title}}</h2>
+        <p>{{truncate $p.Excerpt 150}}</p>
+    </a>
+    {{end}}
+</section>
+{{end}}

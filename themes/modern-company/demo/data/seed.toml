@@ -1,0 +1,707 @@
+# ============================================================
+# GoPress Seed Data — Hurricane Techs Cleanroom Demo
+# ============================================================
+
+# ---------- Site Settings ----------
+[[settings]]
+key   = "site_name"
+value = "Hurricane Techs — Cleanroom Engineering"
+
+[[settings]]
+key   = "site_description"
+value = "Professional cleanroom construction, HEPA filter systems, and air purification engineering since 2003."
+
+[[settings]]
+key   = "company_email"
+value = "info@hurricanetechs.com"
+
+[[settings]]
+key   = "company_phone"
+value = "+86-510-8321-0000"
+
+[[settings]]
+key   = "company_address"
+value = "Yanqiao Industrial Park, Wuxi, Jiangsu Province 214174, China"
+
+[[settings]]
+key   = "social_linkedin"
+value = "https://linkedin.com/company/hurricane-techs"
+
+[[settings]]
+key   = "social_wechat"
+value = "HurricaneTechs"
+
+[[settings]]
+key   = "footer_text"
+value = "© 2003–2026 Wuxi Hurricane Purification Technology Equipment Co., Ltd. All rights reserved."
+
+# ---------- Categories ----------
+[[categories]]
+name = "Industry News"
+slug = "industry-news"
+
+[[categories]]
+name = "Technology"
+slug = "technology"
+
+[[categories]]
+name = "Company Updates"
+slug = "company-updates"
+
+[[categories]]
+name = "Standards & Regulations"
+slug = "standards-regulations"
+
+# ---------- Tags ----------
+[[tags]]
+name = "Cleanroom"
+slug = "cleanroom"
+
+[[tags]]
+name = "HEPA Filter"
+slug = "hepa-filter"
+
+[[tags]]
+name = "ISO 14644"
+slug = "iso-14644"
+
+[[tags]]
+name = "Pharmaceutical"
+slug = "pharmaceutical"
+
+[[tags]]
+name = "HVAC"
+slug = "hvac"
+
+[[tags]]
+name = "Air Purification"
+slug = "air-purification"
+
+[[tags]]
+name = "Energy Efficiency"
+slug = "energy-efficiency"
+
+[[tags]]
+name = "GMP"
+slug = "gmp"
+
+# ============================================================
+# PRODUCTS  (type = "product")
+# ============================================================
+
+[[contents]]
+type        = "product"
+title       = "HEPA / ULPA High-Efficiency Air Filters"
+slug        = "hepa-ulpa-filters"
+image_url   = "https://images.unsplash.com/photo-1513828583688-c52646db42da?w=800&h=600&fit=crop&q=80"
+sort_order  = 1
+category    = "technology"
+tags        = ["hepa-filter", "air-purification", "cleanroom"]
+excerpt     = "Medical-grade filtration from H13 to U17, capturing 99.99% of airborne particles down to 0.12 µm."
+description = "Medical-grade filtration from H13 to U17, capturing 99.99% of airborne particles down to 0.12 µm for pharmaceutical, semiconductor, and food-grade environments."
+content     = """<h3>Product Overview</h3>
+<p>Our HEPA and ULPA filter range is the cornerstone of every cleanroom we build. Manufactured in our Wuxi facility with automated pleat-spacing technology, each filter undergoes individual scan testing to guarantee zero-leak performance before shipment.</p>
+
+<h3>Key Specifications</h3>
+<ul>
+<li><strong>Efficiency grades:</strong> H13 (99.95%), H14 (99.995%), U15 (99.9995%), U16/U17</li>
+<li><strong>Media:</strong> Micro-fiberglass paper, PTFE membrane options</li>
+<li><strong>Frame materials:</strong> Anodised aluminium, galvanised steel, stainless steel 304/316</li>
+<li><strong>Standard sizes:</strong> 610×610×150 mm, 1220×610×150 mm, custom dimensions available</li>
+<li><strong>Sealant:</strong> Polyurethane, silicone, or gel-seal for zero-leak installation</li>
+<li><strong>Operating temperature:</strong> Up to 120 °C (high-temp variants to 350 °C)</li>
+</ul>
+
+<h3>Applications</h3>
+<p>Pharmaceutical fill-finish lines, semiconductor lithography bays, hospital operating theatres, food and beverage aseptic packaging, and aerospace composite lay-up rooms.</p>
+
+<h3>Certifications</h3>
+<p>EN 1822 tested · ISO 29463 compliant · CE marked · Individual scan-test certificate included with every unit.</p>"""
+
+[[contents]]
+type        = "product"
+title       = "Air Shower & Personnel Airlocks"
+slug        = "air-shower-systems"
+image_url   = "https://images.unsplash.com/photo-1513828418004-7aa1c7e5c824?w=800&h=600&fit=crop&q=80"
+sort_order  = 2
+category    = "technology"
+tags        = ["cleanroom", "air-purification"]
+excerpt     = "Stainless-steel air showers with 360° high-velocity nozzles removing >99.9% surface particles in 15 seconds."
+description = "Stainless-steel air showers with 360° high-velocity nozzles removing >99.9% surface particles in 15 seconds, designed for high-traffic cleanroom entrances."
+content     = """<h3>Product Overview</h3>
+<p>Our air shower tunnels create a critical barrier between uncontrolled areas and your cleanroom. Each unit features programmable PLC controls, automatic interlocking doors, and HEPA-filtered recirculating airflow at 25 m/s — ensuring personnel and materials enter your clean zone virtually particle-free.</p>
+
+<h3>Key Specifications</h3>
+<ul>
+<li><strong>Air velocity:</strong> ≥25 m/s at nozzle, adjustable cycle 0–99 seconds</li>
+<li><strong>Nozzle layout:</strong> 360° multi-directional stainless steel jets</li>
+<li><strong>Materials:</strong> SUS 304 / SUS 316L stainless steel, powder-coated cold-rolled steel</li>
+<li><strong>Door system:</strong> Electromagnetic interlock, automatic sliding or swing</li>
+<li><strong>Filtration:</strong> Built-in H14 HEPA filters, pre-filter included</li>
+<li><strong>Configurations:</strong> Single-person, double-person, cargo tunnel, L-shape, U-shape</li>
+</ul>
+
+<h3>Intelligent Controls</h3>
+<p>Touchscreen HMI with shower countdown, door status, filter differential-pressure alarm, and fault diagnostics. Optional integration with building management systems (BMS) via Modbus or BACnet.</p>"""
+
+[[contents]]
+type        = "product"
+title       = "Laminar Flow Hoods & Clean Benches"
+slug        = "laminar-flow-hoods"
+image_url   = "https://images.unsplash.com/photo-1657778753022-ccdb15b28eb4?w=800&h=600&fit=crop&q=80"
+sort_order  = 3
+category    = "technology"
+tags        = ["cleanroom", "hepa-filter", "pharmaceutical"]
+excerpt     = "Class 100 / ISO 5 vertical and horizontal laminar flow workstations for aseptic operations."
+description = "Class 100 / ISO 5 vertical and horizontal laminar flow workstations for aseptic operations in pharmaceutical, biotech, and electronics manufacturing."
+content     = """<h3>Product Overview</h3>
+<p>Hurricane Techs laminar flow hoods provide a localised ISO 5 clean-air environment within a larger cleanroom or laboratory. Available in vertical and horizontal airflow configurations, these benches are indispensable for aseptic compounding, cell culture work, and sensitive electronics assembly.</p>
+
+<h3>Key Specifications</h3>
+<ul>
+<li><strong>Cleanliness class:</strong> ISO 5 (Class 100) at operational state</li>
+<li><strong>Airflow pattern:</strong> Vertical downflow or horizontal crossflow</li>
+<li><strong>Filter:</strong> H14 HEPA, optional ULPA upgrade</li>
+<li><strong>Work surface:</strong> SUS 304 stainless steel, perforated return-air grille</li>
+<li><strong>Lighting:</strong> ≥300 lux LED, anti-glare diffuser</li>
+<li><strong>Noise level:</strong> ≤62 dB(A)</li>
+<li><strong>Sizes:</strong> 2 ft, 3 ft, 4 ft, 5 ft, 6 ft widths</li>
+</ul>
+
+<h3>Optional Features</h3>
+<p>UV germicidal lamp, built-in ioniser, differential pressure gauge, remote alarm relay, and casters with levelling feet for mobile deployment.</p>"""
+
+[[contents]]
+type        = "product"
+title       = "Pass Boxes & Transfer Hatches"
+slug        = "pass-boxes"
+image_url   = "https://images.unsplash.com/photo-1671656200343-d2a322492223?w=800&h=600&fit=crop&q=80"
+sort_order  = 4
+category    = "technology"
+tags        = ["cleanroom", "gmp"]
+excerpt     = "Mechanical and electronic interlocking transfer hatches that maintain pressure differentials during material transfer."
+description = "Mechanical and electronic interlocking transfer hatches that maintain pressure differentials during material transfer between cleanroom zones."
+content     = """<h3>Product Overview</h3>
+<p>Pass boxes (transfer hatches) allow materials to move between cleanroom zones of different classifications without compromising the pressure cascade. Hurricane Techs offers static, dynamic (HEPA-filtered), and air-shower pass boxes to meet every GMP workflow requirement.</p>
+
+<h3>Product Range</h3>
+<ul>
+<li><strong>Static pass box:</strong> Mechanical or electronic interlock, UV option</li>
+<li><strong>Dynamic pass box:</strong> Built-in H14 HEPA fan-filter, laminar flow purge cycle</li>
+<li><strong>Air-shower pass box:</strong> High-velocity purge for high-particulate materials</li>
+<li><strong>Roller-conveyor pass box:</strong> For heavy or high-volume material transfer</li>
+</ul>
+
+<h3>Key Specifications</h3>
+<ul>
+<li><strong>Materials:</strong> SUS 304 / SUS 316L interior, powder-coated exterior optional</li>
+<li><strong>Interlock:</strong> Mechanical gravity-type or PLC-controlled electronic</li>
+<li><strong>Interior lighting:</strong> LED with UV option (254 nm germicidal)</li>
+<li><strong>Sizes:</strong> Standard 600×600×600 mm, custom sizes up to 1500 mm</li>
+</ul>
+
+<h3>GMP Compliance</h3>
+<p>All pass boxes designed in accordance with EU GMP Annex 1 transfer requirements and FDA guidance for aseptic processing.</p>"""
+
+[[contents]]
+type        = "product"
+title       = "FFU Fan Filter Units"
+slug        = "ffu-fan-filter-units"
+image_url   = "https://images.unsplash.com/photo-1546102741-936b7dcc25af?w=800&h=600&fit=crop&q=80"
+sort_order  = 5
+category    = "technology"
+tags        = ["hepa-filter", "air-purification", "energy-efficiency"]
+excerpt     = "Self-contained EC-motor fan-filter units providing modular, energy-efficient HEPA/ULPA coverage for any ceiling grid."
+description = "Self-contained EC-motor fan-filter units providing modular, energy-efficient HEPA/ULPA coverage for any ceiling grid layout, individually controllable from 20%–100% speed."
+content     = """<h3>Product Overview</h3>
+<p>Our FFU range enables flexible cleanroom ceiling design: each unit combines a high-efficiency EC motor, pre-filter, and HEPA/ULPA filter in a slim housing that drops into standard T-grid ceilings. Group control via RS-485 or 0–10V signal allows zone-based airflow management and significant energy savings.</p>
+
+<h3>Key Specifications</h3>
+<ul>
+<li><strong>Motor type:</strong> Brushless EC (electronically commutated), maintenance-free</li>
+<li><strong>Speed control:</strong> Stepless 20%–100%, 0–10V or RS-485 interface</li>
+<li><strong>Filter options:</strong> H13 HEPA, H14 HEPA, U15 ULPA</li>
+<li><strong>Airflow rate:</strong> 600–1200 m³/h per unit (size-dependent)</li>
+<li><strong>Power consumption:</strong> 90–180 W per unit at rated speed</li>
+<li><strong>Noise level:</strong> ≤50 dB(A) at rated speed</li>
+<li><strong>Housing:</strong> Galvanised steel, SUS 304 stainless, or aluminium</li>
+<li><strong>Standard sizes:</strong> 1175×575 mm (2'×4'), 575×575 mm (2'×2')</li>
+</ul>
+
+<h3>Energy Savings</h3>
+<p>Compared to traditional AC-motor FFUs, our EC-motor units reduce energy consumption by 40–60%, with a typical payback period of 18 months. Group control software included free of charge.</p>"""
+
+[[contents]]
+type        = "product"
+title       = "Cleanroom Sandwich Panels & Partition Systems"
+slug        = "color-steel-panels"
+image_url   = "https://images.unsplash.com/photo-1771530789155-b1f03fbf82b5?w=800&h=600&fit=crop&q=80"
+sort_order  = 6
+category    = "technology"
+tags        = ["cleanroom", "gmp"]
+excerpt     = "Flush-joint hand-made and machine-made sandwich panels with rock wool, PIR, or EPS cores for seamless cleanroom enclosures."
+description = "Flush-joint hand-made and machine-made sandwich panels with rock wool, PIR, or EPS cores for seamless cleanroom enclosures meeting fire and hygiene standards."
+content     = """<h3>Product Overview</h3>
+<p>Hurricane Techs manufactures both hand-made and machine-made sandwich panels that form the walls, ceilings, and partitions of cleanroom enclosures. Our panels feature hidden fastener systems and radius coving for smooth, crevice-free surfaces that are easy to clean and meet stringent GMP requirements.</p>
+
+<h3>Panel Types</h3>
+<ul>
+<li><strong>Hand-made panels:</strong> 50/75/100 mm thickness, rock wool or PIR core, Class A fire rating</li>
+<li><strong>Machine-made panels:</strong> High-volume production, EPS or rock wool core, tongue-and-groove joints</li>
+<li><strong>Honeycomb panels:</strong> Lightweight aluminium honeycomb core for clean applications</li>
+</ul>
+
+<h3>Key Specifications</h3>
+<ul>
+<li><strong>Facing material:</strong> 0.4–0.8 mm colour-coated galvanised steel, stainless steel, or HPL</li>
+<li><strong>Core insulation:</strong> Rock wool (Class A1), PIR (Class B1), EPS, or aluminium honeycomb</li>
+<li><strong>Surface finish:</strong> PE, PVDF, or anti-bacterial coating; smooth or peel-textured</li>
+<li><strong>Joint system:</strong> Cam-lock, tongue-and-groove, or concealed screw</li>
+<li><strong>Accessories:</strong> Radius cove mouldings, door frames, viewing windows, cable trunking</li>
+</ul>
+
+<h3>Fire & Hygiene Standards</h3>
+<p>Rock wool core panels achieve Class A1 (non-combustible) per EN 13501-1. Anti-bacterial coatings available for pharmaceutical and food-processing environments.</p>"""
+
+# ============================================================
+# SERVICES  (type = "service")
+# ============================================================
+
+[[contents]]
+type        = "service"
+title       = "Cleanroom Design & Consulting"
+slug        = "design-consulting"
+image_url   = "https://images.unsplash.com/photo-1542621334-a254cf47733d?w=800&h=600&fit=crop&q=80"
+sort_order  = 1
+category    = "industry-news"
+tags        = ["cleanroom", "iso-14644"]
+excerpt     = "From feasibility study to 3D BIM modelling — our engineers design cleanrooms that balance performance, compliance, and budget."
+description = "From feasibility study to 3D BIM modelling — our engineers design cleanrooms that balance performance, compliance, and budget."
+content     = """<h3>Our Approach</h3>
+<p>Every project starts with a detailed User Requirements Specification (URS) workshop. Our HVAC designers, process engineers, and project managers collaborate with your team to translate operational needs into a compliant, cost-effective cleanroom design.</p>
+
+<h3>What We Deliver</h3>
+<ul>
+<li>Feasibility assessment and site survey</li>
+<li>Air-change rate (ACR) and pressure cascade calculations</li>
+<li>3D BIM modelling with Revit / AutoCAD MEP</li>
+<li>P&ID diagrams and equipment schedules</li>
+<li>ISO 14644 classification strategy</li>
+<li>Construction timeline and phased commissioning plan</li>
+</ul>
+
+<h3>Standards We Follow</h3>
+<p>ISO 14644, EU GMP Annex 1, FDA 21 CFR Parts 210/211, ISPE Baseline Guides, and ASHRAE 170 for healthcare applications.</p>"""
+
+[[contents]]
+type        = "service"
+title       = "HVAC System Integration"
+slug        = "hvac-integration"
+image_url   = "https://images.unsplash.com/photo-1660543228680-748e1abd1f9e?w=800&h=600&fit=crop&q=80"
+sort_order  = 2
+category    = "technology"
+tags        = ["hvac", "cleanroom", "energy-efficiency"]
+excerpt     = "Precision air-handling systems engineered for temperature ±0.5 °C, humidity ±3% RH, and multi-zone pressure control."
+description = "Precision air-handling systems engineered for temperature ±0.5 °C, humidity ±3% RH, and multi-zone pressure control for demanding cleanroom environments."
+content     = """<h3>Integrated HVAC Solutions</h3>
+<p>Cleanroom HVAC is not ordinary HVAC. We design and install dedicated air-handling units (AHU), return-air systems, chilled-water piping, and BMS controls that maintain your critical parameters 24/7 — with built-in redundancy for the most demanding production schedules.</p>
+
+<h3>Core Capabilities</h3>
+<ul>
+<li>Custom AHU design with HEPA supply, activated-carbon, and chemical filtration stages</li>
+<li>Temperature control: ±0.5 °C (standard) to ±0.1 °C (precision)</li>
+<li>Humidity control: ±3% RH (standard) to ±1% RH (precision, with steam or ultrasonic humidification)</li>
+<li>Positive/negative pressure cascade across multiple zones</li>
+<li>VFD-driven supply and exhaust fans for energy optimization</li>
+<li>BMS integration: Siemens, Honeywell, Schneider, or open BACnet protocol</li>
+</ul>
+
+<h3>Energy Recovery</h3>
+<p>Plate or rotary heat exchangers recover up to 70% of exhaust-air energy, reducing HVAC operating costs in high-air-change cleanrooms by 30–40%.</p>"""
+
+[[contents]]
+type        = "service"
+title       = "Installation & Commissioning"
+slug        = "installation-commissioning"
+image_url   = "https://images.unsplash.com/photo-1651475828382-1ffeea47739b?w=800&h=600&fit=crop&q=80"
+sort_order  = 3
+category    = "company-updates"
+tags        = ["cleanroom", "gmp"]
+excerpt     = "Turnkey on-site installation by our 120+ skilled team — from steel structure to final HEPA filter integrity testing."
+description = "Turnkey on-site installation by our 120+ skilled team — from steel structure to final HEPA filter integrity testing."
+content     = """<h3>Full-Scope Installation</h3>
+<p>Our in-house installation teams handle every trade: structural steelwork, panel erection, HVAC ductwork, piping, electrical, BMS wiring, flooring, and finishing. Single-source responsibility eliminates coordination gaps and accelerates handover.</p>
+
+<h3>Installation Process</h3>
+<ol>
+<li><strong>Pre-construction meeting</strong> — Detailed method statements, RAMS, and quality plan</li>
+<li><strong>Structural works</strong> — Steel framing, raised floors, ceiling grids</li>
+<li><strong>Envelope</strong> — Sandwich panel walls, ceilings, doors, windows, coving</li>
+<li><strong>MEP first fix</strong> — HVAC ductwork, pipework, electrical conduits</li>
+<li><strong>MEP second fix</strong> — FFU/HEPA installation, lighting, power outlets, controls</li>
+<li><strong>Sealing & finishing</strong> — Epoxy flooring, silicone sealing, cove application</li>
+<li><strong>Commissioning</strong> — HVAC balancing, DOP/PAO HEPA integrity test, airflow visualisation</li>
+</ol>
+
+<h3>Quality Assurance</h3>
+<p>ISO 9001:2015 quality management system applied throughout. All welding, ductwork, and panel installation documented with photographs and inspection reports.</p>"""
+
+[[contents]]
+type        = "service"
+title       = "Validation & Performance Testing"
+slug        = "validation-testing"
+image_url   = "https://images.unsplash.com/photo-1526930382372-67bf22c0fce2?w=800&h=600&fit=crop&q=80"
+sort_order  = 4
+category    = "standards-regulations"
+tags        = ["iso-14644", "gmp", "cleanroom"]
+excerpt     = "IQ/OQ/PQ protocols and ISO 14644 classification testing — particle counts, airflow, pressure, temperature, and humidity mapping."
+description = "IQ/OQ/PQ protocols and ISO 14644 classification testing — including particle counts, airflow uniformity, pressure differentials, temperature mapping, and HEPA integrity."
+content     = """<h3>Comprehensive Validation</h3>
+<p>Validation is not just a formality — it is the proof that your cleanroom performs as designed. Our validation engineers follow GAMP 5 principles and provide complete IQ/OQ/PQ documentation packages accepted by regulatory auditors worldwide.</p>
+
+<h3>Testing Scope</h3>
+<ul>
+<li><strong>Particle count testing</strong> — ISO 14644-1 classification (at rest and in operation)</li>
+<li><strong>HEPA filter integrity</strong> — DOP/PAO aerosol challenge per ISO 14644-3</li>
+<li><strong>Airflow velocity & uniformity</strong> — Anemometer traverse per ISO 14644-3</li>
+<li><strong>Pressure differential</strong> — Multi-point manometer mapping across all zones</li>
+<li><strong>Temperature & humidity mapping</strong> — 24-hour data-logging at grid points</li>
+<li><strong>Recovery test</strong> — Time to return to classification after contamination event</li>
+<li><strong>Sound level measurement</strong> — Compliance with occupational limits</li>
+<li><strong>Lighting level measurement</strong> — EN 12464-1 compliance</li>
+</ul>
+
+<h3>Deliverables</h3>
+<p>Bound validation report with raw data, calibration certificates, deviation management, and summary of compliance. Re-qualification schedules recommended per ISO 14644-2.</p>"""
+
+[[contents]]
+type        = "service"
+title       = "Maintenance & Recertification"
+slug        = "maintenance-recertification"
+image_url   = "https://images.unsplash.com/photo-1513828646384-e4d8ec30d2bb?w=800&h=600&fit=crop&q=80"
+sort_order  = 5
+category    = "company-updates"
+tags        = ["cleanroom", "hepa-filter", "hvac"]
+excerpt     = "Annual recertification, preventive maintenance contracts, and 24/7 emergency support to keep your cleanroom compliant."
+description = "Annual recertification, preventive maintenance contracts, and 24/7 emergency support to keep your cleanroom compliant year-round."
+content     = """<h3>Preventive Maintenance Programs</h3>
+<p>A cleanroom is a living system that requires regular attention. Our maintenance contracts ensure filters are changed on schedule, HVAC performance stays within spec, and you remain audit-ready at all times.</p>
+
+<h3>Service Inclusions</h3>
+<ul>
+<li>Semi-annual or annual HEPA filter integrity retesting</li>
+<li>Pre-filter and medium-filter replacement</li>
+<li>HVAC system inspection: belts, bearings, coils, condensate drains</li>
+<li>BMS sensor calibration verification</li>
+<li>Differential pressure gauge checks</li>
+<li>Door interlock and air-shower functional testing</li>
+<li>Detailed service report with photographic evidence</li>
+</ul>
+
+<h3>Emergency Response</h3>
+<p>24/7 hotline with guaranteed 4-hour telephone response and 24-hour on-site response for critical facilities. Spare-parts consignment stocking available for key clients.</p>
+
+<h3>Recertification</h3>
+<p>Full ISO 14644 classification retesting at intervals required by your quality system — typically every 6 or 12 months. We supply updated validation reports and certificates.</p>"""
+
+# ============================================================
+# SHOWCASE  (type = "showcase")
+# ============================================================
+
+[[contents]]
+type        = "showcase"
+title       = "GMP Pharmaceutical Facility — Jiangsu"
+slug        = "pharma-facility-jiangsu"
+image_url   = "https://images.unsplash.com/photo-1584677123573-7446380b6d69?w=800&h=600&fit=crop&q=80"
+sort_order  = 1
+category    = "industry-news"
+tags        = ["pharmaceutical", "gmp", "cleanroom"]
+excerpt     = "12,000 m² Class B/C/D cleanroom complex for injectable drug manufacturing."
+description = "12,000 m² Class B/C/D cleanroom complex for injectable drug manufacturing, including filling line isolators and cascaded pressure zones."
+content     = """<h3>Project Scope</h3>
+<p>Turnkey design and construction of a 12,000 m² multi-zone pharmaceutical cleanroom complex comprising Class B aseptic core, Class C preparation areas, Class D packaging zones, and supporting utility corridors.</p>
+<h3>Highlights</h3>
+<ul>
+<li>ISO 5 isolators for sterile filling operations</li>
+<li>Full HVAC redundancy with N+1 AHU configuration</li>
+<li>Automated BMS with 1,200+ monitoring points</li>
+<li>Completed in 14 months, passed NMPA inspection first time</li>
+</ul>"""
+[contents.meta]
+client       = "Jiangsu Pharma Group"
+area         = "12,000 m²"
+classification = "ISO 5 / 7 / 8"
+
+[[contents]]
+type        = "showcase"
+title       = "Semiconductor Fab Expansion — Wuxi"
+slug        = "semiconductor-fab-wuxi"
+image_url   = "https://images.unsplash.com/photo-1559744339-9ea435c9b2b4?w=800&h=600&fit=crop&q=80"
+sort_order  = 2
+category    = "technology"
+tags        = ["cleanroom", "iso-14644"]
+excerpt     = "8,500 m² ISO 4/5 wafer fabrication cleanroom with vibration isolation and ESD protection."
+description = "8,500 m² ISO 4 / ISO 5 wafer fabrication cleanroom with micro-vibration isolation, ESD flooring, and chemical exhaust systems."
+content     = """<h3>Project Scope</h3>
+<p>Design and installation of an 8,500 m² semiconductor cleanroom addition for a major chip manufacturer. The facility features Class 10 (ISO 4) lithography bays and Class 100 (ISO 5) general fab areas with stringent vibration, ESD, and AMC controls.</p>
+<h3>Highlights</h3>
+<ul>
+<li>Micro-vibration isolation: VC-D rating in lithography bays</li>
+<li>Full raised-floor return-air plenum with perforated panels</li>
+<li>Chemical filtration for airborne molecular contamination (AMC)</li>
+<li>100% ULPA ceiling coverage in ISO 4 zones</li>
+</ul>"""
+[contents.meta]
+client       = "Wuxi Semiconductor Tech"
+area         = "8,500 m²"
+classification = "ISO 4 / ISO 5"
+
+[[contents]]
+type        = "showcase"
+title       = "Aseptic Food Processing Plant — Shanghai"
+slug        = "food-processing-shanghai"
+image_url   = "https://images.unsplash.com/photo-1651525670054-279c154bc3b6?w=800&h=600&fit=crop&q=80"
+sort_order  = 3
+category    = "industry-news"
+tags        = ["cleanroom", "air-purification"]
+excerpt     = "6,000 m² Class 100,000 aseptic dairy packaging facility with full stainless-steel interior."
+description = "6,000 m² Class 100,000 cleanroom for aseptic dairy product packaging with full stainless-steel wall lining and positive pressure cascade."
+content     = """<h3>Project Scope</h3>
+<p>Complete cleanroom engineering for a new aseptic packaging line at a leading dairy company. The facility processes ultra-high-temperature (UHT) milk into Tetra Pak cartons under Class 100,000 (ISO 8) conditions with localised Class 10,000 (ISO 7) zones.</p>
+<h3>Highlights</h3>
+<ul>
+<li>SUS 316L stainless steel wall cladding throughout production areas</li>
+<li>Resin self-levelling floor with anti-slip aggregate</li>
+<li>CIP-compatible drainage and floor coving</li>
+<li>Full BMS with temperature, humidity, and particulate trending</li>
+</ul>"""
+[contents.meta]
+client       = "Shanghai Dairy Co."
+area         = "6,000 m²"
+classification = "ISO 7 / ISO 8"
+
+[[contents]]
+type        = "showcase"
+title       = "Biotech R&D Laboratory — Beijing"
+slug        = "biotech-lab-beijing"
+image_url   = "https://images.unsplash.com/photo-1657778752180-53adc732cf9e?w=800&h=600&fit=crop&q=80"
+sort_order  = 4
+category    = "technology"
+tags        = ["cleanroom", "pharmaceutical"]
+excerpt     = "3,200 m² BSL-2 / ISO 7 integrated biotech research and cell-therapy manufacturing lab."
+description = "3,200 m² BSL-2 / ISO 7 integrated biotech research laboratory and cell-therapy manufacturing suite with containment and aseptic zones."
+content     = """<h3>Project Scope</h3>
+<p>Design and build of a multi-purpose biotech facility combining BSL-2 containment laboratories with ISO 7 cell-therapy manufacturing suites. The project required careful zoning of negative-pressure containment rooms and positive-pressure aseptic production areas within the same building.</p>
+<h3>Highlights</h3>
+<ul>
+<li>Dual-corridor (clean/dirty) layout for unidirectional personnel and material flow</li>
+<li>Negative-pressure BSL-2 labs with HEPA-filtered exhaust</li>
+<li>Positive-pressure ISO 7 GMP suites for cell processing</li>
+<li>Passed CDE certification on first submission</li>
+</ul>"""
+[contents.meta]
+client       = "Beijing BioGenetics Ltd."
+area         = "3,200 m²"
+classification = "BSL-2 / ISO 7"
+
+[[contents]]
+type        = "showcase"
+title       = "Hospital Operating Theatre Suite — Suzhou"
+slug        = "hospital-ot-suzhou"
+image_url   = "https://images.unsplash.com/photo-1532634786-c8f8c46a0062?w=800&h=600&fit=crop&q=80"
+sort_order  = 5
+category    = "company-updates"
+tags        = ["cleanroom", "hvac"]
+excerpt     = "8-theatre ISO 5 / ISO 7 surgical suite with laminar flow canopies and medical gas integration."
+description = "8-theatre ISO 5 / ISO 7 surgical suite with laminar flow canopies, medical gas integration, and HEPA supply for critical orthopaedic and cardiac procedures."
+content     = """<h3>Project Scope</h3>
+<p>Turnkey delivery of an 8-theatre surgical suite in a new 1,200-bed teaching hospital. The project included four ISO 5 (Class 100) laminar-flow theatres for orthopaedic/cardiac surgery and four ISO 7 (Class 10,000) theatres for general surgery.</p>
+<h3>Highlights</h3>
+<ul>
+<li>Exponential LAF canopies (3.2 m × 3.2 m) providing 0.45 m/s downflow in ISO 5 theatres</li>
+<li>Medical gas outlets (O₂, N₂O, vacuum, air) integrated into pendant columns</li>
+<li>Automatic sliding hermetic doors with foot sensors</li>
+<li>Meets GB 50333-2013 Chinese hospital cleanroom standard</li>
+</ul>"""
+[contents.meta]
+client       = "Suzhou First People's Hospital"
+area         = "2,800 m²"
+classification = "ISO 5 / ISO 7"
+
+[[contents]]
+type        = "showcase"
+title       = "Electronics Assembly Cleanroom — Guangdong"
+slug        = "electronics-assembly-guangdong"
+image_url   = "https://images.unsplash.com/photo-1563968743333-044cef800494?w=800&h=600&fit=crop&q=80"
+sort_order  = 6
+category    = "technology"
+tags        = ["cleanroom", "air-purification", "energy-efficiency"]
+excerpt     = "15,000 m² ISO 7 electronics assembly cleanroom with energy-efficient FFU ceiling system."
+description = "15,000 m² ISO 7 electronics assembly cleanroom featuring 2,400 EC-motor FFUs, LED lighting, and a 40% energy reduction vs. previous facility."
+content     = """<h3>Project Scope</h3>
+<p>Engineering, procurement, and construction of a 15,000 m² ISO 7 (Class 10,000) cleanroom for a consumer electronics manufacturer. The project replaced an ageing facility with a modern, energy-efficient design featuring 2,400 FFU units and full LED lighting.</p>
+<h3>Highlights</h3>
+<ul>
+<li>2,400 EC-motor FFUs with RS-485 group speed control</li>
+<li>Energy consumption reduced 40% compared to the replaced facility</li>
+<li>ESD epoxy flooring system throughout</li>
+<li>Integrated dehumidification for humidity-sensitive components</li>
+</ul>"""
+[contents.meta]
+client       = "Guangdong Electronics Corp."
+area         = "15,000 m²"
+classification = "ISO 7"
+
+# ============================================================
+# BLOG POSTS  (type = "post")
+# ============================================================
+
+[[contents]]
+type        = "post"
+title       = "Understanding ISO 14644: A Practical Guide for Cleanroom Owners"
+slug        = "understanding-iso-14644"
+image_url   = "https://images.unsplash.com/photo-1513828742140-ccaa28f3eda0?w=800&h=600&fit=crop&q=80"
+category    = "standards-regulations"
+tags        = ["iso-14644", "cleanroom"]
+excerpt     = "ISO 14644 is the international benchmark for cleanroom classification. Learn what the standards require and how to stay compliant."
+content     = """<p>ISO 14644 is the cornerstone standard series that defines <a href="https://hurricanetechs.com/tag/cleanroom" target="_blank" rel="noopener">cleanroom</a> and associated controlled environment classifications. For manufacturers, laboratory managers, and facility engineers, understanding this standard is not optional — it is essential for regulatory compliance and product quality.</p>
+
+<h3>The ISO 14644 Series at a Glance</h3>
+<ul>
+<li><strong>ISO 14644-1:</strong> Classification of air cleanliness by particle concentration</li>
+<li><strong>ISO 14644-2:</strong> Monitoring to provide evidence of cleanroom performance</li>
+<li><strong>ISO 14644-3:</strong> Test methods (airflow, pressure, <a href="https://hurricanetechs.com/tag/hepa-filter" target="_blank" rel="noopener">HEPA integrity</a>, recovery)</li>
+<li><strong>ISO 14644-4:</strong> Design, construction, and start-up</li>
+<li><strong>ISO 14644-5:</strong> Operations (garments, cleaning, behaviour)</li>
+</ul>
+
+<h3>Classification Levels</h3>
+<p>The standard defines 9 cleanliness classes from ISO 1 (the cleanest) to ISO 9 (roughly ambient air). Most pharmaceutical cleanrooms operate at ISO 5–8, while semiconductor fabs may require ISO 3–5.</p>
+
+<h3>Key Takeaways</h3>
+<p>Regular monitoring per ISO 14644-2 is mandatory to demonstrate ongoing compliance. Particle counters must be calibrated annually, and requalification testing should be performed at least every 12 months for ISO 5 and cleaner spaces.</p>"""
+
+[[contents]]
+type        = "post"
+title       = "HEPA vs ULPA Filters: Which One Do You Need?"
+slug        = "hepa-vs-ulpa-filters"
+image_url   = "https://images.unsplash.com/photo-1752614671052-92e18f534db1?w=800&h=600&fit=crop&q=80"
+category    = "technology"
+tags        = ["hepa-filter", "air-purification", "cleanroom"]
+excerpt     = "HEPA captures 99.97% of 0.3 µm particles. ULPA captures 99.999%. But which filter is right for your application?"
+content     = """<p>When specifying <a href="https://hurricanetechs.com/tag/air-purification" target="_blank" rel="noopener">air purification</a> for a cleanroom project, the choice between <a href="https://hurricanetechs.com/tag/hepa-filter" target="_blank" rel="noopener">HEPA</a> (High Efficiency Particulate Air) and ULPA (Ultra Low Penetration Air) filters has significant cost and performance implications. Here we break down the differences.</p>
+
+<h3>Efficiency Comparison</h3>
+<table>
+<tr><th>Grade</th><th>Standard</th><th>Efficiency @ MPPS</th></tr>
+<tr><td>H13</td><td>EN 1822</td><td>≥99.95%</td></tr>
+<tr><td>H14</td><td>EN 1822</td><td>≥99.995%</td></tr>
+<tr><td>U15</td><td>EN 1822</td><td>≥99.9995%</td></tr>
+<tr><td>U16</td><td>EN 1822</td><td>≥99.99995%</td></tr>
+<tr><td>U17</td><td>EN 1822</td><td>≥99.999995%</td></tr>
+</table>
+
+<h3>When to Choose ULPA</h3>
+<p>ULPA filters are typically required only for ISO 3–4 (Class 1–10) cleanrooms — mainly found in advanced semiconductor fabrication and nanotechnology research. For the vast majority of pharmaceutical, biotech, and food-processing cleanrooms (ISO 5–8), H14 HEPA filters provide more than adequate performance at lower cost and lower pressure drop.</p>
+
+<h3>Cost Considerations</h3>
+<p>ULPA filters cost 2–3× more than equivalent HEPA filters, have 30–50% higher pressure drop (increasing energy costs), and shorter service life. Always match the filter grade to your actual cleanliness requirement — over-specifying wastes energy and budget.</p>"""
+
+[[contents]]
+type        = "post"
+title       = "Top 5 Contamination Sources in Cleanrooms and How to Control Them"
+slug        = "contamination-control-cleanrooms"
+image_url   = "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=600&fit=crop&q=80"
+category    = "technology"
+tags        = ["cleanroom", "gmp", "air-purification"]
+excerpt     = "People generate 80% of cleanroom contamination. Learn the five biggest sources and proven control strategies."
+content     = """<p>Maintaining <a href="https://hurricanetechs.com/tag/cleanroom" target="_blank" rel="noopener">cleanroom</a> cleanliness is an ongoing battle. Understanding the primary contamination sources is the first step toward an effective control strategy.</p>
+
+<h3>1. Personnel (80% of contamination)</h3>
+<p>Humans are the single largest source of particles in any cleanroom. A person at rest sheds approximately 100,000 particles per minute. Proper gowning procedures, cleanroom-certified garments, and strict behavioural protocols are essential.</p>
+
+<h3>2. Equipment and Process</h3>
+<p>Motors, actuators, and sliding surfaces generate particles. Specify cleanroom-compatible equipment, use covers and local exhaust where possible, and schedule maintenance during shutdowns.</p>
+
+<h3>3. Materials and Components</h3>
+<p>Raw materials, packaging, and consumables carry particles and outgassing compounds. Implement a material airlock process with wipe-down procedures and controlled staging areas.</p>
+
+<h3>4. <a href="https://hurricanetechs.com/tag/hvac" target="_blank" rel="noopener">HVAC</a> System Failures</h3>
+<p>Filter leaks, unbalanced pressures, and inadequate air changes can compromise the entire cleanroom. Regular HEPA integrity testing and pressure monitoring are non-negotiable.</p>
+
+<h3>5. Construction and Maintenance Activities</h3>
+<p>Any work that disturbs surfaces or introduces tools generates massive particle bursts. Isolate work zones with temporary barriers, use portable HEPA scrubbers, and requalify affected areas before restarting production.</p>"""
+
+[[contents]]
+type        = "post"
+title       = "Energy Efficiency in Cleanroom HVAC: Cutting Costs Without Compromising Quality"
+slug        = "energy-efficiency-cleanroom-hvac"
+image_url   = "https://images.unsplash.com/photo-1752614671173-1625eb03a0e1?w=800&h=600&fit=crop&q=80"
+category    = "technology"
+tags        = ["energy-efficiency", "hvac", "cleanroom"]
+excerpt     = "Cleanroom HVAC accounts for 60–70% of total energy use. Here are five proven strategies to reduce consumption."
+content     = """<p><a href="https://hurricanetechs.com/tag/hvac" target="_blank" rel="noopener">HVAC</a> systems in <a href="https://hurricanetechs.com/tag/cleanroom" target="_blank" rel="noopener">cleanrooms</a> consume 60–70% of total facility energy — significantly more than in conventional buildings. With energy prices rising and sustainability regulations tightening, optimising HVAC efficiency is both an economic and environmental imperative.</p>
+
+<h3>1. Demand-Based Ventilation</h3>
+<p>Instead of running at maximum air-change rate 24/7, use particle counters and occupancy sensors to reduce airflow during non-production hours. Many ISO 7/8 cleanrooms can safely reduce air changes by 30–40% during unoccupied periods.</p>
+
+<h3>2. EC Motor FFUs</h3>
+<p>Replace AC-motor fan-filter units with electronically commutated (EC) motor versions. Energy savings of 40–60% per FFU are typical, with payback periods of 12–18 months.</p>
+
+<h3>3. Heat Recovery Systems</h3>
+<p>Install plate or rotary heat exchangers on exhaust air streams. Recovery efficiencies of 60–70% are achievable, dramatically reducing heating and cooling loads.</p>
+
+<h3>4. Right-Sizing the System</h3>
+<p>Over-engineering is the enemy of efficiency. Match classification to what your process actually requires, and avoid specifying higher air changes than the standard demands.</p>
+
+<h3>5. Variable Frequency Drives (VFDs)</h3>
+<p>Install VFDs on all AHU fans and pumps. Even a 20% speed reduction yields a 50% energy reduction, thanks to the cubic relationship between fan speed and power consumption.</p>"""
+
+[[contents]]
+type        = "post"
+title       = "EU GMP Annex 1 (2023): What Changed and What It Means for Your Cleanroom"
+slug        = "eu-gmp-annex-1-2023-changes"
+image_url   = "https://images.unsplash.com/photo-1619335680796-54f13b88c6ba?w=800&h=600&fit=crop&q=80"
+category    = "standards-regulations"
+tags        = ["gmp", "pharmaceutical", "cleanroom"]
+excerpt     = "The revised EU GMP Annex 1 raised the bar for sterile manufacturing. Here is what cleanroom operators need to know."
+content     = """<p>The revised EU GMP Annex 1, effective August 2023, is the most significant update to European sterile manufacturing regulations in over 15 years. It introduces new requirements that directly impact cleanroom design, monitoring, and operations.</p>
+
+<h3>Key Changes</h3>
+<ul>
+<li><strong>Contamination Control Strategy (CCS):</strong> Every site must document a holistic CCS that identifies risks and defines mitigating controls</li>
+<li><strong>Continuous viable monitoring:</strong> Recommended in Grade A/B zones, not just periodic settle plates</li>
+<li><strong>Smoke studies:</strong> More frequent visualisation of airflow patterns required, especially for filling operations</li>
+<li><strong>Transfer procedures:</strong> Enhanced requirements for material and component transfer into Grade A areas</li>
+<li><strong>Data integrity:</strong> All environmental monitoring data must follow ALCOA+ principles</li>
+</ul>
+
+<h3>Implications for Cleanroom Design</h3>
+<p>New facilities must incorporate provisions for continuous monitoring infrastructure, additional pressure monitoring points, and airflow visualisation capabilities. Existing facilities may need HVAC modifications to meet revised air change and recovery requirements.</p>
+
+<h3>Our Recommendation</h3>
+<p>Start with a gap analysis of your current facility against the revised Annex 1 requirements. Hurricane Techs offers complimentary Annex 1 gap assessment workshops for pharmaceutical clients.</p>"""
+
+[[contents]]
+type        = "post"
+title       = "Hurricane Techs Celebrates 500th Cleanroom Project Milestone"
+slug        = "500th-project-milestone"
+image_url   = "https://images.unsplash.com/photo-1651525670099-f828fb5478a5?w=800&h=600&fit=crop&q=80"
+category    = "company-updates"
+tags        = ["cleanroom", "pharmaceutical"]
+excerpt     = "From a small workshop in Wuxi to 500+ cleanroom projects worldwide — a look back at two decades of growth."
+content     = """<p>This month marks a proud milestone for <a href="https://hurricanetechs.com" target="_blank" rel="noopener">Hurricane Techs</a>: the completion of our 500th cleanroom project. From our founding in 2003 with a small team in Wuxi Yanqiao Industrial Park, we have grown into a full-service cleanroom engineering company with over 120 professionals serving clients across five continents.</p>
+
+<h3>By the Numbers</h3>
+<ul>
+<li><strong>500+</strong> cleanroom projects delivered</li>
+<li><strong>120+</strong> team members</li>
+<li><strong>20+</strong> years of experience</li>
+<li><strong>4</strong> industries served: pharmaceutical, electronics, food, and biotech</li>
+<li><strong>ISO 9001</strong> certified since 2005</li>
+</ul>
+
+<h3>Looking Ahead</h3>
+<p>As we enter our third decade, we are investing in digital twin technology for cleanroom design, expanding our service network across Southeast Asia, and developing next-generation energy-efficient FFU systems. We remain committed to our founding principle: delivering clean environments that protect your products and your people.</p>
+
+<p>Thank you to every client, partner, and team member who made this milestone possible. Here is to the next 500.</p>"""

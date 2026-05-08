@@ -1,0 +1,18 @@
+{{define "content"}}
+<section class="af-detail-hero">
+    <span>Service</span>
+    <h1>{{.Service.Title}}</h1>
+    <p>{{.Service.Excerpt}}</p>
+</section>
+
+<section class="af-detail-layout">
+    <article class="af-detail-card">
+        {{if .Service.ImageURL}}<div class="af-detail-media">{{responsiveImagePriority .Service.ImageURL .Service.Title "" "(max-width: 768px) 100vw, 62vw"}}</div>{{end}}
+        <div class="af-richtext">{{safeHTML .Service.Description}}</div>
+    </article>
+    <aside class="af-detail-aside">
+        <h3>More services</h3>
+        {{range .Related}}<a href="{{langPrefixURL $.Ctx (printf "/services/%s" .Slug)}}">{{.Title}} <span>→</span></a>{{end}}
+    </aside>
+</section>
+{{end}}

@@ -1,0 +1,28 @@
+{{define "base"}}<!DOCTYPE html>
+<html lang="{{currentLang .Ctx}}"{{if index .Settings "theme_color_scheme"}} data-color-scheme="{{index .Settings "theme_color_scheme"}}"{{end}}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - {{settingOr .Settings "site_name" "FloraFi"}}</title>
+    {{with seoHeadFor .}}{{.}}{{else}}<meta name="description" content="{{settingOr $.Settings "site_description" "A progressive stablecoin ecosystem designed to move value and power real economies."}}">{{end}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    {{if eq .ActivePage "home"}}{{responsiveImagePreload (settingOr .Settings "home_hero_image" "/static/images/florafi-hero-field.png") "100vw"}}{{end}}
+    <link rel="stylesheet" href="/static/css/style.css?v=florafi-8">
+    {{renderHook "theme.head.end" .}}
+</head>
+<body class="ff-body">
+    {{renderHook "theme.body.open" .}}
+    <div class="ff-page-shell">
+        {{template "header" .}}
+        <main class="ff-main">
+            {{template "content" .}}
+        </main>
+        {{template "footer" .}}
+    </div>
+    <button id="scroll-top" class="scroll-top" aria-label="Scroll to top">&#8679;</button>
+    <script src="/static/js/main.js?v=florafi-1"></script>
+    {{renderHook "theme.footer.end" .}}
+</body>
+</html>{{end}}

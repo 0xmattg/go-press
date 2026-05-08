@@ -1,0 +1,114 @@
+{{define "content"}}
+{{$s := .Settings}}
+<div class="content-header">
+    <div style="display:flex; align-items:center; gap:1rem;">
+        <a href="/admin/themes" class="btn btn-secondary" style="display:inline-flex; align-items:center; gap:.4rem; text-decoration:none;">← {{X $ "theme.settings.back" "返回主题管理"}}</a>
+        <h2>{{X $ "theme.settings.title" "%s - 主题设置" .ThemeName}}</h2>
+    </div>
+</div>
+
+<form method="POST" action="/admin/themes/{{.ThemeSlug}}/settings" class="tt-settings-form">
+    <section class="tt-admin-card">
+        <h3>{{X $ "theme.settings.text.038" "品牌与导航"}}</h3>
+        <div class="tt-admin-grid">
+            <label>{{X $ "theme.settings.text.015" "公司名称"}}<input name="company_name" value="{{index $s "company_name"}}" placeholder="TerraTrail"></label>
+            <label>{{X $ "theme.settings.text.229" "Logo 文本"}}<input name="home_logo_text" value="{{index $s "home_logo_text"}}" placeholder="TerraTrail"></label>
+            <label>{{X $ "theme.settings.text.105" "Logo 图片 URL"}}<input name="home_logo_image" value="{{index $s "home_logo_image"}}" placeholder="{{X $ "theme.settings.text.318" "/static/images/logo.png 或 https://..."}}"></label>
+            <label>{{X $ "theme.settings.text.301" "Home 导航"}}<input name="nav_home" value="{{index $s "nav_home"}}" placeholder="Home"></label>
+            <label>{{X $ "theme.settings.text.230" "About 导航"}}<input name="nav_about" value="{{index $s "nav_about"}}" placeholder="About"></label>
+            <label>{{X $ "theme.settings.text.302" "Tour 导航"}}<input name="nav_process" value="{{index $s "nav_process"}}" placeholder="Tour"></label>
+            <label>{{X $ "theme.settings.text.303" "Destinations 导航"}}<input name="nav_showcase" value="{{index $s "nav_showcase"}}" placeholder="Destinations"></label>
+            <label>{{X $ "theme.settings.text.304" "Transport 导航"}}<input name="nav_services" value="{{index $s "nav_services"}}" placeholder="Transport"></label>
+            <label>{{X $ "theme.settings.text.305" "Journal 导航"}}<input name="nav_blog" value="{{index $s "nav_blog"}}" placeholder="Journal"></label>
+            <label>{{X $ "theme.settings.text.234" "Contact 导航"}}<input name="nav_contact" value="{{index $s "nav_contact"}}" placeholder="Contact"></label>
+        </div>
+    </section>
+
+    <section class="tt-admin-card">
+        <h3>{{X $ "theme.settings.text.235" "首页 Hero"}}</h3>
+        <label>{{X $ "theme.settings.text.236" "Hero 图片 URL"}}<input name="home_hero_image" value="{{index $s "home_hero_image"}}" placeholder="https://images.unsplash.com/..."></label>
+        <div class="tt-admin-grid">
+            <label>{{X $ "theme.settings.text.103" "主标题"}}<input name="home_hero_title" value="{{index $s "home_hero_title"}}" placeholder="Your Next Adventure Awaits"></label>
+            <label>{{X $ "theme.settings.text.070" "按钮文字"}}<input name="home_hero_btn_text" value="{{index $s "home_hero_btn_text"}}" placeholder="Booking"></label>
+            <label>{{X $ "theme.settings.text.071" "按钮链接"}}<input name="home_hero_btn_link" value="{{index $s "home_hero_btn_link"}}" placeholder="/products"></label>
+        </div>
+        <label>{{X $ "theme.settings.text.211" "副标题"}}<textarea name="home_hero_subtitle" rows="3">{{index $s "home_hero_subtitle"}}</textarea></label>
+        <div class="tt-admin-grid">
+            <label>{{X $ "theme.settings.text.254" "搜索按钮"}}<input name="home_search_button" value="{{index $s "home_search_button"}}" placeholder="Search"></label>
+            <label>{{X $ "theme.settings.text.255" "筛选 1"}}<input name="home_filter_1" value="{{index $s "home_filter_1"}}" placeholder="Rinjani, Indonesia"></label>
+            <label>{{X $ "theme.settings.text.256" "筛选 2"}}<input name="home_filter_2" value="{{index $s "home_filter_2"}}" placeholder="27 January 2026"></label>
+            <label>{{X $ "theme.settings.text.257" "筛选 3"}}<input name="home_filter_3" value="{{index $s "home_filter_3"}}" placeholder="30 January 2026"></label>
+            <label>{{X $ "theme.settings.text.258" "筛选 4"}}<input name="home_filter_4" value="{{index $s "home_filter_4"}}" placeholder="4 People | 1 Child"></label>
+        </div>
+    </section>
+
+    <section class="tt-admin-card">
+        <h3>{{X $ "theme.settings.text.237" "首页简介与指标"}}</h3>
+        <label>{{X $ "theme.settings.text.238" "简介标题"}}<input name="home_about_title" value="{{index $s "home_about_title"}}" placeholder="Every Step of the Way"></label>
+        <label>{{X $ "theme.settings.text.239" "简介文字"}}<textarea name="home_about_desc" rows="3">{{index $s "home_about_desc"}}</textarea></label>
+        <div class="tt-admin-grid">
+            {{range $i := seq 4}}
+            <label>{{X $ "theme.settings.dynamic.metric_number_i" "指标 %d 数字" $i}}<input name="home_stat_{{$i}}_number" value="{{index $s (printf "home_stat_%d_number" $i)}}"></label>
+            <label>{{X $ "theme.settings.dynamic.metric_label_i" "指标 %d 标签" $i}}<input name="home_stat_{{$i}}_label" value="{{index $s (printf "home_stat_%d_label" $i)}}"></label>
+            {{end}}
+        </div>
+    </section>
+
+    <section class="tt-admin-card">
+        <h3>{{X $ "theme.settings.text.240" "内容区标题"}}</h3>
+        <div class="tt-admin-grid">
+            <label>{{X $ "theme.settings.text.306" "套餐区小标题"}}<input name="home_products_label" value="{{index $s "home_products_label"}}" placeholder="Tour Package"></label>
+            <label>{{X $ "theme.settings.text.307" "套餐区标题"}}<input name="home_products_title" value="{{index $s "home_products_title"}}" placeholder="Explore Our Exclusive Tour Packages"></label>
+            <label>{{X $ "theme.settings.text.308" "交通区标题"}}<input name="home_services_title" value="{{index $s "home_services_title"}}" placeholder="Effortless Travel"></label>
+            <label>{{X $ "theme.settings.text.309" "目的地区标题"}}<input name="home_showcase_title" value="{{index $s "home_showcase_title"}}" placeholder="Guides, routes, and hidden mountain moments"></label>
+            <label>{{X $ "theme.settings.text.310" "目的地区按钮"}}<input name="home_showcase_btn" value="{{index $s "home_showcase_btn"}}" placeholder="Meet Guides"></label>
+        </div>
+        <label>{{X $ "theme.settings.text.311" "套餐区说明"}}<textarea name="home_products_desc" rows="3">{{index $s "home_products_desc"}}</textarea></label>
+        <label>{{X $ "theme.settings.text.312" "目的地区说明"}}<textarea name="home_showcase_subtitle" rows="3">{{index $s "home_showcase_subtitle"}}</textarea></label>
+        <div class="tt-admin-grid">
+            <label>{{X $ "theme.settings.text.313" "套餐价格"}}<input name="package_price" value="{{index $s "package_price"}}" placeholder="$456.80"></label>
+            <label>{{X $ "theme.settings.text.222" "步骤标题"}}<input name="home_step_title" value="{{index $s "home_step_title"}}" placeholder="Every Step of the Way"></label>
+            <label>{{X $ "theme.settings.text.314" "交通小标题"}}<input name="home_transport_label" value="{{index $s "home_transport_label"}}" placeholder="Transport"></label>
+            <label>{{X $ "theme.settings.text.315" "协作指标"}}<input name="home_nearby_metric" value="{{index $s "home_nearby_metric"}}" placeholder="135+"></label>
+            <label>{{X $ "theme.settings.text.316" "协作指标说明"}}<input name="home_nearby_label" value="{{index $s "home_nearby_label"}}" placeholder="Event Collaboration"></label>
+        </div>
+        <label>{{X $ "theme.settings.text.317" "步骤说明"}}<textarea name="home_step_desc" rows="3">{{index $s "home_step_desc"}}</textarea></label>
+    </section>
+
+    <section class="tt-admin-card">
+        <h3>{{X $ "theme.settings.text.245" "关于页与联系信息"}}</h3>
+        <label>{{X $ "theme.settings.text.246" "关于页大图"}}<input name="about_intro_image" value="{{index $s "about_intro_image"}}" placeholder="https://images.unsplash.com/..."></label>
+        <div class="tt-admin-grid">
+            <label>{{X $ "theme.settings.text.247" "邮箱"}}<input name="company_email" value="{{index $s "company_email"}}" placeholder="hello@terratrail.example"></label>
+            <label>{{X $ "theme.settings.text.248" "电话"}}<input name="company_phone" value="{{index $s "company_phone"}}" placeholder="+1 312 555 0148"></label>
+            <label>{{X $ "theme.settings.text.249" "地址"}}<input name="company_address" value="{{index $s "company_address"}}" placeholder="220 Market Street, Chicago"></label>
+            <label>{{X $ "theme.settings.text.020" "页脚文案"}}<input name="footer_text" value="{{index $s "footer_text"}}" placeholder="© 2026 TerraTrail."></label>
+        </div>
+        <label>{{X $ "theme.settings.text.005" "公司简介"}}<input name="company_description" value="{{index $s "company_description"}}" placeholder="Curated mountain travel planning studio."></label>
+        <h4>{{X $ "theme.settings.text.021" "社交媒体链接"}}</h4>
+        <div class="tt-admin-grid">
+            <label>LinkedIn<input type="url" name="social_linkedin" value="{{index $s "social_linkedin"}}" placeholder="https://linkedin.com/company/..."></label>
+            <label>{{X $ "theme.settings.text.022" "微信链接/二维码"}}<input name="social_wechat" value="{{index $s "social_wechat"}}" placeholder="{{X $ "theme.settings.text.123" "微信号或二维码地址"}}"></label>
+            <label>Facebook<input type="url" name="social_facebook" value="{{index $s "social_facebook"}}" placeholder="https://facebook.com/..."></label>
+            <label>X / Twitter<input type="url" name="social_x" value="{{index $s "social_x"}}" placeholder="https://x.com/..."></label>
+            <label>YouTube<input type="url" name="social_youtube" value="{{index $s "social_youtube"}}" placeholder="https://youtube.com/..."></label>
+        </div>
+    </section>
+
+    <div class="form-actions" style="margin-top:1rem;">
+        <button type="submit" class="btn btn-primary">{{X $ "theme.settings.save" "保存设置"}}</button>
+        <a href="/admin/themes" class="btn btn-secondary">{{X $ "theme.settings.cancel" "取消"}}</a>
+    </div>
+</form>
+
+<style>
+.tt-settings-form { max-width: 1100px; }
+.tt-admin-card { margin: 0 0 1rem; padding: 1.25rem; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; }
+.tt-admin-card h3 { margin: 0 0 1rem; }
+.tt-admin-card h4 { margin: 1.25rem 0 .75rem; color: #475569; font-size: .95rem; }
+.tt-admin-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.tt-admin-card label { display: grid; gap: .4rem; margin-bottom: 1rem; color: #475569; font-weight: 600; }
+.tt-admin-card input, .tt-admin-card textarea { width: 100%; border: 1px solid #d1d5db; border-radius: 8px; padding: .65rem .75rem; font: inherit; }
+@media (max-width: 760px) { .tt-admin-grid { grid-template-columns: 1fr; } }
+</style>
+{{end}}

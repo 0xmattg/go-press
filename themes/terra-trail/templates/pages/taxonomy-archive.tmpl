@@ -1,0 +1,18 @@
+{{define "content"}}
+<section class="tt-page-hero">
+    <span>{{.TaxonomyType}}</span>
+    <h1>{{.TermName}}</h1>
+    <p>{{.Total}} travel records connected to this term.</p>
+</section>
+
+<section class="tt-card-grid">
+    {{range .Items}}
+    <a class="tt-archive-card" href="{{.DetailURL}}">
+        <div class="tt-card-media">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 92vw, 30vw" "lazy"}}{{end}}</div>
+        <span>{{.TypeLabel}}</span>
+        <h2>{{.Title}}</h2>
+        <p>{{truncate .Excerpt 120}}</p>
+    </a>
+    {{end}}
+</section>
+{{end}}

@@ -1,0 +1,41 @@
+{{define "content"}}
+<section class="section">
+    <div class="container">
+        <div class="article-detail-layout">
+            <article class="article-detail">
+                <div class="article-detail-header">
+                    <div class="article-detail-meta">
+                        {{range .Categories}}<a href="/category/{{.Slug}}" class="badge">{{.Name}}</a>{{end}}
+                        {{if .Item.PublishedAt}}<time>{{formatDate .Item.PublishedAt}}</time>{{end}}
+                    </div>
+                    <h1 class="article-detail-title">{{.Title}}</h1>
+                    {{if .Item.Excerpt}}<p class="article-detail-excerpt">{{.Item.Excerpt}}</p>{{end}}
+                </div>
+                {{if .Item.ImageURL}}
+                {{responsiveImagePriority .Item.ImageURL .Title "article-detail-hero" "(max-width: 768px) 100vw, 70vw"}}
+                {{end}}
+                <div class="article-detail-body">
+                    {{safeHTML .Item.Content}}
+                </div>
+                {{if .Tags}}
+                <div class="article-detail-tags">
+                    {{range .Tags}}<a href="/tag/{{.Slug}}" class="tag">{{.Name}}</a>{{end}}
+                </div>
+                {{end}}
+            </article>
+            <aside class="articles-sidebar">
+                <div class="sidebar-widget">
+                    <h3>{{T $.Ctx "sidebar_latest_articles"}}</h3>
+                    <ul class="related-list">
+                        {{range .LatestPosts}}
+                        <li><a href="/blog/{{.Slug}}">{{.Title}}</a>
+                            {{if .PublishedAt}}<time>{{formatDate .PublishedAt}}</time>{{end}}
+                        </li>
+                        {{end}}
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    </div>
+</section>
+{{end}}

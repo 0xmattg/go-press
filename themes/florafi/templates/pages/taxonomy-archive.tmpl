@@ -1,0 +1,34 @@
+{{define "content"}}
+<section class="ff-page-hero ff-page-hero-archive" style="--hero-bg:url('https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1600&h=820&fit=crop&q=82');">
+    <span class="ff-hero-ghost">{{if eq .TaxonomyType "category"}}CATEGORY{{else}}TAG{{end}}</span>
+    <div class="ff-page-hero-inner">
+        <span class="ff-kicker">{{if eq .TaxonomyType "category"}}{{T $.Ctx "archive_label_category"}}{{else}}{{T $.Ctx "archive_label_tag"}}{{end}}</span>
+        <h1>{{.TermName}}</h1>
+        <span class="ff-hero-rule"></span>
+        <p>{{.Total}} {{T $.Ctx "archive_items_found"}} across the FloraFi content library.</p>
+        <div class="ff-breadcrumb"><a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a><span>/</span><span>{{.TermName}}</span></div>
+    </div>
+</section>
+
+<section class="ff-section">
+    {{if .Items}}
+    <div class="ff-archive-grid">
+        {{range .Items}}
+        <article class="ff-archive-card">
+            <a class="ff-archive-media" href="{{.DetailURL}}">
+                {{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="ff-card-icon">◇</span>{{end}}
+            </a>
+            <div class="ff-archive-body">
+                <span class="ff-card-eyebrow">{{.TypeLabel}}</span>
+                <h3><a href="{{.DetailURL}}">{{.Title}}</a></h3>
+                {{if .Excerpt}}<p>{{truncate .Excerpt 150}}</p>{{end}}
+                <a class="ff-card-arrow" href="{{.DetailURL}}">{{T $.Ctx "btn_view_details"}} →</a>
+            </div>
+        </article>
+        {{end}}
+    </div>
+    {{else}}
+    <div class="ff-empty-state"><p>{{T $.Ctx "empty_no_content"}}</p></div>
+    {{end}}
+</section>
+{{end}}

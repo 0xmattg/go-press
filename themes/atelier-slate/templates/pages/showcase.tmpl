@@ -1,0 +1,29 @@
+{{define "content"}}
+{{$s := .Settings}}
+<section class="as-page-hero">
+    <div class="as-container">
+        <div class="as-page-hero-panel">
+            <div>
+                <p class="as-kicker as-kicker-light">Showcase</p>
+                <h1>{{settingOr $s "showcase_page_title" "Campaign worlds with visual texture and commercial intent."}}</h1>
+                <p>{{settingOr $s "showcase_page_subtitle" "A compact archive of launch systems, web experiences, and brand narratives."}}</p>
+            </div>
+            <img src="{{settingOr $s "subpage_hero_image" "/static/images/atelier-card-wood.svg"}}" alt="">
+        </div>
+    </div>
+</section>
+<section class="as-section">
+    <div class="as-container as-showcase-grid">
+        {{range .Showcases}}
+        <article class="as-showcase-card">
+            <a href="{{langPrefixURL $.Ctx (printf "/showcase/%s" .Slug)}}">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 50vw" "lazy"}}{{end}}</a>
+            <div>
+                <p>{{.Client}} {{if .Location}}/ {{.Location}}{{end}}</p>
+                <h2><a href="{{langPrefixURL $.Ctx (printf "/showcase/%s" .Slug)}}">{{.Title}}</a></h2>
+                <span>0{{.SortOrder}}</span>
+            </div>
+        </article>
+        {{end}}
+    </div>
+</section>
+{{end}}

@@ -1,0 +1,64 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>分类管理</h2>
+</div>
+
+{{if can .CurrentRole "category" "create"}}
+<div class="card">
+    <div class="card-header"><h3>新建分类</h3></div>
+    <form method="POST" action="/admin/categories" class="inline-create-form">
+        <div class="form-row">
+            <div class="form-group">
+                <input type="text" name="name" placeholder="分类名称" required>
+            </div>
+            <div class="form-group">
+                <input type="text" name="slug" placeholder="slug" required>
+            </div>
+            <button type="submit" class="btn btn-primary">添加</button>
+        </div>
+    </form>
+</div>
+{{end}}
+
+<div class="card">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>名称</th>
+                <th>Slug</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Items}}
+            <tr>
+                <td>{{.ID}}</td>
+                <td>
+                    {{if can $.CurrentRole "category" "update"}}
+                    <form method="POST" action="/admin/categories/{{.ID}}/edit" class="inline-edit-form">
+                        <input type="text" name="name" value="{{.Name}}" class="inline-input">
+                        <input type="text" name="slug" value="{{.Slug}}" class="inline-input">
+                        <a href="/{{$.TaxType}}/{{.Slug}}" target="_blank" class="content-title-link" title="查看前台页面" style="margin-right:6px">↗</a>
+                        <button type="submit" class="btn btn-sm">保存</button>
+                    </form>
+                    {{else}}
+                    <a href="/{{$.TaxType}}/{{.Slug}}" target="_blank" class="content-title-link">{{.Name}}</a>
+                    {{end}}
+                </td>
+                <td>{{if not (can $.CurrentRole "category" "update")}}<code>{{.Slug}}</code>{{end}}</td>
+                <td class="actions">
+                    {{if can $.CurrentRole "category" "delete"}}
+                    <form method="POST" action="/admin/categories/{{.ID}}/delete" class="inline-form">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确认删除?')">删除</button>
+                    </form>
+                    {{end}}
+                </td>
+            </tr>
+            {{else}}
+            <tr><td colspan="4" class="empty-msg">暂无分类</td></tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}

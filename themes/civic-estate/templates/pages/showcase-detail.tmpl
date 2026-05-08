@@ -1,0 +1,22 @@
+{{define "content"}}
+<section class="ce-detail-hero">
+    <span>Listing Area</span>
+    <h1>{{.Showcase.Title}}</h1>
+    <p>{{if .Showcase.Location}}{{.Showcase.Location}}{{else}}Selected commercial property opportunity by Civic Estate.{{end}}</p>
+</section>
+
+<section class="ce-detail-layout">
+    <article class="ce-detail-card">
+        {{if .Showcase.ImageURL}}<div class="ce-detail-media">{{responsiveImagePriority .Showcase.ImageURL .Showcase.Title "" "(max-width: 768px) 100vw, 62vw"}}</div>{{end}}
+        <div class="ce-meta-row">
+            {{if .Showcase.Client}}<span><strong>Client</strong>{{.Showcase.Client}}</span>{{end}}
+            {{if .Showcase.Location}}<span><strong>Location</strong>{{.Showcase.Location}}</span>{{end}}
+        </div>
+        <div class="ce-richtext">{{safeHTML .Showcase.Description}}</div>
+    </article>
+    <aside class="ce-detail-aside">
+        <h3>Related listings</h3>
+        {{range .Related}}<a href="{{langPrefixURL $.Ctx (printf "/showcase/%s" .Slug)}}">{{.Title}} <span>→</span></a>{{end}}
+    </aside>
+</section>
+{{end}}

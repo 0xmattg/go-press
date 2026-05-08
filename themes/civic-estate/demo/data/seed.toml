@@ -1,0 +1,582 @@
+# ============================================================
+# GoPress Seed Data - Civic Estate commercial real-estate demo
+# ============================================================
+
+# ---------- Site Settings ----------
+[[settings]]
+key   = "site_name"
+value = "Civic Estate"
+
+[[settings]]
+key   = "site_description"
+value = "Commercial property search, leasing advisory, and market-ready real-estate intelligence."
+
+[[settings]]
+key   = "company_name"
+value = "Civic Estate"
+
+[[settings]]
+key   = "company_email"
+value = "hello@civicestate.example"
+
+[[settings]]
+key   = "company_phone"
+value = "+1 312 555 0148"
+
+[[settings]]
+key   = "company_address"
+value = "220 Market Street, Chicago, IL"
+
+[[settings]]
+key   = "company_description"
+value = "Civic Estate helps occupiers, owners, and investors compare commercial spaces with clean search workflows, verified listing data, and practical advisory."
+
+[[settings]]
+key   = "footer_text"
+value = "© 2026 Civic Estate. Commercial space made easier to evaluate."
+
+[[settings]]
+key   = "home_logo_text"
+value = "Civic Estate"
+
+[[settings]]
+key   = "nav_about"
+value = "About"
+
+[[settings]]
+key   = "nav_services"
+value = "Services"
+
+[[settings]]
+key   = "nav_showcase"
+value = "Areas"
+
+[[settings]]
+key   = "nav_process"
+value = "Types"
+
+[[settings]]
+key   = "nav_blog"
+value = "Market Notes"
+
+[[settings]]
+key   = "nav_contact"
+value = "Contact"
+
+[[settings]]
+key   = "home_hero_title"
+value = "Find Premium Commercial Properties"
+
+[[settings]]
+key   = "home_hero_subtitle"
+value = "Compare office, retail, and mixed-use spaces with clear market guidance and curated local options."
+
+[[settings]]
+key   = "home_hero_btn_text"
+value = "Search"
+
+[[settings]]
+key   = "home_hero_btn_link"
+value = "/showcase"
+
+[[settings]]
+key   = "home_hero_image"
+value = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1800&h=980&fit=crop&q=84"
+
+[[settings]]
+key   = "home_search_placeholder"
+value = "Downtown offices, retail corridors, flex space"
+
+[[settings]]
+key   = "home_search_button"
+value = "Search Now"
+
+[[settings]]
+key   = "home_filter_1"
+value = "Central"
+
+[[settings]]
+key   = "home_filter_2"
+value = "Now"
+
+[[settings]]
+key   = "home_filter_3"
+value = "Commercial"
+
+[[settings]]
+key   = "home_filter_4"
+value = "$45/sf"
+
+[[settings]]
+key   = "home_about_title"
+value = "For every commercial move"
+
+[[settings]]
+key   = "home_about_desc"
+value = "Civic Estate combines local brokerage knowledge, property data, and clean CMS-managed content so teams can shortlist spaces faster."
+
+[[settings]]
+key   = "home_stat_1_number"
+value = "1.8M"
+
+[[settings]]
+key   = "home_stat_1_label"
+value = "Sq ft actively tracked across core districts"
+
+[[settings]]
+key   = "home_stat_2_number"
+value = "420+"
+
+[[settings]]
+key   = "home_stat_2_label"
+value = "Verified commercial listings reviewed"
+
+[[settings]]
+key   = "home_stat_3_number"
+value = "96%"
+
+[[settings]]
+key   = "home_stat_3_label"
+value = "Clients shortlist spaces within two weeks"
+
+[[settings]]
+key   = "home_stat_4_number"
+value = "18"
+
+[[settings]]
+key   = "home_stat_4_label"
+value = "Metro markets supported by advisors"
+
+[[settings]]
+key   = "home_services_title"
+value = "Commercial services we provide"
+
+[[settings]]
+key   = "home_services_max"
+value = "4"
+
+[[settings]]
+key   = "home_products_title"
+value = "For every commercial move"
+
+[[settings]]
+key   = "home_showcase_title"
+value = "Featured spaces and market areas"
+
+[[settings]]
+key   = "home_showcase_subtitle"
+value = "Explore curated office towers, storefront corridors, flex properties, and tenant-ready spaces managed through GoPress content."
+
+[[settings]]
+key   = "home_showcase_btn"
+value = "View More Listings"
+
+[[settings]]
+key   = "home_showcases_max"
+value = "4"
+
+[[settings]]
+key   = "home_nearby_title"
+value = "Search Offices & Retail Spaces Near You"
+
+[[settings]]
+key   = "home_nearby_desc"
+value = "Use local market context and CMS-managed listings to compare available spaces, tour options, and next-step costs before you commit."
+
+[[settings]]
+key   = "home_nearby_metric"
+value = "0.02"
+
+[[settings]]
+key   = "home_nearby_label"
+value = "Median vacancy shift across tracked corridors this quarter"
+
+[[settings]]
+key   = "home_nearby_btn"
+value = "View Report"
+
+[[settings]]
+key   = "about_banner_title"
+value = "Commercial real estate search with a calmer operating model."
+
+[[settings]]
+key   = "about_banner_subtitle"
+value = "Civic Estate helps occupiers, landlords, and investors move from scattered listings to a confident shortlist."
+
+[[settings]]
+key   = "about_intro_image"
+value = "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200&h=900&fit=crop&q=82"
+
+[[settings]]
+key   = "about_intro_label"
+value = "How We Work"
+
+[[settings]]
+key   = "about_intro_title"
+value = "We turn property noise into a clear decision path."
+
+[[settings]]
+key   = "about_intro_p1"
+value = "Our work starts with business constraints: location logic, staff access, lease term, budget guardrails, build-out needs, and growth plans."
+
+[[settings]]
+key   = "about_intro_p2"
+value = "Then we structure the search, compare options, coordinate tours, and help teams understand the cost and operational impact of each space."
+
+[[settings]]
+key   = "about_intro_btn_text"
+value = "Request Advisory"
+
+[[settings]]
+key   = "about_stat_1_number"
+value = "1.8M"
+
+[[settings]]
+key   = "about_stat_1_label"
+value = "Sq ft tracked across office and retail inventory"
+
+[[settings]]
+key   = "about_stat_2_number"
+value = "420+"
+
+[[settings]]
+key   = "about_stat_2_label"
+value = "Listings reviewed for fit, pricing, and timing"
+
+[[settings]]
+key   = "about_stat_3_number"
+value = "96%"
+
+[[settings]]
+key   = "about_stat_3_label"
+value = "Searches narrowed to a shortlist within two weeks"
+
+[[settings]]
+key   = "about_stat_4_number"
+value = "18"
+
+[[settings]]
+key   = "about_stat_4_label"
+value = "Metro markets represented in our advisory network"
+
+[[settings]]
+key   = "contact_title"
+value = "Tell us what kind of commercial space you need."
+
+[[settings]]
+key   = "contact_subtitle"
+value = "Share your preferred location, size, timeline, budget, and operating requirements. We will respond with next steps."
+
+# ---------- Categories ----------
+[[categories]]
+name = "Office Market"
+slug = "cat-office-market"
+
+[[categories]]
+name = "Retail Leasing"
+slug = "cat-retail-leasing"
+
+[[categories]]
+name = "Industrial Flex"
+slug = "cat-industrial-flex"
+
+[[categories]]
+name = "Market Intelligence"
+slug = "cat-market-intelligence"
+
+# ---------- Tags ----------
+[[tags]]
+name = "Tenant Strategy"
+slug = "tag-tenant-strategy"
+
+[[tags]]
+name = "Landlord Advisory"
+slug = "tag-landlord-advisory"
+
+[[tags]]
+name = "Downtown"
+slug = "tag-downtown"
+
+[[tags]]
+name = "Retail Corridor"
+slug = "tag-retail-corridor"
+
+[[tags]]
+name = "Lease Terms"
+slug = "tag-lease-terms"
+
+# ============================================================
+# PROPERTY TYPES
+# ============================================================
+
+[[contents]]
+type        = "product"
+title       = "Office Listings"
+slug        = "office-listings"
+image_url   = "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1000&h=720&fit=crop&q=82"
+sort_order  = 1
+category    = "cat-office-market"
+tags        = ["tag-tenant-strategy", "tag-downtown"]
+excerpt     = "Compare tower, boutique, and creative office options by access, floor plate, amenities, and lease flexibility."
+description = "Office Listings help teams understand the difference between headline rent, usable layout, access, amenities, and the true cost of moving."
+content     = """<h3>What to evaluate</h3>
+<p>Office search is not just about available square footage. We compare floor efficiency, commute patterns, elevatoring, daylight, meeting-room capacity, and expansion options before a tour list is finalized.</p>
+<h3>Typical outputs</h3>
+<ul>
+<li>Shortlist by district, rent band, and timing</li>
+<li>Tour matrix with operating notes</li>
+<li>Budget guidance for rent, build-out, and concessions</li>
+</ul>"""
+
+[[contents]]
+type        = "product"
+title       = "Retail Spaces"
+slug        = "retail-spaces"
+image_url   = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1000&h=720&fit=crop&q=82"
+sort_order  = 2
+category    = "cat-retail-leasing"
+tags        = ["tag-retail-corridor", "tag-lease-terms"]
+excerpt     = "Street retail, service storefronts, and food-ready spaces reviewed through visibility, access, and customer flow."
+description = "Retail Spaces focus on frontage, signage, neighborhood rhythm, co-tenancy, delivery access, and cost exposure."
+content     = """<h3>Retail fit</h3>
+<p>We look beyond photos to understand frontage, ceiling height, venting, delivery path, foot traffic, and the landlord's appetite for improvements.</p>
+<h3>Decision factors</h3>
+<ul>
+<li>Visibility and pedestrian flow</li>
+<li>Use restrictions and permit friction</li>
+<li>Lease economics and improvement allowances</li>
+</ul>"""
+
+[[contents]]
+type        = "product"
+title       = "Industrial Flex"
+slug        = "industrial-flex"
+image_url   = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1000&h=720&fit=crop&q=82"
+sort_order  = 3
+category    = "cat-industrial-flex"
+tags        = ["tag-tenant-strategy", "tag-lease-terms"]
+excerpt     = "Warehouse, showroom, light production, and last-mile spaces reviewed by access, loading, clear height, and power."
+description = "Industrial Flex supports teams that need operational space without losing office, display, or customer-facing utility."
+content     = """<h3>Operational match</h3>
+<p>Flex searches require careful review of dock access, grade doors, truck turning, clear height, parking, electrical capacity, and office ratio.</p>
+<h3>Fit checks</h3>
+<ul>
+<li>Loading, staging, and delivery patterns</li>
+<li>Power, HVAC, and utility requirements</li>
+<li>Municipal use and zoning considerations</li>
+</ul>"""
+
+[[contents]]
+type        = "product"
+title       = "Investment Assets"
+slug        = "investment-assets"
+image_url   = "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1000&h=720&fit=crop&q=82"
+sort_order  = 4
+category    = "cat-market-intelligence"
+tags        = ["tag-landlord-advisory", "tag-downtown"]
+excerpt     = "Income-producing commercial assets screened by tenant quality, lease rollover, location strength, and repositioning upside."
+description = "Investment Assets turn scattered opportunities into a disciplined review process for owners and acquisition teams."
+content     = """<h3>Asset review</h3>
+<p>We organize rent rolls, rollover exposure, vacancy assumptions, capex needs, comparable sales, and neighborhood demand signals into a clear investment brief.</p>
+<h3>Useful for</h3>
+<ul>
+<li>Owner strategy and disposition preparation</li>
+<li>Acquisition screeners and market briefs</li>
+<li>Repositioning and leasing assumptions</li>
+</ul>"""
+
+# ============================================================
+# SERVICES
+# ============================================================
+
+[[contents]]
+type        = "service"
+title       = "Tenant Representation"
+slug        = "tenant-representation"
+image_url   = "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=760&fit=crop&q=84"
+sort_order  = 1
+category    = "cat-office-market"
+tags        = ["tag-tenant-strategy", "tag-lease-terms"]
+excerpt     = "Define requirements, compare options, tour efficiently, and negotiate terms with a clear view of total occupancy cost."
+description = "Tenant Representation helps growing teams move from ambiguous requirements to a confident shortlist and negotiated lease path."
+content     = """<p>We translate headcount, work style, customer access, equipment needs, and budget constraints into a practical market search.</p>
+<p>The workflow includes requirements planning, survey lists, tour coordination, proposal comparison, concession review, and deal support through lease execution.</p>"""
+
+[[contents]]
+type        = "service"
+title       = "Landlord Leasing"
+slug        = "landlord-leasing"
+image_url   = "https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=900&h=650&fit=crop&q=82"
+sort_order  = 2
+category    = "cat-retail-leasing"
+tags        = ["tag-landlord-advisory", "tag-retail-corridor"]
+excerpt     = "Position vacancies, package market-facing materials, qualify demand, and keep leasing activity visible."
+description = "Landlord Leasing makes a property easier to understand, tour, compare, and commit to for the right users."
+content     = """<p>We refine property positioning, organize key facts, identify likely user groups, and manage leasing conversations around usable advantages.</p>
+<p>Owners get a clearer activity loop: inquiry quality, tour feedback, competitive context, and recommended next steps.</p>"""
+
+[[contents]]
+type        = "service"
+title       = "Site Selection"
+slug        = "site-selection"
+image_url   = "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=900&h=650&fit=crop&q=82"
+sort_order  = 3
+category    = "cat-market-intelligence"
+tags        = ["tag-downtown", "tag-tenant-strategy"]
+excerpt     = "Compare neighborhoods and corridors by access, customer reach, labor pool, operating friction, and brand fit."
+description = "Site Selection connects business goals to real locations, not just available addresses."
+content     = """<p>We compare candidate areas through commute data, visibility, adjacency, cost, operational access, and local market signals.</p>
+<p>The result is a shorter list of locations that match how the business actually needs to operate.</p>"""
+
+[[contents]]
+type        = "service"
+title       = "Deal Advisory"
+slug        = "deal-advisory"
+image_url   = "https://images.unsplash.com/photo-1552664730-d307ca884978?w=900&h=650&fit=crop&q=82"
+sort_order  = 4
+category    = "cat-market-intelligence"
+tags        = ["tag-lease-terms", "tag-landlord-advisory"]
+excerpt     = "Model lease economics, compare concessions, coordinate diligence, and keep negotiation decisions organized."
+description = "Deal Advisory gives teams a structured view of the commitments behind each property option."
+content     = """<p>We help teams compare rent, escalations, free rent, tenant improvement allowances, relocation cost, operating expenses, and renewal flexibility.</p>
+<p>During negotiation, we keep commercial terms connected to the practical realities of build-out, move timing, and business risk.</p>"""
+
+# ============================================================
+# LISTINGS / AREAS
+# ============================================================
+
+[[contents]]
+type        = "showcase"
+title       = "Lakefront Office Tower"
+slug        = "lakefront-office-tower"
+image_url   = "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1000&h=760&fit=crop&q=82"
+sort_order  = 1
+category    = "cat-office-market"
+tags        = ["tag-downtown", "tag-tenant-strategy"]
+excerpt     = "A high-rise office option with efficient floor plates, transit access, and a refined tenant amenity package."
+description = "This office tower suits teams that need visibility, strong transit access, and flexible multi-floor growth options."
+content     = """<p>The building offers a polished arrival, broad views, efficient elevator access, and a floor plate that can support both client-facing and focused work zones.</p>
+<p>We would prioritize this option for firms that need central access, meeting capacity, and a lease structure with future expansion paths.</p>"""
+[contents.meta]
+client   = "Northline Capital"
+location = "Chicago Loop"
+
+[[contents]]
+type        = "showcase"
+title       = "Warehouse Conversion"
+slug        = "warehouse-conversion"
+image_url   = "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=1000&h=760&fit=crop&q=82"
+sort_order  = 2
+category    = "cat-industrial-flex"
+tags        = ["tag-tenant-strategy", "tag-lease-terms"]
+excerpt     = "A flexible industrial conversion with loading access, showroom potential, and creative office adjacency."
+description = "A strong fit for product teams, distributors, and hybrid showroom operators that need both movement and presentation."
+content     = """<p>The property combines clear-span utility with enough frontage and office area to support a customer-facing component.</p>
+<p>Key review points include loading schedule, parking count, HVAC scope, and how much improvement allowance can be aligned to tenant needs.</p>"""
+[contents.meta]
+client   = "Harbor Works"
+location = "West Fulton"
+
+[[contents]]
+type        = "showcase"
+title       = "Neighborhood Retail Corner"
+slug        = "neighborhood-retail-corner"
+image_url   = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1000&h=760&fit=crop&q=82"
+sort_order  = 3
+category    = "cat-retail-leasing"
+tags        = ["tag-retail-corridor", "tag-lease-terms"]
+excerpt     = "A visible retail corner with storefront rhythm, service access, and a corridor that supports repeat visits."
+description = "This corner opportunity is designed for food, wellness, specialty retail, or service operators that depend on neighborhood loyalty."
+content     = """<p>The strongest feature is frontage: two visible elevations, pedestrian movement, and a storefront scale that can carry signage without feeling overbuilt.</p>
+<p>We would review venting, delivery access, condition of existing utilities, and local use permissions before final negotiations.</p>"""
+[contents.meta]
+client   = "Cedar Row"
+location = "Logan Square"
+
+[[contents]]
+type        = "showcase"
+title       = "Transit-Oriented Office"
+slug        = "transit-oriented-office"
+image_url   = "https://images.unsplash.com/photo-1494526585095-c41746248156?w=1000&h=760&fit=crop&q=82"
+sort_order  = 4
+category    = "cat-office-market"
+tags        = ["tag-downtown", "tag-tenant-strategy"]
+excerpt     = "A mid-rise office option built around easy access, modest floor plates, and a lower-friction move."
+description = "A practical option for teams that want a central address without committing to a trophy-tower cost structure."
+content     = """<p>The space works best for teams that value access, speed, and a manageable improvement scope over heavy customization.</p>
+<p>Tour review should focus on elevator timing, existing layout reuse, building services, and how the rent band compares with newer nearby assets.</p>"""
+[contents.meta]
+client   = "Atlas Labs"
+location = "River North"
+
+[[contents]]
+type        = "showcase"
+title       = "Medical Office Cluster"
+slug        = "medical-office-cluster"
+image_url   = "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1000&h=760&fit=crop&q=82"
+sort_order  = 5
+category    = "cat-office-market"
+tags        = ["tag-tenant-strategy", "tag-lease-terms"]
+excerpt     = "A healthcare-ready office cluster with patient access, parking logic, and professional service adjacency."
+description = "Medical users need a different search model: access, vertical transport, plumbing, patient experience, and compliance all matter."
+content     = """<p>This cluster is strongest for specialist practices and service providers that need professional adjacency without hospital-campus pricing.</p>
+<p>We would review parking ratios, lobby wayfinding, plumbing locations, landlord work letter, and after-hours access.</p>"""
+[contents.meta]
+client   = "Oakwell Partners"
+location = "Near North"
+
+[[contents]]
+type        = "showcase"
+title       = "Mixed-Use Investment Block"
+slug        = "mixed-use-investment-block"
+image_url   = "https://images.unsplash.com/photo-1524230572899-a752b3835840?w=1000&h=760&fit=crop&q=82"
+sort_order  = 6
+category    = "cat-market-intelligence"
+tags        = ["tag-landlord-advisory", "tag-retail-corridor"]
+excerpt     = "A multi-tenant block with ground-floor retail, upper-floor office potential, and repositioning upside."
+description = "This asset is best evaluated through rent roll quality, vacancy exposure, tenant mix, and upgrade sequencing."
+content     = """<p>The block has a strong street presence and enough tenancy variation to support phased improvements.</p>
+<p>Before underwriting, we would map lease rollover, deferred maintenance, comparable rents, and the likely tenant profile after repositioning.</p>"""
+[contents.meta]
+client   = "Meridian Holdings"
+location = "Milwaukee Avenue"
+
+# ============================================================
+# MARKET NOTES
+# ============================================================
+
+[[contents]]
+type        = "post"
+title       = "How to Compare Office Rent Beyond the Headline Number"
+slug        = "compare-office-rent-beyond-headline-number"
+image_url   = "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1000&h=720&fit=crop&q=82"
+sort_order  = 1
+category    = "cat-market-intelligence"
+tags        = ["tag-tenant-strategy", "tag-lease-terms"]
+excerpt     = "Headline rent is only one part of occupancy cost. Layout efficiency, concessions, operating expenses, and timing change the real number."
+content     = """<p>Two office spaces with the same quoted rent can perform very differently once you account for usable layout, free rent, improvement allowance, operating expenses, parking, and move timing.</p>
+<p>A good comparison model converts these pieces into a common view so teams can evaluate cost, risk, and operational fit together.</p>"""
+
+[[contents]]
+type        = "post"
+title       = "Why Retail Corners Need a Different Tour Checklist"
+slug        = "retail-corners-tour-checklist"
+image_url   = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1000&h=720&fit=crop&q=82"
+sort_order  = 2
+category    = "cat-retail-leasing"
+tags        = ["tag-retail-corridor", "tag-lease-terms"]
+excerpt     = "Frontage, utilities, deliveries, pedestrian rhythm, and use restrictions can matter more than the first impression of the storefront."
+content     = """<p>Retail tours should start outside. Watch pedestrian flow, sightlines, neighboring uses, delivery movements, and how the corner behaves at different times of day.</p>
+<p>Inside, the practical checklist includes ceiling height, existing utilities, restroom conditions, venting path, storage, signage rules, and the landlord's willingness to participate in improvements.</p>"""
+
+[[contents]]
+type        = "post"
+title       = "Shortlisting Flex Space for Operational Teams"
+slug        = "shortlisting-flex-space-operational-teams"
+image_url   = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1000&h=720&fit=crop&q=82"
+sort_order  = 3
+category    = "cat-industrial-flex"
+tags        = ["tag-tenant-strategy", "tag-downtown"]
+excerpt     = "Flex users need to balance loading, storage, office comfort, customer access, and local approvals before they compare rent."
+content     = """<p>Flex space is usually selected through operations first. Loading, delivery timing, power, parking, and staging often determine whether a building works.</p>
+<p>After operational fit is established, teams can compare office ratio, customer-facing presentation, commute logic, and total cost with more confidence.</p>"""

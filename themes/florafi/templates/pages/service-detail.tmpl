@@ -1,0 +1,36 @@
+{{define "content"}}
+<section class="ff-page-hero ff-page-hero-services" style="--hero-bg:url('{{if .Service.ImageURL}}{{.Service.ImageURL}}{{else}}https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=1600&h=820&fit=crop&q=82{{end}}');">
+    <span class="ff-hero-ghost">WORKFLOW</span>
+    <div class="ff-page-hero-inner">
+        <span class="ff-kicker">{{T $.Ctx "page_label_service_details"}}</span>
+        <h1>{{.Service.Title}}</h1>
+        <span class="ff-hero-rule"></span>
+        <p>{{if .Service.Excerpt}}{{.Service.Excerpt}}{{else}}{{truncate (stripTags .Service.Description) 140}}{{end}}</p>
+        <div class="ff-breadcrumb"><a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a><span>/</span><a href="{{langPrefixURL $.Ctx "/services"}}">{{T $.Ctx "page_title_services"}}</a><span>/</span><span>{{.Service.Title}}</span></div>
+    </div>
+</section>
+
+<section class="ff-section">
+    <div class="ff-detail-shell">
+        <div class="ff-detail-media">{{if .Service.ImageURL}}{{responsiveImagePriority .Service.ImageURL .Service.Title "" "(max-width: 768px) 100vw, 50vw"}}{{else}}<span class="ff-card-icon">♧</span>{{end}}</div>
+        <article class="ff-detail-content">
+            <span class="ff-kicker">Business workflow</span>
+            <h2>{{.Service.Title}}</h2>
+            <div class="ff-richtext">{{safeHTML .Service.Description}}</div>
+            {{if .Tags}}<div class="ff-chip-cloud">{{range .Tags}}<a href="{{langPrefixURL $.Ctx (printf "/tag/%s" .Slug)}}">{{.Name}}</a>{{end}}</div>{{end}}
+            <div class="ff-action-row"><a class="ff-pill-btn" href="{{langPrefixURL $.Ctx "/contact"}}">{{T $.Ctx "btn_contact_us"}} <span>→</span></a><a class="ff-outline-btn" href="{{langPrefixURL $.Ctx "/services"}}">{{T $.Ctx "btn_back_services"}}</a></div>
+        </article>
+    </div>
+</section>
+
+{{if .Related}}
+<section class="ff-section ff-section-tint">
+    <div class="ff-section-heading"><span class="ff-kicker">{{T $.Ctx "section_may_like"}}</span><h2>{{T $.Ctx "section_other_services"}}</h2></div>
+    <div class="ff-product-grid">
+        {{range .Related}}
+        <a class="ff-product-card" href="{{langPrefixURL $.Ctx (printf "/services/%s" .Slug)}}"><div class="ff-product-media">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="ff-card-icon">♧</span>{{end}}</div><div class="ff-product-body"><h3>{{.Title}}</h3><p>{{truncate .Excerpt 120}}</p><span class="ff-card-arrow">{{T $.Ctx "btn_learn_more"}}</span></div></a>
+        {{end}}
+    </div>
+</section>
+{{end}}
+{{end}}

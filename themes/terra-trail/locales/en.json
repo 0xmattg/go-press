@@ -1,0 +1,16 @@
+{
+  "nav_home": "Home",
+  "nav_about": "About Us",
+  "nav_services": "Transport",
+  "nav_showcase": "Destinations",
+  "nav_process": "Tour",
+  "nav_blog": "Journal",
+  "nav_contact": "Contact Us",
+  "label_client": "Guide",
+  "label_location": "Region",
+  "sidebar_categories": "Categories",
+  "sidebar_tags": "Tags",
+  "archive_label_category": "Category",
+  "archive_label_tag": "Tag",
+  "archive_items_found": "items found"
+}

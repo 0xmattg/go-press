@@ -1,0 +1,23 @@
+{{define "base"}}<!DOCTYPE html>
+<html lang="{{currentLang .Ctx}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - {{settingOr .Settings "site_name" "Atelier Slate"}}</title>
+    {{with seoHeadFor .}}{{.}}{{else}}<meta name="description" content="{{settingOr $.Settings "site_description" "A strategic digital studio for launch campaigns, product storytelling, and immersive brand systems."}}">{{end}}
+    {{if eq .ActivePage "home"}}<link rel="preload" as="image" href="{{settingOr .Settings "home_hero_1_image" "/static/images/atelier-hero.svg"}}">{{end}}
+    <link rel="stylesheet" href="/static/css/style.css?v=9">
+    {{renderHook "theme.head.end" .}}
+</head>
+<body data-page="{{.ActivePage}}">
+    {{renderHook "theme.body.open" .}}
+    {{template "header" .}}
+    <main>
+        {{template "content" .}}
+    </main>
+    {{template "footer" .}}
+    <button id="scroll-top" class="as-scroll-top" aria-label="Scroll to top">↑</button>
+    <script src="/static/js/main.js?v=1"></script>
+    {{renderHook "theme.footer.end" .}}
+</body>
+</html>{{end}}

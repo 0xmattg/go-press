@@ -1,0 +1,59 @@
+# Build outputs
+/dist/
+/build/
+/bin/
+/obj/
+*.exe
+*.dll
+*.so
+*.dylib
+*.dmg
+
+# Go
+*.test
+*.out
+coverage*
+*.coverprofile
+*.cov
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Node/Frontend
+node_modules/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.vscode-test/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*.orig
+
+# Temp
+.tmp/
+*.tmp
+*.temp
+
+# Archives
+*.zip
+*.tar
+*.gz
+*.tgz
+*.bz2
+
+# Coverage/Reports
+coverage/
+reports/
+
+# OS junk
+Thumbs.db

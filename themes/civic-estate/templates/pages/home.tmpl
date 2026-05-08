@@ -1,0 +1,72 @@
+{{define "content"}}
+{{$s := .Settings}}
+{{$hero := settingOr $s "home_hero_image" ""}}
+{{if not $hero}}{{range .Services}}{{if and (not $hero) .ImageURL}}{{$hero = .ImageURL}}{{end}}{{end}}{{end}}
+{{if not $hero}}{{$hero = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1800&h=980&fit=crop&q=84"}}{{end}}
+
+<section class="ce-hero">
+    <div class="ce-hero-image" style="--hero-image:url('{{$hero}}');">
+        <div class="ce-hero-copy">
+            <h1>{{settingOr $s "home_hero_title" "Find Premium Commercial Properties"}}</h1>
+            <p>{{settingOr $s "home_hero_subtitle" "Compare office, retail, and mixed-use spaces with clear market guidance and curated local options."}}</p>
+            <a class="ce-primary-btn" href="{{langPrefixURL .Ctx (settingOr $s "home_hero_btn_link" "/showcase")}}">{{settingOr $s "home_hero_btn_text" "Search"}}</a>
+        </div>
+        <div class="ce-search-panel" role="search" aria-label="Property search">
+            <div class="ce-search-row">
+                <span aria-hidden="true">⌕</span>
+                <input type="search" value="{{settingOr $s "home_search_placeholder" "Downtown offices, retail corridors, flex space"}}" aria-label="Search properties">
+                <a href="{{langPrefixURL .Ctx "/showcase"}}">{{settingOr $s "home_search_button" "Search Now"}}</a>
+            </div>
+            <div class="ce-filter-row">
+                <span><small>Location</small>{{settingOr $s "home_filter_1" "Central"}}</span>
+                <span><small>Availability</small>{{settingOr $s "home_filter_2" "Now"}}</span>
+                <span><small>Asset Type</small>{{settingOr $s "home_filter_3" "Commercial"}}</span>
+                <span><small>Budget</small>{{settingOr $s "home_filter_4" "$45/sf"}}</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+{{if .Products}}
+<section class="ce-property-preview">
+    <h2>{{settingOr $s "home_products_title" "For every commercial move"}}</h2>
+    <div class="ce-property-cards">
+        {{range $i, $p := .Products}}
+        {{if lt $i 3}}
+        <a class="ce-property-card" href="{{langPrefixURL $.Ctx (printf "/products/%s" $p.Slug)}}">
+            <div class="ce-property-media">
+                {{if $p.ImageURL}}{{responsiveImage $p.ImageURL $p.Title "" "(max-width: 768px) 100vw, 31vw" "lazy"}}{{end}}
+            </div>
+            <div class="ce-property-copy">
+                <h3>{{$p.Title}}</h3>
+                <p>{{truncate $p.Excerpt 120}}</p>
+                <span>Contact</span>
+            </div>
+        </a>
+        {{end}}
+        {{end}}
+    </div>
+</section>
+{{end}}
+
+{{if .Showcases}}
+<section class="ce-nearby-panel">
+    {{range $i, $item := .Showcases}}
+    {{if eq $i 0}}
+    <a class="ce-nearby-media" href="{{langPrefixURL $.Ctx (printf "/showcase/%s" $item.Slug)}}">
+        {{if $item.ImageURL}}{{responsiveImage $item.ImageURL $item.Title "" "(max-width: 768px) 100vw, 45vw" "lazy"}}{{end}}
+    </a>
+    <div class="ce-nearby-copy">
+        <h2>{{settingOr $s "home_nearby_title" "Search Offices & Retail Spaces Near You"}}</h2>
+        <p>{{settingOr $s "home_nearby_desc" "Use local market context and CMS-managed listings to compare available spaces, tour options, and next-step costs before you commit."}}</p>
+        <div class="ce-nearby-meta">
+            <strong>{{settingOr $s "home_nearby_metric" "0.02"}}</strong>
+            <span>{{settingOr $s "home_nearby_label" "Median vacancy shift across tracked corridors this quarter"}}</span>
+        </div>
+        <a class="ce-primary-btn ce-inline" href="{{langPrefixURL $.Ctx (printf "/showcase/%s" $item.Slug)}}">{{settingOr $s "home_nearby_btn" "View Report"}}</a>
+    </div>
+    {{end}}
+    {{end}}
+</section>
+{{end}}
+{{end}}

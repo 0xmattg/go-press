@@ -1,0 +1,45 @@
+{{define "content"}}
+<section class="ff-page-hero ff-page-hero-blog" style="--hero-bg:url('{{if .Post.ImageURL}}{{.Post.ImageURL}}{{else}}https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1600&h=820&fit=crop&q=82{{end}}');">
+    <span class="ff-hero-ghost">ARTICLE</span>
+    <div class="ff-page-hero-inner">
+        <span class="ff-kicker">{{if .Post.Category.Name}}{{.Post.Category.Name}}{{else}}{{T $.Ctx "nav_news"}}{{end}}</span>
+        <h1>{{.Post.Title}}</h1>
+        <span class="ff-hero-rule"></span>
+        <p>{{truncate .Post.Excerpt 160}}</p>
+        <div class="ff-breadcrumb"><a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a><span>/</span><a href="{{langPrefixURL $.Ctx "/blog"}}">{{T $.Ctx "nav_news"}}</a><span>/</span><span>{{.Post.Title}}</span></div>
+    </div>
+</section>
+
+<section class="ff-section">
+    <div class="ff-layout-with-sidebar">
+        <article class="ff-article-card">
+            {{if .Post.ImageURL}}<div class="ff-article-media">{{responsiveImagePriority .Post.ImageURL .Post.Title "" "(max-width: 768px) 100vw, 65vw"}}</div>{{end}}
+            <div class="ff-blog-meta">
+                {{if .Post.Category.Name}}<span>{{.Post.Category.Name}}</span>{{end}}
+                <time>{{formatDate .Post.PublishedAt}}</time>
+            </div>
+            <div class="ff-richtext">{{safeHTML .Post.Content}}</div>
+            {{if .Post.Tags}}<div class="ff-chip-cloud">{{range .Post.Tags}}<a href="{{langPrefixURL $.Ctx (printf "/tag/%s" .Slug)}}">{{.Name}}</a>{{end}}</div>{{end}}
+            <a class="ff-outline-btn" href="{{langPrefixURL $.Ctx "/blog"}}">← {{T $.Ctx "btn_back_blog"}}</a>
+        </article>
+        <aside class="ff-sidebar">
+            <div class="ff-side-card">
+                <h3>{{T $.Ctx "section_recent_articles"}}</h3>
+                {{range .RecentPosts}}<a class="ff-side-link" href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}"><span>{{.Title}}</span><small>{{formatDate .PublishedAt}}</small></a>{{end}}
+            </div>
+            {{if .Categories}}<div class="ff-side-card"><h3>{{T $.Ctx "sidebar_categories"}}</h3><div class="ff-chip-cloud">{{range .Categories}}<a href="{{langPrefixURL $.Ctx "/blog"}}?category={{.Slug}}">{{.Name}}</a>{{end}}</div></div>{{end}}
+        </aside>
+    </div>
+</section>
+
+{{if .Related}}
+<section class="ff-section ff-section-tint">
+    <div class="ff-section-heading"><span class="ff-kicker">{{T $.Ctx "section_related_articles"}}</span><h2>You may also like</h2></div>
+    <div class="ff-blog-grid">
+        {{range .Related}}
+        <article class="ff-blog-card"><a class="ff-blog-media" href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="ff-card-icon">◇</span>{{end}}</a><div class="ff-blog-body"><h3><a href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{.Title}}</a></h3><p>{{truncate .Excerpt 150}}</p><a class="ff-card-arrow" href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{T $.Ctx "btn_read_more"}}</a></div></article>
+        {{end}}
+    </div>
+</section>
+{{end}}
+{{end}}

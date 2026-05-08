@@ -1,0 +1,58 @@
+[theme]
+name = "FloraFi"
+version = "1.0.0"
+description = "A polished stablecoin and fintech product theme with growth-focused visuals."
+author = "GoPress Team"
+
+# Content types supported by the theme.
+[[content_types]]
+name = "product"
+label = "金融产品"
+label_plural = "金融产品"
+supports = ["title", "content", "excerpt", "thumbnail", "sort_order"]
+taxonomies = ["category", "tag"]
+has_archive = true
+rewrite_slug = "products"
+menu_icon = "blocks"
+menu_order = 1
+
+[[content_types]]
+name = "service"
+label = "解决方案"
+label_plural = "解决方案"
+supports = ["title", "content", "excerpt", "thumbnail", "sort_order"]
+taxonomies = ["category", "tag"]
+has_archive = true
+rewrite_slug = "services"
+menu_icon = "edit"
+menu_order = 2
+
+[[content_types]]
+name = "showcase"
+label = "用例"
+label_plural = "用例展示"
+supports = ["title", "content", "excerpt", "thumbnail", "sort_order"]
+taxonomies = ["category", "tag"]
+has_archive = true
+rewrite_slug = "showcase"
+menu_icon = "collection"
+menu_order = 3
+
+[[content_types.meta_fields]]
+key = "client"
+label = "客户"
+type = "string"
+
+[[content_types.meta_fields]]
+key = "location"
+label = "市场"
+type = "string"
+
+# Menu locations supported by the theme.
+[[menu_locations]]
+name = "header"
+label = "顶部导航"
+
+[[menu_locations]]
+name = "footer"
+label = "底部导航"

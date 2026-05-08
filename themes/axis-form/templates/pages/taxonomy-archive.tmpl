@@ -1,0 +1,18 @@
+{{define "content"}}
+<section class="af-page-hero">
+    <span>{{.TaxonomyType}}</span>
+    <h1>{{.TermName}}</h1>
+    <p>{{.Total}} studio records connected to this term.</p>
+</section>
+
+<section class="af-card-grid">
+    {{range .Items}}
+    <a class="af-archive-card" href="{{.DetailURL}}">
+        <div class="af-card-media">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{end}}</div>
+        <span>{{.TypeLabel}}</span>
+        <h2>{{.Title}}</h2>
+        <p>{{truncate .Excerpt 120}}</p>
+    </a>
+    {{end}}
+</section>
+{{end}}

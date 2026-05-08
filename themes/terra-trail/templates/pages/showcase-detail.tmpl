@@ -1,0 +1,22 @@
+{{define "content"}}
+<section class="tt-detail-hero">
+    <span>Destination Guide</span>
+    <h1>{{.Showcase.Title}}</h1>
+    <p>{{if .Showcase.Location}}{{.Showcase.Location}}{{else}}Selected TerraTrail destination guide.{{end}}</p>
+</section>
+
+<section class="tt-detail-layout">
+    <article class="tt-detail-card">
+        {{if .Showcase.ImageURL}}<div class="tt-detail-media">{{responsiveImagePriority .Showcase.ImageURL .Showcase.Title "" "(max-width: 768px) 100vw, 62vw"}}</div>{{end}}
+        <div class="tt-meta-row">
+            {{if .Showcase.Client}}<span><strong>Guide</strong>{{.Showcase.Client}}</span>{{end}}
+            {{if .Showcase.Location}}<span><strong>Region</strong>{{.Showcase.Location}}</span>{{end}}
+        </div>
+        <div class="tt-richtext">{{safeHTML .Showcase.Description}}</div>
+    </article>
+    <aside class="tt-detail-aside">
+        <h3>Related destinations</h3>
+        {{range .Related}}<a href="{{langPrefixURL $.Ctx (printf "/showcase/%s" .Slug)}}">{{.Title}} <span>→</span></a>{{end}}
+    </aside>
+</section>
+{{end}}

@@ -1,0 +1,90 @@
+{{define "content"}}
+<!-- Hero / Breaking News -->
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-grid">
+            <div class="hero-main">
+                <span class="badge badge-red">{{T $.Ctx "section_breaking"}}</span>
+                {{if .FeaturedArticles}}
+                {{with index .FeaturedArticles 0}}
+                <h1 class="hero-title">{{.Title}}</h1>
+                <p class="hero-excerpt">{{truncate .Excerpt 120}}</p>
+                {{if .PublishedAt}}<time class="hero-time">{{formatDate .PublishedAt}}</time>{{end}}
+                {{end}}
+                {{else}}
+                <h1 class="hero-title">{{T $.Ctx "welcome_heading"}}</h1>
+                <p class="hero-excerpt">{{T $.Ctx "welcome_sub_heading"}}</p>
+                {{end}}
+            </div>
+            <div class="hero-sidebar">
+                <h3 class="sidebar-title">{{T $.Ctx "section_latest_news"}}</h3>
+                <ul class="ticker-list">
+                {{range .MarketUpdates}}
+                    <li class="ticker-item">
+                        <span class="ticker-symbol">{{.Ticker}}</span>
+                        <span class="ticker-title">{{truncate .Title 30}}</span>
+                        <span class="ticker-change {{if .PriceChange}}{{if eq (index .PriceChange 0) 43}}up{{else}}down{{end}}{{end}}">{{.PriceChange}}</span>
+                    </li>
+                {{else}}
+                    <li class="ticker-item"><span class="ticker-title">{{T $.Ctx "empty_no_market_data"}}</span></li>
+                {{end}}
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Latest Articles -->
+<section class="section">
+    <div class="container">
+        <div class="section-header">
+            <h2>{{T $.Ctx "section_latest_articles"}}</h2>
+            <a href="/articles" class="view-all">{{T $.Ctx "btn_view_all"}}</a>
+        </div>
+        <div class="article-grid">
+        {{range .FeaturedArticles}}
+            <article class="article-card">
+                {{if .ImageURL}}
+                {{responsiveImage .ImageURL .Title "article-card-image" "(max-width: 768px) 100vw, 33vw" "lazy"}}
+                {{end}}
+                <div class="article-card-body">
+                    {{if .Category.Name}}<span class="badge">{{.Category.Name}}</span>{{end}}
+                    <h3 class="article-card-title">{{.Title}}</h3>
+                    <p class="article-card-excerpt">{{truncate .Excerpt 80}}</p>
+                    {{if .PublishedAt}}<time>{{formatDate .PublishedAt}}</time>{{end}}
+                </div>
+            </article>
+        {{else}}
+            <p class="empty-state">{{T $.Ctx "empty_no_articles"}}</p>
+        {{end}}
+        </div>
+    </div>
+</section>
+
+<!-- Latest Analysis -->
+<section class="section section-alt">
+    <div class="container">
+        <div class="section-header">
+            <h2>{{T $.Ctx "section_deep_analysis"}}</h2>
+            <a href="/analysis" class="view-all">{{T $.Ctx "btn_view_all"}}</a>
+        </div>
+        <div class="analysis-grid">
+        {{range .LatestAnalysis}}
+            <article class="analysis-card">
+                <div class="analysis-card-body">
+                    <div class="analysis-meta">
+                        {{if .Rating}}<span class="badge badge-rating">{{.Rating}}</span>{{end}}
+                        {{if .Analyst}}<span class="analyst">{{.Analyst}}</span>{{end}}
+                    </div>
+                    <h3>{{.Title}}</h3>
+                    <p>{{truncate .Excerpt 100}}</p>
+                    {{if .PublishedAt}}<time>{{formatDate .PublishedAt}}</time>{{end}}
+                </div>
+            </article>
+        {{else}}
+            <p class="empty-state">{{T $.Ctx "empty_no_analysis"}}</p>
+        {{end}}
+        </div>
+    </div>
+</section>
+{{end}}

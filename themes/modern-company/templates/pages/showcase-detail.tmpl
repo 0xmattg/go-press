@@ -1,0 +1,87 @@
+{{define "content"}}
+<!-- Page Banner -->
+<section class="page-banner page-banner-showcase">
+    <span class="banner-watermark">{{T $.Ctx "page_title_projects"}}</span>
+    <div class="container">
+        <span class="section-label">{{T $.Ctx "page_label_project_details"}}</span>
+        <h1>{{.Showcase.Title}}</h1>
+        <div class="breadcrumb">
+            <a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a> <span>/</span> <a href="{{langPrefixURL $.Ctx "/showcase"}}">{{T $.Ctx "page_title_projects"}}</a> <span>/</span> <span>{{.Showcase.Title}}</span>
+        </div>
+    </div>
+    <div class="page-banner-accent"></div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="detail-layout">
+            <div class="detail-image">
+                {{if .Showcase.ImageURL}}
+                {{responsiveImagePriority .Showcase.ImageURL .Showcase.Title "" "(max-width: 768px) 100vw, 70vw"}}
+                {{else}}
+                <div class="product-placeholder placeholder-lg">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                </div>
+                {{end}}
+            </div>
+            <div class="detail-content">
+                <h2>{{.Showcase.Title}}</h2>
+                {{if or .Showcase.Client .Showcase.Location}}
+                <div class="detail-meta-bar">
+                    {{if .Showcase.Client}}<div class="meta-item"><strong>{{T $.Ctx "label_client"}}:</strong> {{.Showcase.Client}}</div>{{end}}
+                    {{if .Showcase.Location}}<div class="meta-item"><strong>{{T $.Ctx "label_location"}}:</strong> {{.Showcase.Location}}</div>{{end}}
+                </div>
+                {{end}}
+                <div class="detail-body">
+                    {{safeHTML .Showcase.Description}}
+                </div>
+                {{if .Tags}}
+                <div class="post-tags">
+                    <strong>{{T $.Ctx "sidebar_tags"}}:</strong>
+                    {{range .Tags}}<a href="{{langPrefixURL $.Ctx (printf "/tag/%s" .Slug)}}" class="tag-link">{{.Name}}</a>{{end}}
+                </div>
+                {{end}}
+                <div class="detail-actions">
+                    <a href="{{langPrefixURL $.Ctx "/contact"}}" class="btn btn-primary">{{T $.Ctx "btn_start_project"}}</a>
+                    <a href="{{langPrefixURL $.Ctx "/showcase"}}" class="btn btn-outline">{{T $.Ctx "btn_back_projects"}}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{{if .Related}}
+<section class="section section-gray">
+    <div class="container">
+        <div class="text-center" style="margin-bottom:40px;">
+            <span class="section-label">{{T $.Ctx "section_more_projects"}}</span>
+            <h2>{{T $.Ctx "section_related_projects"}}</h2>
+        </div>
+        <div class="showcase-grid">
+            {{range .Related}}
+            <a href="{{langPrefixURL $.Ctx (printf "/showcase/%s" .Slug)}}" class="showcase-card" style="text-decoration:none;color:inherit;">
+                <div class="showcase-image">
+                    {{if .ImageURL}}
+                    {{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}
+                    {{else}}
+                    <div class="product-placeholder">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                    </div>
+                    {{end}}
+                    <div class="showcase-overlay">
+                        <span>{{T $.Ctx "btn_view_details"}}</span>
+                    </div>
+                </div>
+                <div class="showcase-info">
+                    <h3>{{.Title}}</h3>
+                    <div class="showcase-meta">
+                        {{if .Client}}<span><strong>{{T $.Ctx "label_client"}}:</strong> {{.Client}}</span>{{end}}
+                    </div>
+                </div>
+            </a>
+            {{end}}
+        </div>
+    </div>
+</section>
+{{end}}
+{{end}}

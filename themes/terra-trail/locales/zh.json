@@ -1,0 +1,16 @@
+{
+  "nav_home": "首页",
+  "nav_about": "关于我们",
+  "nav_services": "交通",
+  "nav_showcase": "目的地",
+  "nav_process": "旅行套餐",
+  "nav_blog": "旅行日志",
+  "nav_contact": "联系我们",
+  "label_client": "向导",
+  "label_location": "地区",
+  "sidebar_categories": "分类",
+  "sidebar_tags": "标签",
+  "archive_label_category": "分类",
+  "archive_label_tag": "标签",
+  "archive_items_found": "个结果"
+}

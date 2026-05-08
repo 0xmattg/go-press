@@ -1,0 +1,98 @@
+package admin
+
+import (
+	"time"
+
+	"go-press/core/content"
+	"go-press/pkg/dbprefix"
+)
+
+// DynamicContentView is a generic view model for any registered content type.
+// Used by the data-driven admin to render list/form pages dynamically.
+type DynamicContentView struct {
+	ID          uint
+	Title       string
+	AuthorID    uint
+	AuthorName  string
+	Slug        string
+	Content     string
+	Excerpt     string
+	ImageURL    string
+	Status      string
+	SortOrder   int
+	PublishedAt *time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Meta        map[string]string             // dynamic meta fields from ContentTypeDef.MetaFields
+	Taxonomies  map[string][]TaxonomyItemView // taxonomy type name -> items
+}
+
+// TaxonomyItemView is a generic taxonomy term view.
+type TaxonomyItemView struct {
+	ID   uint
+	Name string
+	Slug string
+}
+
+// ContentTypeStats holds a count for a single content type on the dashboard.
+type ContentTypeStats struct {
+	TypeDef *content.ContentTypeDef
+	Count   int64
+}
+
+// DashboardStats provides dynamic counts for the dashboard overview.
+type DashboardStats struct {
+	ContentStats []ContentTypeStats
+	MediaCount   int64
+	UserCount    int64
+}
+
+// AuditLog represents an admin audit entry.
+type AuditLog struct {
+	ID         uint      `gorm:"primaryKey" json:"id"`
+	UserID     uint      `json:"user_id"`
+	Username   string    `gorm:"size:50" json:"username"`
+	Action     string    `gorm:"size:50;not null" json:"action"`
+	Resource   string    `gorm:"size:50" json:"resource"`
+	ResourceID uint      `json:"resource_id"`
+	Details    string    `gorm:"type:text" json:"details"`
+	IPAddress  string    `gorm:"size:45" json:"ip_address"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
+func (AuditLog) TableName() string { return dbprefix.Table("audit_logs") }
+
+// SettingItemView maps option.Option to template fields.
+type SettingItemView struct {
+	Key         string
+	Label       string
+	Description string
+	ReadOnly    bool
+	Value       string
+	Group       string
+	InputType   string
+	Options     []SettingOptionView
+}
+
+// SettingOptionView describes a selectable setting option.
+type SettingOptionView struct {
+	Value string
+	Label string
+}
+
+// AdminMenuItem represents a dynamic sidebar menu item.
+type AdminMenuItem struct {
+	Label   string
+	URL     string
+	Active  string // key used for active class matching
+	Icon    string
+	Section string // non-empty means this is a section header
+}
+
+// TaxonomyFormData holds taxonomy data for rendering form selectors.
+type TaxonomyFormData struct {
+	TaxDef      *content.TaxonomyDef
+	AllItems    []TaxonomyItemView
+	SelectedID  uint          // for hierarchical (category-like)
+	SelectedMap map[uint]bool // for non-hierarchical (tag-like)
+}

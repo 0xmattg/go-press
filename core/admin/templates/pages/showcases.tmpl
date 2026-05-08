@@ -1,0 +1,43 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>案例列表</h2>
+    {{if can .CurrentRole "showcase" "create"}}
+    <a href="/admin/showcases/new" class="btn btn-primary">新建案例</a>
+    {{end}}
+</div>
+<div class="card">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>标题</th>
+                <th>客户</th>
+                <th>位置</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Items}}
+            <tr>
+                <td>{{.ID}}</td>
+                <td>{{.Title}}</td>
+                <td>{{.Client}}</td>
+                <td>{{.Location}}</td>
+                <td class="actions">
+                    {{if can $.CurrentRole "showcase" "update"}}
+                    <a href="/admin/showcases/{{.ID}}/edit" class="btn btn-sm">编辑</a>
+                    {{end}}
+                    {{if can $.CurrentRole "showcase" "delete"}}
+                    <form method="POST" action="/admin/showcases/{{.ID}}/delete" class="inline-form">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确认删除此案例?')">删除</button>
+                    </form>
+                    {{end}}
+                </td>
+            </tr>
+            {{else}}
+            <tr><td colspan="5" class="empty-msg">暂无案例</td></tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}

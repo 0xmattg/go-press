@@ -1,0 +1,40 @@
+[theme]
+name = "GoPress Landing"
+version = "1.0.0"
+description = "A futuristic, single-page tech landing page theme for GoPress."
+author = "GoPress Team"
+
+[[content_types]]
+name = "feature"
+label = "Feature"
+label_plural = "Features"
+supports = ["title", "content", "excerpt", "sort_order"]
+has_archive = false
+rewrite_slug = "features"
+menu_icon = "blocks"
+menu_order = 1
+
+[[content_types.meta_fields]]
+key = "icon"
+label = "Icon Name"
+type = "string"
+
+[[content_types]]
+name = "testimonial"
+label = "Testimonial"
+label_plural = "Testimonials"
+supports = ["title", "content", "excerpt", "thumbnail", "sort_order"]
+has_archive = false
+rewrite_slug = "testimonials"
+menu_icon = "contact_message"
+menu_order = 2
+
+[[content_types.meta_fields]]
+key = "role"
+label = "Job Title"
+type = "string"
+
+[[content_types.meta_fields]]
+key = "company"
+label = "Company"
+type = "string"

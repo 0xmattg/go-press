@@ -1,0 +1,40 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>{{.Title}}</h2>
+    <a href="/admin/showcases" class="btn">返回列表</a>
+</div>
+<div class="card">
+    <form method="POST" action="/admin/showcases/{{if .Item}}{{.Item.ID}}/edit{{else}}new{{end}}">
+        <div class="form-group">
+            <label for="title">标题 *</label>
+            <input type="text" id="title" name="title" value="{{if .Item}}{{.Item.Title}}{{end}}" required>
+        </div>
+        <div class="form-group">
+            <label for="slug">Slug *</label>
+            <input type="text" id="slug" name="slug" value="{{if .Item}}{{.Item.Slug}}{{end}}" required>
+        </div>
+        <div class="form-group">
+            <label for="description">描述</label>
+            <textarea id="description" name="description" rows="6">{{if .Item}}{{.Item.Description}}{{end}}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="image_url">图片 URL</label>
+            <input type="text" id="image_url" name="image_url" value="{{if .Item}}{{.Item.ImageURL}}{{end}}" placeholder="/static/uploads/...">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="client">客户</label>
+                <input type="text" id="client" name="client" value="{{if .Item}}{{.Item.Client}}{{end}}">
+            </div>
+            <div class="form-group">
+                <label for="location">位置</label>
+                <input type="text" id="location" name="location" value="{{if .Item}}{{.Item.Location}}{{end}}">
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">保存</button>
+            <a href="/admin/showcases" class="btn">取消</a>
+        </div>
+    </form>
+</div>
+{{end}}

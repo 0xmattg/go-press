@@ -1,0 +1,78 @@
+{{define "content"}}
+{{$s := .Settings}}
+<section class="ff-page-hero ff-page-hero-about" style="--hero-bg:url('{{settingOr $s "about_intro_image" "https://images.unsplash.com/photo-1559526324-593bc073d938?w=1600&h=820&fit=crop&q=82"}}');">
+    <span class="ff-hero-ghost">BLOOMFI</span>
+    <div class="ff-page-hero-inner">
+        <span class="ff-kicker">{{settingOr $s "about_intro_label" "About us"}}</span>
+        <h1>{{settingOr $s "about_banner_title" "About FloraFi"}}</h1>
+        <span class="ff-hero-rule"></span>
+        <p>{{settingOr $s "about_banner_subtitle" "A stable-value network for real-world money movement."}}</p>
+        <div class="ff-breadcrumb">
+            <a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a>
+            <span>/</span>
+            <span>{{T $.Ctx "nav_about"}}</span>
+        </div>
+    </div>
+</section>
+
+<section class="ff-section">
+    <div class="ff-about-split">
+        <div class="ff-media-panel">
+            {{responsiveImage (settingOr $s "about_intro_image" "https://images.unsplash.com/photo-1559526324-593bc073d938?w=1000&h=760&fit=crop&q=82") "FloraFi treasury dashboard" "" "(max-width: 768px) 100vw, 50vw" "lazy"}}
+            <div class="ff-float-metric">
+                <strong>{{settingOr $s "about_intro_badge_number" "$320M+"}}</strong>
+                <span>{{settingOr $s "about_intro_badge_text" "TVL"}}</span>
+            </div>
+        </div>
+        <div class="ff-copy-panel">
+            <span class="ff-kicker">{{settingOr $s "about_intro_label" "Who we are"}}</span>
+            <h2>{{settingOr $s "about_intro_title" "We are building stable money that feels useful every day."}}</h2>
+            <p>{{settingOr $s "about_intro_p1" "FloraFi brings stablecoin deposits, treasury yield, and developer-ready payment rails into one composable ecosystem for teams that need dependable digital dollars."}}</p>
+            <p>{{settingOr $s "about_intro_p2" "The product is designed around reserve transparency, fast redemption, and practical integrations for businesses, builders, and treasury teams."}}</p>
+            <a class="ff-outline-btn" href="{{langPrefixURL $.Ctx (settingOr $s "about_intro_btn_link" "/contact")}}">{{settingOr $s "about_intro_btn_text" (T $.Ctx "btn_get_in_touch")}}</a>
+        </div>
+    </div>
+</section>
+
+<section class="ff-dark-band">
+    <div class="ff-dark-stat"><strong>{{settingOr $s "about_stat_1_number" "$320M+"}}</strong><span>{{settingOr $s "about_stat_1_label" "Total value locked"}}</span></div>
+    <div class="ff-dark-stat"><strong>{{settingOr $s "about_stat_2_number" "12.4K+"}}</strong><span>{{settingOr $s "about_stat_2_label" "Holders"}}</span></div>
+    <div class="ff-dark-stat"><strong>{{settingOr $s "about_stat_3_number" "2.1M+"}}</strong><span>{{settingOr $s "about_stat_3_label" "Transfers"}}</span></div>
+    <div class="ff-dark-stat"><strong>{{settingOr $s "about_stat_4_number" "28+"}}</strong><span>{{settingOr $s "about_stat_4_label" "Countries"}}</span></div>
+</section>
+
+<section class="ff-section ff-section-tint">
+    <div class="ff-section-heading">
+        <span class="ff-kicker">{{settingOr $s "about_principles_label" "Operating principles"}}</span>
+        <h2>{{settingOr $s "about_principles_title" "Designed for stable growth"}}</h2>
+        <p>Every part of FloraFi is shaped around trust, liquidity, and practical money movement.</p>
+    </div>
+    <div class="ff-principle-grid">
+        <article class="ff-number-card"><span>01</span><h3>{{settingOr $s "about_principle_1_title" "Reserve-first stability"}}</h3><p>{{settingOr $s "about_principle_1_desc" "Each product surface is anchored to transparent asset backing and clear redemption mechanics."}}</p></article>
+        <article class="ff-number-card"><span>02</span><h3>{{settingOr $s "about_principle_2_title" "Liquidity by design"}}</h3><p>{{settingOr $s "about_principle_2_desc" "Deposits, withdrawals, and transfers are designed for predictable daily operations."}}</p></article>
+        <article class="ff-number-card"><span>03</span><h3>{{settingOr $s "about_principle_3_title" "Composable rails"}}</h3><p>{{settingOr $s "about_principle_3_desc" "APIs and smart-contract flows let teams embed stable value into their own workflows."}}</p></article>
+        <article class="ff-number-card"><span>04</span><h3>{{settingOr $s "about_principle_4_title" "Business-ready controls"}}</h3><p>{{settingOr $s "about_principle_4_desc" "Operational reporting, treasury views, and account controls support real teams."}}</p></article>
+    </div>
+</section>
+
+<section class="ff-section">
+    <div class="ff-section-heading">
+        <span class="ff-kicker">{{settingOr $s "about_exp_label" "Capabilities"}}</span>
+        <h2>{{settingOr $s "about_exp_title" "The FloraFi stack"}}</h2>
+    </div>
+    <div class="ff-feature-grid ff-feature-grid-wide">
+        <article class="ff-feature-card"><span class="ff-card-icon">◇</span><h3>{{settingOr $s "about_exp_1_title" "Stablecoin accounts"}}</h3><p>{{settingOr $s "about_exp_1_desc" "User-facing balances, deposits, redemptions, and reporting for stable-value products."}}</p></article>
+        <article class="ff-feature-card"><span class="ff-card-icon">♧</span><h3>{{settingOr $s "about_exp_2_title" "Treasury yield"}}</h3><p>{{settingOr $s "about_exp_2_desc" "Asset-backed strategies presented through simple, transparent product surfaces."}}</p></article>
+        <article class="ff-feature-card"><span class="ff-card-icon">↔</span><h3>{{settingOr $s "about_exp_3_title" "Payment APIs"}}</h3><p>{{settingOr $s "about_exp_3_desc" "Developer tools for deposits, transfers, payouts, webhooks, and balance automation."}}</p></article>
+    </div>
+</section>
+
+<section class="ff-soft-cta">
+    <div>
+        <span class="ff-kicker">Ready</span>
+        <h2>{{settingOr $s "about_cta_title" "Ready to grow with stable money?"}}</h2>
+        <p>{{settingOr $s "about_cta_desc" "Talk to the FloraFi team about treasury, payments, and developer integrations."}}</p>
+    </div>
+    <a class="ff-pill-btn" href="{{langPrefixURL $.Ctx (settingOr $s "about_cta_btn_link" "/contact")}}">{{settingOr $s "about_cta_btn_text" "Talk to us"}} <span>→</span></a>
+</section>
+{{end}}

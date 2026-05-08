@@ -1,0 +1,142 @@
+{{define "content"}}
+{{$s := .Settings}}
+<div class="content-header">
+    <div style="display:flex; align-items:center; gap:1rem;">
+        <a href="/admin/themes" class="btn btn-secondary" style="display:inline-flex; align-items:center; gap:0.4rem; text-decoration:none;">← {{X $ "theme.settings.back" "返回主题管理"}}</a>
+        <h2>{{X $ "theme.settings.title" "%s - 主题设置" .ThemeName}}</h2>
+    </div>
+</div>
+
+<form method="POST" action="/admin/themes/{{.ThemeSlug}}/settings" class="ff-admin-form">
+    <div class="ff-admin-grid">
+        <section class="ff-admin-card">
+            <h3>{{X $ "theme.settings.text.038" "品牌与导航"}}</h3>
+            <div class="form-group">
+                <label>{{X $ "theme.settings.text.268" "品牌名"}}</label>
+                <input type="text" name="home_logo_text" value="{{index $s "home_logo_text"}}" placeholder="FloraFi">
+            </div>
+            <div class="form-group">
+                <label>{{X $ "theme.settings.text.269" "顶部按钮文字"}}</label>
+                <input type="text" name="home_launch_text" value="{{index $s "home_launch_text"}}" placeholder="Launch app">
+            </div>
+            <div class="form-group">
+                <label>{{X $ "theme.settings.text.270" "顶部按钮链接"}}</label>
+                <input type="text" name="home_launch_link" value="{{index $s "home_launch_link"}}" placeholder="/contact">
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>{{X $ "theme.settings.text.271" "导航 1"}}</label><input type="text" name="home_nav_1_text" value="{{index $s "home_nav_1_text"}}" placeholder="USD Flora"></div>
+                <div class="form-group"><label>{{X $ "theme.settings.text.272" "导航 2"}}</label><input type="text" name="home_nav_2_text" value="{{index $s "home_nav_2_text"}}" placeholder="Business"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>{{X $ "theme.settings.text.273" "导航 3"}}</label><input type="text" name="home_nav_3_text" value="{{index $s "home_nav_3_text"}}" placeholder="Treasury"></div>
+                <div class="form-group"><label>{{X $ "theme.settings.text.274" "导航 4"}}</label><input type="text" name="home_nav_4_text" value="{{index $s "home_nav_4_text"}}" placeholder="Developers"></div>
+            </div>
+            <div class="form-group">
+                <label>{{X $ "theme.settings.text.275" "导航 5"}}</label>
+                <input type="text" name="home_nav_5_text" value="{{index $s "home_nav_5_text"}}" placeholder="About us">
+            </div>
+        </section>
+
+        <section class="ff-admin-card">
+            <h3>{{X $ "theme.settings.text.276" "Hero 原型区"}}</h3>
+            <div class="form-group">
+                <label>{{X $ "theme.settings.text.052" "背景图片 URL"}}</label>
+                <div style="display:flex;gap:.5rem;">
+                    <input type="text" id="home_hero_image" name="home_hero_image" value="{{index $s "home_hero_image"}}" placeholder="/static/images/florafi-hero-field.png">
+                    <button type="button" class="btn btn-secondary" onclick="openMediaPicker(function(url){ document.getElementById('home_hero_image').value=url; })">{{X $ "theme.settings.select_image" "选择图片"}}</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>{{X $ "theme.settings.text.103" "主标题"}}</label>
+                <input type="text" name="home_hero_title" value="{{index $s "home_hero_title"}}" placeholder="Where Money Grows">
+            </div>
+            <div class="form-group">
+                <label>{{X $ "theme.settings.text.211" "副标题"}}</label>
+                <textarea name="home_hero_subtitle" rows="2" placeholder="A progressive stablecoin ecosystem...">{{index $s "home_hero_subtitle"}}</textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>{{X $ "theme.settings.text.070" "按钮文字"}}</label><input type="text" name="home_hero_btn_text" value="{{index $s "home_hero_btn_text"}}" placeholder="Try FloraFi"></div>
+                <div class="form-group"><label>{{X $ "theme.settings.text.071" "按钮链接"}}</label><input type="text" name="home_hero_btn_link" value="{{index $s "home_hero_btn_link"}}" placeholder="/products"></div>
+            </div>
+            <div class="form-group">
+                <label>{{X $ "theme.settings.text.277" "Hero 小字"}}</label>
+                <input type="text" name="home_hero_note" value="{{index $s "home_hero_note"}}" placeholder="Built for stability. Designed for growth.">
+            </div>
+        </section>
+
+        <section class="ff-admin-card">
+            <h3>{{X $ "theme.settings.text.278" "首页指标"}}</h3>
+            <div class="form-row">
+                <div class="form-group"><label>{{X $ "theme.settings.text.279" "指标 1 标签"}}</label><input type="text" name="home_stat_1_label" value="{{index $s "home_stat_1_label"}}" placeholder="Backed by Real Assets"></div>
+                <div class="form-group"><label>{{X $ "theme.settings.text.280" "TVL 数值"}}</label><input type="text" name="home_stat_2_number" value="{{index $s "home_stat_2_number"}}" placeholder="$320M+"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>{{X $ "theme.settings.text.281" "持有人数"}}</label><input type="text" name="home_stat_3_number" value="{{index $s "home_stat_3_number"}}" placeholder="12.4K+"></div>
+                <div class="form-group"><label>{{X $ "theme.settings.text.282" "转账数"}}</label><input type="text" name="home_stat_4_number" value="{{index $s "home_stat_4_number"}}" placeholder="2.1M+"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>{{X $ "theme.settings.text.283" "国家数"}}</label><input type="text" name="home_stat_5_number" value="{{index $s "home_stat_5_number"}}" placeholder="28+"></div>
+                <div class="form-group"><label>{{X $ "theme.settings.text.284" "国家标签"}}</label><input type="text" name="home_stat_5_label" value="{{index $s "home_stat_5_label"}}" placeholder="Countries"></div>
+            </div>
+        </section>
+
+        <section class="ff-admin-card">
+            <h3>{{X $ "theme.settings.text.285" "What is 区块"}}</h3>
+            <div class="form-group"><label>{{X $ "theme.settings.text.286" "标签"}}</label><input type="text" name="home_intro_kicker" value="{{index $s "home_intro_kicker"}}" placeholder="Built for growth"></div>
+            <div class="form-group"><label>{{X $ "theme.settings.text.053" "标题"}}</label><input type="text" name="home_intro_title" value="{{index $s "home_intro_title"}}" placeholder="What is USD Flora?"></div>
+            <div class="form-group"><label>{{X $ "theme.settings.text.196" "描述"}}</label><textarea name="home_intro_desc" rows="3">{{index $s "home_intro_desc"}}</textarea></div>
+            <div class="form-row">
+                <div class="form-group"><label>{{X $ "theme.settings.text.287" "功能 1 标题"}}</label><input type="text" name="home_feature_1_title" value="{{index $s "home_feature_1_title"}}" placeholder="Capital that grows"></div>
+                <div class="form-group"><label>{{X $ "theme.settings.text.288" "功能 2 标题"}}</label><input type="text" name="home_feature_2_title" value="{{index $s "home_feature_2_title"}}" placeholder="Always liquid, always stable"></div>
+            </div>
+            <div class="form-group"><label>{{X $ "theme.settings.text.289" "功能 3 标题"}}</label><input type="text" name="home_feature_3_title" value="{{index $s "home_feature_3_title"}}" placeholder="100% hands-free"></div>
+        </section>
+
+        <section class="ff-admin-card ff-admin-wide">
+            <h3>{{X $ "theme.settings.text.290" "用例与底部 CTA"}}</h3>
+            <div class="form-row">
+                <div class="form-group"><label>{{X $ "theme.settings.text.291" "用例标题"}}</label><input type="text" name="home_usecases_title" value="{{index $s "home_usecases_title"}}" placeholder="Use cases"></div>
+                <div class="form-group"><label>{{X $ "theme.settings.text.292" "用例标签"}}</label><input type="text" name="home_usecases_kicker" value="{{index $s "home_usecases_kicker"}}" placeholder="Built for everyone"></div>
+            </div>
+            <div class="form-group"><label>{{X $ "theme.settings.text.293" "用例说明"}}</label><textarea name="home_usecases_desc" rows="2">{{index $s "home_usecases_desc"}}</textarea></div>
+            <div class="form-row">
+                <div class="form-group"><label>{{X $ "theme.settings.text.294" "用例 1 标题"}}</label><input type="text" name="home_usecase_1_title" value="{{index $s "home_usecase_1_title"}}" placeholder="Business"></div>
+                <div class="form-group"><label>{{X $ "theme.settings.text.295" "用例 2 标题"}}</label><input type="text" name="home_usecase_2_title" value="{{index $s "home_usecase_2_title"}}" placeholder="Developers"></div>
+            </div>
+            <div class="form-group"><label>{{X $ "theme.settings.text.296" "CTA 标题"}}</label><input type="text" name="home_cta_title" value="{{index $s "home_cta_title"}}" placeholder="Ready to grow with stability?"></div>
+            <div class="form-row">
+                <div class="form-group"><label>{{X $ "theme.settings.text.297" "CTA 按钮"}}</label><input type="text" name="home_cta_btn_text" value="{{index $s "home_cta_btn_text"}}" placeholder="Get started"></div>
+                <div class="form-group"><label>{{X $ "theme.settings.text.298" "CTA 链接"}}</label><input type="text" name="home_cta_btn_link" value="{{index $s "home_cta_btn_link"}}" placeholder="/contact"></div>
+            </div>
+        </section>
+
+        <section class="ff-admin-card ff-admin-wide">
+            <h3>{{X $ "theme.settings.text.299" "公司与页脚"}}</h3>
+            <div class="form-row">
+                <div class="form-group"><label>{{X $ "theme.settings.text.015" "公司名称"}}</label><input type="text" name="company_name" value="{{index $s "company_name"}}" placeholder="FloraFi"></div>
+                <div class="form-group"><label>{{X $ "theme.settings.text.016" "公司邮箱"}}</label><input type="email" name="company_email" value="{{index $s "company_email"}}" placeholder="hello@florafi.example"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>{{X $ "theme.settings.text.248" "电话"}}</label><input type="text" name="company_phone" value="{{index $s "company_phone"}}" placeholder="+1 555 0100"></div>
+                <div class="form-group"><label>{{X $ "theme.settings.text.249" "地址"}}</label><input type="text" name="company_address" value="{{index $s "company_address"}}" placeholder="New York / Singapore"></div>
+            </div>
+            <div class="form-group"><label>{{X $ "theme.settings.text.300" "公司描述"}}</label><textarea name="company_description" rows="2">{{index $s "company_description"}}</textarea></div>
+            <div class="form-group"><label>{{X $ "theme.settings.text.020" "页脚文案"}}</label><input type="text" name="footer_text" value="{{index $s "footer_text"}}" placeholder="Built for stability. Designed for growth."></div>
+        </section>
+    </div>
+
+    <div class="form-actions" style="margin-top:1.25rem;">
+        <button type="submit" class="btn btn-primary">{{X $ "theme.settings.save" "保存设置"}}</button>
+    </div>
+</form>
+
+<style>
+.ff-admin-form input,.ff-admin-form textarea{width:100%}
+.ff-admin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.ff-admin-card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:1rem}
+.ff-admin-card h3{margin:0 0 1rem;font-size:1rem}
+.ff-admin-wide{grid-column:1/-1}
+.form-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}
+@media(max-width:900px){.ff-admin-grid,.form-row{grid-template-columns:1fr}.ff-admin-wide{grid-column:auto}}
+</style>
+{{end}}

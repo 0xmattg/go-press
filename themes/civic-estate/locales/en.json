@@ -1,0 +1,15 @@
+{
+  "nav_about": "About",
+  "nav_services": "Services",
+  "nav_showcase": "Areas",
+  "nav_process": "Types",
+  "nav_blog": "Market Notes",
+  "nav_contact": "Contact",
+  "label_client": "Client",
+  "label_location": "Location",
+  "sidebar_categories": "Categories",
+  "sidebar_tags": "Tags",
+  "archive_label_category": "Category",
+  "archive_label_tag": "Tag",
+  "archive_items_found": "items found"
+}

@@ -1,0 +1,43 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>服务列表</h2>
+    {{if can .CurrentRole "service" "create"}}
+    <a href="/admin/services/new" class="btn btn-primary">新建服务</a>
+    {{end}}
+</div>
+<div class="card">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>标题</th>
+                <th>Slug</th>
+                <th>排序</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Items}}
+            <tr>
+                <td>{{.ID}}</td>
+                <td>{{.Title}}</td>
+                <td><code>{{.Slug}}</code></td>
+                <td>{{.SortOrder}}</td>
+                <td class="actions">
+                    {{if can $.CurrentRole "service" "update"}}
+                    <a href="/admin/services/{{.ID}}/edit" class="btn btn-sm">编辑</a>
+                    {{end}}
+                    {{if can $.CurrentRole "service" "delete"}}
+                    <form method="POST" action="/admin/services/{{.ID}}/delete" class="inline-form">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确认删除此服务?')">删除</button>
+                    </form>
+                    {{end}}
+                </td>
+            </tr>
+            {{else}}
+            <tr><td colspan="5" class="empty-msg">暂无服务</td></tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}

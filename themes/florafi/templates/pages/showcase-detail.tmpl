@@ -1,0 +1,42 @@
+{{define "content"}}
+<section class="ff-page-hero ff-page-hero-showcase" style="--hero-bg:url('{{if .Showcase.ImageURL}}{{.Showcase.ImageURL}}{{else}}https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1600&h=820&fit=crop&q=82{{end}}');">
+    <span class="ff-hero-ghost">USE CASE</span>
+    <div class="ff-page-hero-inner">
+        <span class="ff-kicker">{{T $.Ctx "page_label_project_details"}}</span>
+        <h1>{{.Showcase.Title}}</h1>
+        <span class="ff-hero-rule"></span>
+        <p>{{if .Showcase.Description}}{{truncate (stripTags .Showcase.Description) 150}}{{else}}Stablecoin workflow powered by FloraFi.{{end}}</p>
+        <div class="ff-breadcrumb"><a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a><span>/</span><a href="{{langPrefixURL $.Ctx "/showcase"}}">{{T $.Ctx "page_title_projects"}}</a><span>/</span><span>{{.Showcase.Title}}</span></div>
+    </div>
+</section>
+
+<section class="ff-section">
+    <div class="ff-detail-shell">
+        <div class="ff-detail-media">{{if .Showcase.ImageURL}}{{responsiveImagePriority .Showcase.ImageURL .Showcase.Title "" "(max-width: 768px) 100vw, 50vw"}}{{else}}<span class="ff-card-icon">◎</span>{{end}}</div>
+        <article class="ff-detail-content">
+            <span class="ff-kicker">Implementation</span>
+            <h2>{{.Showcase.Title}}</h2>
+            {{if or .Showcase.Client .Showcase.Location}}
+            <div class="ff-meta-strip">
+                {{if .Showcase.Client}}<span><strong>{{T $.Ctx "label_client"}}</strong>{{.Showcase.Client}}</span>{{end}}
+                {{if .Showcase.Location}}<span><strong>{{T $.Ctx "label_location"}}</strong>{{.Showcase.Location}}</span>{{end}}
+            </div>
+            {{end}}
+            <div class="ff-richtext">{{safeHTML .Showcase.Description}}</div>
+            {{if .Tags}}<div class="ff-chip-cloud">{{range .Tags}}<a href="{{langPrefixURL $.Ctx (printf "/tag/%s" .Slug)}}">{{.Name}}</a>{{end}}</div>{{end}}
+            <div class="ff-action-row"><a class="ff-pill-btn" href="{{langPrefixURL $.Ctx "/contact"}}">{{T $.Ctx "btn_start_project"}} <span>→</span></a><a class="ff-outline-btn" href="{{langPrefixURL $.Ctx "/showcase"}}">{{T $.Ctx "btn_back_projects"}}</a></div>
+        </article>
+    </div>
+</section>
+
+{{if .Related}}
+<section class="ff-section ff-section-tint">
+    <div class="ff-section-heading"><span class="ff-kicker">{{T $.Ctx "section_more_projects"}}</span><h2>{{T $.Ctx "section_related_projects"}}</h2></div>
+    <div class="ff-case-grid">
+        {{range .Related}}
+        <a class="ff-case-card" href="{{langPrefixURL $.Ctx (printf "/showcase/%s" .Slug)}}"><div class="ff-case-media">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="ff-card-icon">◎</span>{{end}}</div><div class="ff-case-body"><h3>{{.Title}}</h3><p>{{truncate (stripTags .Description) 110}}</p>{{if .Client}}<div class="ff-case-meta"><span><strong>{{T $.Ctx "label_client"}}:</strong> {{.Client}}</span></div>{{end}}</div></a>
+        {{end}}
+    </div>
+</section>
+{{end}}
+{{end}}

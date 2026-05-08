@@ -1,0 +1,34 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>{{.Title}}</h2>
+    <a href="/admin/services" class="btn">返回列表</a>
+</div>
+<div class="card">
+    <form method="POST" action="/admin/services/{{if .Item}}{{.Item.ID}}/edit{{else}}new{{end}}">
+        <div class="form-group">
+            <label for="title">标题 *</label>
+            <input type="text" id="title" name="title" value="{{if .Item}}{{.Item.Title}}{{end}}" required>
+        </div>
+        <div class="form-group">
+            <label for="slug">Slug *</label>
+            <input type="text" id="slug" name="slug" value="{{if .Item}}{{.Item.Slug}}{{end}}" required>
+        </div>
+        <div class="form-group">
+            <label for="description">描述</label>
+            <textarea id="description" name="description" rows="6">{{if .Item}}{{.Item.Description}}{{end}}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="image_url">图片 URL</label>
+            <input type="text" id="image_url" name="image_url" value="{{if .Item}}{{.Item.ImageURL}}{{end}}" placeholder="/static/uploads/...">
+        </div>
+        <div class="form-group">
+            <label for="sort_order">排序</label>
+            <input type="number" id="sort_order" name="sort_order" value="{{if .Item}}{{.Item.SortOrder}}{{else}}0{{end}}">
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">保存</button>
+            <a href="/admin/services" class="btn">取消</a>
+        </div>
+    </form>
+</div>
+{{end}}

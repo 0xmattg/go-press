@@ -1,0 +1,23 @@
+{{define "header"}}
+{{$s := .Settings}}
+<header class="ce-header">
+    <a class="ce-brand" href="{{langPrefixURL .Ctx "/"}}" aria-label="{{settingOr $s "company_name" "Civic Estate"}} home">
+        <span class="ce-brand-mark" aria-hidden="true"></span>
+        {{settingOr $s "home_logo_text" "Civic Estate"}}
+    </a>
+    <button class="ce-nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false">
+        <span></span><span></span>
+    </button>
+    <nav class="ce-nav" aria-label="Primary navigation">
+        <ul class="ce-nav-list">
+            <li><a class="{{if eq .ActivePage "about"}}active{{end}}" href="{{langPrefixURL .Ctx "/about"}}">{{settingOr $s "nav_about" "About"}}</a></li>
+            <li><a class="{{if eq .ActivePage "products"}}active{{end}}" href="{{langPrefixURL .Ctx "/products"}}">{{settingOr $s "nav_process" "Types"}}</a></li>
+            <li><a class="{{if eq .ActivePage "showcase"}}active{{end}}" href="{{langPrefixURL .Ctx "/showcase"}}">{{settingOr $s "nav_showcase" "Areas"}}</a></li>
+            <li><a class="{{if eq .ActivePage "services"}}active{{end}}" href="{{langPrefixURL .Ctx "/services"}}">{{settingOr $s "nav_services" "Services"}}</a></li>
+            <li><a class="{{if eq .ActivePage "blog"}}active{{end}}" href="{{langPrefixURL .Ctx "/blog"}}">{{settingOr $s "nav_blog" "Market Notes"}}</a></li>
+            <li><a class="{{if eq .ActivePage "contact"}}active{{end}}" href="{{langPrefixURL .Ctx "/contact"}}">{{settingOr $s "nav_contact" "Contact"}}</a></li>
+            {{renderHook "header.nav.after" .}}
+        </ul>
+    </nav>
+</header>
+{{end}}

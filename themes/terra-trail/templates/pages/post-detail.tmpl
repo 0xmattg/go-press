@@ -1,0 +1,18 @@
+{{define "content"}}
+<section class="tt-detail-hero">
+    <span>Journal</span>
+    <h1>{{.Post.Title}}</h1>
+    <p>{{formatDateTime .Post.PublishedAt}}</p>
+</section>
+
+<section class="tt-detail-layout">
+    <article class="tt-detail-card">
+        {{if .Post.ImageURL}}<div class="tt-detail-media">{{responsiveImagePriority .Post.ImageURL .Post.Title "" "(max-width: 768px) 100vw, 62vw"}}</div>{{end}}
+        <div class="tt-richtext">{{safeHTML .Post.Content}}</div>
+    </article>
+    <aside class="tt-detail-aside">
+        <h3>Related journal</h3>
+        {{range .Related}}<a href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{.Title}} <span>→</span></a>{{end}}
+    </aside>
+</section>
+{{end}}

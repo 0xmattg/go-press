@@ -1,0 +1,15 @@
+{{define "footer"}}
+<footer class="ff-footer">
+    <div class="ff-footer-brand">
+        <span class="ff-logo-mark" aria-hidden="true"><span></span></span>
+        <span>{{settingOr .Settings "home_logo_text" "FloraFi"}}</span>
+    </div>
+    <p>{{settingOr .Settings "footer_text" "Built for stability. Designed for growth."}}</p>
+    <div class="ff-footer-links">
+        <a href="{{langPrefixURL $.Ctx "/products"}}">USD Flora</a>
+        <a href="{{langPrefixURL $.Ctx "/services"}}">Business</a>
+        <a href="{{langPrefixURL $.Ctx "/blog"}}">Developers</a>
+        <a href="{{langPrefixURL $.Ctx "/contact"}}">Contact</a>
+    </div>
+</footer>
+{{end}}

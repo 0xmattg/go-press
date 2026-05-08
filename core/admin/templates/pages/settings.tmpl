@@ -1,0 +1,76 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>{{T . "settings.system_settings"}}</h2>
+</div>
+<div class="card settings-shell">
+    <form method="POST" action="/admin/settings" class="settings-form">
+        <section class="settings-section">
+        <h3 class="settings-section-title">{{T . "settings.website_settings"}}</h3>
+        <div class="settings-grid">
+        {{range .Items}}
+        {{if eq .Group "site"}}
+        <div class="form-group settings-item">
+            <label>{{.Label}}</label>
+            {{if .ReadOnly}}
+            <input type="text" name="{{.Key}}" value="{{.Value}}" readonly disabled class="setting-input-readonly" title="{{T $ "help.readonly_setting"}}">
+            {{else if eq .InputType "media"}}
+            <div style="display:flex; gap:0.5rem; align-items:flex-start;">
+                <input type="text" id="setting-{{.Key}}" name="{{.Key}}" value="{{.Value}}" placeholder="/uploads/favicon.png">
+                <button type="button" class="btn btn-secondary" style="white-space:nowrap;" onclick="openMediaPicker(function(url){ document.getElementById('setting-{{.Key}}').value=url; document.getElementById('setting-{{.Key}}-preview').src=url; document.getElementById('setting-{{.Key}}-preview-wrap').style.display='block'; })">{{T $ "action.choose_image"}}</button>
+            </div>
+            <div id="setting-{{.Key}}-preview-wrap" style="margin-top:0.5rem; {{if not .Value}}display:none;{{end}}">
+                <img id="setting-{{.Key}}-preview" src="{{.Value}}" alt="{{.Label}} preview" style="max-height:48px; border-radius:6px; border:1px solid #e2e8f0;">
+            </div>
+            {{else if eq .InputType "checkbox"}}
+            <label class="checkbox-label settings-checkbox-label">
+                <input type="checkbox" name="{{.Key}}" value="1" {{if eq .Value "1"}}checked{{end}}>
+                <span>{{T $ "settings.powered_by_visible"}}</span>
+            </label>
+            {{else}}
+            <input type="text" name="{{.Key}}" value="{{.Value}}">
+            {{end}}
+            {{if .Description}}
+            <small>{{.Description}}</small>
+            {{end}}
+        </div>
+        {{end}}
+        {{end}}
+        </div>
+        </section>
+
+        <section class="settings-section settings-section-admin">
+        <h3 class="settings-section-title">{{T . "settings.admin_settings"}}</h3>
+        <div class="settings-grid">
+        {{range .Items}}
+        {{if eq .Group "admin"}}
+        <div class="form-group settings-item">
+            <label>{{.Label}}</label>
+            {{if eq .InputType "select"}}
+            <select name="{{.Key}}" class="form-control">
+                {{range .Options}}
+                <option value="{{.Value}}" {{if eq $.AdminLanguage .Value}}selected{{end}}>{{.Label}}</option>
+                {{end}}
+            </select>
+            {{else}}
+            <input type="text" name="{{.Key}}" value="{{.Value}}">
+            {{end}}
+            {{if .Description}}
+            <small>{{.Description}}</small>
+            {{end}}
+        </div>
+        {{end}}
+        {{end}}
+        </div>
+        </section>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{{T . "action.save_settings"}}</button>
+            <button type="button" class="btn btn-secondary" id="btn-generate-sitemap" onclick="generateSitemap()" style="margin-left:12px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>
+                {{T . "action.generate_sitemap"}}
+            </button>
+            <span id="sitemap-status" style="margin-left:12px;font-size:13px;color:#666"></span>
+        </div>
+    </form>
+</div>
+{{end}}

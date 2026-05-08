@@ -1,0 +1,203 @@
+<p align="right">
+  <a href="README.md">English</a> · <strong>简体中文</strong>
+</p>
+
+<p align="center">
+  <img src="docs/logo/gopress_logo.png" alt="GoPress Logo" width="220">
+</p>
+
+> GoPress 是一个用 Go 编写的内容管理框架与 CMS 引擎，面向需要自托管、主题化、插件化和 API 扩展能力的网站与内容应用。
+> 它将内容模型、后台管理、主题模板、插件扩展、SEO、媒体处理和 REST API 组织为一套可组合的工程框架。
+> 适合用于企业官网、内容站、产品展示站、文档站，以及需要在 Go 技术栈中保留 CMS 编辑体验的定制项目。
+
+[![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go)](https://go.dev)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+---
+
+## GoPress 是什么？
+
+GoPress 旨在把传统 CMS 中经过验证的内容模型、主题系统、插件扩展和后台管理能力，放到 Go 的运行时与工程生态里重新组织。它提供统一的内容模型、数据驱动的后台 CRUD、主题模板引擎、Hook / Filter 扩展点、REST API、SEO 基础设施、多级缓存、媒体变体和多站点配置能力。
+
+这个项目不是 WordPress 的逐行重写，也不是对 PHP 生态的替代宣言。GoPress 更关注一类具体场景：开发者希望保留 CMS 的编辑体验和扩展模型，同时获得 Go 在部署、并发、可观测性和长期维护上的工程优势。
+
+## 项目状态
+
+GoPress 当前处于 **beta** 阶段。核心内容模型、后台管理、主题引擎、插件机制、SEO、缓存、媒体管线和示例主题已经具备基础可用性，但公开发布前仍需要更多真实项目验证、基准测试、迁移文档和安全审计。
+
+如果你计划在生产环境使用，建议先从内部站点、企业官网、文档站或内容型应用开始，并根据实际流量与编辑流程做压测和备份策略。
+
+## 为什么做 GoPress？
+
+成熟 CMS 生态已经证明了“内容模型 + 主题 + 插件 + 后台管理”这套抽象的长期价值。GoPress 借鉴其中稳定的产品形态，同时用 Go 的单二进制部署、goroutine 并发模型、静态类型和标准化工具链，降低自托管 CMS 在部署、扩展和维护上的复杂度。
+
+下面的对比不是为了评价不同技术栈的优劣，而是说明 GoPress 的设计取舍：
+
+| 维度 | WordPress (PHP) | GoPress (Go) |
+|------|-----------------|--------------|
+| 运行方式 | PHP-FPM / Web Server 组合，围绕请求生命周期运行 | Go 单进程服务，适合常驻内存模型 |
+| 扩展方式 | 主题与插件生态成熟，运行时动态加载灵活 | Go 接口与 Hook 注册，强调类型安全和可维护性 |
+| 缓存策略 | 通常通过插件、对象缓存或反向代理组合增强 | 内置内存 / Redis / 数据库多级缓存路径 |
+| 定时任务 | 常见方案包括 WP-Cron 或系统 Cron | 由服务进程内的调度器执行 |
+| 部署形态 | Web Server、PHP 运行时、数据库等多组件协作 | 编译后以单一服务进程交付，外接数据库与可选 Redis |
+
+## 核心设计原则
+
+1. **内容优先** — 以统一的 `Content + Meta` 模型承载文章、联系留言，以及主题声明的自定义内容类型。
+2. **主题与引擎分离** — 主题负责呈现，引擎负责路由、查询、SEO、媒体和后台能力。
+3. **插件通过接口扩展** — 插件通过 Go 接口、Hook 和 Filter 注册能力，减少隐式运行时耦合。
+4. **缓存作为基础能力** — 内置内存缓存、Redis 缓存和页面缓存路径，并在缺少 Redis 时自动降级。
+5. **SEO 内建** — URL 重写、永久链接、Canonical、Sitemap、Meta、重定向等能力在核心层统一处理。
+6. **API First** — 内容类型可暴露 REST API，并通过 Swagger / OpenAPI 描述接口。
+7. **多实例隔离** — 支持表前缀和站点级配置，便于多实例共享基础设施并隔离数据边界。
+
+---
+
+## 快速开始
+
+### 环境要求
+
+- Go 1.25+
+- PostgreSQL 14+
+- Redis 7+（可选，无 Redis 时自动降级为纯内存缓存）
+- `cwebp`（可选，用于生成 WebP 变体；缺失时自动回退为 JPG/PNG 变体）
+
+### 安装 & 运行
+
+```bash
+# 克隆项目
+git clone https://github.com/0xlostpixel/go-press.git
+cd go-press
+
+# 安装依赖
+go mod download
+
+# 启动服务（首次启动进入 Web 安装器）
+go run ./cmd/server/
+
+# 或指定已有站点配置
+go run ./cmd/server/ -config sites/localhost/config.toml
+```
+
+启动后访问：
+
+| 地址 | 说明 |
+|------|------|
+| `http://localhost:8080` | 前台网站 |
+| `http://localhost:8080/admin` | 后台 CMS |
+| `http://localhost:8080/swagger/index.html` | API 文档 |
+| `http://localhost:8080/api/v1/content` | REST API |
+
+完整安装指南见 [docs/guide/getting-started/installation.md](docs/guide/getting-started/installation.md)。
+
+---
+
+## 文档
+
+完整文档已拆分到 [`docs/guide/`](docs/guide/) 目录，按 GitBook 多页结构组织：
+
+| 章节 | 内容 |
+|---|---|
+| [介绍](docs/guide/README.md) | 项目定位、设计原则 |
+| [快速开始](docs/guide/getting-started/installation.md) | 安装、配置、Web 安装器 |
+| [架构](docs/guide/architecture/overview.md) | 引擎启动流程、内容模型、URL/SEO、缓存、i18n、Content Scope、Hook 系统 |
+| [后台管理](docs/guide/admin/overview.md) | 后台 CMS、扩展点、菜单管理 |
+| [主题开发](docs/guide/themes/overview.md) | 创建主题、SEO 接入规范、图片管线、媒体变体 |
+| [插件开发](docs/guide/plugins/overview.md) | 创建插件、Hook 列表、内置 multilang / seo-extras / code-snippets |
+| [参考资料](docs/guide/reference/project-structure.md) | 项目结构、数据库表前缀、REST API、技术栈、路线图 |
+
+API 接口规范单独存放，由 `swag` 从代码注解自动生成：
+
+| 文件 | 说明 |
+|---|---|
+| [docs/swagger.json](docs/swagger.json) | OpenAPI 规范（JSON） |
+| [docs/swagger.yaml](docs/swagger.yaml) | OpenAPI 规范（YAML） |
+| [docs/docs.go](docs/docs.go) | Swagger Go 包，由 `cmd/server/main.go` 引用 |
+
+重新生成：`go run ./cmd/gendoc/`
+
+---
+
+## 主要特性速览
+
+### 引擎核心
+
+- **统一内容模型** — `Content` + `ContentMeta` + `ContentType` 注册表；核心保留 `post` / `contact_message`，主题通过 `theme.toml` 声明自定义类型
+- **链式查询构建器** — 下面以主题声明的 `product` 内容类型为例：`ContentQuery.Type("product").Published().Taxonomy("category", "hepa").Paginate(1, 20)`
+- **Hook 事件总线** — `AddAction` / `DoAction` / `AddFilter` / `ApplyFilter`，热拔插友好（每个 Add 返回 `Handle` 可精准 Remove）
+- **多级缓存** — L1 内存 + L2 Redis，自动降级，页面缓存中间件 < 1ms 命中
+- **Worker Pool** — Goroutine 工作池 + Cron 定时调度
+- **核心 i18n** — go-i18n + 3 层翻译回退（DB → locale → message ID），可翻译设置项注册表
+
+### URL / SEO
+
+- **统一站点信息** — admin「系统设置 > 网站设置」`site_name` / `site_description`，全主题共用一份来源
+- **SEOBuilder** — home/archive/single 三类页面统一生成 `<meta description>` + `<link canonical>` + `og:*` + JSON-LD（Article/WebSite schema）
+- **`seoHeadFor` 模板助手** — reflection-based 安全实现，对 `gin.H` 和自定义 struct 都不会因字段缺失白屏
+- **Per-content SEO 覆盖** — 内置 `seo-extras` 插件提供 Yoast 风格 4 字段覆盖（Title / Description / OG Image / Robots），核心通过 `seo.content.meta` filter 开放扩展
+- **Sitemap 多语言 hreflang** — `SitemapGenerator.AddTransformer()` 让多语言插件按需贡献 `<xhtml:link hreflang>` 备选链接
+- **301/302 重定向** — 数据库驱动 + 内存缓存 + 命中计数
+
+### 后台 CMS
+
+- **数据驱动 CRUD** — 按 ContentType 注册表自动生成列表/编辑界面，零样板代码
+- **主题内容模型配置化** — `theme.toml` 的 `[[content_types]]` 驱动后台导航、CRUD、REST API、Rewrite 和菜单图标
+- **RBAC 权限** — admin/editor/author/subscriber，全后台 `checkPermission` 加固
+- **拖拽排序 + 富文本** — Quill 2.0 编辑器、媒体选择器、内容列表 HTML5 DnD
+- **后台扩展点** — `admin.HookContentListTabs` / `admin.HookContentPermalinkPrefix` / `admin.content_form.fields` / `admin.content.saved` 等通用 hook，多语言/SEO 等插件按需注入
+
+### 主题与插件
+
+- **BaseTheme 运行时引擎** — 嵌入即获得 URL 解析、模板层级回退（WordPress 风格）、SEO 自动注入
+- **统一 FuncMap** — `BaseFuncMap()` 单一来源下发：`buildURL` / `seoHeadFor` / `menuByLocation` / `T` / `currentLang` / `langPrefixURL` / `renderHook` / `responsiveImage*`
+- **主题模板插槽** — `theme.head.end` / `theme.body.open` / `theme.footer.end` / `header.nav.after` 组成前台插件接入契约，主题只声明语义位置，插件按需输出 HTML
+- **响应式图片管线** — 上传时生成 WebP + JPG/PNG 变体（thumb/480w/768w/1024w/1440w/full），模板用 `responsiveImage` 输出 `<picture>`
+- **插件热拔插** — `Bus.AddAction/AddFilter` 返回 `Handle`，`Deactivate` 中 `Remove*` 干净下线，运行时即时切换无需重启
+- **零交叉耦合** — 主题和插件之间不存在直接调用或类型依赖，core 是唯一交汇点
+
+### 内置主题（8 个）
+
+`atelier-slate` / `axis-form`（Axis Form，建筑设计） / `florafi`（FloraFi，稳定币/金融科技） / `civic-estate` / `financial-news` / `go-press-landing` / `modern-company` / `terra-trail`
+
+详见 [docs/guide/themes/overview.md](docs/guide/themes/overview.md)。
+
+### 内置插件
+
+- **multilang** — WPML 风格内容翻译 + 菜单翻译 + 语言前缀路由 + 智能跳转
+- **seo-extras** — Yoast 风格 per-content SEO 覆盖（4 字段：title/description/og:image/robots）
+- **code-snippets** — WPCode 风格站点级代码注入（`<head>` 末尾、`<body>` 开头、`</body>` 前）
+
+详见 [docs/guide/plugins/overview.md](docs/guide/plugins/overview.md)。
+
+---
+
+## 性能目标
+
+以下是当前架构的目标区间，公开发布前仍需要补充可复现的 benchmark、测试环境说明和压测脚本。
+
+| 指标 | 目标值 |
+|------|--------|
+| 页面缓存命中响应 | < 1ms |
+| 首次渲染（无缓存） | < 50ms |
+| 并发连接数 | 50,000+ |
+| QPS（缓存命中） | 100,000+ |
+| QPS（无缓存） | 5,000+ |
+| 内存占用（空闲） | < 50MB |
+
+---
+
+## 技术栈
+
+Gin / GORM / PostgreSQL / Redis / golang-jwt / Viper + TOML / log/slog / go-i18n / Quill 2.0 / swaggo/swag
+
+完整选型说明见 [docs/guide/reference/tech-stack.md](docs/guide/reference/tech-stack.md)。
+
+---
+
+## 贡献
+
+欢迎提交 Issue 和 Pull Request。开始前请先阅读 [CONTRIBUTING.md](CONTRIBUTING.md)，路线图见 [docs/guide/reference/roadmap.md](docs/guide/reference/roadmap.md)。
+
+## 开源协议
+
+[MIT License](LICENSE)

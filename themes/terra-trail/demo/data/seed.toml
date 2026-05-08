@@ -1,0 +1,492 @@
+# ============================================================
+# GoPress Seed Data - TerraTrail travel demo
+# ============================================================
+
+[[settings]]
+key = "site_name"
+value = "TerraTrail"
+
+[[settings]]
+key = "site_description"
+value = "Curated mountain tours, transport planning, and destination guides for modern travelers."
+
+[[settings]]
+key = "company_name"
+value = "TerraTrail"
+
+[[settings]]
+key = "company_email"
+value = "hello@terratrail.example"
+
+[[settings]]
+key = "company_phone"
+value = "+1 415 555 0196"
+
+[[settings]]
+key = "company_address"
+value = "Remote planning studio"
+
+[[settings]]
+key = "company_description"
+value = "TerraTrail curates mountain journeys with local guides, flexible transport, and thoughtful details for travelers who want the route to feel effortless."
+
+[[settings]]
+key = "footer_text"
+value = "© 2026 TerraTrail. Travel planning made calmer."
+
+[[settings]]
+key = "social_linkedin"
+value = ""
+
+[[settings]]
+key = "social_wechat"
+value = ""
+
+[[settings]]
+key = "social_facebook"
+value = ""
+
+[[settings]]
+key = "social_x"
+value = ""
+
+[[settings]]
+key = "social_youtube"
+value = ""
+
+[[settings]]
+key = "home_logo_text"
+value = "TerraTrail"
+
+[[settings]]
+key = "home_logo_image"
+value = ""
+
+[[settings]]
+key = "nav_home"
+value = "Home"
+
+[[settings]]
+key = "nav_about"
+value = "About Us"
+
+[[settings]]
+key = "nav_services"
+value = "Transport"
+
+[[settings]]
+key = "nav_showcase"
+value = "Destinations"
+
+[[settings]]
+key = "nav_process"
+value = "Tour"
+
+[[settings]]
+key = "nav_blog"
+value = "Journal"
+
+[[settings]]
+key = "nav_contact"
+value = "Contact Us"
+
+[[settings]]
+key = "home_hero_title"
+value = "Your Next Adventure Awaits"
+
+[[settings]]
+key = "home_hero_subtitle"
+value = "Explore stunning destinations, unique experiences, and unforgettable journeys with TerraTrail."
+
+[[settings]]
+key = "home_hero_btn_text"
+value = "Booking"
+
+[[settings]]
+key = "home_hero_btn_link"
+value = "/products"
+
+[[settings]]
+key = "home_hero_image"
+value = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1800&h=980&fit=crop&q=84"
+
+[[settings]]
+key = "home_search_button"
+value = "Search"
+
+[[settings]]
+key = "home_filter_1"
+value = "Rinjani, Indonesia"
+
+[[settings]]
+key = "home_filter_2"
+value = "27 January 2026"
+
+[[settings]]
+key = "home_filter_3"
+value = "30 January 2026"
+
+[[settings]]
+key = "home_filter_4"
+value = "4 People | 1 Child"
+
+[[settings]]
+key = "home_products_label"
+value = "Tour Package"
+
+[[settings]]
+key = "home_products_title"
+value = "Explore Our Exclusive Tour Packages"
+
+[[settings]]
+key = "home_products_desc"
+value = "Find your perfect getaway with curated tour packages. Adventure, relaxation, or culture - it is all here for you."
+
+[[settings]]
+key = "package_price"
+value = "$456.80"
+
+[[settings]]
+key = "home_step_title"
+value = "Every Step of the Way"
+
+[[settings]]
+key = "home_step_desc"
+value = "Travel with ease and comfort. From private transfers to group tours, we ensure seamless transportation throughout your journey."
+
+[[settings]]
+key = "home_transport_label"
+value = "Transport"
+
+[[settings]]
+key = "home_services_title"
+value = "Effortless Travel"
+
+[[settings]]
+key = "home_showcase_title"
+value = "Guides, routes, and hidden mountain moments"
+
+[[settings]]
+key = "home_showcase_subtitle"
+value = "More than 100 local guides are ready to accompany and assist you on your journey."
+
+[[settings]]
+key = "home_showcase_btn"
+value = "Meet Guides"
+
+[[settings]]
+key = "home_nearby_metric"
+value = "135+"
+
+[[settings]]
+key = "home_nearby_label"
+value = "Event Collaboration"
+
+[[settings]]
+key = "home_products_max"
+value = "4"
+
+[[settings]]
+key = "home_services_max"
+value = "4"
+
+[[settings]]
+key = "home_showcases_max"
+value = "4"
+
+[[settings]]
+key = "about_banner_title"
+value = "We make remote adventures feel calm, clear, and human."
+
+[[settings]]
+key = "about_banner_subtitle"
+value = "TerraTrail curates mountain journeys with local guides, flexible transport, and enough detail to make every day feel simple."
+
+[[settings]]
+key = "about_intro_image"
+value = "https://images.unsplash.com/photo-1527631746610-bca00a040d60?w=1200&h=900&fit=crop&q=82"
+
+[[settings]]
+key = "about_intro_label"
+value = "How We Work"
+
+[[settings]]
+key = "about_intro_title"
+value = "Curated routes, local care, and fewer travel unknowns."
+
+[[settings]]
+key = "about_intro_p1"
+value = "We start with the traveler: pace, comfort, weather window, group size, and the kind of landscapes that make the trip worth remembering."
+
+[[settings]]
+key = "about_intro_p2"
+value = "Then we pair packages, guides, stays, and transport into an itinerary that still leaves room for wonder."
+
+[[settings]]
+key = "about_intro_btn_text"
+value = "Plan With Us"
+
+[[settings]]
+key = "about_stat_1_number"
+value = "135+"
+
+[[settings]]
+key = "about_stat_1_label"
+value = "Guide collaborations"
+
+[[settings]]
+key = "about_stat_2_number"
+value = "42"
+
+[[settings]]
+key = "about_stat_2_label"
+value = "Mountain routes curated"
+
+[[settings]]
+key = "about_stat_3_number"
+value = "98%"
+
+[[settings]]
+key = "about_stat_3_label"
+value = "Traveler satisfaction"
+
+[[settings]]
+key = "about_stat_4_number"
+value = "18"
+
+[[settings]]
+key = "about_stat_4_label"
+value = "Countries supported"
+
+[[settings]]
+key = "contact_title"
+value = "Tell us where you want the trail to begin."
+
+[[settings]]
+key = "contact_subtitle"
+value = "Share your dates, group size, comfort level, and dream destination. We will help shape the route."
+
+[[categories]]
+name = "Mountain Routes"
+slug = "cat-mountain-routes"
+
+[[categories]]
+name = "Island Escapes"
+slug = "cat-island-escapes"
+
+[[categories]]
+name = "Transport Planning"
+slug = "cat-transport-planning"
+
+[[categories]]
+name = "Travel Journal"
+slug = "cat-travel-journal"
+
+[[tags]]
+name = "Hiking"
+slug = "tag-hiking"
+
+[[tags]]
+name = "Family Travel"
+slug = "tag-family-travel"
+
+[[tags]]
+name = "Guide Included"
+slug = "tag-guide-included"
+
+[[tags]]
+name = "Scenic Transfer"
+slug = "tag-scenic-transfer"
+
+[[tags]]
+name = "Slow Travel"
+slug = "tag-slow-travel"
+
+[[contents]]
+type = "product"
+title = "Jaya Wijaya Mountain"
+slug = "jaya-wijaya-mountain"
+image_url = "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1000&h=720&fit=crop&q=82"
+sort_order = 1
+category = "cat-mountain-routes"
+tags = ["tag-hiking", "tag-guide-included"]
+excerpt = "A highland route with alpine views, guide support, lodge stays, and flexible daily pacing for small groups."
+description = "This package combines mountain scenery, local guiding, and comfortable recovery time between trail days."
+content = """<h3>Package rhythm</h3><p>Expect slow mornings, scenic drives, guided walks, and evenings built around rest rather than rushing.</p><h3>Included</h3><ul><li>Local guide and route briefing</li><li>Selected stays and breakfast</li><li>Ground transfer coordination</li></ul>"""
+
+[[contents]]
+type = "product"
+title = "Fuji Mountain"
+slug = "fuji-mountain"
+image_url = "https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?w=1000&h=720&fit=crop&q=82"
+sort_order = 2
+category = "cat-mountain-routes"
+tags = ["tag-hiking", "tag-family-travel"]
+excerpt = "A cleanly planned Japan mountain escape with lake views, gentle acclimation, and optional cultural stops."
+description = "Fuji Mountain is designed for travelers who want an iconic view with enough comfort and structure to stay present."
+content = """<p>The itinerary balances mountain viewpoints, lakeside downtime, and transport windows that avoid unnecessary stress.</p>"""
+
+[[contents]]
+type = "product"
+title = "Kilimanjaro"
+slug = "kilimanjaro"
+image_url = "https://images.unsplash.com/photo-1489392191049-fc10c97e64b6?w=1000&h=720&fit=crop&q=82"
+sort_order = 3
+category = "cat-mountain-routes"
+tags = ["tag-hiking", "tag-guide-included"]
+excerpt = "A guided ascent program with support crew planning, gear checks, and recovery days built around summit timing."
+description = "Kilimanjaro requires thoughtful pace and dependable support. This package keeps logistics visible from the first briefing."
+content = """<p>We coordinate route selection, camp rhythm, porter support, and weather-sensitive timing before the group arrives.</p>"""
+
+[[contents]]
+type = "product"
+title = "Alpine Lake Circuit"
+slug = "alpine-lake-circuit"
+image_url = "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1000&h=720&fit=crop&q=82"
+sort_order = 4
+category = "cat-island-escapes"
+tags = ["tag-slow-travel", "tag-family-travel"]
+excerpt = "A softer mountain-lake route for travelers who prefer clear water, easy walks, and scenic lodging."
+description = "The Alpine Lake Circuit is built for slower travelers who want postcard views without a hard trekking schedule."
+content = """<p>Daily plans include short walks, lake transfers, quiet meals, and optional guide-led viewpoint stops.</p>"""
+
+[[contents]]
+type = "service"
+title = "Plane"
+slug = "plane"
+image_url = "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=900&h=650&fit=crop&q=82"
+sort_order = 1
+category = "cat-transport-planning"
+tags = ["tag-scenic-transfer"]
+excerpt = "We choose flight windows that match arrival comfort, mountain weather, and realistic transfer timing."
+description = "Flight planning includes airport choice, arrival buffer, luggage considerations, and reliable onward connection windows."
+content = """<p>Plane segments are selected around the full journey, not only the lowest fare.</p>"""
+
+[[contents]]
+type = "service"
+title = "Train"
+slug = "train"
+image_url = "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=900&h=650&fit=crop&q=82"
+sort_order = 2
+category = "cat-transport-planning"
+tags = ["tag-scenic-transfer", "tag-slow-travel"]
+excerpt = "Scenic train legs that add calm, views, and predictable timing between major destination points."
+description = "Train planning works best when the journey itself becomes part of the experience."
+content = """<p>We match rail segments to daylight views, luggage ease, and hotel check-in windows.</p>"""
+
+[[contents]]
+type = "service"
+title = "Bus"
+slug = "bus"
+image_url = "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=900&h=650&fit=crop&q=82"
+sort_order = 3
+category = "cat-transport-planning"
+tags = ["tag-family-travel"]
+excerpt = "Comfortable group bus transfers for valleys, trailheads, and remote regions with limited rail access."
+description = "Bus transfers are reviewed for comfort, route conditions, stop rhythm, and realistic travel time."
+content = """<p>We build breaks, viewpoints, and reliable pickup notes into each longer ground transfer.</p>"""
+
+[[contents]]
+type = "service"
+title = "Local Transportation"
+slug = "local-transportation"
+image_url = "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=900&h=650&fit=crop&q=82"
+sort_order = 4
+category = "cat-transport-planning"
+tags = ["tag-guide-included", "tag-scenic-transfer"]
+excerpt = "Local drivers, ferries, trailhead shuttles, and short hops arranged through trusted partners."
+description = "The small local movements often decide whether a trip feels smooth. We make them visible before arrival."
+content = """<p>Each local transfer includes pickup details, backup contacts, and expectations around timing.</p>"""
+
+[[contents]]
+type = "showcase"
+title = "Rinjani Valley Road"
+slug = "rinjani-valley-road"
+image_url = "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1000&h=760&fit=crop&q=82"
+sort_order = 1
+category = "cat-mountain-routes"
+tags = ["tag-scenic-transfer", "tag-hiking"]
+excerpt = "A winding valley route with crater views, village stops, and guide-supported trail access."
+description = "This route works well for travelers who want a dramatic approach before the mountain walk begins."
+content = """<p>The road moves through changing light, terraces, and valley viewpoints before reaching the trail access zone.</p>"""
+[contents.meta]
+client = "Lombok Field Team"
+location = "Indonesia"
+
+[[contents]]
+type = "showcase"
+title = "Patagonia Wind Trail"
+slug = "patagonia-wind-trail"
+image_url = "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1000&h=760&fit=crop&q=82"
+sort_order = 2
+category = "cat-mountain-routes"
+tags = ["tag-hiking", "tag-guide-included"]
+excerpt = "Open skies, glacier-fed water, and guide notes for travelers planning a wider southern route."
+description = "Patagonia rewards slower pacing, weather buffers, and guide knowledge that keeps options flexible."
+content = """<p>We plan this area with wind windows, transfer buffers, and day-by-day flexibility.</p>"""
+[contents.meta]
+client = "Southern Andes Guides"
+location = "Argentina"
+
+[[contents]]
+type = "showcase"
+title = "Dolomite Sunrise Pass"
+slug = "dolomite-sunrise-pass"
+image_url = "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1000&h=760&fit=crop&q=82"
+sort_order = 3
+category = "cat-mountain-routes"
+tags = ["tag-slow-travel", "tag-family-travel"]
+excerpt = "A soft alpine route built around sunrise views, village meals, and steady walking days."
+description = "The Dolomite pass itinerary is less about distance and more about clean timing and memorable viewpoints."
+content = """<p>The best experience comes from early light, short transfers, and lodging that keeps the next walk close.</p>"""
+[contents.meta]
+client = "Alto Ridge Collective"
+location = "Italy"
+
+[[contents]]
+type = "showcase"
+title = "Azores Blue Coast"
+slug = "azores-blue-coast"
+image_url = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1000&h=760&fit=crop&q=82"
+sort_order = 4
+category = "cat-island-escapes"
+tags = ["tag-slow-travel", "tag-family-travel"]
+excerpt = "Coastal viewpoints, short hikes, and island transport notes for an easygoing Atlantic escape."
+description = "This guide is ideal for travelers who want mountain texture without a heavy trekking commitment."
+content = """<p>Island timing depends on weather, ferry rhythm, and short-road planning between villages.</p>"""
+[contents.meta]
+client = "Atlantic Local Hosts"
+location = "Portugal"
+
+[[contents]]
+type = "post"
+title = "How to Pack Light for Three Mountain Climates"
+slug = "pack-light-for-three-mountain-climates"
+image_url = "https://images.unsplash.com/photo-1501555088652-021faa106b9b?w=1000&h=720&fit=crop&q=82"
+sort_order = 1
+category = "cat-travel-journal"
+tags = ["tag-hiking", "tag-slow-travel"]
+excerpt = "A practical packing approach for travelers moving from warm valleys to colder ridgelines."
+content = """<p>Pack around layers, quick-dry pieces, one reliable shell, and footwear you already trust. Mountain weather rewards flexibility more than volume.</p>"""
+
+[[contents]]
+type = "post"
+title = "When Scenic Transfers Are Worth the Extra Hour"
+slug = "when-scenic-transfers-are-worth-the-extra-hour"
+image_url = "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1000&h=720&fit=crop&q=82"
+sort_order = 2
+category = "cat-transport-planning"
+tags = ["tag-scenic-transfer", "tag-slow-travel"]
+excerpt = "Some transfers deserve daylight and time because the journey becomes the first memorable view."
+content = """<p>A transfer is worth stretching when it gives acclimation, viewpoints, better arrival energy, or a meaningful break between busy travel days.</p>"""
+
+[[contents]]
+type = "post"
+title = "Designing Family-Friendly High Country Days"
+slug = "designing-family-friendly-high-country-days"
+image_url = "https://images.unsplash.com/photo-1526772662000-3f88f10405ff?w=1000&h=720&fit=crop&q=82"
+sort_order = 3
+category = "cat-travel-journal"
+tags = ["tag-family-travel", "tag-guide-included"]
+excerpt = "Family mountain travel works best with flexible walking goals, early meals, and simple transport."
+content = """<p>The best family itineraries have fewer hard deadlines, more predictable food stops, and guides who can adapt the pace without making anyone feel behind.</p>"""

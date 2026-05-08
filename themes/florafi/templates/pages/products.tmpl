@@ -1,0 +1,44 @@
+{{define "content"}}
+<section class="ff-page-hero ff-page-hero-products" style="--hero-bg:url('https://images.unsplash.com/photo-1640161704729-cbe966a08476?w=1600&h=820&fit=crop&q=82');">
+    <span class="ff-hero-ghost">USD BLOOM</span>
+    <div class="ff-page-hero-inner">
+        <span class="ff-kicker">{{T $.Ctx "page_label_products"}}</span>
+        <h1>{{T $.Ctx "page_title_products"}}</h1>
+        <span class="ff-hero-rule"></span>
+        <p>Stablecoin accounts, yield modules, and payment rails for real-world finance.</p>
+        <div class="ff-breadcrumb"><a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a><span>/</span><span>{{T $.Ctx "page_title_products"}}</span></div>
+    </div>
+</section>
+
+<section class="ff-section">
+    <div class="ff-section-heading">
+        <span class="ff-kicker">{{T $.Ctx "section_equipment_systems"}}</span>
+        <h2>{{T $.Ctx "section_product_lines"}}</h2>
+        <p>Composable product modules for teams building with stable digital dollars.</p>
+    </div>
+    <div class="ff-product-grid">
+        {{range .Products}}
+        <a class="ff-product-card" href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}">
+            <div class="ff-product-media">
+                {{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="ff-card-icon">◇</span>{{end}}
+            </div>
+            <div class="ff-product-body">
+                <span class="ff-card-eyebrow">FloraFi module</span>
+                <h3>{{.Title}}</h3>
+                <p>{{if .Excerpt}}{{.Excerpt}}{{else}}{{truncate (stripTags .Description) 150}}{{end}}</p>
+                <span class="ff-card-arrow">{{T $.Ctx "btn_view_details"}} →</span>
+            </div>
+        </a>
+        {{end}}
+    </div>
+</section>
+
+<section class="ff-soft-cta">
+    <div>
+        <span class="ff-kicker">Custom flow</span>
+        <h2>Need a custom stablecoin path?</h2>
+        <p>Talk to us about embedded deposits, payouts, treasury operations, and developer integrations.</p>
+    </div>
+    <a class="ff-pill-btn" href="{{langPrefixURL $.Ctx "/contact"}}">Talk to sales <span>→</span></a>
+</section>
+{{end}}

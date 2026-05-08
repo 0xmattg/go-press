@@ -1,0 +1,17 @@
+{{define "content"}}
+<section class="af-page-hero">
+    <span>Process</span>
+    <h1>From first sketch to final walkthrough.</h1>
+    <p>Our process modules keep decisions visible, budgets aligned, and craft coordinated from early feasibility through delivery.</p>
+</section>
+
+<section class="af-card-grid af-process-grid">
+    {{range $i, $p := .Products}}
+    <a class="af-process-card" href="{{langPrefixURL $.Ctx (printf "/products/%s" $p.Slug)}}">
+        <span>{{printf "%02d" (add $i 1)}}</span>
+        <h2>{{$p.Title}}</h2>
+        <p>{{truncate $p.Excerpt 150}}</p>
+    </a>
+    {{end}}
+</section>
+{{end}}

@@ -1,0 +1,16 @@
+{{define "content"}}
+<section class="as-detail-hero">
+    <div class="as-container">
+        <div class="as-detail-grid">
+            <div>
+                <p class="as-kicker as-kicker-light">{{.Showcase.Client}} {{if .Showcase.Location}}/ {{.Showcase.Location}}{{end}}</p>
+                <h1>{{.Showcase.Title}}</h1>
+                <p>{{truncate (stripTags .Showcase.Description) 240}}</p>
+                <div class="as-tags">{{range .Tags}}<a href="{{langPrefixURL $.Ctx (printf "/tag/%s" .Slug)}}">{{.Name}}</a>{{end}}</div>
+            </div>
+            <figure>{{if .Showcase.ImageURL}}{{responsiveImage .Showcase.ImageURL .Showcase.Title "" "(max-width: 768px) 100vw, 50vw" "lazy"}}{{end}}</figure>
+        </div>
+    </div>
+</section>
+<section class="as-section"><div class="as-container as-detail-body"><article class="as-richtext">{{safeHTML .Showcase.Description}}</article><aside class="as-side-panel"><h3>Related</h3>{{range .Related}}<a href="{{langPrefixURL $.Ctx (printf "/showcase/%s" .Slug)}}">{{.Title}}</a>{{end}}</aside></div></section>
+{{end}}

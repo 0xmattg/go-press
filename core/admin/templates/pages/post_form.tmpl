@@ -1,0 +1,61 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>{{.Title}}</h2>
+    <a href="/admin/posts" class="btn">返回列表</a>
+</div>
+<div class="card">
+    <form method="POST" action="/admin/posts/{{if .Item}}{{.Item.ID}}/edit{{else}}new{{end}}">
+        <div class="form-group">
+            <label for="title">标题 *</label>
+            <input type="text" id="title" name="title" value="{{if .Item}}{{.Item.Title}}{{end}}" required>
+        </div>
+        <div class="form-group">
+            <label for="slug">Slug *</label>
+            <input type="text" id="slug" name="slug" value="{{if .Item}}{{.Item.Slug}}{{end}}" required>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="category_id">分类</label>
+                <select id="category_id" name="category_id">
+                    <option value="">-- 选择分类 --</option>
+                    {{range .Categories}}
+                    <option value="{{.ID}}" {{if and $.Item (eq $.Item.CategoryID .ID)}}selected{{end}}>{{.Name}}</option>
+                    {{end}}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="published_at">发布时间</label>
+                <input type="datetime-local" id="published_at" name="published_at" value="{{if .Item}}{{formatDateInput .Item.PublishedAt}}{{end}}">
+                <small>留空则为草稿</small>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="excerpt">摘要</label>
+            <textarea id="excerpt" name="excerpt" rows="3">{{if .Item}}{{.Item.Excerpt}}{{end}}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="content">内容</label>
+            <textarea id="content" name="content" rows="12">{{if .Item}}{{.Item.Content}}{{end}}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="image_url">封面图 URL</label>
+            <input type="text" id="image_url" name="image_url" value="{{if .Item}}{{.Item.ImageURL}}{{end}}" placeholder="/static/uploads/...">
+        </div>
+        <div class="form-group">
+            <label>标签</label>
+            <div class="checkbox-group">
+                {{range .AllTags}}
+                <label class="checkbox-label">
+                    <input type="checkbox" name="tag_ids" value="{{.ID}}" {{if hasKey $.SelectedTags .ID}}checked{{end}}>
+                    {{.Name}}
+                </label>
+                {{end}}
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">保存</button>
+            <a href="/admin/posts" class="btn">取消</a>
+        </div>
+    </form>
+</div>
+{{end}}

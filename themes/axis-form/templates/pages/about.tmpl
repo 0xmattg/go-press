@@ -1,0 +1,28 @@
+{{define "content"}}
+{{$s := .Settings}}
+<section class="af-page-hero">
+    <span>About Us</span>
+    <h1>{{settingOr $s "about_banner_title" "Architecture that makes everyday space feel considered."}}</h1>
+    <p>{{settingOr $s "about_banner_subtitle" "Axis Form is a studio for homes, hospitality, and workplace environments shaped by restraint, materiality, and long-term use."}}</p>
+</section>
+
+<section class="af-split">
+    <div class="af-split-media">
+        {{responsiveImage (settingOr $s "about_intro_image" "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1200&h=900&fit=crop&q=82") "Architecture studio interior" "" "(max-width: 768px) 100vw, 50vw" "lazy"}}
+    </div>
+    <div class="af-split-copy">
+        <span class="af-kicker">{{settingOr $s "about_intro_label" "Studio Ethos"}}</span>
+        <h2>{{settingOr $s "about_intro_title" "We design quiet spaces with strong intent."}}</h2>
+        <p>{{settingOr $s "about_intro_p1" "Our work begins with listening: to clients, sites, light, climate, budgets, and the routines that define how spaces are used."}}</p>
+        <p>{{settingOr $s "about_intro_p2" "From concept studies to construction administration, we keep every decision aligned with atmosphere, function, and durability."}}</p>
+        <a class="af-primary-btn af-inline" href="{{langPrefixURL .Ctx "/contact"}}">{{settingOr $s "about_intro_btn_text" "Start a Conversation"}}</a>
+    </div>
+</section>
+
+<section class="af-dark-band">
+    <div><strong>{{settingOr $s "about_stat_1_number" "25+"}}</strong><span>{{settingOr $s "about_stat_1_label" "Years shaping residences and hospitality spaces"}}</span></div>
+    <div><strong>{{settingOr $s "about_stat_2_number" "500+"}}</strong><span>{{settingOr $s "about_stat_2_label" "Projects completed from concept to handover"}}</span></div>
+    <div><strong>{{settingOr $s "about_stat_3_number" "98%"}}</strong><span>{{settingOr $s "about_stat_3_label" "Client retention across multi-phase work"}}</span></div>
+    <div><strong>{{settingOr $s "about_stat_4_number" "15+"}}</strong><span>{{settingOr $s "about_stat_4_label" "Countries represented in our project archive"}}</span></div>
+</section>
+{{end}}

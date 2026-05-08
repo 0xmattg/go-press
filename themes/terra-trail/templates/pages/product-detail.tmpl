@@ -1,0 +1,22 @@
+{{define "content"}}
+<section class="tt-detail-hero">
+    <span>Tour Package</span>
+    <h1>{{.Product.Title}}</h1>
+    <p>{{.Product.Excerpt}}</p>
+</section>
+
+<section class="tt-detail-layout">
+    <article class="tt-detail-card">
+        {{if .Product.ImageURL}}<div class="tt-detail-media">{{responsiveImagePriority .Product.ImageURL .Product.Title "" "(max-width: 768px) 100vw, 62vw"}}</div>{{end}}
+        <div class="tt-meta-row">
+            <span><strong>Rating</strong>5.5 traveler score</span>
+            <span><strong>From</strong>$456.80 per person</span>
+        </div>
+        <div class="tt-richtext">{{safeHTML .Product.Description}}</div>
+    </article>
+    <aside class="tt-detail-aside">
+        <h3>More packages</h3>
+        {{range .Related}}<a href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}">{{.Title}} <span>→</span></a>{{end}}
+    </aside>
+</section>
+{{end}}

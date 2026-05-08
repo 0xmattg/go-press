@@ -1,0 +1,23 @@
+{{define "header"}}
+{{$s := .Settings}}
+{{$logoImage := index $s "home_logo_image"}}
+<header class="af-header">
+    <a class="af-brand" href="{{langPrefixURL .Ctx "/"}}" aria-label="{{settingOr $s "company_name" "Axis Form"}} home">
+        {{if $logoImage}}<img class="af-brand-logo" src="{{$logoImage}}" alt="" aria-hidden="true">{{end}}
+        <span class="af-brand-text">{{settingOr $s "home_logo_text" "Axis Form"}}</span>
+    </a>
+    <button class="af-nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false">
+        <span></span><span></span>
+    </button>
+    <nav class="af-nav" aria-label="Primary navigation">
+        <ul class="af-nav-list">
+            <li><a class="{{if eq .ActivePage "about"}}active{{end}}" href="{{langPrefixURL .Ctx "/about"}}">{{settingOr $s "nav_about" "About Us"}}</a></li>
+            <li><a class="{{if eq .ActivePage "services"}}active{{end}}" href="{{langPrefixURL .Ctx "/services"}}">{{settingOr $s "nav_services" "Our Services"}}</a></li>
+            <li><a class="{{if eq .ActivePage "showcase"}}active{{end}}" href="{{langPrefixURL .Ctx "/showcase"}}">{{settingOr $s "nav_showcase" "Portfolio"}}</a></li>
+            <li><a class="{{if eq .ActivePage "products"}}active{{end}}" href="{{langPrefixURL .Ctx "/products"}}">{{settingOr $s "nav_process" "Process"}}</a></li>
+            <li><a class="{{if eq .ActivePage "contact"}}active{{end}}" href="{{langPrefixURL .Ctx "/contact"}}">{{settingOr $s "nav_contact" "Contacts"}}</a></li>
+            {{renderHook "header.nav.after" .}}
+        </ul>
+    </nav>
+</header>
+{{end}}

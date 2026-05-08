@@ -1,0 +1,21 @@
+{{define "content"}}
+<section class="as-detail-hero">
+    <div class="as-container">
+        <div class="as-detail-grid">
+            <div>
+                <p class="as-kicker as-kicker-light">Product</p>
+                <h1>{{.Product.Title}}</h1>
+                <p>{{if .Product.Excerpt}}{{.Product.Excerpt}}{{else}}{{truncate (stripTags .Product.Description) 220}}{{end}}</p>
+                <div class="as-tags">{{range .Tags}}<a href="{{langPrefixURL $.Ctx (printf "/tag/%s" .Slug)}}">{{.Name}}</a>{{end}}</div>
+            </div>
+            <figure>{{if .Product.ImageURL}}{{responsiveImage .Product.ImageURL .Product.Title "" "(max-width: 768px) 100vw, 50vw" "lazy"}}{{end}}</figure>
+        </div>
+    </div>
+</section>
+<section class="as-section">
+    <div class="as-container as-detail-body">
+        <article class="as-richtext">{{safeHTML .Product.Description}}</article>
+        <aside class="as-side-panel"><h3>Related</h3>{{range .Related}}<a href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}">{{.Title}}</a>{{end}}</aside>
+    </div>
+</section>
+{{end}}

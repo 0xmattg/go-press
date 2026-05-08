@@ -1,0 +1,105 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>{{T . "nav.cache"}}</h2>
+</div>
+
+
+
+{{with .CacheInfo}}
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-body">
+        <h3 style="margin-bottom: 1rem;">{{T $ "cache.status"}}</h3>
+        <table class="table">
+            <tbody>
+                <tr>
+                    <td style="width:200px;"><strong>L1 {{T $ "cache.page"}} (Memory)</strong></td>
+                    <td>
+                        {{if eq .L1Type "noop"}}
+                            <span class="badge" style="background:#94a3b8;">{{T $ "cache.not_enabled"}}</span>
+                        {{else}}
+                            <span class="badge badge-active">{{.L1Type}}</span>
+                        {{end}}
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>L2 {{T $ "cache.page"}} (Redis)</strong></td>
+                    <td>
+                        {{if eq .L2Type "noop"}}
+                            <span class="badge" style="background:#94a3b8;">{{T $ "cache.not_enabled"}}</span>
+                        {{else}}
+                            <span class="badge badge-active">{{.L2Type}}</span>
+                        {{end}}
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>{{T $ "cache.overall"}}</strong></td>
+                    <td>
+                        {{if .IsNoop}}
+                            <span class="badge" style="background:#ef4444;">{{T $ "cache.all_disabled"}}</span>
+                        {{else}}
+                            <span class="badge badge-active">{{T $ "cache.running"}}</span>
+                        {{end}}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{{if not .IsNoop}}
+<div class="card">
+    <div class="card-body">
+        <h3 style="margin-bottom: 1rem;">{{T $ "cache.operations"}}</h3>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <form method="POST" action="/admin/cache/flush" style="display:inline;">
+                <input type="hidden" name="target" value="all">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('{{T $ "confirm.clear_all_cache"}}')">{{T $ "action.clear_all_cache"}}</button>
+            </form>
+            <form method="POST" action="/admin/cache/flush" style="display:inline;">
+                <input type="hidden" name="target" value="page">
+                <button type="submit" class="btn btn-warning" onclick="return confirm('{{T $ "confirm.clear_page_cache"}}')">{{T $ "action.clear_page_cache"}}</button>
+            </form>
+            <form method="POST" action="/admin/cache/flush" style="display:inline;">
+                <input type="hidden" name="target" value="fragment">
+                <button type="submit" class="btn btn-warning" onclick="return confirm('{{T $ "confirm.clear_fragment_cache"}}')">{{T $ "action.clear_fragment_cache"}}</button>
+            </form>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{else}}
+<div class="card">
+    <div class="card-body">
+        <p class="empty-msg">{{T . "cache.manager_unavailable"}}</p>
+    </div>
+</div>
+{{end}}
+
+<style>
+.btn-danger {
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+.btn-danger:hover {
+    background: #dc2626;
+}
+.btn-warning {
+    background: #f59e0b;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+.btn-warning:hover {
+    background: #d97706;
+}
+</style>
+{{end}}

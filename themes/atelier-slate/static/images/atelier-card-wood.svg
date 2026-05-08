@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1120" role="img" aria-label="Editorial wood and slate card">
+  <defs>
+    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f0f0ec"/>
+      <stop offset=".45" stop-color="#a69a8a"/>
+      <stop offset="1" stop-color="#111"/>
+    </linearGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#26120c"/>
+      <stop offset=".3" stop-color="#b78258"/>
+      <stop offset=".58" stop-color="#f0d7b9"/>
+      <stop offset="1" stop-color="#16100e"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="1120" fill="url(#card)"/>
+  <path d="M88 660c108-176 250-269 426-278 117-6 225 22 324 84v560H88Z" fill="#111517" opacity=".88"/>
+  <path d="M125 202c162-52 335-72 520-59 65 4 125 13 179 27-99 58-174 136-224 234-142-73-301-140-475-202Z" fill="url(#wood)"/>
+  <path d="M129 732c159 34 331 40 516 19 88-10 155-24 202-43-43 81-123 131-240 151-158 27-317-15-478-127Z" fill="url(#wood)"/>
+  <text x="82" y="135" font-family="Inter, Arial, sans-serif" font-size="52" font-weight="800" fill="#fff">Vision-proofed</text>
+  <text x="82" y="198" font-family="Inter, Arial, sans-serif" font-size="24" fill="#fff" opacity=".82">Design systems for tactile brands</text>
+  <text x="590" y="1010" font-family="Inter, Arial, sans-serif" font-size="170" font-weight="700" fill="#fff" opacity=".24">01</text>
+</svg>

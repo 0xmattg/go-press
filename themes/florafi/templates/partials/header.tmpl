@@ -1,0 +1,32 @@
+{{define "header"}}
+<header class="ff-header" id="site-header">
+    <a href="{{langPrefixURL $.Ctx "/"}}" class="ff-logo" aria-label="{{settingOr .Settings "home_logo_text" "FloraFi"}} home">
+        <span class="ff-logo-mark" aria-hidden="true"><span></span></span>
+        <span class="ff-logo-text">{{settingOr .Settings "home_logo_text" "FloraFi"}}</span>
+    </a>
+
+    <button class="ff-nav-toggle" id="ff-nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+    </button>
+
+    <nav class="ff-nav" id="ff-nav" aria-label="Primary navigation">
+        <ul class="ff-nav-list">
+            {{$headerMenu := menuByLocation "header"}}
+            {{if $headerMenu}}
+                {{range $headerMenu.Items}}
+                <li><a href="{{.URL}}" class="{{if isMenuActive $.ActivePage .URL}}active{{end}}" {{if eq .Target "_blank"}}target="_blank" rel="noopener"{{end}}>{{.Title}}</a></li>
+                {{end}}
+            {{else}}
+                <li><a href="{{langPrefixURL $.Ctx "/products"}}" class="{{if eq .ActivePage "products"}}active{{end}}">{{settingOr .Settings "home_nav_1_text" "USD Flora"}}</a></li>
+                <li><a href="{{langPrefixURL $.Ctx "/services"}}" class="{{if eq .ActivePage "services"}}active{{end}}">{{settingOr .Settings "home_nav_2_text" "Business"}}</a></li>
+                <li><a href="{{langPrefixURL $.Ctx "/showcase"}}" class="{{if eq .ActivePage "showcase"}}active{{end}}">{{settingOr .Settings "home_nav_3_text" "Treasury"}}</a></li>
+                <li><a href="{{langPrefixURL $.Ctx "/blog"}}" class="{{if eq .ActivePage "blog"}}active{{end}}">{{settingOr .Settings "home_nav_4_text" "Developers"}}</a></li>
+                <li><a href="{{langPrefixURL $.Ctx "/about"}}" class="{{if eq .ActivePage "about"}}active{{end}}">{{settingOr .Settings "home_nav_5_text" "About us"}}</a></li>
+            {{end}}
+            {{renderHook "header.nav.after" .}}
+        </ul>
+    </nav>
+
+    <a class="ff-launch" href="{{settingOr .Settings "home_launch_link" "/contact"}}">{{settingOr .Settings "home_launch_text" "Launch app"}}</a>
+</header>
+{{end}}

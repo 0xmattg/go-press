@@ -1,0 +1,113 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>{{T . "nav.redirects"}}</h2>
+</div>
+
+
+
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-body">
+        <h3 style="margin-bottom: 1rem;">{{T . "redirect.add_rule"}}</h3>
+        <form method="POST" action="/admin/redirects" class="redirect-form">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+                <div class="form-group" style="flex:1; min-width:200px;">
+                    <label for="source">{{T . "field.source_path"}}</label>
+                    <input type="text" id="source" name="source" class="form-control" placeholder="/old-page" required>
+                </div>
+                <div class="form-group" style="flex:1; min-width:200px;">
+                    <label for="target">{{T . "field.target_path"}}</label>
+                    <input type="text" id="target" name="target" class="form-control" placeholder="/new-page" required>
+                </div>
+                <div class="form-group" style="width:120px;">
+                    <label for="code">{{T . "field.status_code"}}</label>
+                    <select id="code" name="code" class="form-control">
+                        <option value="301">{{T . "redirect.permanent"}}</option>
+                        <option value="302">{{T . "redirect.temporary"}}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">{{T . "action.add"}}</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h3 style="margin-bottom: 1rem;">{{T . "redirect.existing_rules"}}</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>{{T . "field.source_path"}}</th>
+                    <th>{{T . "field.target_path"}}</th>
+                    <th>{{T . "field.status_code"}}</th>
+                    <th>{{T . "field.hit_count"}}</th>
+                    <th>{{T . "field.actions"}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Redirects}}
+                <tr>
+                    <td><code>{{.SourcePath}}</code></td>
+                    <td><code>{{.TargetPath}}</code></td>
+                    <td>
+                        {{if eq .StatusCode 301}}
+                            <span class="badge badge-active">{{T $ "redirect.permanent"}}</span>
+                        {{else}}
+                            <span class="badge" style="background:#f59e0b;">{{T $ "redirect.temporary"}}</span>
+                        {{end}}
+                    </td>
+                    <td>{{.HitCount}}</td>
+                    <td>
+                        <form method="POST" action="/admin/redirects/delete" style="display:inline;">
+                            <input type="hidden" name="source" value="{{.SourcePath}}">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('{{T $ "confirm.delete_redirect"}}')">{{T $ "action.delete"}}</button>
+                        </form>
+                    </td>
+                </tr>
+                {{else}}
+                <tr>
+                    <td colspan="5" class="empty-msg">{{T . "redirect.empty"}}</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+.redirect-form .form-group {
+    margin-bottom: 0;
+}
+.redirect-form label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: #475569;
+}
+.btn-sm {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+}
+.btn-danger {
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+.btn-danger:hover {
+    background: #dc2626;
+}
+code {
+    background: #f1f5f9;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.85rem;
+}
+</style>
+{{end}}

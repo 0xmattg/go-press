@@ -1,0 +1,30 @@
+{{define "base"}}<!DOCTYPE html>
+<html lang="{{currentLang .Ctx}}">
+<head>
+    {{$hero := settingOr .Settings "home_hero_image" ""}}
+    {{if and (eq .ActivePage "home") (not $hero)}}{{range .Services}}{{if and (not $hero) .ImageURL}}{{$hero = .ImageURL}}{{end}}{{end}}{{end}}
+    {{if not $hero}}{{$hero = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1800&h=980&fit=crop&q=84"}}{{end}}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - {{settingOr .Settings "site_name" "Civic Estate"}}</title>
+    {{with seoHeadFor .}}{{.}}{{else}}<meta name="description" content="{{settingOr $.Settings "site_description" "Commercial property search, leasing advisory, and market-ready real-estate intelligence."}}">{{end}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    {{if eq .ActivePage "home"}}{{responsiveImagePreload $hero "100vw"}}{{end}}
+    <link rel="stylesheet" href="/static/css/style.css?v=civic-estate-1">
+    {{renderHook "theme.head.end" .}}
+</head>
+<body class="ce-body ce-page-{{.ActivePage}}">
+    {{renderHook "theme.body.open" .}}
+    <div class="ce-site">
+        {{template "header" .}}
+        <main class="ce-main">
+            {{template "content" .}}
+        </main>
+        {{template "footer" .}}
+    </div>
+    <script src="/static/js/main.js?v=civic-estate-1"></script>
+    {{renderHook "theme.footer.end" .}}
+</body>
+</html>{{end}}

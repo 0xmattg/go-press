@@ -1,0 +1,51 @@
+[theme]
+name = "Financial News"
+version = "1.0.0"
+description = "A fast, data-driven financial news portal theme for GoPress."
+author = "GoPress Team"
+
+[[content_types]]
+name = "market_update"
+label = "行情快讯"
+label_plural = "行情快讯"
+supports = ["title", "content", "publish_date"]
+has_archive = true
+rewrite_slug = "market"
+menu_icon = "cache_mgmt"
+menu_order = 2
+
+[[content_types.meta_fields]]
+key = "ticker"
+label = "股票代码"
+type = "string"
+
+[[content_types.meta_fields]]
+key = "price_change"
+label = "涨跌幅"
+type = "string"
+
+[[content_types.meta_fields]]
+key = "market"
+label = "所属市场"
+type = "string"
+
+[[content_types]]
+name = "analysis"
+label = "深度分析"
+label_plural = "深度分析"
+supports = ["title", "content", "excerpt", "thumbnail", "publish_date"]
+taxonomies = ["category"]
+has_archive = true
+rewrite_slug = "analysis"
+menu_icon = "post"
+menu_order = 3
+
+[[content_types.meta_fields]]
+key = "analyst"
+label = "分析师"
+type = "string"
+
+[[content_types.meta_fields]]
+key = "rating"
+label = "评级"
+type = "string"

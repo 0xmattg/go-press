@@ -1,0 +1,404 @@
+# GoPress Seed Data — Atelier Slate Demo
+
+[[settings]]
+key = "site_name"
+value = "Atelier Slate"
+
+[[settings]]
+key = "site_description"
+value = "A strategic digital studio for launch campaigns, product storytelling, and immersive brand systems."
+
+[[settings]]
+key = "company_name"
+value = "Atelier Slate"
+
+[[settings]]
+key = "company_email"
+value = "hello@atelierslate.example"
+
+[[settings]]
+key = "company_phone"
+value = "+1 415 000 0198"
+
+[[settings]]
+key = "company_address"
+value = "Remote studio · Shanghai / San Francisco"
+
+[[settings]]
+key = "company_description"
+value = "A digital guild for founders who need strategy, design, content, and launch systems to move as one."
+
+[[settings]]
+key = "company_year"
+value = "2026"
+
+[[settings]]
+key = "footer_text"
+value = "© 2026 Atelier Slate. All rights reserved."
+
+[[settings]]
+key = "home_logo_glyph"
+value = "A"
+
+[[settings]]
+key = "home_logo_text"
+value = "Atelier Slate"
+
+[[settings]]
+key = "home_cta_text"
+value = "Start Today"
+
+[[settings]]
+key = "home_cta_link"
+value = "/contact"
+
+[[settings]]
+key = "home_hero_1_image"
+value = "/static/images/atelier-hero.svg"
+
+[[settings]]
+key = "home_hero_1_label"
+value = "Digital guild / Strategy + Design"
+
+[[settings]]
+key = "home_hero_1_title"
+value = "We build campaign systems with strategic creativity and visual conviction."
+
+[[settings]]
+key = "home_hero_1_desc"
+value = "Brand worlds, product narratives, and digital experiences for founders who need launch work that feels sharp from day one."
+
+[[settings]]
+key = "home_hero_1_btn1_text"
+value = "Start Today"
+
+[[settings]]
+key = "home_hero_1_btn1_link"
+value = "/contact"
+
+[[settings]]
+key = "home_hero_1_btn2_text"
+value = "View Work"
+
+[[settings]]
+key = "home_hero_1_btn2_link"
+value = "/showcase"
+
+[[settings]]
+key = "home_hero_note_title"
+value = "Designing in Solution"
+
+[[settings]]
+key = "home_hero_note_text"
+value = "Narrative, UI, content, and launch assets."
+
+[[settings]]
+key = "home_intro_micro"
+value = "We create intuitive and visually engaging digital experiences that enhance user interaction and satisfaction."
+
+[[settings]]
+key = "home_about_title"
+value = "Empowering visionary founders from day one"
+
+[[settings]]
+key = "home_about_image"
+value = "/static/images/atelier-hero.svg"
+
+[[settings]]
+key = "home_card_1_image"
+value = "/static/images/atelier-card-wood.svg"
+
+[[settings]]
+key = "home_card_2_image"
+value = "/static/images/atelier-card-slate.svg"
+
+[[settings]]
+key = "home_services_label"
+value = "Featured"
+
+[[settings]]
+key = "home_services_title"
+value = "We are a team of designers, strategists, and innovators dedicated to exceptional digital experiences."
+
+[[settings]]
+key = "home_products_label"
+value = "Products"
+
+[[settings]]
+key = "home_products_title"
+value = "Launch-ready systems for every visible touchpoint"
+
+[[settings]]
+key = "home_products_max"
+value = "6"
+
+[[settings]]
+key = "home_services_max"
+value = "6"
+
+[[settings]]
+key = "home_stat_1_number"
+value = "12+"
+
+[[settings]]
+key = "home_stat_1_label"
+value = "Years of Service"
+
+[[settings]]
+key = "home_stat_2_number"
+value = "80+"
+
+[[settings]]
+key = "home_stat_2_label"
+value = "Team Members"
+
+[[settings]]
+key = "home_stat_3_number"
+value = "3K+"
+
+[[settings]]
+key = "home_stat_3_label"
+value = "Assets Delivered"
+
+[[settings]]
+key = "subpage_hero_image"
+value = "/static/images/atelier-hero.svg"
+
+[[settings]]
+key = "footer_cta_image"
+value = "/static/images/atelier-hero.svg"
+
+[[settings]]
+key = "social_linkedin"
+value = ""
+
+[[settings]]
+key = "social_wechat"
+value = ""
+
+[[settings]]
+key = "social_facebook"
+value = ""
+
+[[settings]]
+key = "social_x"
+value = ""
+
+[[settings]]
+key = "social_youtube"
+value = ""
+
+[[settings]]
+key = "social_slack"
+value = ""
+
+[[settings]]
+key = "social_discord"
+value = ""
+
+[[settings]]
+key = "social_github"
+value = ""
+
+[[categories]]
+name = "Studio Notes"
+slug = "cat-studio-notes"
+
+[[categories]]
+name = "Product Systems"
+slug = "cat-product-systems"
+
+[[categories]]
+name = "Launch Work"
+slug = "cat-launch-work"
+
+[[categories]]
+name = "Field Signals"
+slug = "cat-field-signals"
+
+[[tags]]
+name = "Narrative Design"
+slug = "tag-narrative-design"
+
+[[tags]]
+name = "Interface Systems"
+slug = "tag-interface-systems"
+
+[[tags]]
+name = "Campaign Assets"
+slug = "tag-campaign-assets"
+
+[[tags]]
+name = "Founder Story"
+slug = "tag-founder-story"
+
+[[tags]]
+name = "Motion Direction"
+slug = "tag-motion-direction"
+
+[[tags]]
+name = "Editorial Web"
+slug = "tag-editorial-web"
+
+[[contents]]
+type = "product"
+title = "Launch Narrative System"
+slug = "launch-narrative-system"
+image_url = "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1200&h=900&fit=crop&q=80"
+sort_order = 1
+category = "cat-product-systems"
+tags = ["tag-narrative-design", "tag-founder-story", "tag-campaign-assets"]
+excerpt = "A complete story architecture for a new product, from positioning to web copy and investor-ready proof points."
+description = """<h3>What it includes</h3><p>We turn a raw product brief into a usable launch narrative: audience frame, category tension, proof hierarchy, landing page copy, product story, and campaign message library.</p><h3>Best for</h3><p>Teams preparing a public launch, funding announcement, new market entry, or major repositioning.</p>"""
+
+[[contents]]
+type = "product"
+title = "Editorial Web Kit"
+slug = "editorial-web-kit"
+image_url = "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&h=900&fit=crop&q=80"
+sort_order = 2
+category = "cat-product-systems"
+tags = ["tag-interface-systems", "tag-editorial-web"]
+excerpt = "A focused website system with page patterns, components, media rules, and CMS-ready content structure."
+description = """<h3>System shape</h3><p>The kit covers the high-pressure pages that shape perception: home, product, use case, about, contact, journal, and conversion paths. It pairs design files with CMS-ready templates and media direction.</p><h3>Delivery</h3><p>Teams receive a compact design system, content model, reusable blocks, and implementation notes.</p>"""
+
+[[contents]]
+type = "product"
+title = "Campaign Asset Lab"
+slug = "campaign-asset-lab"
+image_url = "https://images.unsplash.com/photo-1518005020951-eccb494ad742?w=1200&h=900&fit=crop&q=80"
+sort_order = 3
+category = "cat-product-systems"
+tags = ["tag-campaign-assets", "tag-motion-direction"]
+excerpt = "A sprint for ad variants, social modules, launch visuals, press imagery, and partner-ready creative."
+description = """<h3>Asset rhythm</h3><p>We produce a visual language, motion frames, modular campaign crops, paid social variants, and a working image library that keeps the launch consistent across channels.</p><h3>Output</h3><p>Final files include editable source, export packs, and usage guidance for future drops.</p>"""
+
+[[contents]]
+type = "product"
+title = "Founder Signal Deck"
+slug = "founder-signal-deck"
+image_url = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&h=900&fit=crop&q=80"
+sort_order = 4
+category = "cat-product-systems"
+tags = ["tag-founder-story", "tag-narrative-design"]
+excerpt = "A concise investor, partner, or sales narrative deck with sharp proof, clear sequence, and premium visual pacing."
+description = """<h3>Deck strategy</h3><p>The deck is built around the few arguments that matter most. We remove weak claims, sharpen visual evidence, and create a rhythm that can be presented live or sent cold.</p>"""
+
+[[contents]]
+type = "service"
+title = "Strategic Positioning"
+slug = "strategic-positioning"
+image_url = "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200&h=900&fit=crop&q=80"
+sort_order = 1
+category = "cat-launch-work"
+tags = ["tag-narrative-design", "tag-founder-story"]
+excerpt = "Define the category, audience, tension, proof, and story sequence before production starts."
+description = """<h3>Position before polish</h3><p>We pressure-test the brief, map audience decisions, identify claims that can be proven, and create a simple narrative spine for all design and content work.</p>"""
+
+[[contents]]
+type = "service"
+title = "Interface Direction"
+slug = "interface-direction"
+image_url = "https://images.unsplash.com/photo-1558655146-d09347e92766?w=1200&h=900&fit=crop&q=80"
+sort_order = 2
+category = "cat-launch-work"
+tags = ["tag-interface-systems", "tag-editorial-web"]
+excerpt = "Design page systems, interaction rules, content density, and visual hierarchy for conversion-focused experiences."
+description = """<h3>Interface systems</h3><p>We design screens that carry the same editorial rhythm across pages: compact navigation, tactile media, readable copy, strong sequence markers, and no unnecessary decoration.</p>"""
+
+[[contents]]
+type = "service"
+title = "Creative Production"
+slug = "creative-production"
+image_url = "https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=1200&h=900&fit=crop&q=80"
+sort_order = 3
+category = "cat-launch-work"
+tags = ["tag-campaign-assets", "tag-motion-direction"]
+excerpt = "Produce the visual, motion, and content assets needed to keep a launch coherent across every channel."
+description = """<h3>Production scope</h3><p>We create launch imagery, motion references, social crops, page graphics, content modules, and reusable campaign elements for internal and external teams.</p>"""
+
+[[contents]]
+type = "service"
+title = "CMS Implementation"
+slug = "cms-implementation"
+image_url = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=900&fit=crop&q=80"
+sort_order = 4
+category = "cat-launch-work"
+tags = ["tag-interface-systems", "tag-editorial-web"]
+excerpt = "Translate design into maintainable CMS templates, content models, and publishing workflows."
+description = """<h3>Implementation</h3><p>We build the visible system and the editorial workflow behind it, so internal teams can publish products, cases, posts, and landing pages without breaking the design language.</p>"""
+
+[[contents]]
+type = "showcase"
+title = "Northline AI Launch World"
+slug = "northline-ai-launch-world"
+image_url = "https://images.unsplash.com/photo-1518005020951-eccb494ad742?w=1400&h=1000&fit=crop&q=80"
+sort_order = 1
+category = "cat-launch-work"
+tags = ["tag-interface-systems", "tag-campaign-assets"]
+excerpt = "A launch system for an AI operations product entering a crowded category."
+description = """<h3>Challenge</h3><p>Northline needed to avoid generic AI language and make an operational product feel specific, credible, and visually memorable.</p><h3>Result</h3><p>We delivered positioning, homepage direction, campaign visuals, product modules, and a compact proof library for sales and investor conversations.</p>"""
+[contents.meta]
+client = "Northline AI"
+location = "San Francisco"
+
+[[contents]]
+type = "showcase"
+title = "Lumen Market Editorial System"
+slug = "lumen-market-editorial-system"
+image_url = "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1400&h=1000&fit=crop&q=80"
+sort_order = 2
+category = "cat-launch-work"
+tags = ["tag-editorial-web", "tag-narrative-design"]
+excerpt = "A content-rich brand and web system for a marketplace with complex trust signals."
+description = """<h3>Challenge</h3><p>The product had strong supply but scattered storytelling. We created a modular editorial architecture that made expertise, inventory, and outcomes easy to scan.</p><h3>Result</h3><p>The final system included a homepage, category pages, partner stories, journal templates, and campaign creative.</p>"""
+[contents.meta]
+client = "Lumen Market"
+location = "New York"
+
+[[contents]]
+type = "showcase"
+title = "Vessel Studio Campaign Kit"
+slug = "vessel-studio-campaign-kit"
+image_url = "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1400&h=1000&fit=crop&q=80"
+sort_order = 3
+category = "cat-launch-work"
+tags = ["tag-campaign-assets", "tag-motion-direction"]
+excerpt = "A compact visual campaign kit for a design studio's first international announcement."
+description = """<h3>Challenge</h3><p>The announcement needed to look premium without feeling like a generic portfolio launch.</p><h3>Result</h3><p>We produced a black-and-white visual system, tactile image crops, social modules, motion boards, and a lightweight landing page.</p>"""
+[contents.meta]
+client = "Vessel Studio"
+location = "London"
+
+[[contents]]
+type = "post"
+title = "Why launch pages need sequence, not decoration"
+slug = "why-launch-pages-need-sequence"
+image_url = "https://images.unsplash.com/photo-1522542550221-31fd19575a2d?w=1200&h=800&fit=crop&q=80"
+sort_order = 1
+category = "cat-studio-notes"
+tags = ["tag-editorial-web", "tag-narrative-design"]
+excerpt = "A launch page succeeds when it moves the reader through proof, tension, product clarity, and action in the right order."
+content = """<h3>Sequence creates trust</h3><p>Decoration can make a page feel expensive for a moment, but sequence makes it useful. The visitor needs a clear first claim, a specific problem, proof that the team understands the market, and a next action that does not feel premature.</p><p>That is why our pages often use visible numbers, constrained sections, and compact copy. The structure tells the reader where they are and what decision comes next.</p>"""
+
+[[contents]]
+type = "post"
+title = "Using tactile imagery in digital product storytelling"
+slug = "using-tactile-imagery"
+image_url = "https://images.unsplash.com/photo-1518005020951-eccb494ad742?w=1200&h=800&fit=crop&q=80"
+sort_order = 2
+category = "cat-field-signals"
+tags = ["tag-campaign-assets", "tag-founder-story"]
+excerpt = "Material imagery can make abstract technology feel specific, physical, and easier to remember."
+content = """<h3>Texture makes technology legible</h3><p>Abstract products often need a physical visual anchor. Wood, stone, paper, glass, metal, and shadow can give a digital idea weight without pretending to be literal product photography.</p><p>The rule is restraint: one strong material language is better than a collage of unrelated effects.</p>"""
+
+[[contents]]
+type = "post"
+title = "The founder story is an interface"
+slug = "founder-story-is-an-interface"
+image_url = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&h=800&fit=crop&q=80"
+sort_order = 3
+category = "cat-studio-notes"
+tags = ["tag-founder-story", "tag-narrative-design"]
+excerpt = "A founder narrative should help readers navigate conviction, timing, proof, and risk."
+content = """<h3>Story as navigation</h3><p>A founder story is not a biography pasted onto an about page. It is an interface for trust. It should help the reader understand why this team sees the problem clearly, why now matters, and why the proposed product has earned attention.</p>"""

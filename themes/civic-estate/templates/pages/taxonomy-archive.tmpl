@@ -1,0 +1,18 @@
+{{define "content"}}
+<section class="ce-page-hero">
+    <span>{{.TaxonomyType}}</span>
+    <h1>{{.TermName}}</h1>
+    <p>{{.Total}} commercial real-estate records connected to this term.</p>
+</section>
+
+<section class="ce-card-grid">
+    {{range .Items}}
+    <a class="ce-archive-card" href="{{.DetailURL}}">
+        <div class="ce-card-media">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{end}}</div>
+        <span>{{.TypeLabel}}</span>
+        <h2>{{.Title}}</h2>
+        <p>{{truncate .Excerpt 120}}</p>
+    </a>
+    {{end}}
+</section>
+{{end}}

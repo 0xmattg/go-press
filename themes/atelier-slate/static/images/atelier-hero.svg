@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 950" role="img" aria-label="Abstract dark slate and carved wood studio object">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#070707"/>
+      <stop offset="0.58" stop-color="#242628"/>
+      <stop offset="1" stop-color="#050505"/>
+    </linearGradient>
+    <linearGradient id="slate" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d5d9dc"/>
+      <stop offset="0.3" stop-color="#70777b"/>
+      <stop offset="0.7" stop-color="#151719"/>
+      <stop offset="1" stop-color="#040404"/>
+    </linearGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7b4728"/>
+      <stop offset="0.25" stop-color="#d19a70"/>
+      <stop offset="0.52" stop-color="#eed2b2"/>
+      <stop offset="0.76" stop-color="#9f6340"/>
+      <stop offset="1" stop-color="#20100b"/>
+    </linearGradient>
+    <radialGradient id="light" cx="43%" cy="40%" r="55%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".34"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="36" stdDeviation="38" flood-color="#000" flood-opacity=".55"/>
+    </filter>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 .08"/>
+      </feComponentTransfer>
+    </filter>
+  </defs>
+  <rect width="1600" height="950" fill="url(#bg)"/>
+  <rect width="1600" height="950" fill="url(#light)"/>
+  <g filter="url(#shadow)" transform="translate(155 130)">
+    <path d="M95 324c150-60 373-83 610-73 286 12 492 89 655 145-102 109-265 145-487 139-237-6-510-60-778-211Z" fill="#0f1113"/>
+    <path d="M143 277c257-40 495-38 712 9 153 33 302 83 458 100-109 91-315 122-550 100-243-22-440-90-620-209Z" fill="url(#slate)" opacity=".96"/>
+    <path d="M400 232c80 31 132 90 150 180 36-95 82-139 141-130-13 95-54 164-126 207 161 18 292 14 394-13-52-88-23-168 88-240-139 9-251-7-337-48-138-64-241-50-310 44Z" fill="#111517" opacity=".9"/>
+    <g fill="#060707">
+      <rect x="610" y="287" width="22" height="172" rx="2"/>
+      <rect x="641" y="270" width="28" height="190" rx="2"/>
+      <rect x="678" y="306" width="24" height="154" rx="2"/>
+      <rect x="713" y="249" width="36" height="211" rx="2"/>
+      <rect x="758" y="328" width="21" height="132" rx="2"/>
+      <rect x="787" y="286" width="31" height="174" rx="2"/>
+    </g>
+    <path d="M797 244c198-70 393-96 552-91 42 1 81 7 118 17-69 60-132 132-188 214-125-38-286-64-482-140Z" fill="url(#wood)"/>
+    <path d="M50 497c262 32 520 42 774 29 187-10 342-31 464-63-61 76-176 121-346 135-278 23-575-7-892-101Z" fill="url(#wood)"/>
+    <path d="M826 260c166-42 322-65 468-71-137 31-277 65-420 101Z" fill="#f3d8b9" opacity=".35"/>
+    <path d="M95 320c205 67 435 110 690 129" fill="none" stroke="#fff" stroke-opacity=".13" stroke-width="3"/>
+  </g>
+  <rect width="1600" height="950" filter="url(#grain)"/>
+  <text x="82" y="880" font-family="Inter, Arial, sans-serif" font-size="210" font-weight="800" fill="#fff" opacity=".09">Atelier</text>
+</svg>

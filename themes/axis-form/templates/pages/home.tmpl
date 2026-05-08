@@ -1,0 +1,77 @@
+{{define "content"}}
+{{$s := .Settings}}
+{{$hero := settingOr $s "home_hero_image" ""}}
+{{if not $hero}}{{range .Services}}{{if and (not $hero) .ImageURL}}{{$hero = .ImageURL}}{{end}}{{end}}{{end}}
+{{if not $hero}}{{$hero = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1800&h=980&fit=crop&q=84"}}{{end}}
+
+<section class="af-hero">
+    <div class="af-hero-image" style="--hero-image:url('{{$hero}}');">
+        <div class="af-hero-copy">
+            <h1>{{settingOr $s "home_hero_title" "Designing Spaces That Inspire & Endure"}}</h1>
+            <p>{{settingOr $s "home_hero_subtitle" "We transform visions into timeless architecture, blending innovative design with functional excellence."}}</p>
+        </div>
+        <div class="af-hero-cta">
+            <a class="af-primary-btn" href="{{langPrefixURL .Ctx (settingOr $s "home_hero_btn_link" "/contact")}}">{{settingOr $s "home_hero_btn_text" "Schedule a Free Consultation"}}</a>
+        </div>
+    </div>
+</section>
+
+<section class="af-about-strip">
+    <div>
+        <h2>{{settingOr $s "home_about_title" "About Company"}}</h2>
+        <p>{{settingOr $s "home_about_desc" "At Axis Form, we believe that architecture is more than just buildings; it's about creating environments that enhance human experience."}}</p>
+        <div class="af-wordmarks" aria-label="Selected collaborators">
+            <span>CNBC</span>
+            <span>officend</span>
+            <span>ARCONIC</span>
+        </div>
+    </div>
+    <div class="af-stats-grid">
+        <div><strong>{{settingOr $s "home_stat_1_number" "25+"}}</strong><span>{{settingOr $s "home_stat_1_label" "Years of Excellence in Architecture & Design"}}</span></div>
+        <div><strong>{{settingOr $s "home_stat_2_number" "500+"}}</strong><span>{{settingOr $s "home_stat_2_label" "Projects Successfully Completed"}}</span></div>
+        <div><strong>{{settingOr $s "home_stat_3_number" "98%"}}</strong><span>{{settingOr $s "home_stat_3_label" "Our Client Retention Rate"}}</span></div>
+        <div><strong>{{settingOr $s "home_stat_4_number" "15+"}}</strong><span>{{settingOr $s "home_stat_4_label" "Countries with Our Projects"}}</span></div>
+    </div>
+</section>
+
+{{if .Services}}
+<section class="af-section">
+    <div class="af-section-head af-section-head-row">
+        <h2>{{settingOr $s "home_services_title" "Services we provide"}}</h2>
+        <div class="af-round-actions" aria-hidden="true"><span>←</span><span>→</span></div>
+    </div>
+    <div class="af-service-row">
+        {{range $i, $svc := .Services}}
+        <a class="af-service-mini" href="{{langPrefixURL $.Ctx (printf "/services/%s" $svc.Slug)}}">
+            <div class="af-card-media">
+                {{if $svc.ImageURL}}{{responsiveImage $svc.ImageURL $svc.Title "" "(max-width: 768px) 100vw, 25vw" "lazy"}}{{end}}
+                <span>{{printf "%02d" (add $i 1)}}</span>
+            </div>
+            <h3>{{$svc.Title}}</h3>
+            <p>{{truncate $svc.Excerpt 82}}</p>
+        </a>
+        {{end}}
+    </div>
+</section>
+{{end}}
+
+{{if .Showcases}}
+<section class="af-portfolio-home">
+    <div class="af-portfolio-intro">
+        <h2>{{settingOr $s "home_showcase_title" "Our Portfolio of Pioneering Design"}}</h2>
+        <p>{{settingOr $s "home_showcase_subtitle" "Explore our selected works that demonstrate our commitment to design excellence, innovation, and client satisfaction."}}</p>
+    </div>
+    <div class="af-portfolio-mosaic">
+        {{range $i, $item := .Showcases}}
+        {{if lt $i 4}}
+        <a class="af-mosaic-card af-mosaic-{{$i}}" href="{{langPrefixURL $.Ctx (printf "/showcase/%s" $item.Slug)}}">
+            {{if $item.ImageURL}}{{responsiveImage $item.ImageURL $item.Title "" "(max-width: 768px) 100vw, 40vw" "lazy"}}{{end}}
+            <span>{{$item.Title}}</span>
+        </a>
+        {{end}}
+        {{end}}
+    </div>
+    <a class="af-outline-btn" href="{{langPrefixURL .Ctx "/showcase"}}">{{settingOr $s "home_showcase_btn" "See More Projects"}}</a>
+</section>
+{{end}}
+{{end}}

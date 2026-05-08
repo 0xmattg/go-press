@@ -1,0 +1,23 @@
+{{define "content"}}
+<section class="ce-page-hero">
+    <span>Brokerage Services</span>
+    <h1>Search, negotiate, and move with fewer blind spots.</h1>
+    <p>Advisory workflows for tenants, owners, and investors who need clean comparisons and practical deal support.</p>
+</section>
+
+<section class="ce-service-list">
+    {{range $i, $svc := .Services}}
+    <a class="ce-service-card" href="{{langPrefixURL $.Ctx (printf "/services/%s" $svc.Slug)}}">
+        <div class="ce-card-media">
+            {{if $svc.ImageURL}}{{responsiveImage $svc.ImageURL $svc.Title "" "(max-width: 768px) 100vw, 40vw" "lazy"}}{{end}}
+            <span>{{printf "%02d" (add $i 1)}}</span>
+        </div>
+        <div>
+            <h2>{{$svc.Title}}</h2>
+            <p>{{truncate $svc.Excerpt 160}}</p>
+            <em>Explore service -></em>
+        </div>
+    </a>
+    {{end}}
+</section>
+{{end}}

@@ -1,0 +1,27 @@
+{{define "content"}}
+{{$s := .Settings}}
+<section class="tt-page-hero">
+    <span>Contact Us</span>
+    <h1>{{settingOr $s "contact_title" "Tell us where you want the trail to begin."}}</h1>
+    <p>{{settingOr $s "contact_subtitle" "Share your dates, group size, comfort level, and dream destination. We will help shape the route."}}</p>
+</section>
+
+<section class="tt-contact-grid">
+    <div class="tt-contact-card">
+        <h2>{{settingOr $s "company_name" "TerraTrail"}}</h2>
+        <p>{{settingOr $s "company_description" "Curated mountain travel and destination planning for thoughtful travelers."}}</p>
+        <span>{{settingOr $s "company_email" "hello@terratrail.example"}}</span>
+        <span>{{settingOr $s "company_phone" "+1 212 555 0188"}}</span>
+        <span>{{settingOr $s "company_address" "Remote planning studio"}}</span>
+    </div>
+    <form class="tt-form" method="POST" action="{{langPrefixURL .Ctx "/contact"}}">
+        {{if .Success}}<div class="tt-alert success">Message sent. We will be in touch shortly.</div>{{end}}
+        {{if .Error}}<div class="tt-alert error">{{.Error}}</div>{{end}}
+        <label>Name<input name="name" required></label>
+        <label>Email<input name="email" type="email" required></label>
+        <label>Phone<input name="phone"></label>
+        <label>Trip brief<textarea name="message" rows="6" required></textarea></label>
+        <button class="tt-primary-btn" type="submit">Start Planning</button>
+    </form>
+</section>
+{{end}}

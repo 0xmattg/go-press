@@ -1,0 +1,43 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>文章列表</h2>
+    {{if can .CurrentRole "post" "create"}}
+    <a href="/admin/posts/new" class="btn btn-primary">新建文章</a>
+    {{end}}
+</div>
+<div class="card">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>标题</th>
+                <th>分类</th>
+                <th>发布时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Items}}
+            <tr>
+                <td>{{.ID}}</td>
+                <td>{{.Title}}</td>
+                <td>{{.Category.Name}}</td>
+                <td>{{if .PublishedAt}}{{formatDate .PublishedAt}}{{else}}<span class="badge badge-draft">草稿</span>{{end}}</td>
+                <td class="actions">
+                    {{if can $.CurrentRole "post" "update"}}
+                    <a href="/admin/posts/{{.ID}}/edit" class="btn btn-sm">编辑</a>
+                    {{end}}
+                    {{if can $.CurrentRole "post" "delete"}}
+                    <form method="POST" action="/admin/posts/{{.ID}}/delete" class="inline-form">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确认删除此文章?')">删除</button>
+                    </form>
+                    {{end}}
+                </td>
+            </tr>
+            {{else}}
+            <tr><td colspan="5" class="empty-msg">暂无文章</td></tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}
