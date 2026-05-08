@@ -9,7 +9,8 @@ GoPress 把 SEO 的所有数据来源统一在框架层，主题只负责"消费
 ```
 admin 「系统设置 > 网站设置」
   ├── site_name           ─┐
-  └── site_description    ─┤
+  ├── site_description    ─┤
+  └── site_icon           ─┤
                            ▼
 core SEOBuilder (per-page)
   ├── ForHome(siteDescription)            → home
@@ -18,17 +19,18 @@ core SEOBuilder (per-page)
                            ▼
 core ApplySiteOptionOverrides
   ├── 用 admin 的 site_name 覆盖 cfg.Site.Name 拼出来的 og:title / Title
-  └── description 为空时回填 site_description（兜底 chain）
+  ├── description 为空时回填 site_description（兜底 chain）
+  └── site_icon 非空时写入 SEOMeta.SiteIcon
                            ▼
 data["SEO"] = SEOMeta{...}            （BaseTheme 路径自动注入）
 data.PageData.SEO = SEOMeta{...}      （自定义 struct 主题手动注入）
                            ▼
 template: {{with seoHeadFor .}}{{.}}{{else}}<meta description fallback>{{end}}
                            ▼
-HTML <head>: <meta description> + <link canonical> + og:* + JSON-LD
+HTML <head>: <meta description> + <link canonical> + og:* + JSON-LD + favicon links
 ```
 
-## 必须遵守的两条契约
+## 必须遵守的三条契约
 
 ### 1. `<title>` 拼接走 `site_name`
 
@@ -50,14 +52,26 @@ HTML <head>: <meta description> + <link canonical> + og:* + JSON-LD
 ### 2. `<meta name="description">` 走 `seoHeadFor` + 兜底链
 
 ```html
+{{$siteIcon := settingOr .Settings "site_icon" ""}}
 {{with seoHeadFor .}}
   {{.}}
 {{else}}
   <meta name="description" content="{{settingOr $.Settings "site_description" "My Theme Default"}}">
+  {{if $siteIcon}}<link rel="icon" href="{{$siteIcon}}">
+  <link rel="apple-touch-icon" href="{{$siteIcon}}">{{end}}
 {{end}}
 ```
 
 `seoHeadFor` 是核心提供的 reflection-based helper，对 `gin.H` 和自定义 struct **都安全**：找不到 SEO 字段就返回空字符串，模板自动 fallback 到 else 分支，永远不会因为字段缺失把页面渲染成白屏。注意 `with` 改变了 `.` 指向，要用 `$.Settings` 访问根上下文。
+
+### 3. favicon 统一走 `site_icon`
+
+后台「系统设置 > 网站设置」里的 `site_icon` 是全主题统一的网站图标来源。主题不要再发明 `favicon_url`、`theme_icon` 之类的本地 key。
+
+- 正常 SEO 分支：`ApplySiteOptionOverrides` 会把 `site_icon` 写入 `SEOMeta.SiteIcon`，`seoHeadFor` 渲染 `<link rel="icon">` 和 `<link rel="apple-touch-icon">`
+- fallback 分支：如果页面没有 `SEO` 字段，layout 的 `else` 分支仍应直接从 `.Settings["site_icon"]` 输出同样的两个标签
+
+浏览器会强缓存 favicon。修改 `site_icon` 后如果标签已经输出但浏览器仍显示旧图标，先强刷或清理站点缓存再验证。
 
 ## 推荐写法：BaseTheme + gin.H
 
@@ -78,7 +92,12 @@ func (t *MyTheme) ServeHTTP(c *gin.Context) {
 ```html
 <!-- templates/layouts/base.tmpl -->
 <title>{{.Title}} - {{settingOr .Settings "site_name" "My Theme"}}</title>
-{{with seoHeadFor .}}{{.}}{{else}}<meta name="description" content="{{settingOr $.Settings "site_description" "..."}}">{{end}}
+{{$siteIcon := settingOr .Settings "site_icon" ""}}
+{{with seoHeadFor .}}{{.}}{{else}}
+<meta name="description" content="{{settingOr $.Settings "site_description" "..."}}">
+{{if $siteIcon}}<link rel="icon" href="{{$siteIcon}}">
+<link rel="apple-touch-icon" href="{{$siteIcon}}">{{end}}
+{{end}}
 ```
 
 收工。所有 SEO 标签自动出现。
@@ -118,7 +137,7 @@ func (s *PageService) GetProductDetail(slug string) (*ProductDetailData, error) 
     typeDef := s.registry.GetType("product")
 
     seo := s.seoBuilder.ForContent(item, typeDef)
-    coreTheme.ApplySiteOptionOverrides(app, &seo)                            // admin site_name 覆盖
+    coreTheme.ApplySiteOptionOverrides(app, &seo)                            // admin site_name/site_description/site_icon 覆盖
     coreTheme.ApplyContentMetaSEO(s.hookBus, s.contentRepo, &seo, item)     // ← 让 SEO 插件能 patch
 
     data := &ProductDetailData{ /* ... */ }
@@ -129,7 +148,7 @@ func (s *PageService) GetProductDetail(slug string) (*ProductDetailData, error) 
 
 两个 helper 必须都调：
 
-- **`ApplySiteOptionOverrides`** — 把 admin 的 `site_name` 覆盖到 `seo.Title` / `seo.OGTitle`，并在 `seo.Description` 为空时回填 `site_description`
+- **`ApplySiteOptionOverrides`** — 把 admin 的 `site_name` 覆盖到 `seo.Title` / `seo.OGTitle`，在 `seo.Description` 为空时回填 `site_description`，并把 `site_icon` 写入 `seo.SiteIcon`
 - **`ApplyContentMetaSEO`** — 触发 `seo.content.meta` filter 链，让 [seo-extras 插件](../plugins/seo-extras.md) 这类 per-content SEO 覆盖插件能修改 SEOMeta
 
 `BaseTheme + gin.H` 主题完全不用关心，core 的 `renderSingle` 已经替你调好了。这又是一个倾向 BaseTheme 的理由——插件生态默认就工作。
@@ -180,7 +199,7 @@ seo.content.meta            filter → 在 SEOBuilder 输出后 patch SEOMeta
 ```
 SEOBuilder.ForContent(item, typeDef)
                 ▼
-ApplySiteOptionOverrides         （site_name / site_description 兜底）
+ApplySiteOptionOverrides         （site_name / site_description / site_icon 兜底）
                 ▼
 ApplyContentMetaSEO              （触发 seo.content.meta filter 链）
    ├── seo-extras 插件插入        （读 _seo_* meta，覆盖 Title/Description/OGImage/Robots）

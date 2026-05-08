@@ -2,6 +2,7 @@ package financialnews
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -13,8 +14,8 @@ import (
 	coreI18n "go-press/core/i18n"
 	"go-press/core/option"
 	"go-press/core/rewrite"
-	coreTheme "go-press/core/theme"
 	"go-press/core/taxonomy"
+	coreTheme "go-press/core/theme"
 )
 
 // ======== View Models ========
@@ -163,10 +164,10 @@ func NewPageServiceDB(db *gorm.DB) *PageService {
 //
 // Mirrors BaseTheme's SEO injection: build per-page SEOMeta via the core
 // SEOBuilder, then apply runtime option overrides so admin's site_name /
-// site_description always win over the static cfg.Site.Name baked into the
-// builder. Returns zero-value SEOMeta when the engine isn't wired in (DB-only
-// service used by tests / CLI), which the template's seoHeadFor helper treats
-// as "no SEO" and falls back to a plain meta description.
+// site_description / site_icon always win over the static config values baked
+// into the builder. Returns zero-value SEOMeta when the engine isn't wired in
+// (DB-only service used by tests / CLI), which the template's seoHeadFor helper
+// treats as "no SEO" and falls back to a plain meta description.
 
 func (s *PageService) buildHomeSEO() rewrite.SEOMeta {
 	if s.seoBuilder == nil {
@@ -219,6 +220,9 @@ func (s *PageService) applySEOOverrides(seo *rewrite.SEOMeta) {
 				seo.OGDescription = d
 			}
 		}
+	}
+	if icon := strings.TrimSpace(s.options.Get("site_icon")); icon != "" {
+		seo.SiteIcon = icon
 	}
 }
 

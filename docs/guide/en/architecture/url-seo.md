@@ -26,7 +26,7 @@ The SEO builder creates page-level metadata for:
 - Single content pages.
 - Taxonomy archives.
 
-Site-wide values such as `site_name` and `site_description` are applied as final fallbacks from system settings.
+Site-wide values such as `site_name`, `site_description`, and `site_icon` are applied as final fallbacks from system settings. `site_icon` is rendered as both favicon and Apple touch icon links when present.
 
 ## Plugin Overrides
 
@@ -35,4 +35,3 @@ The `seo.content.meta` filter allows plugins to modify SEO output after core bui
 ## Sitemap and Redirects
 
 Sitemap generation reads registered content, taxonomy URLs, and route transformers. Redirect rules are stored separately and are resolved before normal rewrite handling.
-

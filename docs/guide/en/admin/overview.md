@@ -17,9 +17,8 @@ The admin CRUD surface is data-driven. A content type declared in `theme.toml` c
 
 ## Settings
 
-System settings are split into website settings and admin settings. Website settings affect the public site, SEO metadata, sitemap, favicon, and branding options. Admin settings control the CMS interface, including the admin language.
+System settings are split into website settings and admin settings. Website settings affect the public site, SEO metadata, sitemap, favicon, and branding options. The `site_icon` value is the shared favicon source for all themes. Admin settings control the CMS interface, including the admin language.
 
 ## Extension Points
 
 Plugins can add settings pages, content form fields, save handlers, content-list tabs, frontend hook output, SEO overrides, and sitemap transformers without modifying admin core templates directly.
-

@@ -150,5 +150,7 @@
   "theme.settings.text.139": "Experience title",
   "theme.settings.text.140": "Experience description...",
   "theme.settings.text.141": "CTA description...",
+  "theme.settings.text.142": "Header CTA Text",
+  "theme.settings.text.143": "Header CTA Link",
   "theme.settings.title": "%s - Theme Settings"
 }

@@ -4,7 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}} - {{settingOr .Settings "site_name" "Atelier Slate"}}</title>
-    {{with seoHeadFor .}}{{.}}{{else}}<meta name="description" content="{{settingOr $.Settings "site_description" "A strategic digital studio for launch campaigns, product storytelling, and immersive brand systems."}}">{{end}}
+    {{$siteIcon := settingOr .Settings "site_icon" ""}}
+    {{with seoHeadFor .}}{{.}}{{else}}
+    <meta name="description" content="{{settingOr $.Settings "site_description" "A strategic digital studio for launch campaigns, product storytelling, and immersive brand systems."}}">
+    {{if $siteIcon}}<link rel="icon" href="{{$siteIcon}}">
+    <link rel="apple-touch-icon" href="{{$siteIcon}}">{{end}}
+    {{end}}
     {{if eq .ActivePage "home"}}<link rel="preload" as="image" href="{{settingOr .Settings "home_hero_1_image" "/static/images/atelier-hero.svg"}}">{{end}}
     <link rel="stylesheet" href="/static/css/style.css?v=9">
     {{renderHook "theme.head.end" .}}

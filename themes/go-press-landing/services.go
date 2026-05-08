@@ -109,8 +109,8 @@ func NewPageServiceDB(db *gorm.DB) *PageService {
 
 // buildHomeSEO mirrors BaseTheme's SEO injection for the landing page.
 // Builds SEOMeta via the core SEOBuilder, then applies runtime option
-// overrides so admin's site_name / site_description always win over the
-// static cfg.Site.Name baked into the builder.
+// overrides so admin's site_name / site_description / site_icon always win over
+// the static config values baked into the builder.
 func (s *PageService) buildHomeSEO() rewrite.SEOMeta {
 	if s.seoBuilder == nil {
 		return rewrite.SEOMeta{}
@@ -127,6 +127,9 @@ func (s *PageService) buildHomeSEO() rewrite.SEOMeta {
 				seo.OGDescription = d
 			}
 		}
+	}
+	if icon := strings.TrimSpace(s.options.Get("site_icon")); icon != "" {
+		seo.SiteIcon = icon
 	}
 	return seo
 }
