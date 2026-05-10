@@ -207,6 +207,12 @@
     <h3 class="ts-section-title">{{X $ "theme.settings.text.049" "Hero 轮播图设置"}}</h3>
     <p class="ts-hint">{{X $ "theme.settings.text.050" "最多 3 张轮播图，每张可设置标签、标题、描述、背景图和按钮。"}}</p>
 
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.149" "Hero 自动切换间隔（毫秒）"}}</label>
+        <input type="number" name="home_hero_interval_ms" value="{{settingOr $s "home_hero_interval_ms" "5000"}}" min="1000" step="500" placeholder="5000">
+        <p class="ts-hint">{{X $ "theme.settings.text.150" "默认 5000 毫秒；数值越大，每张 Hero 图停留越久。"}}</p>
+    </div>
+
     {{range $i := seq 3}}
     <div class="ts-slide-block">
         <h4 class="ts-slide-title">{{X $ "theme.settings.dynamic.slide" "轮播图 %d" (add $i 1)}}</h4>

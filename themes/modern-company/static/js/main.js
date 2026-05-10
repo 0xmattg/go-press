@@ -32,6 +32,7 @@
     const slides = slider.querySelectorAll('.hero-slide');
     if (slides.length === 0) return;
 
+    const intervalMs = Math.max(1000, parseInt(slider.dataset.intervalMs || '5000', 10) || 5000);
     let currentIndex = 0;
     let interval;
 
@@ -61,7 +62,7 @@
 
     function resetInterval() {
         clearInterval(interval);
-        interval = setInterval(nextSlide, 5000);
+        interval = setInterval(nextSlide, intervalMs);
     }
 
     resetInterval();

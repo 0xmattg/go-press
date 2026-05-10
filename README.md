@@ -51,6 +51,45 @@ The comparison below is not meant to rank technology stacks. It describes the de
 6. **API first** — registered content types can expose REST endpoints and Swagger / OpenAPI documentation.
 7. **Instance isolation** — table prefixes and site-level configuration allow multiple instances to share infrastructure while keeping data boundaries clear.
 
+## Theme And Admin UI Preview
+
+GoPress ships with a practical admin CMS and a set of production-oriented example themes. The previews below show the direction of the bundled UI: theme-specific visual systems on the public side, and a focused content-management workspace on the admin side.
+
+### Admin UI
+
+The first-run installer guides database connection, site bootstrap, and admin account creation before the CMS opens.
+
+| Database Setup | Site Bootstrap | Ready To Use |
+|---|---|---|
+| <img src="docs/resources/ui_preview/admin/install-1.png" alt="GoPress installer database setup preview"> | <img src="docs/resources/ui_preview/admin/install-2.png" alt="GoPress installer site bootstrap preview"> | <img src="docs/resources/ui_preview/admin/install-3.png" alt="GoPress installer completion preview"> |
+
+| Content Workspace | Theme Settings | Media And Editing |
+|---|---|---|
+| <img src="docs/resources/ui_preview/admin/admin-ui-1.png" alt="GoPress admin content workspace preview"> | <img src="docs/resources/ui_preview/admin/admin-ui-2.png" alt="GoPress admin theme settings preview"> | <img src="docs/resources/ui_preview/admin/admin-ui-3.png" alt="GoPress admin media and editing preview"> |
+
+### Theme Gallery
+
+| Axis Form | FloraFi |
+|---|---|
+| <img src="docs/resources/ui_preview/theme/axis-form.png" alt="Axis Form theme preview"> | <img src="docs/resources/ui_preview/theme/floraFi.png" alt="FloraFi theme preview"> |
+
+| Modern Company ([live site](https://hurricanetechs.com)) | Civic Estate |
+|---|---|
+| <img src="docs/resources/ui_preview/theme/modern-company.png" alt="Modern Company theme preview"> | <img src="docs/resources/ui_preview/theme/civic-estate.png" alt="Civic Estate theme preview"> |
+
+<details>
+<summary>More bundled theme previews</summary>
+
+| Atelier Slate ([live site](https://gopress.xyz)) | Terra Trail |
+|---|---|
+| <img src="docs/resources/ui_preview/theme/atelier-slate.png" alt="Atelier Slate theme preview"> | <img src="docs/resources/ui_preview/theme/terra-trail.png" alt="Terra Trail theme preview"> |
+
+| GoPress Landing Indigo | GoPress Landing Rose |
+|---|---|
+| <img src="docs/resources/ui_preview/theme/gopress-landing-color-2.png" alt="GoPress Landing indigo theme preview"> | <img src="docs/resources/ui_preview/theme/gopress-landing-color-1.png" alt="GoPress Landing rose theme preview"> |
+
+</details>
+
 ---
 
 ## Quick Start
