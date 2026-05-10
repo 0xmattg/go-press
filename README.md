@@ -105,7 +105,7 @@ The first-run installer guides database connection, site bootstrap, and admin ac
 
 ```bash
 # Clone the repository
-git clone https://github.com/0xlostpixel/go-press.git
+git clone https://github.com/0xmattg/go-press.git
 cd go-press
 
 # Download dependencies
