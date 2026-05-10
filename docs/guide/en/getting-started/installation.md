@@ -12,7 +12,7 @@ GoPress can be started directly from source during development. In production, i
 ## Clone and Run
 
 ```bash
-git clone https://github.com/0xlostpixel/go-press.git
+git clone https://github.com/0xmattg/go-press.git
 cd go-press
 go mod download
 go run ./cmd/server

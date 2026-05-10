@@ -50,7 +50,7 @@ func TestAtelierSocialLinksUseConfiguredItems(t *testing.T) {
 		"social_x":       "https://x.com/gopress",
 		"social_wechat":  "gopress-dev",
 		"social_discord": "https://discord.gg/gopress",
-		"social_github":  "https://github.com/0xlostpixel/go-press",
+		"social_github":  "https://github.com/0xmattg/go-press",
 	})
 	if len(links) != 4 {
 		t.Fatalf("expected 4 configured social links, got %d", len(links))
