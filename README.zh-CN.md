@@ -127,7 +127,7 @@ go run ./cmd/server/ -config sites/localhost/config.toml
 | `http://localhost:8080/swagger/index.html` | API 文档 |
 | `http://localhost:8080/api/v1/content` | REST API |
 
-完整安装指南见 [docs/guide/getting-started/installation.md](docs/guide/getting-started/installation.md)。
+完整安装指南见 [docs/guide/zh-CN/getting-started/installation.md](docs/guide/zh-CN/getting-started/installation.md)。
 
 ---
 
@@ -137,13 +137,13 @@ go run ./cmd/server/ -config sites/localhost/config.toml
 
 | 章节 | 内容 |
 |---|---|
-| [介绍](docs/guide/README.md) | 项目定位、设计原则 |
-| [快速开始](docs/guide/getting-started/installation.md) | 安装、配置、Web 安装器 |
-| [架构](docs/guide/architecture/overview.md) | 引擎启动流程、内容模型、URL/SEO、缓存、i18n、Content Scope、Hook 系统 |
-| [后台管理](docs/guide/admin/overview.md) | 后台 CMS、扩展点、菜单管理 |
-| [主题开发](docs/guide/themes/overview.md) | 创建主题、SEO 接入规范、图片管线、媒体变体 |
-| [插件开发](docs/guide/plugins/overview.md) | 创建插件、Hook 列表、内置 multilang / seo-extras / code-snippets |
-| [参考资料](docs/guide/reference/project-structure.md) | 项目结构、数据库表前缀、REST API、技术栈、路线图 |
+| [介绍](docs/guide/zh-CN/README.md) | 项目定位、设计原则 |
+| [快速开始](docs/guide/zh-CN/getting-started/installation.md) | 安装、配置、Web 安装器 |
+| [架构](docs/guide/zh-CN/architecture/overview.md) | 引擎启动流程、内容模型、URL/SEO、缓存、i18n、Content Scope、Hook 系统 |
+| [后台管理](docs/guide/zh-CN/admin/overview.md) | 后台 CMS、扩展点、菜单管理 |
+| [主题开发](docs/guide/zh-CN/themes/overview.md) | 创建主题、SEO 接入规范、图片管线、媒体变体 |
+| [插件开发](docs/guide/zh-CN/plugins/overview.md) | 创建插件、Hook 列表、内置 multilang / seo-extras / code-snippets |
+| [参考资料](docs/guide/zh-CN/reference/project-structure.md) | 项目结构、数据库表前缀、REST API、技术栈、路线图 |
 
 API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 
@@ -198,7 +198,7 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 
 `atelier-slate` / `axis-form`（Axis Form，建筑设计） / `florafi`（FloraFi，稳定币/金融科技） / `civic-estate` / `financial-news` / `go-press-landing` / `modern-company` / `terra-trail`
 
-详见 [docs/guide/themes/overview.md](docs/guide/themes/overview.md)。
+详见 [docs/guide/zh-CN/themes/overview.md](docs/guide/zh-CN/themes/overview.md)。
 
 ### 内置插件
 
@@ -206,7 +206,7 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 - **seo-extras** — Yoast 风格 per-content SEO 覆盖（4 字段：title/description/og:image/robots）
 - **code-snippets** — WPCode 风格站点级代码注入（`<head>` 末尾、`<body>` 开头、`</body>` 前）
 
-详见 [docs/guide/plugins/overview.md](docs/guide/plugins/overview.md)。
+详见 [docs/guide/zh-CN/plugins/overview.md](docs/guide/zh-CN/plugins/overview.md)。
 
 ---
 
@@ -229,13 +229,13 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 
 Gin / GORM / PostgreSQL / Redis / golang-jwt / Viper + TOML / log/slog / go-i18n / Quill 2.0 / swaggo/swag
 
-完整选型说明见 [docs/guide/reference/tech-stack.md](docs/guide/reference/tech-stack.md)。
+完整选型说明见 [docs/guide/zh-CN/reference/tech-stack.md](docs/guide/zh-CN/reference/tech-stack.md)。
 
 ---
 
 ## 贡献
 
-欢迎提交 Issue 和 Pull Request。开始前请先阅读 [CONTRIBUTING.md](CONTRIBUTING.md)，路线图见 [docs/guide/reference/roadmap.md](docs/guide/reference/roadmap.md)。
+欢迎提交 Issue 和 Pull Request。开始前请先阅读 [CONTRIBUTING.md](CONTRIBUTING.md)，路线图见 [docs/guide/zh-CN/reference/roadmap.md](docs/guide/zh-CN/reference/roadmap.md)。
 
 ## 开源协议
 
