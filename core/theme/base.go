@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"net/url"
 	"reflect"
 	"strings"
 
@@ -205,6 +206,9 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 			// internal links like /zh/products/xxx so the language stays consistent.
 			engineFuncs["langPrefixURL"] = func(c *gin.Context, path string) string {
 				if path == "" {
+					return path
+				}
+				if !isLanguagePrefixableURL(path) {
 					return path
 				}
 				defLang := i18nMgr.DefaultLang()
@@ -590,4 +594,16 @@ func ApplyContentMetaSEO(hookBus *hook.Bus, contentRepo *content.Repository, seo
 	if updated, ok := result.(rewrite.SEOMeta); ok {
 		*seo = updated
 	}
+}
+
+func isLanguagePrefixableURL(raw string) bool {
+	u := strings.TrimSpace(raw)
+	if u == "" || strings.HasPrefix(u, "#") || strings.HasPrefix(u, "?") || strings.HasPrefix(u, "//") {
+		return false
+	}
+	parsed, err := url.Parse(u)
+	if err == nil && parsed.Scheme != "" {
+		return false
+	}
+	return true
 }

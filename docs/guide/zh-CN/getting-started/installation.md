@@ -11,7 +11,7 @@
 
 ```bash
 # 克隆项目
-git clone https://github.com/your-org/go-press.git
+git clone https://github.com/0xmattg/go-press.git
 cd go-press
 
 # 安装依赖
