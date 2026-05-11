@@ -1437,16 +1437,31 @@ func (p *Plugin) LinkTranslation(contentID uint, langCode string, sourceContentI
 	})
 }
 
-// LangPrefixURL prepends a language prefix to a path if the current language
-// is not the default language.
+// LangPrefixURL prepends a language prefix to local site paths when the
+// current language is not the default language. Absolute external URLs,
+// protocol-relative URLs, anchors, query-only links, and scheme-based links
+// such as mailto: or tel: are returned unchanged.
 func (p *Plugin) LangPrefixURL(c *gin.Context, path string) string {
+	if path == "" || !isLanguagePrefixableURL(path) {
+		return path
+	}
 	lang := p.getDefaultLang()
-	if l, ok := c.Get(coreI18n.CtxKeyLang); ok {
-		lang = l.(string)
+	if c != nil {
+		if l, ok := c.Get(coreI18n.CtxKeyLang); ok {
+			if s, ok := l.(string); ok && s != "" {
+				lang = s
+			}
+		}
 	}
 	defaultLang := p.getDefaultLang()
 	if lang == defaultLang {
 		return path
+	}
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+	if path == "/" {
+		return "/" + lang + "/"
 	}
 	return "/" + lang + path
 }
@@ -1750,8 +1765,8 @@ func (p *Plugin) rewriteItems(items []menu.Item, lang string) []menu.Item {
 func (p *Plugin) rewriteItemURL(item menu.Item, lang string) string {
 	u := item.URL
 
-	// External URLs: keep as-is
-	if strings.HasPrefix(u, "http://") || strings.HasPrefix(u, "https://") {
+	// Non-page links are not language-scoped.
+	if !isLanguagePrefixableURL(u) {
 		return u
 	}
 
@@ -1767,6 +1782,18 @@ func (p *Plugin) rewriteItemURL(item menu.Item, lang string) string {
 		u = "/" + u
 	}
 	return "/" + lang + u
+}
+
+func isLanguagePrefixableURL(raw string) bool {
+	u := strings.TrimSpace(raw)
+	if u == "" || strings.HasPrefix(u, "#") || strings.HasPrefix(u, "?") || strings.HasPrefix(u, "//") {
+		return false
+	}
+	parsed, err := url.Parse(u)
+	if err == nil && parsed.Scheme != "" {
+		return false
+	}
+	return true
 }
 
 // resolveContentURL finds the translated content's URL for a menu item's content_id.

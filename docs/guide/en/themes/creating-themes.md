@@ -45,11 +45,11 @@ func (t *MyTheme) TemplateDir() string { return filepath.Join(t.ThemeDir, "templ
 func (t *MyTheme) StaticDir() string { return filepath.Join(t.ThemeDir, "static") }
 ```
 
-Add a blank import in `cmd/server/main.go` so the theme registers at startup.
+No manual `cmd/server/main.go` edit is required. Drop the folder into `themes/`, make sure it has both `theme.toml` and at least one non-test `.go` file at its root, then re-run `gopress serve`. The autoload package is regenerated and the new theme's `init()` registers itself with `core.RegisterTheme` at startup. See [Getting Started > Installation](../getting-started/installation.md) for details.
 
 ## Theme Metadata
 
-Declare content types and menu locations in `theme.toml`:
+`theme.toml` is required — it both serves as the auto-detection marker (the `gopress` CLI ignores a `themes/<name>/` directory without it) and supplies the content type and menu location declarations consumed by core. Minimum schema:
 
 ```toml
 [theme]

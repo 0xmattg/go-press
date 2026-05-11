@@ -1,8 +1,8 @@
 site_name: GoPress Docs
 site_description: GoPress is a modern content management framework and CMS engine written in Go
 site_url: https://doc.gopress.xyz/
-repo_url: https://github.com/0xlostpixel/go-press
-repo_name: 0xlostpixel/go-press
+repo_url: https://github.com/0xmattg/go-press
+repo_name: 0xmattg/go-press
 edit_uri: edit/dev/docs/guide/
 
 docs_dir: docs/guide

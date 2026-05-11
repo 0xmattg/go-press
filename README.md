@@ -51,6 +51,45 @@ The comparison below is not meant to rank technology stacks. It describes the de
 6. **API first** — registered content types can expose REST endpoints and Swagger / OpenAPI documentation.
 7. **Instance isolation** — table prefixes and site-level configuration allow multiple instances to share infrastructure while keeping data boundaries clear.
 
+## Theme And Admin UI Preview
+
+GoPress ships with a practical admin CMS and a set of production-oriented example themes. The previews below show the direction of the bundled UI: theme-specific visual systems on the public side, and a focused content-management workspace on the admin side.
+
+### Admin UI
+
+The first-run installer guides database connection, site bootstrap, and admin account creation before the CMS opens.
+
+| Database Setup | Site Bootstrap | Ready To Use |
+|---|---|---|
+| <img src="docs/resources/ui_preview/admin/install-1.png" alt="GoPress installer database setup preview"> | <img src="docs/resources/ui_preview/admin/install-2.png" alt="GoPress installer site bootstrap preview"> | <img src="docs/resources/ui_preview/admin/install-3.png" alt="GoPress installer completion preview"> |
+
+| Content Workspace | Theme Settings | Media And Editing |
+|---|---|---|
+| <img src="docs/resources/ui_preview/admin/admin-ui-1.png" alt="GoPress admin content workspace preview"> | <img src="docs/resources/ui_preview/admin/admin-ui-2.png" alt="GoPress admin theme settings preview"> | <img src="docs/resources/ui_preview/admin/admin-ui-3.png" alt="GoPress admin media and editing preview"> |
+
+### Theme Gallery
+
+| Axis Form | FloraFi |
+|---|---|
+| <img src="docs/resources/ui_preview/theme/axis-form.png" alt="Axis Form theme preview"> | <img src="docs/resources/ui_preview/theme/floraFi.png" alt="FloraFi theme preview"> |
+
+| Modern Company ([live site](https://hurricanetechs.com)) | Civic Estate |
+|---|---|
+| <img src="docs/resources/ui_preview/theme/modern-company.png" alt="Modern Company theme preview"> | <img src="docs/resources/ui_preview/theme/civic-estate.png" alt="Civic Estate theme preview"> |
+
+<details>
+<summary>More bundled theme previews</summary>
+
+| Atelier Slate ([live site](https://gopress.xyz)) | Terra Trail |
+|---|---|
+| <img src="docs/resources/ui_preview/theme/atelier-slate.png" alt="Atelier Slate theme preview"> | <img src="docs/resources/ui_preview/theme/terra-trail.png" alt="Terra Trail theme preview"> |
+
+| GoPress Landing Indigo | GoPress Landing Rose |
+|---|---|
+| <img src="docs/resources/ui_preview/theme/gopress-landing-color-2.png" alt="GoPress Landing indigo theme preview"> | <img src="docs/resources/ui_preview/theme/gopress-landing-color-1.png" alt="GoPress Landing rose theme preview"> |
+
+</details>
+
 ---
 
 ## Quick Start
@@ -64,20 +103,34 @@ The comparison below is not meant to rank technology stacks. It describes the de
 
 ### Install and Run
 
+GoPress ships with a small orchestrator CLI named `gopress`. It scans `themes/` and `plugins/` at startup, regenerates the autoload package, and runs the server. You never have to hand-edit imports when adding a theme or plugin — drop the folder in, restart with `gopress serve`, and it is picked up automatically.
+
 ```bash
 # Clone the repository
-git clone https://github.com/0xlostpixel/go-press.git
+git clone https://github.com/0xmattg/go-press.git
 cd go-press
 
 # Download dependencies
 go mod download
 
-# Start the server. First run opens the web installer.
-go run ./cmd/server/
+# One-time: install the gopress CLI to $GOBIN (or $GOPATH/bin)
+make install
+# (without install: `make gopress` produces ./build/gopress)
 
-# Or start with an existing site config
-go run ./cmd/server/ -config sites/localhost/config.toml
+# Start the server. First run opens the web installer.
+gopress serve
+
+# Or start with an existing site config (any flag is forwarded to cmd/server)
+gopress serve -config sites/localhost/config.toml
+
+# Produce a single production binary (autoload baked in at build time)
+gopress build               # -> build/gopress-server
+gopress build -o ./myserver # custom output path
 ```
+
+`make help` lists all Make targets. `gopress help` lists all CLI subcommands.
+
+> **Building on a 1c1g VM?** `go build` parallelizes across all cores and can be OOM-killed on small VPS instances. Prefix with `GOFLAGS="-p=1 -v"` to force serial compilation, e.g. `GOFLAGS="-p=1 -v" gopress build`. See [installation guide](docs/guide/en/getting-started/installation.md#building-on-low-memory-machines) for details.
 
 After startup:
 
@@ -88,7 +141,7 @@ After startup:
 | `http://localhost:8080/swagger/index.html` | API documentation |
 | `http://localhost:8080/api/v1/content` | REST API |
 
-See the full installation guide: [docs/guide/getting-started/installation.md](docs/guide/getting-started/installation.md).
+See the full installation guide: [docs/guide/en/getting-started/installation.md](docs/guide/en/getting-started/installation.md).
 
 ---
 
@@ -98,13 +151,13 @@ The documentation lives under [`docs/guide/`](docs/guide/) and is organized as a
 
 | Section | Covers |
 |---|---|
-| [Introduction](docs/guide/README.md) | Positioning and design principles |
-| [Getting Started](docs/guide/getting-started/installation.md) | Installation, configuration, and the web installer |
-| [Architecture](docs/guide/architecture/overview.md) | Engine boot flow, content model, URL/SEO, cache, i18n, content scope, and hooks |
-| [Admin](docs/guide/admin/overview.md) | Admin CMS, extension points, and menu management |
-| [Themes](docs/guide/themes/overview.md) | Creating themes, SEO integration, image pipeline, and media variants |
-| [Plugins](docs/guide/plugins/overview.md) | Creating plugins, hook contracts, and bundled plugins |
-| [Reference](docs/guide/reference/project-structure.md) | Project structure, table prefixes, REST API, tech stack, and roadmap |
+| [Introduction](docs/guide/en/README.md) | Positioning and design principles |
+| [Getting Started](docs/guide/en/getting-started/installation.md) | Installation, configuration, and the web installer |
+| [Architecture](docs/guide/en/architecture/overview.md) | Engine boot flow, content model, URL/SEO, cache, i18n, content scope, and hooks |
+| [Admin](docs/guide/en/admin/overview.md) | Admin CMS, extension points, and menu management |
+| [Themes](docs/guide/en/themes/overview.md) | Creating themes, SEO integration, image pipeline, and media variants |
+| [Plugins](docs/guide/en/plugins/overview.md) | Creating plugins, hook contracts, and bundled plugins |
+| [Reference](docs/guide/en/reference/project-structure.md) | Project structure, table prefixes, REST API, tech stack, and roadmap |
 
 OpenAPI files are generated from code annotations:
 
@@ -112,7 +165,7 @@ OpenAPI files are generated from code annotations:
 |---|---|
 | [docs/swagger.json](docs/swagger.json) | OpenAPI specification in JSON |
 | [docs/swagger.yaml](docs/swagger.yaml) | OpenAPI specification in YAML |
-| [docs/docs.go](docs/docs.go) | Generated Swagger Go package imported by `cmd/server/main.go` |
+| [docs/docs.go](docs/docs.go) | Generated Swagger Go package imported by the server entry point |
 
 Regenerate docs with:
 
@@ -163,7 +216,7 @@ go run ./cmd/gendoc/
 
 `atelier-slate` / `axis-form` (Axis Form, architecture and design) / `florafi` (FloraFi, stablecoin and fintech) / `civic-estate` / `financial-news` / `go-press-landing` / `modern-company` / `terra-trail`
 
-See [docs/guide/themes/overview.md](docs/guide/themes/overview.md).
+See [docs/guide/en/themes/overview.md](docs/guide/en/themes/overview.md).
 
 ### Bundled Plugins
 
@@ -171,7 +224,7 @@ See [docs/guide/themes/overview.md](docs/guide/themes/overview.md).
 - **seo-extras** — Yoast-style per-content SEO overrides for title, description, Open Graph image, and robots.
 - **code-snippets** — WPCode-style site-level injection for end of `<head>`, start of `<body>`, and before `</body>`.
 
-See [docs/guide/plugins/overview.md](docs/guide/plugins/overview.md).
+See [docs/guide/en/plugins/overview.md](docs/guide/en/plugins/overview.md).
 
 ---
 
@@ -194,13 +247,13 @@ These are current architecture targets. Reproducible benchmark scripts, test env
 
 Gin / GORM / PostgreSQL / Redis / golang-jwt / Viper + TOML / log/slog / go-i18n / Quill 2.0 / swaggo/swag
 
-See [docs/guide/reference/tech-stack.md](docs/guide/reference/tech-stack.md).
+See [docs/guide/en/reference/tech-stack.md](docs/guide/en/reference/tech-stack.md).
 
 ---
 
 ## Contributing
 
-Issues and pull requests are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before contributing. The project roadmap is available at [docs/guide/reference/roadmap.md](docs/guide/reference/roadmap.md).
+Issues and pull requests are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before contributing. The project roadmap is available at [docs/guide/en/reference/roadmap.md](docs/guide/en/reference/roadmap.md).
 
 ## License
 

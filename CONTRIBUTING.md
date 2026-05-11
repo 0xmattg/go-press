@@ -27,7 +27,7 @@ Common verification commands:
 
 ```bash
 go test ./...
-go run ./cmd/server/
+gopress serve              # or `./build/gopress serve` if not installed via `make install`
 ```
 
 If some checks depend on PostgreSQL, Redis, or local site configuration, please describe in the PR what you actually ran and which checks were not run.

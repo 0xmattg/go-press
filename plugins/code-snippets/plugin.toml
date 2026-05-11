@@ -1,0 +1,5 @@
+[plugin]
+name = "Code Snippets"
+version = "1.0.0"
+description = "WPCode-like injector that pushes admin-defined HTML/JS snippets into theme head, body-open, and footer slots — wire up GA, GTM, chat widgets without editing theme templates."
+author = "GoPress Team"

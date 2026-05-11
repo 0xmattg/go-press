@@ -56,13 +56,11 @@ func (t *MyTheme) TemplateDir() string             { return filepath.Join(t.Them
 func (t *MyTheme) StaticDir() string               { return filepath.Join(t.ThemeDir, "static") }
 ```
 
-最后在 `cmd/server/main.go` 加一行 blank import：
+**不需要手动改 `cmd/server/main.go`**。把目录拖到 `themes/`，确保根目录同时有 `theme.toml` 和至少一个非 test `.go` 文件，然后重新执行 `gopress serve`。autoload 包会被重新生成，新主题的 `init()` 在启动时自动调用 `core.RegisterTheme` 完成注册。详见 [安装与运行](../getting-started/installation.md)。
 
-```go
-_ "go-press/themes/my-theme"
-```
+配置文件 `[site] theme = "my-theme"` 即可激活该主题。
 
-主题就会被引擎注册。配置文件 `[site] theme = "my-theme"` 即可激活。
+> `theme.toml` 是必需的——它既是 gopress 自动发现的标记（缺它则 `themes/<name>/` 目录会被忽略），也承载内容类型与菜单位置声明，由 core 在激活时读取。
 
 ## 内容类型配置
 

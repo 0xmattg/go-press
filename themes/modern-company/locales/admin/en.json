@@ -150,5 +150,7 @@
   "theme.settings.text.146": "e.g. Hurricane Techs",
   "theme.settings.text.147": "e.g. Cleanroom Engineering Experts",
   "theme.settings.text.148": "/products or /services/cleanroom-design",
+  "theme.settings.text.149": "Hero autoplay interval (ms)",
+  "theme.settings.text.150": "Default is 5000 ms. Larger values keep each hero slide visible longer.",
   "theme.settings.title": "%s - Theme Settings"
 }

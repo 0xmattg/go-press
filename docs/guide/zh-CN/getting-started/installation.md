@@ -7,22 +7,42 @@
 - Redis 7+（可选，无 Redis 时自动降级为纯内存缓存）
 - `cwebp`（可选，用于生成 WebP 变体；缺失时自动回退为 JPG/PNG 变体）
 
+## `gopress` CLI 简介
+
+GoPress 自带一个小型编排二进制 `gopress`，它包装了 server 入口。每次启动都会扫描 themes 与 plugins 目录，所以新增扩展时**不需要手动改 `cmd/server/main.go`**。
+
+`themes/` 或 `plugins/` 下的目录被识别需要同时满足：
+
+- 根目录有标记文件：主题是 `theme.toml`，插件是 `plugin.toml`
+- 根目录至少有一个非 test 的 `.go` 文件
+
+CLI 三个子命令：
+
+| 命令 | 作用 |
+|---|---|
+| `gopress serve [flags...]` | 重新生成 autoload 并启动服务。任何 flag 都会原样透传给 `cmd/server`（例如 `-config`、`-seed`）。终止信号会转发给子进程，沿用 graceful shutdown。 |
+| `gopress build [-o path]` | 重新生成 autoload 并 `go build` 出一个 server 二进制，默认输出到 `build/gopress-server`。 |
+| `gopress gen` | 只重新生成 autoload 包——适合 IDE 或 CI 钩子调用。 |
+
 ## 安装步骤
 
 ```bash
 # 克隆项目
-git clone https://github.com/your-org/go-press.git
+git clone https://github.com/0xmattg/go-press.git
 cd go-press
 
 # 安装依赖
 go mod download
 
-# 启动服务（首次启动进入 Web 安装器）
-go run ./cmd/server/
+# 一次性安装 gopress 到 $GOBIN（或 $GOPATH/bin）
+make install
+# 如果 $GOBIN 不在 PATH 上，`make install` 会打印添加方式
 
-# 或指定已有站点配置
-go run ./cmd/server/ -config sites/localhost/config.toml
+# 启动服务（首次启动进入 Web 安装器）
+gopress serve
 ```
+
+不想全局安装可以执行 `make gopress`——产物是 `./build/gopress`，调用方式 `./build/gopress serve`。
 
 启动后访问：
 
@@ -42,6 +62,76 @@ go run ./cmd/server/ -config sites/localhost/config.toml
 - **安全** — 配置文件写入权限 `0600`，安装完成后自动锁定
 
 完成安装后，配置文件会被写入 `sites/<your-site>/config.toml`，下次启动直接以此为入口。
+
+## 构建生产二进制
+
+```bash
+gopress build                  # -> build/gopress-server
+gopress build -o ./myserver    # 自定义输出
+./build/gopress-server
+```
+
+`gopress build` 先重新生成 `internal/autoload/autoload_gen.go`，再执行 `go build ./cmd/server`，最终二进制里已经把当前的全部 theme/plugin 编译进去——线上部署不依赖 Go 工具链做任何运行时发现。
+
+### 小内存机器编译
+
+`go build` 默认按 `GOMAXPROCS` 个 CPU 并行编译，每个 worker 占用的内存不小。在 1c1g 的小 VPS 上，并行编译经常被 OOM killer 杀掉，或者直接报 `signal: killed`。
+
+遇到这种情况，用 `GOFLAGS` 强制串行编译即可。Go 工具链会自动识别这个环境变量，所以对 `gopress` 和直接调用 `go build` 都生效：
+
+```bash
+GOFLAGS="-p=1"    gopress build     # 串行编译 + 固化 autoload
+GOFLAGS="-p=1"    gopress serve     # 串行编译后启动
+GOFLAGS="-p=1 -v" gopress build     # 加 -v 让编译过程逐包打印，避免看上去卡死
+```
+
+不想走 `gopress`、想直接调 `go build` 的话（记得先 `gopress gen` 刷新 autoload）：
+
+```bash
+go build -p 1 -v -o build/gopress-server ./cmd/server
+```
+
+`-p 1` 把并行度限制为 1，`-v` 让每编译完一个包就打印一行；代价是编译时间变长，换来的是内存峰值大幅下降。
+
+## Make 目标速查
+
+| 目标 | 用途 |
+|---|---|
+| `make help` | 列出全部目标（无参数 / 错误目标也会展示同样的帮助）。 |
+| `make gopress` | 构建 gopress CLI 到 `build/gopress`。 |
+| `make server` | 通过 `gopress build` 构建 server 二进制。 |
+| `make gen` | 只重新生成 `internal/autoload`。 |
+| `make install` | `go install ./cmd/gopress`（把 `gopress` 放到 `$GOBIN`）。 |
+| `make uninstall` | 移除已安装的 `gopress` 二进制。 |
+| `make clean` | 清掉 `build/` 目录。 |
+
+## 常用开发命令
+
+```bash
+# 启动 server（每次启动都会刷新 autoload）
+gopress serve
+
+# 透传 flag 给 cmd/server
+gopress serve -config sites/localhost/config.toml
+gopress serve -seed
+
+# 只刷新 autoload（不启动任何东西）
+gopress gen
+
+# 生成 Swagger 文档
+go run ./cmd/gendoc
+
+# 跑测试
+go test ./...
+```
+
+## 新增主题或插件
+
+1. 把目录拖到 `themes/` 或 `plugins/`。
+2. 确保该目录根有 `theme.toml`（主题）或 `plugin.toml`（插件），并且根有至少一个非 test 的 `.go` 文件。
+3. 重新执行 `gopress serve` —— autoload 自动重新生成，新模块在启动时被自动 import。
+
+**不需要修改 `cmd/server/main.go`。**
 
 ## 媒体处理依赖
 

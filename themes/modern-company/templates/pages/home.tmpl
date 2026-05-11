@@ -2,7 +2,7 @@
 {{$s := .Settings}}
 <!-- Hero Section -->
 <section class="hero">
-    <div class="hero-slider" id="hero-slider">
+    <div class="hero-slider" id="hero-slider" data-interval-ms="{{settingOr $s "home_hero_interval_ms" "5000"}}">
         <div class="hero-slide active">
             {{responsiveImagePriority (settingOr $s "home_hero_1_image" "https://images.unsplash.com/photo-1584677123573-7446380b6d69?w=1600&h=900&fit=crop&q=80") (settingOr $s "home_hero_1_title" "Cleanroom Construction & HEPA Filter Systems") "hero-image" "100vw"}}
             <div class="hero-overlay"></div>
