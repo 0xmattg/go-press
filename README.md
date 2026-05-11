@@ -103,6 +103,8 @@ The first-run installer guides database connection, site bootstrap, and admin ac
 
 ### Install and Run
 
+GoPress ships with a small orchestrator CLI named `gopress`. It scans `themes/` and `plugins/` at startup, regenerates the autoload package, and runs the server. You never have to hand-edit imports when adding a theme or plugin — drop the folder in, restart with `gopress serve`, and it is picked up automatically.
+
 ```bash
 # Clone the repository
 git clone https://github.com/0xmattg/go-press.git
@@ -111,12 +113,24 @@ cd go-press
 # Download dependencies
 go mod download
 
-# Start the server. First run opens the web installer.
-go run ./cmd/server/
+# One-time: install the gopress CLI to $GOBIN (or $GOPATH/bin)
+make install
+# (without install: `make gopress` produces ./build/gopress)
 
-# Or start with an existing site config
-go run ./cmd/server/ -config sites/localhost/config.toml
+# Start the server. First run opens the web installer.
+gopress serve
+
+# Or start with an existing site config (any flag is forwarded to cmd/server)
+gopress serve -config sites/localhost/config.toml
+
+# Produce a single production binary (autoload baked in at build time)
+gopress build               # -> build/gopress-server
+gopress build -o ./myserver # custom output path
 ```
+
+`make help` lists all Make targets. `gopress help` lists all CLI subcommands.
+
+> **Building on a 1c1g VM?** `go build` parallelizes across all cores and can be OOM-killed on small VPS instances. Prefix with `GOFLAGS="-p=1 -v"` to force serial compilation, e.g. `GOFLAGS="-p=1 -v" gopress build`. See [installation guide](docs/guide/en/getting-started/installation.md#building-on-low-memory-machines) for details.
 
 After startup:
 
@@ -151,7 +165,7 @@ OpenAPI files are generated from code annotations:
 |---|---|
 | [docs/swagger.json](docs/swagger.json) | OpenAPI specification in JSON |
 | [docs/swagger.yaml](docs/swagger.yaml) | OpenAPI specification in YAML |
-| [docs/docs.go](docs/docs.go) | Generated Swagger Go package imported by `cmd/server/main.go` |
+| [docs/docs.go](docs/docs.go) | Generated Swagger Go package imported by the server entry point |
 
 Regenerate docs with:
 
