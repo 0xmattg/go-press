@@ -66,11 +66,21 @@ func init() {
 }
 ```
 
-最后在 `cmd/server/main.go` 加 blank import：
+**不需要手动改 `cmd/server/main.go`**。把目录拖到 `plugins/`，确保根目录同时有 `plugin.toml` 和至少一个非 test `.go` 文件，然后重新执行 `gopress serve`。autoload 包会被重新生成，新插件的 `init()` 在启动时自动调用 `core.RegisterPlugin` 完成注册。详见 [安装与运行](../getting-started/installation.md)。
 
-```go
-_ "go-press/plugins/my-plugin"
+## 插件元数据
+
+每个插件根目录必须有 `plugin.toml`——它既是 gopress 自动发现的标记（缺它则 `plugins/<name>/` 目录会被忽略），也作为后台插件管理 UI 与后续插件注册表的元信息来源。最小 schema：
+
+```toml
+[plugin]
+name = "My Plugin"
+version = "1.0.0"
+description = "插件简介"
+author = "Me"
 ```
+
+保留字段后续可能扩展（例如依赖声明、兼容版本范围）；目前请坚守 `[plugin]` 顶层表，方便向前兼容。
 
 ## Plugin 接口可选扩展
 

@@ -1,0 +1,5 @@
+[plugin]
+name = "Multi-Language"
+version = "1.0.0"
+description = "WPML-like multi-language support with per-content translations, language-prefixed URLs, admin language management, and theme-side language switcher."
+author = "GoPress Team"

@@ -47,11 +47,21 @@ func (p *Plugin) Deactivate() error {
 }
 ```
 
-Add a blank import in `cmd/server/main.go`:
+No manual `cmd/server/main.go` edit is required. Drop the folder into `plugins/`, make sure it has both `plugin.toml` and at least one non-test `.go` file at its root, then re-run `gopress serve`. The autoload package is regenerated and the new plugin's `init()` registers itself with `core.RegisterPlugin` at startup. See [Getting Started > Installation](../getting-started/installation.md) for details.
 
-```go
-_ "go-press/plugins/my-plugin"
+## Plugin Metadata
+
+Every plugin must ship a `plugin.toml` at its root — it both serves as the auto-detection marker (the `gopress` CLI ignores a `plugins/<name>/` directory without it) and provides metadata for the admin UI and future plugin registry features. Minimum schema:
+
+```toml
+[plugin]
+name = "My Plugin"
+version = "1.0.0"
+description = "Short summary of what the plugin does."
+author = "Me"
 ```
+
+Reserved keys may grow over time (for example dependency declarations or compatibility ranges); keep your file forward-compatible by sticking to the `[plugin]` table for now.
 
 ## Plugin Data
 

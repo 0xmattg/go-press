@@ -32,12 +32,7 @@
 
 ## 启用方式
 
-1. `cmd/server/main.go` 里通过 blank import 注册插件：
-
-```go
-_ "go-press/plugins/code-snippets"
-```
-
+1. `plugins/code-snippets/` 目录已经满足 gopress 自动发现条件（含 `plugin.toml` 与 `.go` 文件）——执行 `gopress serve` 即可被 autoload 包含。如果是从旧版本升级，移除 `cmd/server/main.go` 里手写的 blank import 即可，autoload 会接管。
 2. 在后台「插件管理」启用 `code-snippets`。
 3. 进入插件设置页，分别填写 `<head>` 末尾、`<body>` 开头、`</body>` 前的代码片段。
 4. 保存后 core 会刷新缓存，前台页面立即使用新的片段。
