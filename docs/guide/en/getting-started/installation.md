@@ -28,30 +28,40 @@ The CLI exposes three subcommands:
 
 ## Clone and Run
 
+The fastest path to a running GoPress is a local `make gopress` build — no global install needed for a first look.
+
 ```bash
 git clone https://github.com/0xmattg/go-press.git
 cd go-press
 go mod download
 
-# One-time: install gopress into $GOBIN (or $GOPATH/bin).
-make install
-# If $GOBIN is not on PATH, `make install` prints the line to add.
+# Build the gopress CLI into ./build/ (no global install).
+make gopress
 
 # Start the server. First run opens the web installer.
-gopress serve
+./build/gopress serve
 ```
 
-If you prefer not to install globally, run `make gopress` instead — it produces `./build/gopress`, which you invoke as `./build/gopress serve`.
+If you plan to use GoPress regularly, install the CLI onto your `$PATH` so you can drop the `./build/` prefix:
+
+```bash
+make install            # installs gopress to $GOBIN (or $GOPATH/bin)
+gopress serve           # works from any directory after install
+```
+
+`make install` prints the `export PATH=...` line to add if `$GOBIN` is not on `$PATH` yet.
 
 Open `http://localhost:8080/install` on first run. The installer verifies the PostgreSQL connection, writes the site configuration, initializes tables, creates the administrator account, and switches the current process to the live site after setup.
 
 ## Build a Production Binary
 
 ```bash
-gopress build                  # -> build/gopress-server
-gopress build -o ./myserver    # custom output path
+./build/gopress build                  # -> build/gopress-server
+./build/gopress build -o ./myserver    # custom output path
 ./build/gopress-server
 ```
+
+(Drop the `./build/` prefix if you ran `make install`.)
 
 `gopress build` regenerates `internal/autoload/autoload_gen.go` first, then runs `go build ./cmd/server`. The resulting binary has the currently-present themes and plugins baked in at compile time — production deployments do not need the Go toolchain to "discover" anything at runtime.
 
@@ -61,15 +71,16 @@ The service discovers site configuration from `sites/{host}/config.toml`. For lo
 
 `go build` compiles packages in parallel across `GOMAXPROCS` cores, and each compile worker holds a sizeable working set in memory. On a 1 CPU / 1 GB VM (typical small VPS), parallel compilation can be killed by the OOM killer or fail with `signal: killed`.
 
-If you hit this, force `go build` to compile one package at a time using `GOFLAGS`. The Go toolchain reads this environment variable transparently, so it applies to `gopress` and direct `go build` invocations alike:
+If you hit this, force `go build` to compile one package at a time using `GOFLAGS`. The Go toolchain reads this environment variable transparently, so it applies to every step in the chain — `make gopress`, `gopress serve`, `gopress build`, and direct `go build` invocations:
 
 ```bash
-GOFLAGS="-p=1"    gopress build     # serial compile, baked-in autoload
-GOFLAGS="-p=1"    gopress serve     # serial compile, then run
-GOFLAGS="-p=1 -v" gopress build     # add -v to print package names as progress
+GOFLAGS="-p=1"    make gopress              # serial compile of the CLI itself
+GOFLAGS="-p=1"    ./build/gopress build     # serial compile of the server
+GOFLAGS="-p=1"    ./build/gopress serve     # serial compile, then run
+GOFLAGS="-p=1 -v" ./build/gopress build     # add -v to print package names as progress
 ```
 
-Equivalent without `gopress`, after running `gopress gen` to refresh autoload:
+Equivalent without `gopress`, after running `./build/gopress gen` to refresh autoload:
 
 ```bash
 go build -p 1 -v -o build/gopress-server ./cmd/server
@@ -101,16 +112,18 @@ If the target database does not exist, GoPress attempts to connect to `postgres`
 
 ## Common Development Commands
 
+Examples use `./build/gopress` (local build). After `make install` you can drop the `./build/` prefix.
+
 ```bash
 # Run the server (with autoload regenerated)
-gopress serve
+./build/gopress serve
 
 # Forward flags to cmd/server
-gopress serve -config sites/localhost/config.toml
-gopress serve -seed
+./build/gopress serve -config sites/localhost/config.toml
+./build/gopress serve -seed
 
 # Regenerate autoload only (does not start anything)
-gopress gen
+./build/gopress gen
 
 # Generate Swagger docs
 go run ./cmd/gendoc
@@ -123,7 +136,7 @@ go test ./...
 
 1. Drop the folder into `themes/` or `plugins/`.
 2. Make sure it contains a `theme.toml` (theme) or `plugin.toml` (plugin) and at least one non-test `.go` file at its root.
-3. Re-run `gopress serve`. The autoload file is regenerated and the new module is imported on startup.
+3. Re-run `./build/gopress serve`. The autoload file is regenerated and the new module is imported on startup.
 
 No edit to `cmd/server/main.go` is required.
 
