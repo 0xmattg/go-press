@@ -26,6 +26,8 @@ CLI 三个子命令：
 
 ## 安装步骤
 
+最快上手方式是本地 `make gopress` 构建——先试一下不必全局安装。
+
 ```bash
 # 克隆项目
 git clone https://github.com/0xmattg/go-press.git
@@ -34,15 +36,21 @@ cd go-press
 # 安装依赖
 go mod download
 
-# 一次性安装 gopress 到 $GOBIN（或 $GOPATH/bin）
-make install
-# 如果 $GOBIN 不在 PATH 上，`make install` 会打印添加方式
+# 把 gopress CLI 构建到 ./build/（不需要全局安装）
+make gopress
 
 # 启动服务（首次启动进入 Web 安装器）
-gopress serve
+./build/gopress serve
 ```
 
-不想全局安装可以执行 `make gopress`——产物是 `./build/gopress`，调用方式 `./build/gopress serve`。
+如果长期使用，可以把 CLI 装到 `$PATH` 上，省掉 `./build/` 前缀：
+
+```bash
+make install      # 装到 $GOBIN（或 $GOPATH/bin）
+gopress serve     # 装完之后任意目录都能跑
+```
+
+如果 `$GOBIN` 还不在 `$PATH` 上，`make install` 会打印需要加到 shell rc 的 `export PATH=...` 一行。
 
 启动后访问：
 
@@ -66,10 +74,12 @@ gopress serve
 ## 构建生产二进制
 
 ```bash
-gopress build                  # -> build/gopress-server
-gopress build -o ./myserver    # 自定义输出
+./build/gopress build                  # -> build/gopress-server
+./build/gopress build -o ./myserver    # 自定义输出
 ./build/gopress-server
 ```
+
+（如果跑过 `make install`，可以省掉 `./build/` 前缀。）
 
 `gopress build` 先重新生成 `internal/autoload/autoload_gen.go`，再执行 `go build ./cmd/server`，最终二进制里已经把当前的全部 theme/plugin 编译进去——线上部署不依赖 Go 工具链做任何运行时发现。
 
@@ -77,15 +87,16 @@ gopress build -o ./myserver    # 自定义输出
 
 `go build` 默认按 `GOMAXPROCS` 个 CPU 并行编译，每个 worker 占用的内存不小。在 1c1g 的小 VPS 上，并行编译经常被 OOM killer 杀掉，或者直接报 `signal: killed`。
 
-遇到这种情况，用 `GOFLAGS` 强制串行编译即可。Go 工具链会自动识别这个环境变量，所以对 `gopress` 和直接调用 `go build` 都生效：
+遇到这种情况，用 `GOFLAGS` 强制串行编译即可。Go 工具链会自动识别这个环境变量，所以链路中每一步都生效—— `make gopress`、`gopress serve`、`gopress build`、直接的 `go build` 都吃：
 
 ```bash
-GOFLAGS="-p=1"    gopress build     # 串行编译 + 固化 autoload
-GOFLAGS="-p=1"    gopress serve     # 串行编译后启动
-GOFLAGS="-p=1 -v" gopress build     # 加 -v 让编译过程逐包打印，避免看上去卡死
+GOFLAGS="-p=1"    make gopress              # 串行编译 CLI 本身
+GOFLAGS="-p=1"    ./build/gopress build     # 串行编译 server
+GOFLAGS="-p=1"    ./build/gopress serve     # 串行编译后启动
+GOFLAGS="-p=1 -v" ./build/gopress build     # 加 -v 让编译过程逐包打印，避免看上去卡死
 ```
 
-不想走 `gopress`、想直接调 `go build` 的话（记得先 `gopress gen` 刷新 autoload）：
+不想走 `gopress`、想直接调 `go build` 的话（记得先 `./build/gopress gen` 刷新 autoload）：
 
 ```bash
 go build -p 1 -v -o build/gopress-server ./cmd/server
@@ -107,16 +118,18 @@ go build -p 1 -v -o build/gopress-server ./cmd/server
 
 ## 常用开发命令
 
+下面例子统一用 `./build/gopress`（本地构建）。如果跑过 `make install`，可以省掉 `./build/` 前缀。
+
 ```bash
 # 启动 server（每次启动都会刷新 autoload）
-gopress serve
+./build/gopress serve
 
 # 透传 flag 给 cmd/server
-gopress serve -config sites/localhost/config.toml
-gopress serve -seed
+./build/gopress serve -config sites/localhost/config.toml
+./build/gopress serve -seed
 
 # 只刷新 autoload（不启动任何东西）
-gopress gen
+./build/gopress gen
 
 # 生成 Swagger 文档
 go run ./cmd/gendoc
@@ -129,7 +142,7 @@ go test ./...
 
 1. 把目录拖到 `themes/` 或 `plugins/`。
 2. 确保该目录根有 `theme.toml`（主题）或 `plugin.toml`（插件），并且根有至少一个非 test 的 `.go` 文件。
-3. 重新执行 `gopress serve` —— autoload 自动重新生成，新模块在启动时被自动 import。
+3. 重新执行 `./build/gopress serve` —— autoload 自动重新生成，新模块在启动时被自动 import。
 
 **不需要修改 `cmd/server/main.go`。**
 
