@@ -6,7 +6,20 @@ GoPress 把 SEO 相关能力内建在引擎层，主题和插件**不需要**自
 
 - **Rewrite 引擎** — URL 路径 → ContentType + Slug 自动解析
 - **永久链接** — 由内容类型的 `rewrite_slug` 决定 URL 结构，例如主题声明的 `product` 可以使用 `/products/:slug`，文章可以使用 `/blog/:slug`
+- **模板映射** — 内容类型可通过 `templates = { archive = "...", single = "..." }` 指定归档/详情页使用哪个 `templates/pages/*.tmpl`，避免在 Go handler 中写特殊分支
 - **301/302 重定向** — 数据库驱动，内存缓存，命中计数
+
+`product` / `service` / `showcase` 都不是 core 内置假设，只是示例主题常用的业务类型。真正的 URL 行为来自当前注册表：
+
+```toml
+[[content_types]]
+name = "module"
+has_archive = true
+rewrite_slug = "modules"
+templates = { archive = "products", single = "product-detail" }
+```
+
+这个配置会产生 `/modules` 和 `/modules/{slug}`，同时复用 `products` / `product-detail` 页面模板。后台 CRUD、REST API、SEO canonical、Sitemap 和前台动态渲染都会读取同一个内容类型定义。
 
 ## XML Sitemap
 
@@ -42,4 +55,13 @@ GoPress 把 SEO 相关能力内建在引擎层，主题和插件**不需要**自
 
 ## i18n 内链一致性
 
-模板通过 `{{langPrefixURL .Ctx "/path"}}` 生成内部链接，核心 funcmap 根据当前请求语言自动补齐 `/zh`、`/ja` 等前缀，保证用户在非默认语言下点击内链不会回落到默认语言。
+模板通过 `{{langPrefixURL .Ctx "/path"}}` 生成普通内部链接，核心 funcmap 根据当前请求语言自动补齐 `/zh`、`/ja` 等前缀，保证用户在非默认语言下点击内链不会回落到默认语言。
+
+内容类型相关链接优先使用 Rewrite 感知 helper：
+
+```gotemplate
+{{archiveURL "module"}}
+{{contentURL . "module"}}
+```
+
+`archiveURL` 返回当前内容类型归档 URL；`contentURL` 优先使用 item 上已有的 `URL` 字段，否则按 item 的 `Type` / `Slug` 和 Rewrite 注册表构造 URL，并以传入的 fallback type 兜底。

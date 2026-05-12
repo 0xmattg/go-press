@@ -16,12 +16,12 @@
     <nav class="tt-nav" aria-label="Primary navigation">
         <ul class="tt-nav-list">
             <li><a class="{{if eq .ActivePage "home"}}active{{end}}" href="{{langPrefixURL .Ctx "/"}}">{{settingOr $s "nav_home" "Home"}}</a></li>
-            <li><a class="{{if eq .ActivePage "products"}}active{{end}}" href="{{langPrefixURL .Ctx "/products"}}">{{settingOr $s "nav_process" "Tour"}}</a></li>
+            <li><a class="{{if eq .ActivePage "products"}}active{{end}}" href="{{langPrefixURL .Ctx (archiveURL "product")}}">{{settingOr $s "nav_process" "Tour"}}</a></li>
             <li><a class="{{if eq .ActivePage "about"}}active{{end}}" href="{{langPrefixURL .Ctx "/about"}}">{{settingOr $s "nav_about" "About Us"}}</a></li>
             <li><a class="{{if eq .ActivePage "contact"}}active{{end}}" href="{{langPrefixURL .Ctx "/contact"}}">{{settingOr $s "nav_contact" "Contact Us"}}</a></li>
-            <li><a class="{{if eq .ActivePage "showcase"}}active{{end}}" href="{{langPrefixURL .Ctx "/showcase"}}">{{settingOr $s "nav_showcase" "Destinations"}}</a></li>
-            <li><a class="{{if eq .ActivePage "services"}}active{{end}}" href="{{langPrefixURL .Ctx "/services"}}">{{settingOr $s "nav_services" "Transport"}}</a></li>
-            <li><a class="{{if eq .ActivePage "blog"}}active{{end}}" href="{{langPrefixURL .Ctx "/blog"}}">{{settingOr $s "nav_blog" "Journal"}}</a></li>
+            <li><a class="{{if eq .ActivePage "showcase"}}active{{end}}" href="{{langPrefixURL .Ctx (archiveURL "showcase")}}">{{settingOr $s "nav_showcase" "Destinations"}}</a></li>
+            <li><a class="{{if eq .ActivePage "services"}}active{{end}}" href="{{langPrefixURL .Ctx (archiveURL "service")}}">{{settingOr $s "nav_services" "Transport"}}</a></li>
+            <li><a class="{{if eq .ActivePage "blog"}}active{{end}}" href="{{langPrefixURL .Ctx (archiveURL "post")}}">{{settingOr $s "nav_blog" "Journal"}}</a></li>
             {{renderHook "header.nav.after" .}}
         </ul>
     </nav>

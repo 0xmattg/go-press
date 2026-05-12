@@ -7,10 +7,13 @@ GoPress 的引擎核心提供了所有 CMS 功能赖以运行的基础能力。
 - **统一内容模型** — `Content` + `ContentMeta` + `ContentType` 注册表，一套模型驱动所有内容类型
 - **核心内容类型** — `post`（文章）、`contact_message`（联系留言）、`category`（分类）、`tag`（标签）在引擎层注册，主题切换后仍保留，不丢失数据
 - **主题内容类型** — 主题在 `theme.toml` 的 `[[content_types]]` 中声明自定义内容类型，core 激活主题时自动注册
+- **配置驱动路由/模板** — 同一个 `ContentTypeDef` 同时驱动后台导航、CRUD 表单、REST API、Rewrite、Sitemap、分类归档和 BaseTheme 动态归档/详情渲染；`rewrite_slug` 控制公开 URL，`templates = { archive = "...", single = "..." }` 可把内容类型映射到指定页面模板
 - **链式查询构建器** — 以主题声明的 `product` 内容类型为例：`ContentQuery.Type("product").Published().Taxonomy("category", "hepa").Paginate(1, 20)`
 - **分类法系统** — 支持层级分类和标签，多对多关联，自动计数；主题内容类型通过 `theme.toml` 的 `taxonomies = ["category", "tag"]` 挂载核心分类法
 - **分类归档页** — `/category/{slug}` 和 `/tag/{slug}` 跨内容类型聚合展示，类型标签来自当前注册的 `ContentTypeDef`
 - **分类法类型过滤** — 归档页自动过滤当前主题未注册的内容类型，主题切换后仅显示有效内容
+
+`product` / `service` / `showcase` 是示例主题常用约定，不是 core 必须存在的模型。主题可以声明 `module`、`project`、`case_study` 等任意类型，并获得同样的后台、API、路由和模板渲染能力。
 
 ## Hook 事件总线
 

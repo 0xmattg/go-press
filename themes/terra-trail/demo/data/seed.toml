@@ -104,7 +104,7 @@ value = "Booking"
 
 [[settings]]
 key = "home_hero_btn_link"
-value = "/products"
+value = ""
 
 [[settings]]
 key = "home_hero_image"

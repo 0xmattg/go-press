@@ -6,12 +6,15 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"sort"
 	"strings"
+	"unicode"
 
 	"go-press/core/content"
 	"go-press/core/hook"
 	"go-press/core/menu"
 	"go-press/core/rewrite"
+	"go-press/core/taxonomy"
 	"go-press/pkg/logger"
 
 	"github.com/gin-gonic/gin"
@@ -43,6 +46,7 @@ type BaseTheme struct {
 	App           App
 	ThemeDir      string
 	Templates     *TemplateEngine
+	PageTemplates map[string]*template.Template
 	CustomRoutes  map[string]map[string]gin.HandlerFunc // path → method → handler
 	customFuncMap template.FuncMap
 }
@@ -56,6 +60,7 @@ type BaseTheme struct {
 func (b *BaseTheme) InitBase(app App, themeDir string, extraFuncs template.FuncMap) {
 	b.App = app
 	b.ThemeDir = themeDir
+	b.PageTemplates = make(map[string]*template.Template)
 	b.CustomRoutes = make(map[string]map[string]gin.HandlerFunc)
 	b.customFuncMap = extraFuncs
 }
@@ -75,6 +80,13 @@ func (b *BaseTheme) AddRoute(method, path string, handler gin.HandlerFunc) {
 // LoadTemplates compiles all templates using the core TemplateEngine
 // with merged common + theme-specific function maps.
 func (b *BaseTheme) LoadTemplates(t Theme) {
+	pageTemplates, err := LoadAllPageBundles(t)
+	if err != nil {
+		logger.Error("BaseTheme: failed to load page templates", "error", err)
+	} else {
+		b.PageTemplates = pageTemplates
+	}
+
 	b.Templates = NewTemplateEngine(t)
 	if err := b.Templates.Load(); err != nil {
 		logger.Error("BaseTheme: failed to load templates", "error", err)
@@ -95,6 +107,23 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 		if rw != nil {
 			engineFuncs["buildURL"] = rw.BuildURL
 			engineFuncs["archiveURL"] = rw.BuildArchiveURL
+			engineFuncs["contentURL"] = func(item interface{}, fallbackType string) string {
+				if url := stringField(item, "URL"); url != "" {
+					return url
+				}
+				slug := stringField(item, "Slug")
+				if slug == "" {
+					return "/"
+				}
+				contentType := stringField(item, "Type")
+				if contentType == "" {
+					contentType = fallbackType
+				}
+				if contentType == "" {
+					return "/" + strings.TrimPrefix(slug, "/")
+				}
+				return rw.BuildURL(contentType, slug)
+			}
 		}
 		if seo != nil {
 			engineFuncs["seoHead"] = func(meta rewrite.SEOMeta) template.HTML {
@@ -153,7 +182,11 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 				if name == "" {
 					return ""
 				}
-				output := hooks.ApplyFilter(name, template.HTML(""), data)
+				args := []interface{}{data}
+				if ctx := templateGinContext(data); ctx != nil {
+					args = append(args, ctx)
+				}
+				output := hooks.ApplyFilter(name, template.HTML(""), args...)
 				switch v := output.(type) {
 				case template.HTML:
 					return v
@@ -236,6 +269,52 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 	return MergeFuncMap(CommonFuncMap(), engineFuncs, b.customFuncMap)
 }
 
+func templateGinContext(data interface{}) *gin.Context {
+	if data == nil {
+		return nil
+	}
+	if c, ok := data.(*gin.Context); ok {
+		return c
+	}
+
+	v := reflect.ValueOf(data)
+	for v.IsValid() && v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return nil
+		}
+		v = v.Elem()
+	}
+	if !v.IsValid() {
+		return nil
+	}
+
+	switch v.Kind() {
+	case reflect.Map:
+		key := reflect.ValueOf("Ctx")
+		if key.Type().AssignableTo(v.Type().Key()) {
+			val := v.MapIndex(key)
+			if val.IsValid() {
+				if val.Kind() == reflect.Interface {
+					val = val.Elem()
+				}
+				if val.IsValid() && val.CanInterface() {
+					if c, ok := val.Interface().(*gin.Context); ok {
+						return c
+					}
+				}
+			}
+		}
+	case reflect.Struct:
+		field := v.FieldByName("Ctx")
+		if field.IsValid() && field.CanInterface() {
+			if c, ok := field.Interface().(*gin.Context); ok {
+				return c
+			}
+		}
+	}
+	return nil
+}
+
 // ServeHTTP implements the default front-end request handling:
 //  1. Check custom routes (static pages)
 //  2. Resolve URL via rewrite engine → content type
@@ -313,8 +392,13 @@ func (b *BaseTheme) renderHome(c *gin.Context) {
 
 // renderArchive renders an archive listing page with template hierarchy.
 func (b *BaseTheme) renderArchive(c *gin.Context, route *rewrite.ResolvedRoute) {
-	candidates := ResolveTemplate(route.ContentType, "", "", "", true, false, false)
-	tmpl := b.Templates.Resolve(candidates)
+	typeDef := b.App.ContentRegistry().GetType(route.ContentType)
+	pageTmpl := b.resolvePageTemplate(archivePageCandidates(route.ContentType, typeDef))
+	var tmpl *template.Template
+	if pageTmpl == nil && b.Templates != nil {
+		candidates := ResolveTemplate(route.ContentType, "", "", "", true, false, false)
+		tmpl = b.Templates.Resolve(candidates)
+	}
 
 	// Query published content of this type
 	page := route.Page
@@ -323,7 +407,7 @@ func (b *BaseTheme) renderArchive(c *gin.Context, route *rewrite.ResolvedRoute) 
 	}
 	perPage := 20
 
-	result, err := content.NewQuery(b.App.Database()).
+	result, err := content.NewQuery(content.ScopedDB(c, b.App.Database())).
 		Type(route.ContentType).Published().
 		OrderBy("published_at", "DESC").
 		Paginate(page, perPage)
@@ -333,15 +417,22 @@ func (b *BaseTheme) renderArchive(c *gin.Context, route *rewrite.ResolvedRoute) 
 		return
 	}
 
-	typeDef := b.App.ContentRegistry().GetType(route.ContentType)
-
 	data := b.buildBaseData("")
 	if typeDef != nil {
 		data["Title"] = typeDef.LabelPlural
 	}
+	data["ActivePage"] = route.ContentType
+	items := b.contentViews(c, result.Items)
 	data["ContentType"] = route.ContentType
-	data["Items"] = result.Items
+	data["TypeDef"] = typeDef
+	data["Items"] = items
+	data[pluralAlias(route.ContentType)] = items
+	addLegacyListAliases(data, items)
 	data["Pagination"] = result
+	b.addArchiveTaxonomyData(data)
+	if rw := b.App.RewriteEngine(); rw != nil {
+		data["ArchiveURL"] = rw.BuildArchiveURL(route.ContentType)
+	}
 
 	// Inject SEO
 	if b.App.SEOBuilder() != nil && typeDef != nil {
@@ -351,6 +442,10 @@ func (b *BaseTheme) renderArchive(c *gin.Context, route *rewrite.ResolvedRoute) 
 	}
 
 	// If theme has a template, use it
+	if pageTmpl != nil {
+		b.executeTemplate(c, pageTmpl, data)
+		return
+	}
 	if tmpl != nil {
 		b.executeTemplate(c, tmpl, data)
 		return
@@ -384,8 +479,13 @@ func (b *BaseTheme) renderSingle(c *gin.Context, route *rewrite.ResolvedRoute) {
 		return
 	}
 
-	candidates := ResolveTemplate(route.ContentType, route.Slug, "", "", false, false, false)
-	tmpl := b.Templates.Resolve(candidates)
+	typeDef := b.App.ContentRegistry().GetType(route.ContentType)
+	pageTmpl := b.resolvePageTemplate(singlePageCandidates(route.ContentType, route.Slug, typeDef))
+	var tmpl *template.Template
+	if pageTmpl == nil && b.Templates != nil {
+		candidates := ResolveTemplate(route.ContentType, route.Slug, "", "", false, false, false)
+		tmpl = b.Templates.Resolve(candidates)
+	}
 
 	// Load meta
 	meta, _ := b.App.ContentRepo().GetMeta(item.ID)
@@ -408,14 +508,24 @@ func (b *BaseTheme) renderSingle(c *gin.Context, route *rewrite.ResolvedRoute) {
 	}
 
 	data := b.buildBaseData(item.Title)
-	data["Item"] = item
+	view := b.contentView(c, *item)
+	related := b.relatedContentViews(c, route.ContentType, item.ID, 3)
+	data["ActivePage"] = route.ContentType
+	data["Item"] = view
+	data[singularAlias(route.ContentType)] = view
+	addLegacySingleAliases(data, view)
 	data["Meta"] = meta
 	data["Categories"] = categories
 	data["Tags"] = tags
+	data["Related"] = related
 	data["ContentType"] = route.ContentType
+	data["TypeDef"] = typeDef
+	if rw := b.App.RewriteEngine(); rw != nil {
+		data["ArchiveURL"] = rw.BuildArchiveURL(route.ContentType)
+		data["Permalink"] = rw.BuildURL(route.ContentType, item.Slug)
+	}
 
 	// Inject SEO
-	typeDef := b.App.ContentRegistry().GetType(route.ContentType)
 	if b.App.SEOBuilder() != nil && typeDef != nil {
 		seo := b.App.SEOBuilder().ForContent(item, typeDef)
 		ApplySiteOptionOverrides(b.App, &seo)
@@ -424,6 +534,10 @@ func (b *BaseTheme) renderSingle(c *gin.Context, route *rewrite.ResolvedRoute) {
 	}
 
 	// If theme has a template, use it
+	if pageTmpl != nil {
+		b.executeTemplate(c, pageTmpl, data)
+		return
+	}
 	if tmpl != nil {
 		b.executeTemplate(c, tmpl, data)
 		return
@@ -439,10 +553,20 @@ func (b *BaseTheme) renderSingle(c *gin.Context, route *rewrite.ResolvedRoute) {
 
 // renderTaxonomy renders a taxonomy term archive.
 func (b *BaseTheme) renderTaxonomy(c *gin.Context, route *rewrite.ResolvedRoute) {
-	candidates := ResolveTemplate("", "", route.TaxSlug, route.TermSlug, false, false, false)
-	tmpl := b.Templates.Resolve(candidates)
+	pageTmpl := b.resolvePageTemplate([]string{
+		"taxonomy-" + route.TaxSlug + "-" + route.TermSlug,
+		"taxonomy-" + route.TaxSlug,
+		"taxonomy-archive",
+		"taxonomy",
+		"archive",
+	})
+	var tmpl *template.Template
+	if pageTmpl == nil && b.Templates != nil {
+		candidates := ResolveTemplate("", "", route.TaxSlug, route.TermSlug, false, false, false)
+		tmpl = b.Templates.Resolve(candidates)
+	}
 
-	items, err := content.NewQuery(b.App.Database()).
+	items, err := content.NewQuery(content.ScopedDB(c, b.App.Database())).
 		Published().
 		Types(b.registeredTypeNames()).
 		Taxonomy(route.TaxSlug, route.TermSlug).
@@ -470,9 +594,13 @@ func (b *BaseTheme) renderTaxonomy(c *gin.Context, route *rewrite.ResolvedRoute)
 	data["TermSlug"] = route.TermSlug
 	data["TaxLabel"] = taxLabel
 	data["TermName"] = termName
-	data["Items"] = items
+	data["Items"] = b.taxonomyArchiveViews(c, items)
 
 	// If theme has a template, use it (with "base" block)
+	if pageTmpl != nil {
+		b.executeTemplate(c, pageTmpl, data)
+		return
+	}
 	if tmpl != nil {
 		b.executeTemplate(c, tmpl, data)
 		return
@@ -534,6 +662,267 @@ func (b *BaseTheme) executeTemplate(c *gin.Context, tmpl *template.Template, dat
 	c.Header("Content-Type", "text/html; charset=utf-8")
 	if err := tmpl.ExecuteTemplate(c.Writer, "base", data); err != nil {
 		logger.Error("BaseTheme: template render error", "template", tmpl.Name(), "error", err)
+	}
+}
+
+func (b *BaseTheme) resolvePageTemplate(candidates []string) *template.Template {
+	if len(b.PageTemplates) == 0 {
+		return nil
+	}
+	for _, name := range candidates {
+		if tmpl := b.PageTemplates[name]; tmpl != nil {
+			return tmpl
+		}
+	}
+	return nil
+}
+
+func archivePageCandidates(contentType string, typeDef *content.ContentTypeDef) []string {
+	candidates := []string{"archive-" + contentType}
+	if typeDef != nil && typeDef.Rewrite.Slug != "" {
+		candidates = append(candidates, strings.Trim(typeDef.Rewrite.Slug, "/"))
+	}
+	candidates = append(candidates, contentType, pluralName(contentType))
+	if typeDef != nil && typeDef.Templates.Archive != "" {
+		candidates = append(candidates, typeDef.Templates.Archive)
+	}
+	candidates = append(candidates, "archive")
+	return uniqueStrings(candidates)
+}
+
+func singlePageCandidates(contentType, slug string, typeDef *content.ContentTypeDef) []string {
+	candidates := []string{}
+	if slug != "" {
+		candidates = append(candidates, "single-"+contentType+"-"+slug)
+	}
+	candidates = append(candidates, "single-"+contentType, contentType+"-detail", contentType+"_detail")
+	if typeDef != nil && typeDef.Rewrite.Slug != "" {
+		candidates = append(candidates, strings.Trim(typeDef.Rewrite.Slug, "/")+"-detail")
+	}
+	if typeDef != nil && typeDef.Templates.Single != "" {
+		candidates = append(candidates, typeDef.Templates.Single)
+	}
+	candidates = append(candidates, "single")
+	return uniqueStrings(candidates)
+}
+
+func uniqueStrings(in []string) []string {
+	seen := make(map[string]bool, len(in))
+	out := make([]string, 0, len(in))
+	for _, s := range in {
+		s = strings.TrimSpace(s)
+		if s == "" || seen[s] {
+			continue
+		}
+		seen[s] = true
+		out = append(out, s)
+	}
+	return out
+}
+
+func (b *BaseTheme) contentViews(c *gin.Context, items []content.Content) []map[string]interface{} {
+	views := make([]map[string]interface{}, len(items))
+	for i, item := range items {
+		views[i] = b.contentView(c, item)
+	}
+	return views
+}
+
+func (b *BaseTheme) contentView(c *gin.Context, item content.Content) map[string]interface{} {
+	meta, _ := b.App.ContentRepo().GetMeta(item.ID)
+	categories := b.termViews(item.ID, "category")
+	tags := b.termViews(item.ID, "tag")
+
+	view := map[string]interface{}{
+		"ID":          item.ID,
+		"Type":        item.Type,
+		"Status":      item.Status,
+		"Title":       item.Title,
+		"Slug":        item.Slug,
+		"Content":     item.Content,
+		"Description": item.Content,
+		"Excerpt":     item.Excerpt,
+		"ImageURL":    item.ImageURL,
+		"AuthorID":    item.AuthorID,
+		"ParentID":    item.ParentID,
+		"SortOrder":   item.SortOrder,
+		"PublishedAt": item.PublishedAt,
+		"CreatedAt":   item.CreatedAt,
+		"UpdatedAt":   item.UpdatedAt,
+		"Meta":        meta,
+		"Categories":  categories,
+		"Tags":        tags,
+	}
+	if len(categories) > 0 {
+		view["Category"] = categories[0]
+	} else {
+		view["Category"] = map[string]interface{}{}
+	}
+	if rw := b.App.RewriteEngine(); rw != nil {
+		view["URL"] = rw.BuildURL(item.Type, item.Slug)
+	}
+
+	keys := make([]string, 0, len(meta))
+	for key := range meta {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		val := meta[key]
+		view[key] = val
+		view[exportedKey(key)] = val
+	}
+	view["GalleryImages"] = splitCSV(meta["gallery_images"])
+
+	return view
+}
+
+func (b *BaseTheme) taxonomyArchiveViews(c *gin.Context, items []content.Content) []map[string]interface{} {
+	views := b.contentViews(c, items)
+	for _, view := range views {
+		contentType, _ := view["Type"].(string)
+		slug, _ := view["Slug"].(string)
+		view["ContentType"] = contentType
+		view["TypeLabel"] = contentType
+		if typeDef := b.App.ContentRegistry().GetType(contentType); typeDef != nil {
+			view["TypeLabel"] = typeDef.Label
+		}
+		if rw := b.App.RewriteEngine(); rw != nil {
+			view["DetailURL"] = rw.BuildURL(contentType, slug)
+		}
+	}
+	return views
+}
+
+func (b *BaseTheme) relatedContentViews(c *gin.Context, contentType string, excludeID uint, limit int) []map[string]interface{} {
+	if limit <= 0 {
+		return nil
+	}
+	items, err := content.NewQuery(content.ScopedDB(c, b.App.Database())).
+		Type(contentType).
+		Published().
+		OrderBy("published_at", "DESC").
+		Limit(limit + 1).
+		Get()
+	if err != nil {
+		return nil
+	}
+	filtered := make([]content.Content, 0, limit)
+	for _, item := range items {
+		if item.ID == excludeID {
+			continue
+		}
+		filtered = append(filtered, item)
+		if len(filtered) == limit {
+			break
+		}
+	}
+	return b.contentViews(c, filtered)
+}
+
+func (b *BaseTheme) termViews(contentID uint, taxName string) []map[string]interface{} {
+	if b.App == nil || b.App.TaxonomyRepo() == nil {
+		return nil
+	}
+	items, _ := b.App.TaxonomyRepo().GetContentTaxonomies(contentID, taxName)
+	return taxonomyViews(items)
+}
+
+func taxonomyViews(items []taxonomy.Taxonomy) []map[string]interface{} {
+	views := make([]map[string]interface{}, len(items))
+	for i, item := range items {
+		views[i] = map[string]interface{}{
+			"ID":   item.ID,
+			"Name": item.Term.Name,
+			"Slug": item.Term.Slug,
+		}
+	}
+	return views
+}
+
+func (b *BaseTheme) addArchiveTaxonomyData(data gin.H) {
+	if b.App == nil || b.App.TaxonomyRepo() == nil {
+		return
+	}
+	if cats, err := b.App.TaxonomyRepo().ListByTaxonomy("category"); err == nil {
+		data["Categories"] = taxonomyViews(cats)
+	}
+	if tags, err := b.App.TaxonomyRepo().ListByTaxonomy("tag"); err == nil {
+		data["Tags"] = taxonomyViews(tags)
+	}
+}
+
+func singularAlias(contentType string) string {
+	return exportedKey(contentType)
+}
+
+func pluralAlias(contentType string) string {
+	return exportedKey(pluralName(contentType))
+}
+
+func pluralName(name string) string {
+	if strings.HasSuffix(name, "y") && len(name) > 1 {
+		prev := name[len(name)-2]
+		if !strings.ContainsRune("aeiou", rune(prev)) {
+			return strings.TrimSuffix(name, "y") + "ies"
+		}
+	}
+	if strings.HasSuffix(name, "s") || strings.HasSuffix(name, "x") || strings.HasSuffix(name, "ch") || strings.HasSuffix(name, "sh") {
+		return name + "es"
+	}
+	return name + "s"
+}
+
+func exportedKey(key string) string {
+	var b strings.Builder
+	upperNext := true
+	for _, r := range key {
+		if r == '_' || r == '-' || r == ' ' {
+			upperNext = true
+			continue
+		}
+		if upperNext {
+			b.WriteRune(unicode.ToUpper(r))
+			upperNext = false
+			continue
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
+}
+
+func splitCSV(value string) []string {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	parts := strings.Split(value, ",")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
+}
+
+func addLegacyListAliases(data gin.H, items []map[string]interface{}) {
+	// Compatibility for bundled themes that predate dynamic content rendering.
+	// These aliases do not imply required content types; they all point to the
+	// current archive result so old page templates can keep working while new
+	// themes use Items or the type-derived alias.
+	for _, key := range []string{"Products", "Services", "Showcases", "Posts", "Articles", "Updates", "Analyses", "MarketUpdates", "LatestAnalysis"} {
+		if _, exists := data[key]; !exists {
+			data[key] = items
+		}
+	}
+}
+
+func addLegacySingleAliases(data gin.H, item map[string]interface{}) {
+	for _, key := range []string{"Product", "Service", "Showcase", "Post", "Article", "MarketUpdate", "Analysis"} {
+		if _, exists := data[key]; !exists {
+			data[key] = item
+		}
 	}
 }
 

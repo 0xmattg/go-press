@@ -15,7 +15,7 @@
 <section class="as-section">
     <div class="as-container as-detail-body">
         <article class="as-richtext">{{safeHTML .Product.Description}}</article>
-        <aside class="as-side-panel"><h3>Related</h3>{{range .Related}}<a href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}">{{.Title}}</a>{{end}}</aside>
+        <aside class="as-side-panel"><h3>Related</h3>{{range .Related}}<a href="{{langPrefixURL $.Ctx (contentURL . "product")}}">{{.Title}}</a>{{end}}</aside>
     </div>
 </section>
 {{end}}

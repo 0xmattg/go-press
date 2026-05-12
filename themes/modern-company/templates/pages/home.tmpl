@@ -12,7 +12,7 @@
                 <p>{{settingOr $s "home_hero_1_desc" "Professional turnkey cleanroom solutions from design to installation, serving pharmaceutical, food, and tech industries globally since 2003."}}</p>
                 <div class="hero-btns">
                     <a href="{{settingOr $s "home_hero_1_btn1_link" "/contact"}}" class="btn btn-primary btn-lg">{{settingOr $s "home_hero_1_btn1_text" "Get a Quote"}}</a>
-                    <a href="{{settingOr $s "home_hero_1_btn2_link" "/products"}}" class="btn btn-outline btn-lg">{{settingOr $s "home_hero_1_btn2_text" "Our Products"}}</a>
+                    <a href="{{langPrefixURL $.Ctx (settingOr $s "home_hero_1_btn2_link" (archiveURL "product"))}}" class="btn btn-outline btn-lg">{{settingOr $s "home_hero_1_btn2_text" "Our Products"}}</a>
                 </div>
             </div>
         </div>
@@ -24,7 +24,7 @@
                 <h1>{{settingOr $s "home_hero_2_title" "ISO-Certified Air Purification Solutions"}}</h1>
                 <p>{{settingOr $s "home_hero_2_desc" "High-efficiency filters, laminar flow hoods, air showers, and complete purification equipment manufactured in Wuxi, China."}}</p>
                 <div class="hero-btns">
-                    <a href="{{settingOr $s "home_hero_2_btn1_link" "/services"}}" class="btn btn-primary btn-lg">{{settingOr $s "home_hero_2_btn1_text" "Our Services"}}</a>
+                    <a href="{{langPrefixURL $.Ctx (settingOr $s "home_hero_2_btn1_link" (archiveURL "service"))}}" class="btn btn-primary btn-lg">{{settingOr $s "home_hero_2_btn1_text" "Our Services"}}</a>
                     <a href="{{settingOr $s "home_hero_2_btn2_link" "/about"}}" class="btn btn-outline btn-lg">{{settingOr $s "home_hero_2_btn2_text" "Learn More"}}</a>
                 </div>
             </div>
@@ -37,7 +37,7 @@
                 <h1>{{settingOr $s "home_hero_3_title" "Precision Engineering for Critical Environments"}}</h1>
                 <p>{{settingOr $s "home_hero_3_desc" "Over 120 skilled professionals delivering Class 100 to Class 300,000 cleanroom systems with strict quality standards."}}</p>
                 <div class="hero-btns">
-                    <a href="{{settingOr $s "home_hero_3_btn1_link" "/showcase"}}" class="btn btn-primary btn-lg">{{settingOr $s "home_hero_3_btn1_text" "View Projects"}}</a>
+                    <a href="{{langPrefixURL $.Ctx (settingOr $s "home_hero_3_btn1_link" (archiveURL "showcase"))}}" class="btn btn-primary btn-lg">{{settingOr $s "home_hero_3_btn1_text" "View Projects"}}</a>
                     <a href="{{settingOr $s "home_hero_3_btn2_link" "/contact"}}" class="btn btn-outline btn-lg">{{settingOr $s "home_hero_3_btn2_text" "Contact Us"}}</a>
                 </div>
             </div>
@@ -132,7 +132,7 @@
         </div>
         <div class="product-geo-grid">
             {{range .Products}}
-            {{$purl := langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}
+            {{$purl := langPrefixURL $.Ctx (contentURL . "product")}}
             <div class="geo-card">
                 {{if .ImageURL}}
                 <a href="{{$purl}}" class="card-image">
@@ -168,18 +168,18 @@
             {{range .Services}}
             <div class="card card-dark">
                 {{if .ImageURL}}
-                <a href="{{langPrefixURL $.Ctx (printf "/services/%s" .Slug)}}" class="card-image card-image-dark">
+                <a href="{{langPrefixURL $.Ctx (contentURL . "service")}}" class="card-image card-image-dark">
                     {{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 50vw" "lazy"}}
                 </a>
                 {{else}}
-                <a href="{{langPrefixURL $.Ctx (printf "/services/%s" .Slug)}}" class="card-image card-image-dark" style="background:rgba(255,255,255,0.04);height:200px;display:flex;align-items:center;justify-content:center;">
+                <a href="{{langPrefixURL $.Ctx (contentURL . "service")}}" class="card-image card-image-dark" style="background:rgba(255,255,255,0.04);height:200px;display:flex;align-items:center;justify-content:center;">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
                 </a>
                 {{end}}
                 <div class="card-body">
                     <h3>{{.Title}}</h3>
                     <p>{{if .Excerpt}}{{truncate .Excerpt 120}}{{else}}{{truncate (stripTags .Description) 120}}{{end}}</p>
-                    <a href="{{langPrefixURL $.Ctx (printf "/services/%s" .Slug)}}" class="card-link">{{T $.Ctx "btn_read_more"}}</a>
+                    <a href="{{langPrefixURL $.Ctx (contentURL . "service")}}" class="card-link">{{T $.Ctx "btn_read_more"}}</a>
                 </div>
             </div>
             {{end}}
@@ -255,7 +255,7 @@
         <p>{{settingOr $s "home_cta_desc" "From concept to completion — we design, build, and deliver certified clean environments for critical industries."}}</p>
         <div>
             <a href="{{settingOr $s "home_cta_btn1_link" "/contact"}}" class="btn btn-primary btn-lg">{{settingOr $s "home_cta_btn1_text" "Contact Us Today"}}</a>
-            <a href="{{settingOr $s "home_cta_btn2_link" "/showcase"}}" class="btn btn-outline btn-lg">{{settingOr $s "home_cta_btn2_text" "View Our Work"}}</a>
+            <a href="{{langPrefixURL $.Ctx (settingOr $s "home_cta_btn2_link" (archiveURL "showcase"))}}" class="btn btn-outline btn-lg">{{settingOr $s "home_cta_btn2_text" "View Our Work"}}</a>
         </div>
     </div>
 </section>

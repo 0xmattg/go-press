@@ -71,10 +71,6 @@ func New(engine *core.Engine, themeDir string) *AtelierSlateTheme {
 	// Register custom static-page routes (these take priority over rewrite engine)
 	t.AddRoute("GET", "/", t.handler.Home)
 	t.AddRoute("GET", "/about", t.handler.About)
-	t.AddRoute("GET", "/products", t.handler.Products)
-	t.AddRoute("GET", "/services", t.handler.Services)
-	t.AddRoute("GET", "/showcase", t.handler.Showcase)
-	t.AddRoute("GET", "/blog", t.handler.Blog)
 	t.AddRoute("GET", "/contact", t.handler.Contact)
 	t.AddRoute("POST", "/contact", t.handler.ContactSubmit)
 
@@ -119,10 +115,6 @@ func NewWithDB(db *gorm.DB, themeDir string) *AtelierSlateTheme {
 	})
 	t.AddRoute("GET", "/", t.handler.Home)
 	t.AddRoute("GET", "/about", t.handler.About)
-	t.AddRoute("GET", "/products", t.handler.Products)
-	t.AddRoute("GET", "/services", t.handler.Services)
-	t.AddRoute("GET", "/showcase", t.handler.Showcase)
-	t.AddRoute("GET", "/blog", t.handler.Blog)
 	t.AddRoute("GET", "/contact", t.handler.Contact)
 	t.AddRoute("POST", "/contact", t.handler.ContactSubmit)
 	return t
@@ -152,57 +144,9 @@ func (t *AtelierSlateTheme) Setup(app coreTheme.App) {
 	registerTranslatableOptions()
 }
 
-// ServeHTTP handles all frontend requests.
-// Detail routes (e.g. /products/slug) are matched here before falling back to BaseTheme.
+// ServeHTTP delegates frontend routing to BaseTheme. Content archives and singles are resolved from the active content registry and theme.toml rewrite slugs.
 func (t *AtelierSlateTheme) ServeHTTP(c *gin.Context) {
-	path := c.Request.URL.Path
-	if c.Request.Method == "GET" {
-		// Taxonomy archive routes are handled by BaseTheme via rewrite engine,
-		// but we intercept them here so the theme-specific handler/template is used.
-		if slug, ok := matchPrefix(path, "/category/"); ok {
-			t.handler.TaxonomyArchive(c, "category", slug)
-			return
-		}
-		if slug, ok := matchPrefix(path, "/tag/"); ok {
-			t.handler.TaxonomyArchive(c, "tag", slug)
-			return
-		}
-		if slug, ok := matchPrefix(path, "/products/"); ok {
-			c.Params = append(c.Params, gin.Param{Key: "slug", Value: slug})
-			t.handler.ProductDetail(c)
-			return
-		}
-		if slug, ok := matchPrefix(path, "/services/"); ok {
-			c.Params = append(c.Params, gin.Param{Key: "slug", Value: slug})
-			t.handler.ServiceDetail(c)
-			return
-		}
-		if slug, ok := matchPrefix(path, "/showcase/"); ok {
-			c.Params = append(c.Params, gin.Param{Key: "slug", Value: slug})
-			t.handler.ShowcaseDetail(c)
-			return
-		}
-		if slug, ok := matchPrefix(path, "/blog/"); ok {
-			c.Params = append(c.Params, gin.Param{Key: "slug", Value: slug})
-			t.handler.BlogPost(c)
-			return
-		}
-	}
 	t.BaseTheme.ServeHTTP(c)
-}
-
-// matchPrefix checks if path starts with prefix and returns the remaining slug segment.
-// Returns false if the path has additional segments beyond the slug.
-func matchPrefix(path, prefix string) (string, bool) {
-	if !strings.HasPrefix(path, prefix) {
-		return "", false
-	}
-	slug := strings.TrimPrefix(path, prefix)
-	slug = strings.TrimSuffix(slug, "/")
-	if slug == "" || strings.Contains(slug, "/") {
-		return "", false
-	}
-	return slug, true
 }
 
 // --- Templates ---

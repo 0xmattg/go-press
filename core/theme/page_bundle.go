@@ -22,6 +22,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 )
 
 // LoadPageBundle composes a per-page template set for the given theme.
@@ -71,6 +72,45 @@ func LoadPageBundle(t Theme, pages []string) (map[string]*template.Template, err
 	}
 
 	return out, nil
+}
+
+// LoadAllPageBundles composes every templates/pages/*.tmpl file for a theme.
+//
+// It is used by BaseTheme's dynamic archive/single renderer, where page names
+// are resolved from registered content type configuration instead of a
+// theme-maintained hard-coded route list.
+func LoadAllPageBundles(t Theme) (map[string]*template.Template, error) {
+	tplDir := t.TemplateDir()
+	if tplDir == "" {
+		return nil, fmt.Errorf("theme %q has no template dir", t.Name())
+	}
+
+	pagesDir := filepath.Join(tplDir, "pages")
+	entries, err := os.ReadDir(pagesDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return map[string]*template.Template{}, nil
+		}
+		return nil, err
+	}
+
+	pages := make([]string, 0, len(entries))
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		ext := filepath.Ext(e.Name())
+		if ext != ".tmpl" && ext != ".html" {
+			continue
+		}
+		pages = append(pages, strings.TrimSuffix(e.Name(), ext))
+	}
+	sort.Strings(pages)
+	if len(pages) == 0 {
+		return map[string]*template.Template{}, nil
+	}
+
+	return LoadPageBundle(t, pages)
 }
 
 func globTemplates(dir string) ([]string, error) {

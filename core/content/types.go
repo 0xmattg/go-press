@@ -40,8 +40,20 @@ type ContentTypeDef struct {
 	Taxonomies  []string       `json:"taxonomies"`
 	HasArchive  bool           `json:"has_archive"`
 	Rewrite     RewriteRule    `json:"rewrite"`
+	Templates   TemplateDef    `json:"templates"`
 	MenuIcon    string         `json:"menu_icon"` // optional: built-in icon key or raw SVG
 	MenuOrder   int            `json:"menu_order"`
+}
+
+// TemplateDef optionally maps a content type to theme page template names.
+//
+// Most themes can rely on the default hierarchy derived from the content type
+// name and rewrite slug. Themes that reuse a visual template for a differently
+// named content type can set Archive and Single from theme.toml instead of
+// requiring core to guess by menu order or presentation labels.
+type TemplateDef struct {
+	Archive string `json:"archive"`
+	Single  string `json:"single"`
 }
 
 // TaxonomyDef declares a taxonomy that can be attached to one or more content types.

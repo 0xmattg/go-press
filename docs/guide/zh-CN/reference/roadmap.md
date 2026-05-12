@@ -18,7 +18,7 @@
 - [x] 富文本编辑器（Quill 2.0）+ 媒体选择器
 - [x] Demo 数据导入（DemoDataProvider 接口，图片自动下载 + 媒体注册）
 - [x] 核心内容类型 post/contact_message/category/tag（跨主题切换保留）
-- [x] 主题内容类型配置化（`theme.toml` 的 `[[content_types]]` 驱动后台菜单、CRUD、REST API、Rewrite 和图标）
+- [x] 主题内容类型配置化（`theme.toml` 的 `[[content_types]]` 驱动后台菜单、CRUD、REST API、Rewrite、模板映射和图标）
 - [x] 分类归档页（跨类型聚合 + 类型标签徽章 + 主题类型过滤）
 - [x] 内置回退模板（分类/单页/列表，主题未提供时自动回退）
 - [x] 详情页标签展示（任意挂载 tag 的内容详情页显示关联 Tags）
@@ -35,6 +35,7 @@
 - [x] 内容列表拖拽排序（`sort_order` 支持类型自动启用，`POST /{slug}/reorder` 事务批量写 + 前端原生 HTML5 DnD + toast）
 - [x] 插件热拔插（`hook.Handle` + `RemoveAction/RemoveFilter`、`SitemapGenerator.RemoveTransformer`、Gin 中间件 `IsActive` 自守卫，`plugin_active_<name>` option 持久化启用状态）
 - [x] 前台模板 Hook 插槽（`renderHook` + `theme.head.end` / `theme.body.open` / `theme.footer.end` / `header.nav.after`，站点代码片段和多语言导航切换器均由插件 filter 注入，主题不再依赖 HTML 后处理）
+- [x] 配置驱动动态内容渲染（`rewrite_slug` + `templates.archive` / `templates.single` 驱动归档/详情 URL、页面模板、Sitemap 和后台永久链接，移除对 product/service/showcase 的特殊路由假设）
 - [x] WPML 同 slug 跨语言语义（`FindBySlugScoped` / `EnsureUniqueSlugScoped` + 主题 PageService 注入 `reqCtx` + multilang 克隆默认复用源 slug，例如主题声明的 `product` 可对应 SEO `/products/foo` ↔ `/zh/products/foo`）
 - [x] 后台编辑页永久链接前缀注入（`admin.HookContentPermalinkPrefix` filter，例如多语言时显示 `/zh/products/foo` 区分同 slug 翻译版本）
 - [x] 统一站点信息（admin「系统设置 > 网站设置」`site_name` / `site_description` 作为 WordPress `blogname` / `blogdescription` 等价物，全部主题统一来源 + 主题兜底默认）

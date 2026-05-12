@@ -12,7 +12,7 @@
     </article>
     <aside class="tt-detail-aside">
         <h3>More transport</h3>
-        {{range .Related}}<a href="{{langPrefixURL $.Ctx (printf "/services/%s" .Slug)}}">{{.Title}} <span>→</span></a>{{end}}
+        {{range .Related}}<a href="{{langPrefixURL $.Ctx (contentURL . "service")}}">{{.Title}} <span>→</span></a>{{end}}
     </aside>
 </section>
 {{end}}

@@ -36,7 +36,7 @@ go-press/
 │   ├── rewrite/                # URL 重写 + 永久链接 + SEO + Sitemap + 重定向
 │   ├── api/                    # REST API（自动端点 + JWT/APIKey 双认证 + 限流 + CORS）
 │   ├── installer/              # Web 安装器（DB 配置 + 站点信息 + 热切换）
-│   ├── theme/                  # Theme/App 接口 + BaseTheme + 模板引擎 + FuncMap + 内置回退模板
+│   ├── theme/                  # Theme/App 接口 + BaseTheme + 页面 bundle 加载 + FuncMap + 内置回退模板
 │   ├── plugin/                 # Plugin 接口定义
 │   └── admin/                  # 后台 CMS（数据驱动 CRUD + RBAC + 审计日志）
 │       ├── static/css/         #   后台样式
@@ -54,7 +54,7 @@ go-press/
 │   │   ├── locales/            #     i18n 翻译文件（en.json, zh.json）
 │   │   ├── demo/data/          #     内置演示数据（seed.toml）
 │   │   ├── static/             #     CSS/JS/Images
-│   │   └── templates/          #     页面/布局/局部模板
+│   │   └── templates/          #     layouts/ + partials/ + pages/ 页面模板
 │   ├── atelier-slate/          #   设计工作室主题
 │   ├── axis-form/              #   Axis Form 建筑设计主题
 │   ├── florafi/                #   FloraFi 稳定币 / 金融科技主题

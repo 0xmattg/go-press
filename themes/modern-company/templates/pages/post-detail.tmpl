@@ -14,7 +14,7 @@
             {{end}}
         </div>
         <div class="breadcrumb">
-            <a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a> <span>/</span> <a href="{{langPrefixURL $.Ctx "/blog"}}">{{T $.Ctx "nav_news"}}</a> <span>/</span> <span>{{.Post.Title}}</span>
+            <a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a> <span>/</span> <a href="{{langPrefixURL $.Ctx (archiveURL "post")}}">{{T $.Ctx "nav_news"}}</a> <span>/</span> <span>{{.Post.Title}}</span>
         </div>
     </div>
     <div class="page-banner-accent"></div>
@@ -35,11 +35,11 @@
                 {{if .Post.Tags}}
                 <div class="post-tags">
                     <strong>{{T $.Ctx "sidebar_tags"}}:</strong>
-                    {{range .Post.Tags}}<a href="{{langPrefixURL $.Ctx "/blog"}}?tag={{.Slug}}" class="tag-link">{{.Name}}</a>{{end}}
+                    {{range .Post.Tags}}<a href="{{langPrefixURL $.Ctx (archiveURL "post")}}?tag={{.Slug}}" class="tag-link">{{.Name}}</a>{{end}}
                 </div>
                 {{end}}
                 <div class="post-nav">
-                    <a href="{{langPrefixURL $.Ctx "/blog"}}" class="btn btn-outline">&larr; {{T $.Ctx "btn_back_blog"}}</a>
+                    <a href="{{langPrefixURL $.Ctx (archiveURL "post")}}" class="btn btn-outline">&larr; {{T $.Ctx "btn_back_blog"}}</a>
                 </div>
             </article>
             <aside class="post-sidebar">
@@ -47,7 +47,7 @@
                     <h4>{{T $.Ctx "section_recent_articles"}}</h4>
                     {{range .RecentPosts}}
                     <div class="sidebar-post">
-                        <a href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{.Title}}</a>
+                        <a href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{.Title}}</a>
                         <time>{{formatDate .PublishedAt}}</time>
                     </div>
                     {{end}}
@@ -56,7 +56,7 @@
                 <div class="sidebar-widget">
                     <h4>{{T $.Ctx "sidebar_categories"}}</h4>
                     {{range .Categories}}
-                    <a href="{{langPrefixURL $.Ctx "/blog"}}?category={{.Slug}}" class="sidebar-cat">{{.Name}}</a>
+                    <a href="{{langPrefixURL $.Ctx (archiveURL "post")}}?category={{.Slug}}" class="sidebar-cat">{{.Name}}</a>
                     {{end}}
                 </div>
                 {{end}}
@@ -64,7 +64,7 @@
                 <div class="sidebar-widget">
                     <h4>{{T $.Ctx "sidebar_tags"}}</h4>
                     <div class="sidebar-tags">
-                        {{range .Tags}}<a href="{{langPrefixURL $.Ctx "/blog"}}?tag={{.Slug}}" class="tag-badge">{{.Name}}</a>{{end}}
+                        {{range .Tags}}<a href="{{langPrefixURL $.Ctx (archiveURL "post")}}?tag={{.Slug}}" class="tag-badge">{{.Name}}</a>{{end}}
                     </div>
                 </div>
                 {{end}}
@@ -99,7 +99,7 @@
                     </div>
                     <h3>{{.Title}}</h3>
                     <p>{{truncate .Excerpt 150}}</p>
-                    <a href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}" class="card-link">Read More &rarr;</a>
+                    <a href="{{langPrefixURL $.Ctx (contentURL . "post")}}" class="card-link">Read More &rarr;</a>
                 </div>
             </article>
             {{end}}

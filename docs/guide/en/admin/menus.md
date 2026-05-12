@@ -32,8 +32,10 @@ The admin displays the active theme's registered locations and lets users assign
 Themes call `menuByLocation` in templates. Core resolves the correct menu for the current location and, when multilingual support is active, the current language.
 
 ```gotemplate
-{{range menuByLocation .Ctx "header"}}
-  <a href="{{.URL}}">{{.Title}}</a>
+{{with menuByLocation "header"}}
+  {{range .Items}}
+    <a href="{{.URL}}">{{.Title}}</a>
+  {{end}}
 {{end}}
 ```
 
@@ -41,3 +43,4 @@ Themes call `menuByLocation` in templates. Core resolves the correct menu for th
 
 The multilingual plugin can assign different menus per language and translate menu item labels. The theme still renders by location; the plugin changes resolution through the core menu hook.
 
+Menu items can point to content records instead of hard-coded URLs. Core resolves those content links through the same rewrite registry used by `archiveURL` and `contentURL`, so a theme can change a content type's `rewrite_slug` without rewriting every menu item manually.

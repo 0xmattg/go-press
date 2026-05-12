@@ -16,7 +16,7 @@
     </article>
     <aside class="tt-detail-aside">
         <h3>More packages</h3>
-        {{range .Related}}<a href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}">{{.Title}} <span>→</span></a>{{end}}
+        {{range .Related}}<a href="{{langPrefixURL $.Ctx (contentURL . "product")}}">{{.Title}} <span>→</span></a>{{end}}
     </aside>
 </section>
 {{end}}

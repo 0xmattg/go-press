@@ -190,6 +190,7 @@ go run ./cmd/gendoc/
 ### Engine Core
 
 - **Unified content model** — `Content` + `ContentMeta` + `ContentType` registry; core keeps `post` and `contact_message`, while themes declare custom types in `theme.toml`.
+- **Config-driven content routing** — `theme.toml` `rewrite_slug` and optional `templates = { archive = "...", single = "..." }` drive archive URLs, detail URLs, sitemap entries, admin permalinks, and dynamic template resolution. `product`, `service`, and `showcase` are examples, not framework assumptions.
 - **Chainable content queries** — for example: `ContentQuery.Type("product").Published().Taxonomy("category", "hepa").Paginate(1, 20)`.
 - **Hook event bus** — `AddAction` / `DoAction` / `AddFilter` / `ApplyFilter`, with removable handles for clean plugin deactivation.
 - **Multi-level cache** — L1 memory cache, optional L2 Redis, graceful fallback, and page-cache middleware for sub-millisecond cache hits.
@@ -208,15 +209,15 @@ go run ./cmd/gendoc/
 ### Admin CMS
 
 - **Data-driven CRUD** — admin list/edit screens are generated from the registered `ContentType` definitions.
-- **Theme-declared content models** — `theme.toml` drives admin navigation, CRUD, REST API exposure, rewrite rules, and menu icons.
+- **Theme-declared content models** — `theme.toml` drives admin navigation, CRUD, REST API exposure, rewrite rules, template mapping, and menu icons.
 - **RBAC** — `admin`, `editor`, `author`, and `subscriber` roles enforced throughout the admin surface.
 - **Drag sorting and rich text** — Quill 2.0 editor, media picker, and HTML5 drag-and-drop ordering.
 - **Admin extension points** — hooks such as `admin.HookContentListTabs`, `admin.HookContentPermalinkPrefix`, `admin.content_form.fields`, and `admin.content.saved`.
 
 ### Themes and Plugins
 
-- **BaseTheme runtime** — embed it to get URL resolution, WordPress-style template hierarchy fallback, and automatic SEO integration.
-- **Unified FuncMap** — `BaseFuncMap()` provides `buildURL`, `seoHeadFor`, `menuByLocation`, `T`, `currentLang`, `langPrefixURL`, `renderHook`, and `responsiveImage*`.
+- **BaseTheme runtime** — embed it to get config-driven URL resolution, dynamic archive/detail rendering, WordPress-style fallback hierarchy, and automatic SEO integration.
+- **Unified FuncMap** — `BaseFuncMap()` provides `buildURL`, `archiveURL`, `contentURL`, `seoHeadFor`, `menuByLocation`, `T`, `currentLang`, `langPrefixURL`, `renderHook`, and `responsiveImage*`.
 - **Theme template slots** — `theme.head.end`, `theme.body.open`, `theme.footer.end`, and `header.nav.after` define semantic insertion points for plugins.
 - **Responsive image pipeline** — uploads generate WebP and JPG/PNG variants (`thumb`, `480w`, `768w`, `1024w`, `1440w`, `full`), and templates output `<picture>` through `responsiveImage`.
 - **Hot-pluggable plugins** — `Bus.AddAction/AddFilter` return handles; `Deactivate` removes hooks cleanly without restarting the process.

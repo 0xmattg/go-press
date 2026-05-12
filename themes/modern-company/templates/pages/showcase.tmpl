@@ -23,7 +23,7 @@
         {{if eq (settingOr .Settings "showcase_layout" "grid") "mosaic"}}
         <div class="showcase-mosaic">
             {{range $i, $item := .Showcases}}
-            <a href="{{langPrefixURL $.Ctx (printf "/showcase/%s" $item.Slug)}}" class="showcase-mosaic-item" style="text-decoration:none;color:inherit;">
+            <a href="{{langPrefixURL $.Ctx (contentURL $item "showcase")}}" class="showcase-mosaic-item" style="text-decoration:none;color:inherit;">
                 <div class="showcase-mosaic-photo">
                     {{if $item.ImageURL}}
                     {{responsiveImage $item.ImageURL $item.Title "" "(max-width: 768px) 100vw, (max-width: 1200px) 45vw, 560px" "lazy"}}
@@ -46,7 +46,7 @@
         {{else}}
         <div class="showcase-grid">
             {{range .Showcases}}
-            <a href="{{langPrefixURL $.Ctx (printf "/showcase/%s" .Slug)}}" class="showcase-card" style="text-decoration:none;color:inherit;">
+            <a href="{{langPrefixURL $.Ctx (contentURL . "showcase")}}" class="showcase-card" style="text-decoration:none;color:inherit;">
                 <div class="showcase-image">
                     {{if .ImageURL}}
                     {{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}

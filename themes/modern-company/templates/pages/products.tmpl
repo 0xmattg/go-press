@@ -24,7 +24,7 @@
             {{range .Products}}
             <div class="product-card">
                 <div class="product-image">
-                    <a href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}" class="product-image-link" aria-label="View details for {{.Title}}">
+                    <a href="{{langPrefixURL $.Ctx (contentURL . "product")}}" class="product-image-link" aria-label="View details for {{.Title}}">
                         {{if .ImageURL}}
                         {{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}
                         {{else}}
@@ -35,11 +35,11 @@
                     </a>
                 </div>
                 <div class="product-info">
-                    <h3><a href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}">{{.Title}}</a></h3>
+                    <h3><a href="{{langPrefixURL $.Ctx (contentURL . "product")}}">{{.Title}}</a></h3>
                     {{if .Excerpt}}<p class="product-excerpt">{{.Excerpt}}</p>{{end}}
                     {{if .Description}}<p class="product-summary">{{stripTags .Description}}</p>{{end}}
                     <div class="product-actions">
-                        <a href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}" class="btn btn-secondary">{{T $.Ctx "btn_view_details"}}</a>
+                        <a href="{{langPrefixURL $.Ctx (contentURL . "product")}}" class="btn btn-secondary">{{T $.Ctx "btn_view_details"}}</a>
                     </div>
                 </div>
             </div>

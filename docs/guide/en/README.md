@@ -8,7 +8,7 @@ It is not a line-by-line rewrite of WordPress, and it is not a claim that PHP-ba
 
 - Unified content and metadata models for posts, pages, theme-defined content types, and plugin-owned data.
 - A built-in admin CMS with data-driven CRUD pages, media library, menu management, theme settings, plugin settings, users, permissions, audit logs, cache controls, and system settings.
-- A theme runtime with WordPress-like template fallback, SEO injection, responsive image helpers, menu locations, language-aware URLs, and frontend hook slots.
+- A theme runtime with config-driven content routing, dynamic template resolution, WordPress-like fallback hierarchy, SEO injection, responsive image helpers, menu locations, language-aware URLs, and frontend hook slots.
 - A plugin system based on Go interfaces, actions, filters, and optional settings providers.
 - Core services for caching, workers, URL rewriting, sitemap generation, redirects, REST APIs, i18n, and table-prefix isolation.
 
@@ -18,7 +18,7 @@ It is not a line-by-line rewrite of WordPress, and it is not a claim that PHP-ba
 2. **Themes render, plugins extend** — themes own presentation; plugins attach behavior through core extension points.
 3. **Typed extension contracts** — themes and plugins communicate with the engine, not directly with each other.
 4. **Cache by default** — the engine provides L1 memory cache, optional Redis, and page-level cache paths.
-5. **SEO and URLs belong to the framework** — rewrite rules, canonical URLs, sitemap output, metadata, and SEO overrides are coordinated in core.
+5. **SEO and URLs belong to the framework** — rewrite rules, canonical URLs, sitemap output, metadata, template mapping, and SEO overrides are coordinated in core.
 6. **Admin first** — content teams should manage most site behavior from the CMS instead of editing code.
 7. **Open-source ready architecture** — public APIs, docs, and extension boundaries are designed to survive third-party themes and plugins.
 
@@ -29,4 +29,3 @@ It is not a line-by-line rewrite of WordPress, and it is not a claim that PHP-ba
 - [Architecture Overview](architecture/overview.md)
 - [Theme Development](themes/overview.md)
 - [Plugin Development](plugins/overview.md)
-

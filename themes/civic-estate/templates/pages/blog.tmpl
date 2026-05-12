@@ -9,10 +9,10 @@
     <div class="ce-blog-list">
         {{range .Posts}}
         <article class="ce-blog-card">
-            <a class="ce-card-media" href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 36vw" "lazy"}}{{end}}</a>
+            <a class="ce-card-media" href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 36vw" "lazy"}}{{end}}</a>
             <div>
                 <time>{{formatDateTime .PublishedAt}}</time>
-                <h2><a href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{.Title}}</a></h2>
+                <h2><a href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{.Title}}</a></h2>
                 <p>{{truncate .Excerpt 170}}</p>
             </div>
         </article>

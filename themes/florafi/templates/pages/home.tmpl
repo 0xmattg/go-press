@@ -5,7 +5,7 @@
     <div class="ff-hero-copy">
         <h1>{{settingOr $s "home_hero_title" "Where Money Grows"}}</h1>
         <p>{{settingOr $s "home_hero_subtitle" "A progressive stablecoin ecosystem designed to move value and power real economies."}}</p>
-        <a class="ff-pill-btn" href="{{settingOr $s "home_hero_btn_link" "/products"}}">
+        <a class="ff-pill-btn" href="{{langPrefixURL $.Ctx (settingOr $s "home_hero_btn_link" (archiveURL "product"))}}">
             {{settingOr $s "home_hero_btn_text" "Try FloraFi"}}
             <span aria-hidden="true">→</span>
         </a>
@@ -55,7 +55,7 @@
         <span>{{settingOr $s "home_intro_kicker" "Built for growth"}}</span>
         <h2>{{settingOr $s "home_intro_title" "What is USD Flora?"}}</h2>
         <p>{{settingOr $s "home_intro_desc" "USD Flora is a next-generation stablecoin built to grow your capital while keeping it stable, liquid, and secure."}}</p>
-        <a class="ff-text-link" href="{{langPrefixURL $.Ctx "/products"}}">{{settingOr $s "home_intro_link_text" "Explore USD Flora"}} <span>→</span></a>
+        <a class="ff-text-link" href="{{langPrefixURL $.Ctx (archiveURL "product")}}">{{settingOr $s "home_intro_link_text" "Explore USD Flora"}} <span>→</span></a>
     </div>
 
     <div class="ff-feature-grid">
@@ -63,19 +63,19 @@
             <span class="ff-card-icon">♧</span>
             <h3>{{settingOr $s "home_feature_1_title" "Capital that grows"}}</h3>
             <p>{{settingOr $s "home_feature_1_desc" "Earn consistent yield backed by real-world assets and transparent strategies."}}</p>
-            <a href="{{langPrefixURL $.Ctx "/products"}}">→</a>
+            <a href="{{langPrefixURL $.Ctx (archiveURL "product")}}">→</a>
         </article>
         <article class="ff-feature-card">
             <span class="ff-card-icon">◇</span>
             <h3>{{settingOr $s "home_feature_2_title" "Always liquid, always stable"}}</h3>
             <p>{{settingOr $s "home_feature_2_desc" "Redeem 1:1 in USD anytime. Built for confidence and consistency."}}</p>
-            <a href="{{langPrefixURL $.Ctx "/services"}}">→</a>
+            <a href="{{langPrefixURL $.Ctx (archiveURL "service")}}">→</a>
         </article>
         <article class="ff-feature-card">
             <span class="ff-card-icon">▣</span>
             <h3>{{settingOr $s "home_feature_3_title" "100% hands-free"}}</h3>
             <p>{{settingOr $s "home_feature_3_desc" "No active management. Just deposit and grow while we handle the rest."}}</p>
-            <a href="{{langPrefixURL $.Ctx "/showcase"}}">→</a>
+            <a href="{{langPrefixURL $.Ctx (archiveURL "showcase")}}">→</a>
         </article>
     </div>
 </section>
@@ -90,14 +90,14 @@
     </div>
 
     <div class="ff-usecase-grid">
-        <a class="ff-usecase-card ff-usecase-business" href="{{langPrefixURL $.Ctx "/services"}}">
+        <a class="ff-usecase-card ff-usecase-business" href="{{langPrefixURL $.Ctx (archiveURL "service")}}">
             <div>
                 <h3>{{settingOr $s "home_usecase_1_title" "Business"}}</h3>
                 <p>{{settingOr $s "home_usecase_1_desc" "Unlock new growth opportunities with a stable, yield-generating asset you can trust."}}</p>
                 <span>{{settingOr $s "home_usecase_1_link" "Learn more"}} →</span>
             </div>
         </a>
-        <a class="ff-usecase-card ff-usecase-dev" href="{{langPrefixURL $.Ctx "/blog"}}">
+        <a class="ff-usecase-card ff-usecase-dev" href="{{langPrefixURL $.Ctx (archiveURL "post")}}">
             <div>
                 <h3>{{settingOr $s "home_usecase_2_title" "Developers"}}</h3>
                 <p>{{settingOr $s "home_usecase_2_desc" "Build the next generation of financial products with USD Flora."}}</p>
@@ -132,7 +132,7 @@
     </div>
     <div class="ff-cms-grid">
         {{range .Products}}
-        <a class="ff-cms-card" href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}">
+        <a class="ff-cms-card" href="{{langPrefixURL $.Ctx (contentURL . "product")}}">
             {{if .ImageURL}}<div class="ff-cms-media">{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}</div>{{end}}
             <h3>{{.Title}}</h3>
             <p>{{if .Excerpt}}{{truncate .Excerpt 120}}{{else}}{{truncate (stripTags .Description) 120}}{{end}}</p>

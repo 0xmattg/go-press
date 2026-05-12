@@ -11,7 +11,7 @@
         </div>
         <div class="tt-hero-aside">
             <p>{{settingOr $s "home_hero_subtitle" "Explore stunning destinations, unique experiences, and unforgettable journeys with TerraTrail."}}</p>
-            <a class="tt-primary-btn" href="{{langPrefixURL .Ctx (settingOr $s "home_hero_btn_link" "/products")}}">{{settingOr $s "home_hero_btn_text" "Booking"}}</a>
+            <a class="tt-primary-btn" href="{{langPrefixURL .Ctx (settingOr $s "home_hero_btn_link" (archiveURL "product"))}}">{{settingOr $s "home_hero_btn_text" "Booking"}}</a>
         </div>
     </div>
     <div class="tt-hero-media">
@@ -23,7 +23,7 @@
                 <span><small>Check Out</small>{{settingOr $s "home_filter_3" "30 January 2026"}}</span>
                 <span><small>People</small>{{settingOr $s "home_filter_4" "4 People | 1 Child"}}</span>
             </div>
-            <a class="tt-search-button" href="{{langPrefixURL .Ctx "/products"}}" aria-label="{{settingOr $s "home_search_button" "Search"}}">⌕</a>
+            <a class="tt-search-button" href="{{langPrefixURL .Ctx (archiveURL "product")}}" aria-label="{{settingOr $s "home_search_button" "Search"}}">⌕</a>
         </div>
     </div>
 </section>
@@ -38,7 +38,7 @@
     <div class="tt-package-grid">
         {{range $i, $p := .Products}}
         {{if lt $i 3}}
-        <a class="tt-package-card {{if gt $i 0}}tt-package-card-slim{{end}}" href="{{langPrefixURL $.Ctx (printf "/products/%s" $p.Slug)}}">
+        <a class="tt-package-card {{if gt $i 0}}tt-package-card-slim{{end}}" href="{{langPrefixURL $.Ctx (contentURL $p "product")}}">
             <div class="tt-card-media">
                 {{if $p.ImageURL}}{{responsiveImage $p.ImageURL $p.Title "" "(max-width: 768px) 88vw, 25vw" "lazy"}}{{end}}
                 <em>Mountain</em>
@@ -57,7 +57,7 @@
         {{end}}
         {{range $i, $p := .Products}}
         {{if eq $i 3}}
-        <a class="tt-package-more" href="{{langPrefixURL $.Ctx (printf "/products/%s" $p.Slug)}}" aria-label="{{$p.Title}}">
+        <a class="tt-package-more" href="{{langPrefixURL $.Ctx (contentURL $p "product")}}" aria-label="{{$p.Title}}">
             <div class="tt-card-media">
                 {{if $p.ImageURL}}{{responsiveImage $p.ImageURL $p.Title "" "(max-width: 768px) 42vw, 12vw" "lazy"}}{{end}}
             </div>
@@ -76,7 +76,7 @@
                 <h2>{{settingOr $s "home_step_title" "Every Step of the Way"}}</h2>
                 <p>{{settingOr $s "home_step_desc" "Travel with ease and comfort. From private transfers to group tours, we ensure seamless transportation throughout your journey."}}</p>
             </div>
-            <a href="{{langPrefixURL .Ctx "/services"}}" aria-label="View transport">↗</a>
+            <a href="{{langPrefixURL .Ctx (archiveURL "service")}}" aria-label="View transport">↗</a>
         </div>
         <div class="tt-road-card">
             <div class="tt-card-media">
@@ -84,7 +84,7 @@
             </div>
         </div>
         {{if .Showcases}}
-        <a class="tt-side-trip-card" href="{{langPrefixURL .Ctx "/showcase"}}" aria-label="View destinations">
+        <a class="tt-side-trip-card" href="{{langPrefixURL .Ctx (archiveURL "showcase")}}" aria-label="View destinations">
             <div class="tt-card-media">
                 {{range $i, $item := .Showcases}}{{if eq $i 1}}{{if $item.ImageURL}}{{responsiveImage $item.ImageURL $item.Title "" "(max-width: 768px) 40vw, 12vw" "lazy"}}{{end}}{{end}}{{end}}
             </div>
@@ -98,7 +98,7 @@
         <div class="tt-transport-list">
             {{range $i, $svc := .Services}}
             {{if lt $i 3}}
-            <a class="tt-transport-item {{if eq $i 0}}active{{end}}" href="{{langPrefixURL $.Ctx (printf "/services/%s" $svc.Slug)}}">
+            <a class="tt-transport-item {{if eq $i 0}}active{{end}}" href="{{langPrefixURL $.Ctx (contentURL $svc "service")}}">
                 <i>{{if eq $i 0}}✈{{else if eq $i 1}}▣{{else}}⌁{{end}}</i>
                 <span><strong>{{$svc.Title}}</strong><small>{{truncate $svc.Excerpt 82}}</small></span>
             </a>
@@ -113,12 +113,12 @@
     <div class="tt-guide-copy">
         <h2>{{settingOr $s "home_showcase_title" "Guides, routes, and hidden mountain moments"}}</h2>
         <p>{{settingOr $s "home_showcase_subtitle" "More than 100 local guides are ready to accompany and assist you on your journey."}}</p>
-        <a class="tt-outline-btn" href="{{langPrefixURL .Ctx "/showcase"}}">{{settingOr $s "home_showcase_btn" "Meet Guides"}}</a>
+        <a class="tt-outline-btn" href="{{langPrefixURL .Ctx (archiveURL "showcase")}}">{{settingOr $s "home_showcase_btn" "Meet Guides"}}</a>
     </div>
     <div class="tt-guide-stack">
         {{range $i, $item := .Showcases}}
         {{if lt $i 2}}
-        <a class="tt-guide-card" href="{{langPrefixURL $.Ctx (printf "/showcase/%s" $item.Slug)}}">
+        <a class="tt-guide-card" href="{{langPrefixURL $.Ctx (contentURL $item "showcase")}}">
             <div class="tt-card-media">{{if $item.ImageURL}}{{responsiveImage $item.ImageURL $item.Title "" "(max-width: 768px) 70vw, 18vw" "lazy"}}{{end}}</div>
             <strong>{{$item.Title}}</strong>
             <span>{{$item.Location}}</span>

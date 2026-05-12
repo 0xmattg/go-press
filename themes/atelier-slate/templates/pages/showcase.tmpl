@@ -16,10 +16,10 @@
     <div class="as-container as-showcase-grid">
         {{range .Showcases}}
         <article class="as-showcase-card">
-            <a href="{{langPrefixURL $.Ctx (printf "/showcase/%s" .Slug)}}">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 50vw" "lazy"}}{{end}}</a>
+            <a href="{{langPrefixURL $.Ctx (contentURL . "showcase")}}">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 50vw" "lazy"}}{{end}}</a>
             <div>
                 <p>{{.Client}} {{if .Location}}/ {{.Location}}{{end}}</p>
-                <h2><a href="{{langPrefixURL $.Ctx (printf "/showcase/%s" .Slug)}}">{{.Title}}</a></h2>
+                <h2><a href="{{langPrefixURL $.Ctx (contentURL . "showcase")}}">{{.Title}}</a></h2>
                 <span>0{{.SortOrder}}</span>
             </div>
         </article>

@@ -12,5 +12,5 @@
         </div>
     </div>
 </section>
-<section class="as-section"><div class="as-container as-detail-body"><article class="as-richtext">{{safeHTML .Post.Content}}</article><aside class="as-side-panel"><h3>Related</h3>{{range .Related}}<a href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{.Title}}</a>{{end}}<h3>Categories</h3>{{range .Categories}}<a href="{{langPrefixURL $.Ctx (printf "/category/%s" .Slug)}}">{{.Name}}</a>{{end}}</aside></div></section>
+<section class="as-section"><div class="as-container as-detail-body"><article class="as-richtext">{{safeHTML .Post.Content}}</article><aside class="as-side-panel"><h3>Related</h3>{{range .Related}}<a href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{.Title}}</a>{{end}}<h3>Categories</h3>{{range .Categories}}<a href="{{langPrefixURL $.Ctx (printf "/category/%s" .Slug)}}">{{.Name}}</a>{{end}}</aside></div></section>
 {{end}}

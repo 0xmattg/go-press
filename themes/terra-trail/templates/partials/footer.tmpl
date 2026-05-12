@@ -8,8 +8,8 @@
         </div>
         <nav class="tt-footer-links" aria-label="Footer navigation">
             <a href="{{langPrefixURL .Ctx "/about"}}">About</a>
-            <a href="{{langPrefixURL .Ctx "/products"}}">Tour</a>
-            <a href="{{langPrefixURL .Ctx "/showcase"}}">Destinations</a>
+            <a href="{{langPrefixURL .Ctx (archiveURL "product")}}">Tour</a>
+            <a href="{{langPrefixURL .Ctx (archiveURL "showcase")}}">Destinations</a>
             <a href="{{langPrefixURL .Ctx "/contact"}}">Contact</a>
         </nav>
         <div class="tt-footer-contact">

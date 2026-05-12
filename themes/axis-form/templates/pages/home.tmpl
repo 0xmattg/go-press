@@ -42,7 +42,7 @@
     </div>
     <div class="af-service-row">
         {{range $i, $svc := .Services}}
-        <a class="af-service-mini" href="{{langPrefixURL $.Ctx (printf "/services/%s" $svc.Slug)}}">
+        <a class="af-service-mini" href="{{langPrefixURL $.Ctx (contentURL $svc "service")}}">
             <div class="af-card-media">
                 {{if $svc.ImageURL}}{{responsiveImage $svc.ImageURL $svc.Title "" "(max-width: 768px) 100vw, 25vw" "lazy"}}{{end}}
                 <span>{{printf "%02d" (add $i 1)}}</span>
@@ -64,14 +64,14 @@
     <div class="af-portfolio-mosaic">
         {{range $i, $item := .Showcases}}
         {{if lt $i 4}}
-        <a class="af-mosaic-card af-mosaic-{{$i}}" href="{{langPrefixURL $.Ctx (printf "/showcase/%s" $item.Slug)}}">
+        <a class="af-mosaic-card af-mosaic-{{$i}}" href="{{langPrefixURL $.Ctx (contentURL $item "showcase")}}">
             {{if $item.ImageURL}}{{responsiveImage $item.ImageURL $item.Title "" "(max-width: 768px) 100vw, 40vw" "lazy"}}{{end}}
             <span>{{$item.Title}}</span>
         </a>
         {{end}}
         {{end}}
     </div>
-    <a class="af-outline-btn" href="{{langPrefixURL .Ctx "/showcase"}}">{{settingOr $s "home_showcase_btn" "See More Projects"}}</a>
+    <a class="af-outline-btn" href="{{langPrefixURL .Ctx (archiveURL "showcase")}}">{{settingOr $s "home_showcase_btn" "See More Projects"}}</a>
 </section>
 {{end}}
 {{end}}

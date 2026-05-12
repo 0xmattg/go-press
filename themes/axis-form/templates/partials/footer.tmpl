@@ -10,9 +10,9 @@
         <p>{{settingOr $s "company_description" "We design modern architecture and interiors that balance clarity, comfort, and long-term value."}}</p>
     </div>
     <div class="af-footer-links">
-        <a href="{{langPrefixURL .Ctx "/services"}}">Services</a>
-        <a href="{{langPrefixURL .Ctx "/showcase"}}">Portfolio</a>
-        <a href="{{langPrefixURL .Ctx "/products"}}">Process</a>
+        <a href="{{langPrefixURL .Ctx (archiveURL "service")}}">Services</a>
+        <a href="{{langPrefixURL .Ctx (archiveURL "showcase")}}">Portfolio</a>
+        <a href="{{langPrefixURL .Ctx (archiveURL "product")}}">Process</a>
         <a href="{{langPrefixURL .Ctx "/contact"}}">Contact</a>
     </div>
     <div class="af-footer-contact">

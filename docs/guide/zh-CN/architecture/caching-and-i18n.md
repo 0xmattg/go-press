@@ -83,6 +83,10 @@ func (p *PageData) TranslateSettings(c *gin.Context, mgr *i18n.Manager) {
 
 // 生成带语言前缀的 URL
 {{langPrefixURL .Ctx "/products/hepa-filters"}}
+
+// 生成内容类型归档和详情 URL，读取 Rewrite 注册表
+{{archiveURL "product"}}
+{{contentURL . "product"}}
 ```
 
 详细多语言能力（内容翻译、菜单翻译、URL 路由、语言检测、智能跳转等）见 [多语言插件](../plugins/multilang.md)。

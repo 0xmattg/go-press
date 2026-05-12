@@ -1235,7 +1235,6 @@ func (p *Plugin) handleLangSwitch(c *gin.Context) {
 	if !p.isSupported(tag) {
 		tag = p.getDefaultLang()
 	}
-	c.SetCookie(CookieName, tag, 365*24*3600, "/", "", false, false)
 
 	ref := c.GetHeader("Referer")
 	if ref == "" {
@@ -1243,21 +1242,29 @@ func (p *Plugin) handleLangSwitch(c *gin.Context) {
 	}
 
 	// Try to resolve the translated URL for the target language
-	redirectURL := p.resolveTranslatedURL(ref, tag)
+	redirectURL, switched := p.resolveTranslatedURL(ref, tag)
+	if switched {
+		c.SetCookie(CookieName, tag, 365*24*3600, "/", "", false, false)
+	}
 	c.Redirect(http.StatusFound, redirectURL)
 }
 
 // resolveTranslatedURL takes a referer URL and target language,
-// and returns the best URL to redirect to in that language.
-func (p *Plugin) resolveTranslatedURL(referer, targetLang string) string {
+// and returns the best URL to redirect to in that language. The boolean
+// indicates whether the target language was actually resolved and may be
+// persisted in the language cookie.
+func (p *Plugin) resolveTranslatedURL(referer, targetLang string) (string, bool) {
 	defaultLang := p.getDefaultLang()
 
 	// Parse the referer to get the path
 	parsed, err := url.Parse(referer)
 	if err != nil {
-		return "/"
+		return "/", true
 	}
 	path := parsed.Path
+	if path == "" {
+		path = "/"
+	}
 
 	// Strip any existing language prefix from the path
 	langs, _ := p.repo.ActiveLanguages()
@@ -1277,31 +1284,34 @@ func (p *Plugin) resolveTranslatedURL(referer, targetLang string) string {
 	// Detail page patterns: /products/{slug}, /services/{slug}, /blog/{slug}, etc.
 	// originalLang is needed so the source-side slug lookup picks the right
 	// language row when same slug is reused across languages (WPML mode).
-	if translatedPath := p.resolveContentTranslation(path, originalLang, targetLang); translatedPath != "" {
-		return translatedPath
+	if translatedPath, matched := p.resolveContentTranslation(path, originalLang, targetLang); matched {
+		if translatedPath != "" {
+			return translatedPath, true
+		}
+		return sameRefererPath(parsed), false
 	}
 
 	// For archive/list pages, just add or remove the language prefix
 	if targetLang == defaultLang {
-		return path
+		return path, true
 	}
-	return "/" + targetLang + path
+	return "/" + targetLang + path, true
 }
 
 // resolveContentTranslation checks if the path matches a detail page pattern
 // and returns the translated content's URL with proper language prefix.
 // sourceLang scopes the slug lookup so a same-slug-across-languages setup
 // (WPML mode) correctly picks the row for the page the user is currently on.
-func (p *Plugin) resolveContentTranslation(path, sourceLang, targetLang string) string {
+func (p *Plugin) resolveContentTranslation(path, sourceLang, targetLang string) (string, bool) {
 	if p.engine == nil {
-		return ""
+		return "", false
 	}
 	defaultLang := p.getDefaultLang()
 
 	// Try common detail page patterns: /{archive}/{slug}
 	parts := strings.Split(strings.Trim(path, "/"), "/")
 	if len(parts) != 2 {
-		return ""
+		return "", false
 	}
 	archivePath := parts[0] // e.g. "products", "services", "blog"
 	slug := parts[1]
@@ -1339,29 +1349,40 @@ func (p *Plugin) resolveContentTranslation(path, sourceLang, targetLang string) 
 		if err != nil {
 			// No translation record. If target is default lang, stay on same slug.
 			if targetLang == defaultLang {
-				return path
+				return path, true
 			}
-			return ""
+			return "", true
 		}
 
 		translatedID, err := p.repo.GetTranslatedContentID(trans.Trid, targetLang)
 		if err != nil {
-			return "" // No translation available for this language
+			return "", true // No translation available for this language
 		}
 
 		// Load the translated content to get its slug
 		translatedContent, err := p.engine.Content.FindByID(translatedID)
 		if err != nil {
-			return ""
+			return "", true
 		}
 
 		translatedPath := "/" + archivePath + "/" + translatedContent.Slug
 		if targetLang == defaultLang {
-			return translatedPath
+			return translatedPath, true
 		}
-		return "/" + targetLang + translatedPath
+		return "/" + targetLang + translatedPath, true
 	}
-	return ""
+	return "", false
+}
+
+func sameRefererPath(parsed *url.URL) string {
+	path := parsed.Path
+	if path == "" {
+		path = "/"
+	}
+	if parsed.RawQuery != "" {
+		path += "?" + parsed.RawQuery
+	}
+	return path
 }
 
 // --- Content Translation Helpers ---

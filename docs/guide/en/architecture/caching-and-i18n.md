@@ -24,3 +24,12 @@ The core i18n manager loads locale files and exposes translation helpers to admi
 
 The multilingual plugin adds content-language scoping through the Content Scope API. Core remains language-aware but does not directly depend on the plugin. This allows a site to run as a single-language CMS or as a multilingual CMS with the same theme and admin surface.
 
+Templates should use core URL helpers so language prefixing and rewrite slugs stay aligned:
+
+```gotemplate
+{{langPrefixURL .Ctx "/about"}}
+{{archiveURL "product"}}
+{{contentURL . "product"}}
+```
+
+`product` is only an example content type. `archiveURL` and `contentURL` read the current rewrite registry, so custom types and changed `rewrite_slug` values do not require hard-coded template link updates.

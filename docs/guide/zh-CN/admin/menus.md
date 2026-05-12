@@ -16,7 +16,7 @@ core/menu/
 
 | 功能 | 说明 |
 |------|------|
-| **位置注册** | 主题通过 `RegisterMenuLocation("header", "顶部导航")` 声明可用位置 |
+| **位置注册** | 主题通过 `app.MenuStore().RegisterLocation("header", "顶部导航")` 声明可用位置 |
 | **树形结构** | 菜单项支持任意层级嵌套（ParentID → Children），自动构建树 |
 | **内存缓存** | `LoadAll()` 启动时加载全部菜单到内存，`GetByLocation()` 零 DB 查询 |
 | **内容关联** | 菜单项可关联 `ContentID`，URL 自动解析为对应内容的永久链接 |
@@ -66,6 +66,8 @@ func (t *MyTheme) Setup(app coreTheme.App) {
         4. 克隆 + URL 重写（本地链接加 /zh 前缀，内容关联项解析翻译版 slug）
     → 返回中文菜单（含重写后的 URL）
 ```
+
+菜单项如果关联的是内容记录，应优先保存 `ContentID`，由 core 按当前 Rewrite 注册表解析 URL。这样后续把某个内容类型的 `rewrite_slug` 从 `products` 改成 `catalog` 时，菜单不需要逐条手动改链接。
 
 后台「翻译管理 → 菜单翻译」按主题注册的菜单位置展示，每个位置每种语言一个下拉框，一键保存分配：
 

@@ -6,7 +6,7 @@
         <h1>{{.Showcase.Title}}</h1>
         <span class="ff-hero-rule"></span>
         <p>{{if .Showcase.Description}}{{truncate (stripTags .Showcase.Description) 150}}{{else}}Stablecoin workflow powered by FloraFi.{{end}}</p>
-        <div class="ff-breadcrumb"><a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a><span>/</span><a href="{{langPrefixURL $.Ctx "/showcase"}}">{{T $.Ctx "page_title_projects"}}</a><span>/</span><span>{{.Showcase.Title}}</span></div>
+        <div class="ff-breadcrumb"><a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a><span>/</span><a href="{{langPrefixURL $.Ctx (archiveURL "showcase")}}">{{T $.Ctx "page_title_projects"}}</a><span>/</span><span>{{.Showcase.Title}}</span></div>
     </div>
 </section>
 
@@ -24,7 +24,7 @@
             {{end}}
             <div class="ff-richtext">{{safeHTML .Showcase.Description}}</div>
             {{if .Tags}}<div class="ff-chip-cloud">{{range .Tags}}<a href="{{langPrefixURL $.Ctx (printf "/tag/%s" .Slug)}}">{{.Name}}</a>{{end}}</div>{{end}}
-            <div class="ff-action-row"><a class="ff-pill-btn" href="{{langPrefixURL $.Ctx "/contact"}}">{{T $.Ctx "btn_start_project"}} <span>→</span></a><a class="ff-outline-btn" href="{{langPrefixURL $.Ctx "/showcase"}}">{{T $.Ctx "btn_back_projects"}}</a></div>
+            <div class="ff-action-row"><a class="ff-pill-btn" href="{{langPrefixURL $.Ctx "/contact"}}">{{T $.Ctx "btn_start_project"}} <span>→</span></a><a class="ff-outline-btn" href="{{langPrefixURL $.Ctx (archiveURL "showcase")}}">{{T $.Ctx "btn_back_projects"}}</a></div>
         </article>
     </div>
 </section>
@@ -34,7 +34,7 @@
     <div class="ff-section-heading"><span class="ff-kicker">{{T $.Ctx "section_more_projects"}}</span><h2>{{T $.Ctx "section_related_projects"}}</h2></div>
     <div class="ff-case-grid">
         {{range .Related}}
-        <a class="ff-case-card" href="{{langPrefixURL $.Ctx (printf "/showcase/%s" .Slug)}}"><div class="ff-case-media">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="ff-card-icon">◎</span>{{end}}</div><div class="ff-case-body"><h3>{{.Title}}</h3><p>{{truncate (stripTags .Description) 110}}</p>{{if .Client}}<div class="ff-case-meta"><span><strong>{{T $.Ctx "label_client"}}:</strong> {{.Client}}</span></div>{{end}}</div></a>
+        <a class="ff-case-card" href="{{langPrefixURL $.Ctx (contentURL . "showcase")}}"><div class="ff-case-media">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="ff-card-icon">◎</span>{{end}}</div><div class="ff-case-body"><h3>{{.Title}}</h3><p>{{truncate (stripTags .Description) 110}}</p>{{if .Client}}<div class="ff-case-meta"><span><strong>{{T $.Ctx "label_client"}}:</strong> {{.Client}}</span></div>{{end}}</div></a>
         {{end}}
     </div>
 </section>

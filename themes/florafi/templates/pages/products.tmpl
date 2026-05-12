@@ -18,7 +18,7 @@
     </div>
     <div class="ff-product-grid">
         {{range .Products}}
-        <a class="ff-product-card" href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}">
+        <a class="ff-product-card" href="{{langPrefixURL $.Ctx (contentURL . "product")}}">
             <div class="ff-product-media">
                 {{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="ff-card-icon">◇</span>{{end}}
             </div>

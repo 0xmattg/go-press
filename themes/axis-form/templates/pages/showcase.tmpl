@@ -7,7 +7,7 @@
 
 <section class="af-showcase-grid">
     {{range $i, $item := .Showcases}}
-    <a class="af-showcase-card" href="{{langPrefixURL $.Ctx (printf "/showcase/%s" $item.Slug)}}">
+    <a class="af-showcase-card" href="{{langPrefixURL $.Ctx (contentURL $item "showcase")}}">
         <div class="af-card-media">
             {{if $item.ImageURL}}{{responsiveImage $item.ImageURL $item.Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{end}}
         </div>

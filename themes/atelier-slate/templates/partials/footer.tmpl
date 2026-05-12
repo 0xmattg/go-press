@@ -43,7 +43,7 @@
             <div>
                 <h3>{{T $.Ctx "footer_section_latest_news"}}</h3>
                 {{range .RecentPosts}}
-                <a class="as-footer-link" href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{.Title}}</a>
+                <a class="as-footer-link" href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{.Title}}</a>
                 {{end}}
             </div>
         </div>

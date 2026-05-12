@@ -71,7 +71,6 @@ func New(engine *core.Engine, themeDir string) *FinancialNewsTheme {
 	// Register custom static-page routes
 	t.AddRoute("GET", "/", t.handler.Home)
 	t.AddRoute("GET", "/articles", t.handler.Articles)
-	t.AddRoute("GET", "/blog", t.handler.Articles) // /blog also lists posts
 	t.AddRoute("GET", "/market", t.handler.Market)
 	t.AddRoute("GET", "/analysis", t.handler.Analysis)
 	t.AddRoute("GET", "/about", t.handler.About)
@@ -97,7 +96,6 @@ func NewWithDB(db *gorm.DB, themeDir string) *FinancialNewsTheme {
 	t.InitBase(nil, themeDir, nil)
 	t.AddRoute("GET", "/", t.handler.Home)
 	t.AddRoute("GET", "/articles", t.handler.Articles)
-	t.AddRoute("GET", "/blog", t.handler.Articles)
 	t.AddRoute("GET", "/market", t.handler.Market)
 	t.AddRoute("GET", "/analysis", t.handler.Analysis)
 	t.AddRoute("GET", "/about", t.handler.About)
@@ -125,31 +123,10 @@ func (t *FinancialNewsTheme) Setup(app coreTheme.App) {
 	t.engine.Menus.RegisterLocation("footer", "底部导航")
 }
 
-// ServeHTTP handles frontend requests.
-// Blog post detail routes (/blog/:slug) are intercepted here so they use
-// the theme's styled template instead of the framework fallback.
+// ServeHTTP delegates frontend routing to BaseTheme. Exact custom page routes
+// still win first; content detail pages are resolved from the registry.
 func (t *FinancialNewsTheme) ServeHTTP(c *gin.Context) {
-	path := c.Request.URL.Path
-	if c.Request.Method == "GET" {
-		if slug, ok := matchPrefix(path, "/blog/"); ok {
-			t.handler.BlogPost(c, slug)
-			return
-		}
-	}
 	t.BaseTheme.ServeHTTP(c)
-}
-
-// matchPrefix checks if path starts with prefix and returns the remaining slug segment.
-func matchPrefix(path, prefix string) (string, bool) {
-	if !strings.HasPrefix(path, prefix) {
-		return "", false
-	}
-	slug := strings.TrimPrefix(path, prefix)
-	slug = strings.TrimSuffix(slug, "/")
-	if slug == "" || strings.Contains(slug, "/") {
-		return "", false
-	}
-	return slug, true
 }
 
 // --- Templates ---

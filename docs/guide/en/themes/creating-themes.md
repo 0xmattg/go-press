@@ -74,30 +74,79 @@ name = "header"
 label = "Header Navigation"
 ```
 
-Core types such as `post` and `contact_message` should not be redeclared by themes.
+Core types such as `post` and `contact_message` should not be redeclared by themes. `product` is only an example custom content type; GoPress does not require a theme to provide products, services, or showcases.
+
+### Rewrite Slugs And Template Mapping
+
+`rewrite_slug` is the public URL base for a content type. The example above produces:
+
+```text
+/products
+/products/{content-slug}
+```
+
+When the visual template name differs from the content type name, add an explicit `templates` mapping instead of hard-coding routes in Go:
+
+```toml
+[[content_types]]
+name = "module"
+label = "Module"
+label_plural = "Modules"
+supports = ["title", "content", "excerpt", "thumbnail", "sort_order"]
+taxonomies = ["category", "tag"]
+has_archive = true
+rewrite_slug = "modules"
+templates = { archive = "products", single = "product-detail" }
+menu_icon = "blocks"
+menu_order = 1
+```
+
+This keeps the content model (`module`), public URLs (`/modules`), and presentation templates (`products`, `product-detail`) independently configurable. It is useful when a theme reuses an existing layout for a differently named business concept.
 
 ## Template Hierarchy
 
 ```text
 templates/
   layouts/base.tmpl
-  front-page.tmpl
-  archive-product.tmpl
-  single-product.tmpl
-  single.tmpl
-  archive.tmpl
-  404.tmpl
-  index.tmpl
+  partials/header.tmpl
+  pages/home.tmpl
+  pages/products.tmpl
+  pages/product-detail.tmpl
+  pages/archive.tmpl
+  pages/single.tmpl
 ```
 
-For a product named `air-shower`, BaseTheme searches:
+BaseTheme compiles `templates/pages/*.tmpl` as page bundles. For a `product` detail page named `air-shower`, it first tries page bundle names derived from the route and content type:
 
 ```text
-single-product-air-shower.tmpl
-single-product.tmpl
-single.tmpl
-index.tmpl
+single-product-air-shower
+single-product
+product-detail
+products-detail
+<templates.single from theme.toml>
+single
 ```
+
+For a `product` archive with `rewrite_slug = "products"`, it tries:
+
+```text
+archive-product
+products
+product
+<templates.archive from theme.toml>
+archive
+```
+
+If no page bundle matches, BaseTheme falls back to the classic root-template hierarchy (`archive-product.tmpl`, `single-product.tmpl`, `archive.tmpl`, `single.tmpl`, `index.tmpl`) and finally to built-in fallback templates.
+
+Inside templates, prefer core URL helpers:
+
+```gotemplate
+<a href="{{archiveURL "product"}}">Products</a>
+<a href="{{contentURL . "product"}}">{{.Title}}</a>
+```
+
+`archiveURL` and `contentURL` consult the rewrite registry, so a later `rewrite_slug` change or content-type rename does not require template edits.
 
 ## Base Layout Contract
 
@@ -110,7 +159,7 @@ Every plugin-friendly theme should declare:
 {{renderHook "header.nav.after" .}}
 ```
 
-Use `seoHeadFor`, `settingOr`, `currentLang`, `langPrefixURL`, `menuByLocation`, and the responsive image helpers from the core funcmap instead of implementing theme-local equivalents.
+Use `seoHeadFor`, `settingOr`, `archiveURL`, `contentURL`, `currentLang`, `langPrefixURL`, `menuByLocation`, and the responsive image helpers from the core funcmap instead of implementing theme-local equivalents.
 
 ## Demo Data
 
@@ -121,4 +170,3 @@ func (t *MyTheme) DemoSeedPath() string {
     return filepath.Join(t.ThemeDir, "demo", "data", "seed.toml")
 }
 ```
-
