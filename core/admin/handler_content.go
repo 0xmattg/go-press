@@ -243,6 +243,7 @@ func (h *Handler) ContentCreate(c *gin.Context) {
 			item.PublishedAt = &now
 		}
 	}
+	ensurePublishedAtForPublished(item)
 
 	filterQuery := listFilterQuery(c)
 	if err := h.svc.CreateContent(item); err != nil {
@@ -284,6 +285,14 @@ func (h *Handler) ContentCreate(c *gin.Context) {
 	h.invalidatePageCache()
 	h.logAction(c, "create", typeName, item.ID, item.Title)
 	c.Redirect(http.StatusFound, listRedirectURL(slug, filterQuery, "success", adminT(lang, "notice.created")))
+}
+
+func ensurePublishedAtForPublished(item *content.Content) {
+	if item == nil || item.Status != content.StatusPublished || item.PublishedAt != nil {
+		return
+	}
+	now := time.Now()
+	item.PublishedAt = &now
 }
 
 // ==================== Content Edit ====================
@@ -398,6 +407,7 @@ func (h *Handler) ContentUpdate(c *gin.Context) {
 			item.PublishedAt = nil
 		}
 	}
+	ensurePublishedAtForPublished(item)
 
 	if err := h.svc.UpdateContent(item); err != nil {
 		view := h.svc.ToDynamicContentView(*item, typeDef)

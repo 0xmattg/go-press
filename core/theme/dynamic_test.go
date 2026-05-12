@@ -93,6 +93,28 @@ func TestLegacyAliasesPointToCurrentArchiveOnly(t *testing.T) {
 	}
 }
 
+func TestArchiveOrderUsesSortOrderWhenSupported(t *testing.T) {
+	typeDef := &content.ContentTypeDef{Supports: []string{"title", "sort_order"}}
+
+	if got := archiveOrderField(typeDef); got != "sort_order" {
+		t.Fatalf("archiveOrderField = %q, want sort_order", got)
+	}
+	if got := archiveOrderDir(typeDef); got != "ASC" {
+		t.Fatalf("archiveOrderDir = %q, want ASC", got)
+	}
+}
+
+func TestArchiveOrderDefaultsToPublishedAt(t *testing.T) {
+	typeDef := &content.ContentTypeDef{Supports: []string{"title"}}
+
+	if got := archiveOrderField(typeDef); got != "published_at" {
+		t.Fatalf("archiveOrderField = %q, want published_at", got)
+	}
+	if got := archiveOrderDir(typeDef); got != "DESC" {
+		t.Fatalf("archiveOrderDir = %q, want DESC", got)
+	}
+}
+
 func containsString(items []string, want string) bool {
 	for _, item := range items {
 		if item == want {

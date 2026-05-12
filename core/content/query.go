@@ -64,12 +64,13 @@ func (q *ContentQuery) Status(s string) *ContentQuery {
 
 // Published limits results to rows visible on the public site.
 //
-// A row must have StatusPublished and a non-null PublishedAt that is not in the
-// future. This prevents scheduled posts from appearing before their publish
-// time while still keeping them editable in admin.
+// A row must have StatusPublished and either no explicit publish time or a
+// PublishedAt that is not in the future. NULL PublishedAt is treated as
+// immediately published for custom content types that do not expose a
+// publish_date field, while future timestamps still support scheduled content.
 func (q *ContentQuery) Published() *ContentQuery {
 	tbl := dbprefix.Table("contents")
-	q.db = q.db.Where(tbl+".status = ? AND "+tbl+".published_at IS NOT NULL AND "+tbl+".published_at <= NOW()", StatusPublished)
+	q.db = q.db.Where(tbl+".status = ? AND ("+tbl+".published_at IS NULL OR "+tbl+".published_at <= NOW())", StatusPublished)
 	return q
 }
 

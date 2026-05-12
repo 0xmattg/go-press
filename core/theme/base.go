@@ -409,7 +409,7 @@ func (b *BaseTheme) renderArchive(c *gin.Context, route *rewrite.ResolvedRoute) 
 
 	result, err := content.NewQuery(content.ScopedDB(c, b.App.Database())).
 		Type(route.ContentType).Published().
-		OrderBy("published_at", "DESC").
+		OrderBy(archiveOrderField(typeDef), archiveOrderDir(typeDef)).
 		Paginate(page, perPage)
 	if err != nil {
 		logger.Error("BaseTheme: archive query failed", "type", route.ContentType, "error", err)
@@ -704,6 +704,32 @@ func singlePageCandidates(contentType, slug string, typeDef *content.ContentType
 	}
 	candidates = append(candidates, "single")
 	return uniqueStrings(candidates)
+}
+
+func archiveOrderField(typeDef *content.ContentTypeDef) string {
+	if contentTypeSupports(typeDef, "sort_order") {
+		return "sort_order"
+	}
+	return "published_at"
+}
+
+func archiveOrderDir(typeDef *content.ContentTypeDef) string {
+	if contentTypeSupports(typeDef, "sort_order") {
+		return "ASC"
+	}
+	return "DESC"
+}
+
+func contentTypeSupports(typeDef *content.ContentTypeDef, feature string) bool {
+	if typeDef == nil {
+		return false
+	}
+	for _, support := range typeDef.Supports {
+		if support == feature {
+			return true
+		}
+	}
+	return false
 }
 
 func uniqueStrings(in []string) []string {
