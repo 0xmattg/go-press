@@ -77,7 +77,7 @@ value = "Search"
 
 [[settings]]
 key   = "home_hero_btn_link"
-value = "/showcase"
+value = ""
 
 [[settings]]
 key   = "home_hero_image"

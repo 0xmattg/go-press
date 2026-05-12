@@ -6,7 +6,7 @@
         <h1>{{.Product.Title}}</h1>
         <span class="ff-hero-rule"></span>
         <p>{{if .Product.Excerpt}}{{.Product.Excerpt}}{{else}}{{truncate (stripTags .Product.Description) 140}}{{end}}</p>
-        <div class="ff-breadcrumb"><a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a><span>/</span><a href="{{langPrefixURL $.Ctx "/products"}}">{{T $.Ctx "page_title_products"}}</a><span>/</span><span>{{.Product.Title}}</span></div>
+        <div class="ff-breadcrumb"><a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a><span>/</span><a href="{{langPrefixURL $.Ctx (archiveURL "product")}}">{{T $.Ctx "page_title_products"}}</a><span>/</span><span>{{.Product.Title}}</span></div>
     </div>
 </section>
 
@@ -22,7 +22,7 @@
             {{if .Tags}}<div class="ff-chip-cloud">{{range .Tags}}<a href="{{langPrefixURL $.Ctx (printf "/tag/%s" .Slug)}}">{{.Name}}</a>{{end}}</div>{{end}}
             <div class="ff-action-row">
                 <a class="ff-pill-btn" href="{{langPrefixURL $.Ctx "/contact"}}">{{T $.Ctx "btn_get_quote"}} <span>→</span></a>
-                <a class="ff-outline-btn" href="{{langPrefixURL $.Ctx "/products"}}">{{T $.Ctx "btn_back_products"}}</a>
+                <a class="ff-outline-btn" href="{{langPrefixURL $.Ctx (archiveURL "product")}}">{{T $.Ctx "btn_back_products"}}</a>
             </div>
         </article>
     </div>
@@ -33,7 +33,7 @@
     <div class="ff-section-heading"><span class="ff-kicker">{{T $.Ctx "section_may_like"}}</span><h2>{{T $.Ctx "section_other_products"}}</h2></div>
     <div class="ff-product-grid">
         {{range .Related}}
-        <a class="ff-product-card" href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}"><div class="ff-product-media">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="ff-card-icon">◇</span>{{end}}</div><div class="ff-product-body"><h3>{{.Title}}</h3><p>{{truncate .Excerpt 120}}</p><span class="ff-card-arrow">{{T $.Ctx "btn_view_details"}} →</span></div></a>
+        <a class="ff-product-card" href="{{langPrefixURL $.Ctx (contentURL . "product")}}"><div class="ff-product-media">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="ff-card-icon">◇</span>{{end}}</div><div class="ff-product-body"><h3>{{.Title}}</h3><p>{{truncate .Excerpt 120}}</p><span class="ff-card-arrow">{{T $.Ctx "btn_view_details"}} →</span></div></a>
         {{end}}
     </div>
 </section>

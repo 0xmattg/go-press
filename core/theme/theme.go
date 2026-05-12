@@ -133,8 +133,15 @@ type ContentTypeConfig struct {
 	Taxonomies  []string               `toml:"taxonomies"`
 	HasArchive  bool                   `toml:"has_archive"`
 	RewriteSlug string                 `toml:"rewrite_slug"`
+	Templates   TemplateConfig         `toml:"templates"`
 	MenuIcon    string                 `toml:"menu_icon"`
 	MenuOrder   int                    `toml:"menu_order"`
+}
+
+// TemplateConfig optionally maps a content type to existing page templates.
+type TemplateConfig struct {
+	Archive string `toml:"archive"`
+	Single  string `toml:"single"`
 }
 
 // MenuLocationConfig maps a [[menu_locations]] entry in theme.toml.
@@ -196,8 +203,12 @@ func RegisterContentTypesFromConfig(registry *content.Registry, cfg *FileConfig)
 			Taxonomies:  append([]string(nil), ct.Taxonomies...),
 			HasArchive:  ct.HasArchive,
 			Rewrite:     content.RewriteRule{Slug: ct.RewriteSlug},
-			MenuIcon:    ct.MenuIcon,
-			MenuOrder:   menuOrder,
+			Templates: content.TemplateDef{
+				Archive: ct.Templates.Archive,
+				Single:  ct.Templates.Single,
+			},
+			MenuIcon:  ct.MenuIcon,
+			MenuOrder: menuOrder,
 		})
 
 		for _, taxName := range ct.Taxonomies {

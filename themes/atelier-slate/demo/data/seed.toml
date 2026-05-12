@@ -82,7 +82,7 @@ value = "View Work"
 
 [[settings]]
 key = "home_hero_1_btn2_link"
-value = "/showcase"
+value = ""
 
 [[settings]]
 key = "home_hero_note_title"

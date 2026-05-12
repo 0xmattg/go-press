@@ -6,9 +6,9 @@
         <p>{{settingOr $s "company_description" "We help occupiers, owners, and investors compare commercial spaces with clean search workflows and human advisory."}}</p>
     </div>
     <div class="ce-footer-links">
-        <a href="{{langPrefixURL .Ctx "/services"}}">Services</a>
-        <a href="{{langPrefixURL .Ctx "/showcase"}}">Listings</a>
-        <a href="{{langPrefixURL .Ctx "/products"}}">Property Types</a>
+        <a href="{{langPrefixURL .Ctx (archiveURL "service")}}">Services</a>
+        <a href="{{langPrefixURL .Ctx (archiveURL "showcase")}}">Listings</a>
+        <a href="{{langPrefixURL .Ctx (archiveURL "product")}}">Property Types</a>
         <a href="{{langPrefixURL .Ctx "/contact"}}">Contact</a>
     </div>
     <div class="ce-footer-contact">

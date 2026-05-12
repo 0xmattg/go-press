@@ -1,0 +1,50 @@
+{{define "content"}}
+<section class="section">
+    <div class="container">
+        <div class="page-header">
+            <h1>{{T $.Ctx "page_title_articles"}}</h1>
+        </div>
+        <div class="articles-layout">
+            <div class="articles-main">
+                {{range .Articles}}
+                <article class="article-row">
+                    {{if .ImageURL}}
+                    {{responsiveImage .ImageURL .Title "article-row-image" "(max-width: 768px) 100vw, 220px" "lazy"}}
+                    {{end}}
+                    <div class="article-row-body">
+                        <div class="article-row-meta">
+                            {{if .Category.Name}}<span class="badge">{{.Category.Name}}</span>{{end}}
+                            {{if .PublishedAt}}<time>{{formatDate .PublishedAt}}</time>{{end}}
+                        </div>
+                        <h2 class="article-row-title"><a href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{.Title}}</a></h2>
+                        <p>{{truncate .Excerpt 160}}</p>
+                        <div class="article-tags">
+                            {{range .Tags}}<span class="tag">{{.Name}}</span>{{end}}
+                        </div>
+                    </div>
+                </article>
+                {{else}}
+                <p class="empty-state">{{T $.Ctx "empty_no_articles"}}</p>
+                {{end}}
+            </div>
+            <aside class="articles-sidebar">
+                <div class="sidebar-widget">
+                    <h3>{{T $.Ctx "sidebar_categories"}}</h3>
+                    <ul class="category-list">
+                        <li><a href="{{langPrefixURL $.Ctx (archiveURL "post")}}" class="{{if eq .ActiveCat ""}}active{{end}}">{{T $.Ctx "filter_all"}}</a></li>
+                        {{range .Categories}}
+                        <li><a href="{{langPrefixURL $.Ctx (archiveURL "post")}}?category={{.Slug}}" class="{{if eq $.ActiveCat .Slug}}active{{end}}">{{.Name}}</a></li>
+                        {{end}}
+                    </ul>
+                </div>
+                <div class="sidebar-widget">
+                    <h3>{{T $.Ctx "sidebar_popular_tags"}}</h3>
+                    <div class="tag-cloud">
+                        {{range .Tags}}<span class="tag">{{.Name}}</span>{{end}}
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</section>
+{{end}}

@@ -7,7 +7,7 @@
 
 <section class="ce-service-list">
     {{range $i, $svc := .Services}}
-    <a class="ce-service-card" href="{{langPrefixURL $.Ctx (printf "/services/%s" $svc.Slug)}}">
+    <a class="ce-service-card" href="{{langPrefixURL $.Ctx (contentURL $svc "service")}}">
         <div class="ce-card-media">
             {{if $svc.ImageURL}}{{responsiveImage $svc.ImageURL $svc.Title "" "(max-width: 768px) 100vw, 40vw" "lazy"}}{{end}}
             <span>{{printf "%02d" (add $i 1)}}</span>

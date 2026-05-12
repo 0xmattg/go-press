@@ -6,7 +6,7 @@
         <span class="section-label">{{T $.Ctx "page_label_project_details"}}</span>
         <h1>{{.Showcase.Title}}</h1>
         <div class="breadcrumb">
-            <a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a> <span>/</span> <a href="{{langPrefixURL $.Ctx "/showcase"}}">{{T $.Ctx "page_title_projects"}}</a> <span>/</span> <span>{{.Showcase.Title}}</span>
+            <a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a> <span>/</span> <a href="{{langPrefixURL $.Ctx (archiveURL "showcase")}}">{{T $.Ctx "page_title_projects"}}</a> <span>/</span> <span>{{.Showcase.Title}}</span>
         </div>
     </div>
     <div class="page-banner-accent"></div>
@@ -43,7 +43,7 @@
                 {{end}}
                 <div class="detail-actions">
                     <a href="{{langPrefixURL $.Ctx "/contact"}}" class="btn btn-primary">{{T $.Ctx "btn_start_project"}}</a>
-                    <a href="{{langPrefixURL $.Ctx "/showcase"}}" class="btn btn-outline">{{T $.Ctx "btn_back_projects"}}</a>
+                    <a href="{{langPrefixURL $.Ctx (archiveURL "showcase")}}" class="btn btn-outline">{{T $.Ctx "btn_back_projects"}}</a>
                 </div>
             </div>
         </div>
@@ -59,7 +59,7 @@
         </div>
         <div class="showcase-grid">
             {{range .Related}}
-            <a href="{{langPrefixURL $.Ctx (printf "/showcase/%s" .Slug)}}" class="showcase-card" style="text-decoration:none;color:inherit;">
+            <a href="{{langPrefixURL $.Ctx (contentURL . "showcase")}}" class="showcase-card" style="text-decoration:none;color:inherit;">
                 <div class="showcase-image">
                     {{if .ImageURL}}
                     {{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}

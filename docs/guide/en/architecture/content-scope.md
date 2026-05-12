@@ -16,12 +16,11 @@ Instead of making every repository method know about every plugin, GoPress store
 ## Typical Flow
 
 ```go
-ctx := content.AddContentScope(req.Context(), content.Scope{
-    Key: "lang",
-    Value: "en",
+content.AddContentScope(c, func(db *gorm.DB) *gorm.DB {
+    return db.Where("visible = ?", true)
 })
 
-db := content.ScopedDB(ctx, baseDB)
+db := content.ScopedDB(c, baseDB)
 ```
 
 Repository methods that use `ScopedDB` receive the active filters automatically.
@@ -32,6 +31,6 @@ Repository methods that use `ScopedDB` receive the active filters automatically.
 - Core repositories remain generic.
 - Plugins attach scope data through public APIs.
 - Themes pass the current request context into services when they need scoped reads.
+- BaseTheme dynamic archive, single, and taxonomy rendering uses scoped reads, so multilingual filtering works for config-driven content routes without theme-specific plugin code.
 
 This gives plugins meaningful control over query behavior while keeping the core content repository stable.
-

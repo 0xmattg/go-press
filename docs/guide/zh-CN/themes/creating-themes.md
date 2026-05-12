@@ -98,23 +98,82 @@ label = "顶部导航"
 
 `menu_icon` 使用 admin 内置图标 key（例如 `blocks` / `edit` / `collection` / `post` / `contact_message` / `media`），也可以传入完整 SVG 字符串。`post` 和 `contact_message` 是核心内容类型，主题不应在 `theme.toml` 中重新声明。
 
+`product` 只是一个常见示例，不是 core 的固定假设。主题可以声明 `module`、`project`、`case_study`、`destination` 等任意业务内容类型。
+
+### Rewrite Slug 与模板映射
+
+`rewrite_slug` 是该内容类型的公开 URL base。上面的 `product` 配置会生成：
+
+```text
+/products
+/products/{content-slug}
+```
+
+当内容类型名、URL 和视觉模板名不一致时，不要在 Go handler 里手写特殊路由，而是在 `theme.toml` 里加 `templates`：
+
+```toml
+[[content_types]]
+name = "module"
+label = "模块"
+label_plural = "核心模块"
+supports = ["title", "content", "excerpt", "thumbnail", "sort_order"]
+taxonomies = ["category", "tag"]
+has_archive = true
+rewrite_slug = "modules"
+templates = { archive = "products", single = "product-detail" }
+menu_icon = "blocks"
+menu_order = 1
+```
+
+这样数据模型是 `module`，前台 URL 是 `/modules` / `/modules/{slug}`，视觉层复用 `products` / `product-detail` 页面模板。内容模型、URL slug 和模板名互相独立，统一由 core 注册表驱动。
+
 ## 模板命名约定
 
-将模板放在 `themes/my-theme/templates/`，按层级命名：
+将模板放在 `themes/my-theme/templates/`。推荐使用 `layouts/` + `partials/` + `pages/` 的页面 bundle 结构：
 
 ```
 templates/
-├── layouts/base.tmpl           # 基础布局
-├── front-page.tmpl             # 首页
-├── archive-product.tmpl        # 产品列表页
-├── single-product.tmpl         # 产品详情页
-├── single.tmpl                 # 通用详情页（回退）
-├── archive.tmpl                # 通用列表页（回退）
-├── 404.tmpl                    # 404 页面
-└── index.tmpl                  # 终极回退
+├── layouts/base.tmpl           # 基础布局，定义 {{define "base"}}
+├── partials/header.tmpl        # 可选局部模板
+└── pages/
+    ├── home.tmpl
+    ├── products.tmpl           # 列表页页面 bundle
+    ├── product-detail.tmpl     # 详情页页面 bundle
+    ├── archive.tmpl            # 通用列表页（回退）
+    └── single.tmpl             # 通用详情页（回退）
 ```
 
-BaseTheme 自动按 WordPress 风格查找模板：`single-product-air-shower.tmpl` → `single-product.tmpl` → `single.tmpl` → `index.tmpl`。
+BaseTheme 会自动编译 `templates/pages/*.tmpl`。对于 `product` 类型、slug 为 `air-shower` 的详情页，会优先查找这些页面 bundle：
+
+```text
+single-product-air-shower
+single-product
+product-detail
+products-detail
+<theme.toml 中 templates.single>
+single
+```
+
+对于 `product` 类型、`rewrite_slug = "products"` 的归档页，会查找：
+
+```text
+archive-product
+products
+product
+<theme.toml 中 templates.archive>
+archive
+```
+
+如果页面 bundle 没命中，BaseTheme 仍会回退到旧的根模板层级（`archive-product.tmpl` / `single-product.tmpl` / `archive.tmpl` / `single.tmpl` / `index.tmpl`），最后再使用内置 fallback 模板。
+
+模板内链应走 core helper，避免路径和 `theme.toml` 配置脱节：
+
+```gotemplate
+<a href="{{archiveURL "product"}}">产品</a>
+<a href="{{contentURL . "product"}}">{{.Title}}</a>
+```
+
+`archiveURL` 和 `contentURL` 会读取 Rewrite 注册表；后续把 `rewrite_slug = "products"` 改成 `catalog` 时，模板不需要跟着硬改。
 
 ## 基础布局契约
 

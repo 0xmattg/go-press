@@ -11,7 +11,7 @@
                 <p>{{settingOr $s "home_hero_1_desc" "Brand worlds, product narratives, and digital experiences for founders who need launch work that feels sharp from day one."}}</p>
                 <div class="as-actions">
                     <a class="as-btn as-btn-light" href="{{langPrefixURL $.Ctx (settingOr $s "home_hero_1_btn1_link" "/contact")}}">{{settingOr $s "home_hero_1_btn1_text" "Start Today"}} <span>↗</span></a>
-                    <a class="as-btn as-btn-ghost" href="{{langPrefixURL $.Ctx (settingOr $s "home_hero_1_btn2_link" "/showcase")}}">{{settingOr $s "home_hero_1_btn2_text" "View Work"}}</a>
+                    <a class="as-btn as-btn-ghost" href="{{langPrefixURL $.Ctx (settingOr $s "home_hero_1_btn2_link" (archiveURL "showcase"))}}">{{settingOr $s "home_hero_1_btn2_text" "View Work"}}</a>
                 </div>
             </div>
             <div class="as-floating-note">
@@ -49,7 +49,7 @@
                     <div>
                         <p>Vision-provider</p>
                         <h3>{{settingOr $s "home_card_1_title" "Beautiful vision oriented"}}</h3>
-                        <a href="{{langPrefixURL $.Ctx "/services"}}">Learn More <span>↗</span></a>
+                        <a href="{{langPrefixURL $.Ctx (archiveURL "service")}}">Learn More <span>↗</span></a>
                     </div>
                     <b>01</b>
                 </article>
@@ -58,7 +58,7 @@
                     <div>
                         <p>Nextgen-styled</p>
                         <h3>{{settingOr $s "home_card_2_title" "Modern launch systems"}}</h3>
-                        <a href="{{langPrefixURL $.Ctx "/products"}}">Learn More <span>↗</span></a>
+                        <a href="{{langPrefixURL $.Ctx (archiveURL "product")}}">Learn More <span>↗</span></a>
                     </div>
                     <b>02</b>
                 </article>
@@ -109,15 +109,15 @@
                 <p class="as-kicker">{{settingOr $s "home_products_label" "Products"}}</p>
                 <h2>{{settingOr $s "home_products_title" "Launch-ready systems for every visible touchpoint"}}</h2>
             </div>
-            <a class="as-round-link" href="{{langPrefixURL $.Ctx "/products"}}">→</a>
+            <a class="as-round-link" href="{{langPrefixURL $.Ctx (archiveURL "product")}}">→</a>
         </div>
         <div class="as-card-grid">
             {{range .Products}}
             <article class="as-content-card">
-                <a href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}" class="as-card-media">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{end}}</a>
+                <a href="{{langPrefixURL $.Ctx (contentURL . "product")}}" class="as-card-media">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{end}}</a>
                 <div class="as-card-body">
                     <span>0{{.SortOrder}}</span>
-                    <h3><a href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}">{{.Title}}</a></h3>
+                    <h3><a href="{{langPrefixURL $.Ctx (contentURL . "product")}}">{{.Title}}</a></h3>
                     <p>{{if .Excerpt}}{{truncate .Excerpt 120}}{{else}}{{truncate (stripTags .Description) 120}}{{end}}</p>
                 </div>
             </article>
@@ -131,7 +131,7 @@
         <div class="as-index-block as-index-card">
             <div class="as-index-line"><span>01</span><span>02 03 04</span></div>
             <h2>{{settingOr $s "home_showcase_title" "We specialize in designing and crafting high-quality digital products that blend strategy and aesthetics."}}</h2>
-            <a class="as-round-link" href="{{langPrefixURL $.Ctx "/showcase"}}">→</a>
+            <a class="as-round-link" href="{{langPrefixURL $.Ctx (archiveURL "showcase")}}">→</a>
         </div>
         <div class="as-crop-image">
             <img src="{{settingOr $s "home_showcase_image" "/static/images/atelier-card-wood.svg"}}" alt="">

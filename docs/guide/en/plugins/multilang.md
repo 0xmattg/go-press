@@ -14,6 +14,8 @@ The `multilang` plugin provides WPML-like multilingual behavior for GoPress. It 
 
 ## URL Behavior
 
+The examples below use a theme-declared `product` content type whose `rewrite_slug` is `products`. The same behavior applies to any registered content type; the plugin reads core rewrite configuration instead of assuming product/service/showcase routes.
+
 The default language uses normal URLs:
 
 ```text
@@ -27,6 +29,8 @@ Other languages receive a prefix:
 ```
 
 The plugin preserves same-slug semantics where possible, so translated content can share the same slug under different language prefixes.
+
+When the current detail page has no translation in the target language, the language switcher does not invent a target URL that would 404. It leaves the user on the current page and does not persist the target language cookie for that failed detail-page switch. Archive pages and static pages can still be prefixed normally.
 
 ## Admin Translation Management
 
@@ -48,8 +52,7 @@ The plugin relies on core extension points:
 - Content Scope API for language-aware queries.
 - Menu location resolution hooks for language-specific menus.
 - Admin content list tabs for language filters.
-- Template helpers such as `currentLang` and `langPrefixURL`.
+- Template helpers such as `currentLang`, `langPrefixURL`, `archiveURL`, and `contentURL`.
 - Option translation helpers for theme setting translations.
 
 Core remains usable without the plugin; multilingual behavior is additive.
-

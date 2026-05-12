@@ -12,9 +12,9 @@
 
 <section class="ff-section">
     <div class="ff-filter-row">
-        <a href="{{langPrefixURL $.Ctx "/blog"}}" class="{{if eq .ActiveCat ""}}active{{end}}">{{T $.Ctx "filter_all"}}</a>
+        <a href="{{langPrefixURL $.Ctx (archiveURL "post")}}" class="{{if eq .ActiveCat ""}}active{{end}}">{{T $.Ctx "filter_all"}}</a>
         {{range .Categories}}
-        <a href="{{langPrefixURL $.Ctx "/blog"}}?category={{.Slug}}" class="{{if eq $.ActiveCat .Slug}}active{{end}}">{{.Name}}</a>
+        <a href="{{langPrefixURL $.Ctx (archiveURL "post")}}?category={{.Slug}}" class="{{if eq $.ActiveCat .Slug}}active{{end}}">{{.Name}}</a>
         {{end}}
     </div>
 
@@ -22,7 +22,7 @@
     <div class="ff-blog-grid">
         {{range .Posts}}
         <article class="ff-blog-card">
-            <a class="ff-blog-media" href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">
+            <a class="ff-blog-media" href="{{langPrefixURL $.Ctx (contentURL . "post")}}">
                 {{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="ff-card-icon">◇</span>{{end}}
             </a>
             <div class="ff-blog-body">
@@ -30,9 +30,9 @@
                     {{if .Category.Name}}<span>{{.Category.Name}}</span>{{end}}
                     <time>{{formatDate .PublishedAt}}</time>
                 </div>
-                <h3><a href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{.Title}}</a></h3>
+                <h3><a href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{.Title}}</a></h3>
                 <p>{{truncate .Excerpt 150}}</p>
-                <a class="ff-card-arrow" href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{T $.Ctx "btn_read_more"}}</a>
+                <a class="ff-card-arrow" href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{T $.Ctx "btn_read_more"}}</a>
             </div>
         </article>
         {{end}}
@@ -40,7 +40,7 @@
     {{else}}
     <div class="ff-empty-state">
         <p>{{T $.Ctx "empty_no_posts_category"}}</p>
-        <a class="ff-outline-btn" href="{{langPrefixURL $.Ctx "/blog"}}">{{T $.Ctx "btn_view_all_posts"}}</a>
+        <a class="ff-outline-btn" href="{{langPrefixURL $.Ctx (archiveURL "post")}}">{{T $.Ctx "btn_view_all_posts"}}</a>
     </div>
     {{end}}
 </section>

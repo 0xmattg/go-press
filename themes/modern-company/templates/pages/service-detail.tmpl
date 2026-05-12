@@ -6,7 +6,7 @@
         <span class="section-label">{{T $.Ctx "page_label_service_details"}}</span>
         <h1>{{.Service.Title}}</h1>
         <div class="breadcrumb">
-            <a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a> <span>/</span> <a href="{{langPrefixURL $.Ctx "/services"}}">{{T $.Ctx "page_title_services"}}</a> <span>/</span> <span>{{.Service.Title}}</span>
+            <a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a> <span>/</span> <a href="{{langPrefixURL $.Ctx (archiveURL "service")}}">{{T $.Ctx "page_title_services"}}</a> <span>/</span> <span>{{.Service.Title}}</span>
         </div>
     </div>
     <div class="page-banner-accent"></div>
@@ -37,7 +37,7 @@
                 {{end}}
                 <div class="detail-actions">
                     <a href="{{langPrefixURL $.Ctx "/contact"}}" class="btn btn-primary">{{T $.Ctx "btn_contact_us"}}</a>
-                    <a href="{{langPrefixURL $.Ctx "/services"}}" class="btn btn-outline">{{T $.Ctx "btn_back_services"}}</a>
+                    <a href="{{langPrefixURL $.Ctx (archiveURL "service")}}" class="btn btn-outline">{{T $.Ctx "btn_back_services"}}</a>
                 </div>
             </div>
         </div>
@@ -53,7 +53,7 @@
         </div>
         <div class="related-card-grid">
             {{range .Related}}
-            <a href="{{langPrefixURL $.Ctx (printf "/services/%s" .Slug)}}" class="related-card">
+            <a href="{{langPrefixURL $.Ctx (contentURL . "service")}}" class="related-card">
                 <div class="related-card-image">
                     {{if .ImageURL}}
                     {{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}

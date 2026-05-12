@@ -28,7 +28,7 @@
                     <h3>{{T $.Ctx "sidebar_latest_articles"}}</h3>
                     <ul class="related-list">
                         {{range .LatestPosts}}
-                        <li><a href="/blog/{{.Slug}}">{{.Title}}</a>
+                        <li><a href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{.Title}}</a>
                             {{if .PublishedAt}}<time>{{formatDate .PublishedAt}}</time>{{end}}
                         </li>
                         {{end}}

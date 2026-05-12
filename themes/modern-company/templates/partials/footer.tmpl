@@ -53,7 +53,7 @@
                 <ul>
                     {{range .RecentPosts}}
                     <li>
-                        <a href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{.Title}}</a>
+                        <a href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{.Title}}</a>
                         <time>{{formatDate .PublishedAt}}</time>
                     </li>
                     {{end}}

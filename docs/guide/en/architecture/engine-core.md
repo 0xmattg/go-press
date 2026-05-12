@@ -20,6 +20,10 @@ Core content types such as `post`, `contact_message`, `category`, and `tag` are 
 
 Theme-specific content types are declared in `theme.toml`. During activation, the engine reads the active theme metadata and registers those types in the content registry.
 
+A theme content type definition drives more than admin fields. The same registry entry is used for admin navigation, CRUD forms, REST API exposure, rewrite rules, sitemap entries, taxonomy archives, and BaseTheme dynamic archive/detail rendering. `rewrite_slug` controls the public URL base, while optional `templates = { archive = "...", single = "..." }` maps a content type to specific page bundles when the template names do not match the content type name.
+
+This means `product`, `service`, and `showcase` are conventional example types, not core requirements. A theme can declare `module`, `project`, `case_study`, or any other type and still receive the same routing/rendering/admin behavior.
+
 ## Runtime Boundaries
 
 GoPress keeps a strict boundary:
@@ -29,4 +33,3 @@ GoPress keeps a strict boundary:
 - Plugins own additive behavior and optional admin settings.
 
 When new features cross this boundary, they should usually become a core hook, a core helper, or a small interface instead of a direct dependency.
-

@@ -7,7 +7,7 @@
 
 <section class="tt-showcase-grid">
     {{range $i, $item := .Showcases}}
-    <a class="tt-showcase-card" href="{{langPrefixURL $.Ctx (printf "/showcase/%s" $item.Slug)}}">
+    <a class="tt-showcase-card" href="{{langPrefixURL $.Ctx (contentURL $item "showcase")}}">
         <div class="tt-card-media">
             {{if $item.ImageURL}}{{responsiveImage $item.ImageURL $item.Title "" "(max-width: 768px) 92vw, 30vw" "lazy"}}{{end}}
         </div>

@@ -6,7 +6,7 @@
         <span class="section-label">{{T $.Ctx "page_label_product_details"}}</span>
         <h1>{{.Product.Title}}</h1>
         <div class="breadcrumb">
-            <a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a> <span>/</span> <a href="{{langPrefixURL $.Ctx "/products"}}">{{T $.Ctx "page_title_products"}}</a> <span>/</span> <span>{{.Product.Title}}</span>
+            <a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a> <span>/</span> <a href="{{langPrefixURL $.Ctx (archiveURL "product")}}">{{T $.Ctx "page_title_products"}}</a> <span>/</span> <span>{{.Product.Title}}</span>
         </div>
     </div>
     <div class="page-banner-accent"></div>
@@ -55,7 +55,7 @@
                 {{end}}
                 <div class="detail-actions">
                     <a href="{{langPrefixURL $.Ctx "/contact"}}" class="btn btn-primary">{{T $.Ctx "btn_get_quote"}}</a>
-                    <a href="{{langPrefixURL $.Ctx "/products"}}" class="btn btn-outline">{{T $.Ctx "btn_back_products"}}</a>
+                    <a href="{{langPrefixURL $.Ctx (archiveURL "product")}}" class="btn btn-outline">{{T $.Ctx "btn_back_products"}}</a>
                 </div>
             </div>
         </div>
@@ -92,7 +92,7 @@ function galleryNext() { galleryNav(1); }
         </div>
         <div class="related-card-grid">
             {{range .Related}}
-            <a href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}" class="related-card">
+            <a href="{{langPrefixURL $.Ctx (contentURL . "product")}}" class="related-card">
                 <div class="related-card-image">
                     {{if .ImageURL}}
                     {{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}

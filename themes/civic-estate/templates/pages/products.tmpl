@@ -7,7 +7,7 @@
 
 <section class="ce-card-grid ce-process-grid">
     {{range $i, $p := .Products}}
-    <a class="ce-process-card" href="{{langPrefixURL $.Ctx (printf "/products/%s" $p.Slug)}}">
+    <a class="ce-process-card" href="{{langPrefixURL $.Ctx (contentURL $p "product")}}">
         <span>{{printf "%02d" (add $i 1)}}</span>
         <h2>{{$p.Title}}</h2>
         <p>{{truncate $p.Excerpt 150}}</p>

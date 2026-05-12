@@ -7,7 +7,7 @@
 
 <section class="tt-card-grid tt-package-list">
     {{range $i, $p := .Products}}
-    <a class="tt-package-card" href="{{langPrefixURL $.Ctx (printf "/products/%s" $p.Slug)}}">
+    <a class="tt-package-card" href="{{langPrefixURL $.Ctx (contentURL $p "product")}}">
         <div class="tt-card-media">
             {{if $p.ImageURL}}{{responsiveImage $p.ImageURL $p.Title "" "(max-width: 768px) 90vw, 30vw" "lazy"}}{{end}}
             <em>{{printf "%02d" (add $i 1)}}</em>

@@ -6,7 +6,7 @@
         <h1>{{.Post.Title}}</h1>
         <span class="ff-hero-rule"></span>
         <p>{{truncate .Post.Excerpt 160}}</p>
-        <div class="ff-breadcrumb"><a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a><span>/</span><a href="{{langPrefixURL $.Ctx "/blog"}}">{{T $.Ctx "nav_news"}}</a><span>/</span><span>{{.Post.Title}}</span></div>
+        <div class="ff-breadcrumb"><a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a><span>/</span><a href="{{langPrefixURL $.Ctx (archiveURL "post")}}">{{T $.Ctx "nav_news"}}</a><span>/</span><span>{{.Post.Title}}</span></div>
     </div>
 </section>
 
@@ -20,14 +20,14 @@
             </div>
             <div class="ff-richtext">{{safeHTML .Post.Content}}</div>
             {{if .Post.Tags}}<div class="ff-chip-cloud">{{range .Post.Tags}}<a href="{{langPrefixURL $.Ctx (printf "/tag/%s" .Slug)}}">{{.Name}}</a>{{end}}</div>{{end}}
-            <a class="ff-outline-btn" href="{{langPrefixURL $.Ctx "/blog"}}">← {{T $.Ctx "btn_back_blog"}}</a>
+            <a class="ff-outline-btn" href="{{langPrefixURL $.Ctx (archiveURL "post")}}">← {{T $.Ctx "btn_back_blog"}}</a>
         </article>
         <aside class="ff-sidebar">
             <div class="ff-side-card">
                 <h3>{{T $.Ctx "section_recent_articles"}}</h3>
-                {{range .RecentPosts}}<a class="ff-side-link" href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}"><span>{{.Title}}</span><small>{{formatDate .PublishedAt}}</small></a>{{end}}
+                {{range .RecentPosts}}<a class="ff-side-link" href="{{langPrefixURL $.Ctx (contentURL . "post")}}"><span>{{.Title}}</span><small>{{formatDate .PublishedAt}}</small></a>{{end}}
             </div>
-            {{if .Categories}}<div class="ff-side-card"><h3>{{T $.Ctx "sidebar_categories"}}</h3><div class="ff-chip-cloud">{{range .Categories}}<a href="{{langPrefixURL $.Ctx "/blog"}}?category={{.Slug}}">{{.Name}}</a>{{end}}</div></div>{{end}}
+            {{if .Categories}}<div class="ff-side-card"><h3>{{T $.Ctx "sidebar_categories"}}</h3><div class="ff-chip-cloud">{{range .Categories}}<a href="{{langPrefixURL $.Ctx (archiveURL "post")}}?category={{.Slug}}">{{.Name}}</a>{{end}}</div></div>{{end}}
         </aside>
     </div>
 </section>
@@ -37,7 +37,7 @@
     <div class="ff-section-heading"><span class="ff-kicker">{{T $.Ctx "section_related_articles"}}</span><h2>You may also like</h2></div>
     <div class="ff-blog-grid">
         {{range .Related}}
-        <article class="ff-blog-card"><a class="ff-blog-media" href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="ff-card-icon">◇</span>{{end}}</a><div class="ff-blog-body"><h3><a href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{.Title}}</a></h3><p>{{truncate .Excerpt 150}}</p><a class="ff-card-arrow" href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}">{{T $.Ctx "btn_read_more"}}</a></div></article>
+        <article class="ff-blog-card"><a class="ff-blog-media" href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="ff-card-icon">◇</span>{{end}}</a><div class="ff-blog-body"><h3><a href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{.Title}}</a></h3><p>{{truncate .Excerpt 150}}</p><a class="ff-card-arrow" href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{T $.Ctx "btn_read_more"}}</a></div></article>
         {{end}}
     </div>
 </section>

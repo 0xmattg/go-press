@@ -6,21 +6,48 @@ GoPress 的主题系统借鉴 WordPress 设计：主题是一个 Go 包，通过
 
 - **BaseTheme 运行时引擎** — 主题嵌入 `BaseTheme` 即可获得 URL 解析、模板层级、SEO 注入等运行时能力
 - **核心类型保护** — 引擎在 `Registry.Clear()` 后自动 `registerCoreTypes()`，`post` / `contact_message` / `category` / `tag` 跨主题切换永久保留
-- **配置化内容类型** — 主题自定义内容类型由 `theme.toml` 的 `[[content_types]]` 声明；后台导航、CRUD、REST API、Rewrite 和菜单图标都从注册表读取
+- **配置化内容类型** — 主题自定义内容类型由 `theme.toml` 的 `[[content_types]]` 声明；后台导航、CRUD、REST API、Rewrite、模板映射和菜单图标都从注册表读取
 - **内置回退模板** — 当主题未提供对应模板时，BaseTheme 自动使用内置的分类归档、单页、列表回退模板，避免 404
 - **详情页标签展示** — 任意挂载 `tag` 分类法的内容详情页都可以显示关联 Tags，链接到对应分类归档页
 - **Theme 接口** — 实现 `Name()` / `Setup()` / `ServeHTTP()` / `TemplateFuncs()` 即可
 - **App 接口** — 主题通过 `theme.App` 接口访问 DB、ContentRepo、RewriteEngine、SEOBuilder、MediaRepo、HookBus 等引擎能力
 - **模板层级回退** — 类 WordPress 的模板查找：`single-{type}-{slug}.tmpl` → `single-{type}.tmpl` → `single.tmpl` → `index.tmpl`
-- **统一模板函数（Single-Source FuncMap）** — `CommonFuncMap()` + BaseTheme 的引擎感知 helpers（`buildURL`、`seoHead`、`menuByLocation`、`T`、`currentLang`、`langPrefixURL`、`renderHook`、`isMenuActive`、`responsiveImage`、`responsiveImagePriority`、`responsiveImagePreload`）通过 `BaseFuncMap()` 统一下发。**所有主题、所有模板加载路径共享同一份 funcmap**
+- **统一模板函数（Single-Source FuncMap）** — `CommonFuncMap()` + BaseTheme 的引擎感知 helpers（`buildURL`、`archiveURL`、`contentURL`、`seoHead`、`menuByLocation`、`T`、`currentLang`、`langPrefixURL`、`renderHook`、`isMenuActive`、`responsiveImage`、`responsiveImagePriority`、`responsiveImagePreload`）通过 `BaseFuncMap()` 统一下发。**所有主题、所有模板加载路径共享同一份 funcmap**
 - **前台模板 Hook 插槽** — 主题在语义位置声明 `{{renderHook "theme.head.end" .}}` / `{{renderHook "theme.body.open" .}}` / `{{renderHook "theme.footer.end" .}}` / `{{renderHook "header.nav.after" .}}` 等标准插槽，插件注册同名 filter 输出 HTML
-- **LoadPageBundle 核心级页面模板编译器** — `core/theme/page_bundle.go` 提供 `LoadPageBundle(theme, pages)`：自动发现 `layouts/base.tmpl` + `partials/*.tmpl`，对每个页面独立编译（允许不同页面重新定义同名 block）
-- **自定义路由 + 动态路由** — 静态页面（`/about`）通过 `AddRoute()` 注册，动态 URL（例如主题声明的 `product` 对应 `/products/:slug`）由 Rewrite 引擎按当前内容类型配置自动解析
+- **LoadPageBundle 核心级页面模板编译器** — `core/theme/page_bundle.go` 提供 `LoadPageBundle(theme, pages)` 和 `LoadAllPageBundles(theme)`：自动发现 `layouts/base.tmpl` + `partials/*.tmpl` + `pages/*.tmpl`，对每个页面独立编译（允许不同页面重新定义同名 block）
+- **自定义路由 + 动态路由** — 静态页面（`/about`）通过 `AddRoute()` 注册，动态 URL（例如主题声明的 `product` 对应 `/products/:slug`）由 Rewrite 引擎按当前内容类型配置自动解析；`product` / `service` / `showcase` 只是常见示例，不是 core 固定模型
 - **SEO 自动注入** — 每个页面模板自动获得 `SEO` 数据（title、OG、JSON-LD），详见 [SEO 接入规范](seo-integration.md)
 - **热切换** — 后台一键切换主题，自动重建路由 + 刷新缓存
 - **DemoDataProvider** — 主题可实现 `DemoSeedPath()` 接口，后台一键导入演示内容和图片
 - **init() 自注册** — 主题通过 `init()` 函数自动注册到引擎
 - **零主题/插件交叉耦合** — 主题只依赖 core funcmap 的字符串 key（`{{T .Ctx "x"}}`、`{{langPrefixURL .Ctx "/blog"}}`、`{{renderHook "theme.head.end" .}}`），插件只向 core 注册 hook/ctx key。**主题和插件之间不存在任何直接调用或类型依赖**
+
+## 配置驱动内容路由
+
+core 不假设一个站点一定有 `product`、`service` 或 `showcase`。除核心保留的 `post` / `contact_message` 等类型外，主题需要的业务内容类型都由 `theme.toml` 声明。
+
+每个内容类型的 `rewrite_slug` 决定前台归档和详情 URL；当内容类型名、URL 和视觉模板名不一致时，可以通过 `templates` 显式指定复用哪个页面模板：
+
+```toml
+[[content_types]]
+name = "module"
+label = "模块"
+label_plural = "核心模块"
+has_archive = true
+rewrite_slug = "modules"
+templates = { archive = "products", single = "product-detail" }
+```
+
+这个配置会让 `/modules` 和 `/modules/{slug}` 解析到 `module` 内容类型，同时复用 `templates/pages/products.tmpl` 和 `templates/pages/product-detail.tmpl`。如果不写 `templates`，BaseTheme 会按内容类型名和 `rewrite_slug` 推导候选模板，再回退到通用 archive/single 模板和内置 fallback。
+
+模板里的内容链接不要硬写 `/products` / `/services` 这类路径，应使用 core helper：
+
+```gotemplate
+<a href="{{archiveURL "module"}}">Modules</a>
+<a href="{{contentURL . "module"}}">{{.Title}}</a>
+```
+
+这样后续只改 `theme.toml` 的 `rewrite_slug` 或模板映射时，菜单、页面内链、SEO canonical 和 sitemap 都能跟随注册表保持一致。
 
 ## 前台扩展插槽
 

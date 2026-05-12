@@ -186,6 +186,7 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 ### 引擎核心
 
 - **统一内容模型** — `Content` + `ContentMeta` + `ContentType` 注册表；核心保留 `post` / `contact_message`，主题通过 `theme.toml` 声明自定义类型
+- **配置驱动内容路由** — `theme.toml` 的 `rewrite_slug` 和可选 `templates = { archive = "...", single = "..." }` 统一驱动归档 URL、详情 URL、Sitemap、后台永久链接和动态模板解析。`product` / `service` / `showcase` 只是示例类型，不是框架内置假设。
 - **链式查询构建器** — 下面以主题声明的 `product` 内容类型为例：`ContentQuery.Type("product").Published().Taxonomy("category", "hepa").Paginate(1, 20)`
 - **Hook 事件总线** — `AddAction` / `DoAction` / `AddFilter` / `ApplyFilter`，热拔插友好（每个 Add 返回 `Handle` 可精准 Remove）
 - **多级缓存** — L1 内存 + L2 Redis，自动降级，页面缓存中间件 < 1ms 命中
@@ -204,15 +205,15 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 ### 后台 CMS
 
 - **数据驱动 CRUD** — 按 ContentType 注册表自动生成列表/编辑界面，零样板代码
-- **主题内容模型配置化** — `theme.toml` 的 `[[content_types]]` 驱动后台导航、CRUD、REST API、Rewrite 和菜单图标
+- **主题内容模型配置化** — `theme.toml` 的 `[[content_types]]` 驱动后台导航、CRUD、REST API、Rewrite、模板映射和菜单图标
 - **RBAC 权限** — admin/editor/author/subscriber，全后台 `checkPermission` 加固
 - **拖拽排序 + 富文本** — Quill 2.0 编辑器、媒体选择器、内容列表 HTML5 DnD
 - **后台扩展点** — `admin.HookContentListTabs` / `admin.HookContentPermalinkPrefix` / `admin.content_form.fields` / `admin.content.saved` 等通用 hook，多语言/SEO 等插件按需注入
 
 ### 主题与插件
 
-- **BaseTheme 运行时引擎** — 嵌入即获得 URL 解析、模板层级回退（WordPress 风格）、SEO 自动注入
-- **统一 FuncMap** — `BaseFuncMap()` 单一来源下发：`buildURL` / `seoHeadFor` / `menuByLocation` / `T` / `currentLang` / `langPrefixURL` / `renderHook` / `responsiveImage*`
+- **BaseTheme 运行时引擎** — 嵌入即获得配置驱动 URL 解析、动态归档/详情渲染、模板层级回退（WordPress 风格）和 SEO 自动注入
+- **统一 FuncMap** — `BaseFuncMap()` 单一来源下发：`buildURL` / `archiveURL` / `contentURL` / `seoHeadFor` / `menuByLocation` / `T` / `currentLang` / `langPrefixURL` / `renderHook` / `responsiveImage*`
 - **主题模板插槽** — `theme.head.end` / `theme.body.open` / `theme.footer.end` / `header.nav.after` 组成前台插件接入契约，主题只声明语义位置，插件按需输出 HTML
 - **响应式图片管线** — 上传时生成 WebP + JPG/PNG 变体（thumb/480w/768w/1024w/1440w/full），模板用 `responsiveImage` 输出 `<picture>`
 - **插件热拔插** — `Bus.AddAction/AddFilter` 返回 `Handle`，`Deactivate` 中 `Remove*` 干净下线，运行时即时切换无需重启

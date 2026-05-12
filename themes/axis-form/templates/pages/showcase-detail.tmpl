@@ -16,7 +16,7 @@
     </article>
     <aside class="af-detail-aside">
         <h3>Related projects</h3>
-        {{range .Related}}<a href="{{langPrefixURL $.Ctx (printf "/showcase/%s" .Slug)}}">{{.Title}} <span>→</span></a>{{end}}
+        {{range .Related}}<a href="{{langPrefixURL $.Ctx (contentURL . "showcase")}}">{{.Title}} <span>→</span></a>{{end}}
     </aside>
 </section>
 {{end}}

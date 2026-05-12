@@ -2,6 +2,7 @@ package theme
 
 import (
 	"html/template"
+	"reflect"
 	"strings"
 	"time"
 
@@ -73,6 +74,38 @@ func CommonFuncMap() template.FuncMap {
 		"langPrefixURL": func(c *gin.Context, path string) string {
 			return path
 		},
+		"buildURL": func(contentType, slug string) string {
+			if slug == "" {
+				return "/"
+			}
+			if contentType == "" {
+				return "/" + strings.TrimPrefix(slug, "/")
+			}
+			return "/" + strings.Trim(contentType, "/") + "/" + strings.TrimPrefix(slug, "/")
+		},
+		"archiveURL": func(contentType string) string {
+			if contentType == "" {
+				return "/"
+			}
+			return "/" + strings.Trim(contentType, "/")
+		},
+		"contentURL": func(item interface{}, fallbackType string) string {
+			if url := stringField(item, "URL"); url != "" {
+				return url
+			}
+			slug := stringField(item, "Slug")
+			if slug == "" {
+				return "/"
+			}
+			contentType := stringField(item, "Type")
+			if contentType == "" {
+				contentType = fallbackType
+			}
+			if contentType == "" {
+				return "/" + strings.TrimPrefix(slug, "/")
+			}
+			return "/" + strings.Trim(contentType, "/") + "/" + strings.TrimPrefix(slug, "/")
+		},
 		"renderHook": func(name string, data interface{}) template.HTML {
 			return ""
 		},
@@ -133,6 +166,45 @@ func CommonFuncMap() template.FuncMap {
 			return seg == activePage
 		},
 	}
+}
+
+func stringField(item interface{}, name string) string {
+	if item == nil {
+		return ""
+	}
+	v := reflect.ValueOf(item)
+	if v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return ""
+		}
+		v = v.Elem()
+	}
+	switch v.Kind() {
+	case reflect.Map:
+		mv := v.MapIndex(reflect.ValueOf(name))
+		if !mv.IsValid() && name == "URL" {
+			mv = v.MapIndex(reflect.ValueOf("Url"))
+		}
+		if !mv.IsValid() {
+			return ""
+		}
+		if mv.Kind() == reflect.Interface {
+			mv = mv.Elem()
+		}
+		if mv.Kind() == reflect.String {
+			return mv.String()
+		}
+	case reflect.Struct:
+		fv := v.FieldByName(name)
+		if !fv.IsValid() && name == "URL" {
+			fv = v.FieldByName("Url")
+		}
+		if !fv.IsValid() || fv.Kind() != reflect.String {
+			return ""
+		}
+		return fv.String()
+	}
+	return ""
 }
 
 // MergeFuncMap merges multiple FuncMaps, later maps override earlier ones.

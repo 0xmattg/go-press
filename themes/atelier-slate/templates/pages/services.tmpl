@@ -18,10 +18,10 @@
         <article class="as-service-row">
             <span>0{{.SortOrder}}</span>
             <div>
-                <h2><a href="{{langPrefixURL $.Ctx (printf "/services/%s" .Slug)}}">{{.Title}}</a></h2>
+                <h2><a href="{{langPrefixURL $.Ctx (contentURL . "service")}}">{{.Title}}</a></h2>
                 <p>{{if .Excerpt}}{{.Excerpt}}{{else}}{{truncate (stripTags .Description) 170}}{{end}}</p>
             </div>
-            <a class="as-round-link" href="{{langPrefixURL $.Ctx (printf "/services/%s" .Slug)}}">→</a>
+            <a class="as-round-link" href="{{langPrefixURL $.Ctx (contentURL . "service")}}">→</a>
         </article>
         {{end}}
     </div>

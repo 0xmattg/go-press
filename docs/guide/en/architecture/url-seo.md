@@ -4,7 +4,7 @@ GoPress treats URLs and SEO metadata as framework-level concerns. Themes provide
 
 ## Rewrite Engine
 
-The rewrite engine resolves incoming URLs against registered content types, taxonomy archives, static pages, and custom theme routes. Theme-declared content types can define archive behavior and rewrite slugs in `theme.toml`.
+The rewrite engine resolves incoming URLs against registered content types, taxonomy archives, static pages, and custom theme routes. Theme-declared content types define archive behavior, rewrite slugs, and optional template mapping in `theme.toml`.
 
 Example:
 
@@ -16,6 +16,27 @@ rewrite_slug = "products"
 ```
 
 This produces archive and single-content URLs such as `/products` and `/products/example-product`.
+
+`product` is not special to core. A theme can declare any content type name and any public URL base:
+
+```toml
+[[content_types]]
+name = "module"
+has_archive = true
+rewrite_slug = "modules"
+templates = { archive = "products", single = "product-detail" }
+```
+
+In this example the data model is `module`, the public URLs are `/modules` and `/modules/{slug}`, and the archive/detail pages reuse `templates/pages/products.tmpl` and `templates/pages/product-detail.tmpl`. This keeps routing, admin CRUD, REST API exposure, sitemap entries, and frontend rendering driven by the same registry entry.
+
+Theme templates should use registry-aware helpers for internal content links:
+
+```gotemplate
+{{archiveURL "module"}}
+{{contentURL . "module"}}
+```
+
+`archiveURL` returns the current archive URL for a content type. `contentURL` uses an item's existing `URL` field when present, otherwise combines the item's `Type`/`Slug` with the rewrite registry and falls back to the supplied type.
 
 ## SEO Builder
 
@@ -34,4 +55,4 @@ The `seo.content.meta` filter allows plugins to modify SEO output after core bui
 
 ## Sitemap and Redirects
 
-Sitemap generation reads registered content, taxonomy URLs, and route transformers. Redirect rules are stored separately and are resolved before normal rewrite handling.
+Sitemap generation reads registered content types and their rewrite configuration, taxonomy URLs, and route transformers. Redirect rules are stored separately and are resolved before normal rewrite handling.

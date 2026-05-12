@@ -26,7 +26,7 @@
                     {{range .Services}}
                     <div class="service-card-full">
                         <div class="service-image">
-                            <a href="{{langPrefixURL $.Ctx (printf "/services/%s" .Slug)}}" class="service-image-link" aria-label="Learn more about {{.Title}}">
+                            <a href="{{langPrefixURL $.Ctx (contentURL . "service")}}" class="service-image-link" aria-label="Learn more about {{.Title}}">
                                 {{if .ImageURL}}
                                 {{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}
                                 {{else}}
@@ -37,11 +37,11 @@
                             </a>
                         </div>
                         <div class="service-info">
-                            <h3><a href="{{langPrefixURL $.Ctx (printf "/services/%s" .Slug)}}">{{.Title}}</a></h3>
+                            <h3><a href="{{langPrefixURL $.Ctx (contentURL . "service")}}">{{.Title}}</a></h3>
                             {{if .Excerpt}}<p class="service-excerpt">{{.Excerpt}}</p>{{end}}
                             {{if .Description}}<p class="service-summary">{{stripTags .Description}}</p>{{end}}
                             <div class="service-actions">
-                                <a href="{{langPrefixURL $.Ctx (printf "/services/%s" .Slug)}}" class="btn btn-secondary">{{T $.Ctx "btn_learn_more"}}</a>
+                                <a href="{{langPrefixURL $.Ctx (contentURL . "service")}}" class="btn btn-secondary">{{T $.Ctx "btn_learn_more"}}</a>
                             </div>
                         </div>
                     </div>
@@ -54,7 +54,7 @@
                     <ul class="sidebar-posts">
                         {{range .PageData.RecentPosts}}
                         <li>
-                            <a href="{{langPrefixURL $.Ctx "/blog"}}">{{.Title}}</a>
+                            <a href="{{langPrefixURL $.Ctx (archiveURL "post")}}">{{.Title}}</a>
                             <time>{{formatDate .PublishedAt}}</time>
                         </li>
                         {{end}}
@@ -64,7 +64,7 @@
                     <h4>{{T $.Ctx "sidebar_tags"}}</h4>
                     <div class="tag-cloud">
                         {{range .Tags}}
-                        <a href="{{langPrefixURL $.Ctx "/blog"}}?category={{.Slug}}" class="tag">{{.Name}}</a>
+                        <a href="{{langPrefixURL $.Ctx (archiveURL "post")}}?category={{.Slug}}" class="tag">{{.Name}}</a>
                         {{end}}
                     </div>
                 </div>

@@ -12,9 +12,9 @@
     <nav class="af-nav" aria-label="Primary navigation">
         <ul class="af-nav-list">
             <li><a class="{{if eq .ActivePage "about"}}active{{end}}" href="{{langPrefixURL .Ctx "/about"}}">{{settingOr $s "nav_about" "About Us"}}</a></li>
-            <li><a class="{{if eq .ActivePage "services"}}active{{end}}" href="{{langPrefixURL .Ctx "/services"}}">{{settingOr $s "nav_services" "Our Services"}}</a></li>
-            <li><a class="{{if eq .ActivePage "showcase"}}active{{end}}" href="{{langPrefixURL .Ctx "/showcase"}}">{{settingOr $s "nav_showcase" "Portfolio"}}</a></li>
-            <li><a class="{{if eq .ActivePage "products"}}active{{end}}" href="{{langPrefixURL .Ctx "/products"}}">{{settingOr $s "nav_process" "Process"}}</a></li>
+            <li><a class="{{if eq .ActivePage "services"}}active{{end}}" href="{{langPrefixURL .Ctx (archiveURL "service")}}">{{settingOr $s "nav_services" "Our Services"}}</a></li>
+            <li><a class="{{if eq .ActivePage "showcase"}}active{{end}}" href="{{langPrefixURL .Ctx (archiveURL "showcase")}}">{{settingOr $s "nav_showcase" "Portfolio"}}</a></li>
+            <li><a class="{{if eq .ActivePage "products"}}active{{end}}" href="{{langPrefixURL .Ctx (archiveURL "product")}}">{{settingOr $s "nav_process" "Process"}}</a></li>
             <li><a class="{{if eq .ActivePage "contact"}}active{{end}}" href="{{langPrefixURL .Ctx "/contact"}}">{{settingOr $s "nav_contact" "Contacts"}}</a></li>
             {{renderHook "header.nav.after" .}}
         </ul>

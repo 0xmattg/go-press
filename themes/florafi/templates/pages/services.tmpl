@@ -20,7 +20,7 @@
             </div>
             <div class="ff-list-stack">
                 {{range .Services}}
-                <a class="ff-list-card" href="{{langPrefixURL $.Ctx (printf "/services/%s" .Slug)}}">
+                <a class="ff-list-card" href="{{langPrefixURL $.Ctx (contentURL . "service")}}">
                     <div class="ff-list-media">
                         {{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="ff-card-icon">♧</span>{{end}}
                     </div>
@@ -39,7 +39,7 @@
             <div class="ff-side-card">
                 <h3>{{T $.Ctx "section_recent_articles"}}</h3>
                 {{range .RecentPosts}}
-                <a class="ff-side-link" href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}"><span>{{.Title}}</span><small>{{formatDate .PublishedAt}}</small></a>
+                <a class="ff-side-link" href="{{langPrefixURL $.Ctx (contentURL . "post")}}"><span>{{.Title}}</span><small>{{formatDate .PublishedAt}}</small></a>
                 {{end}}
             </div>
             <div class="ff-side-card">

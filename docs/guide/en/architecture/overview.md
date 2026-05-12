@@ -29,7 +29,7 @@ If the site is not installed yet, the handler switcher routes requests to the in
 
 - Own database repositories, rewrite engine, SEO builder, hook bus, cache, media repository, workers, and admin services.
 - Register core content types that must survive theme switching.
-- Load theme-declared content types from `theme.toml`.
+- Load theme-declared content types from `theme.toml`, including rewrite slugs and archive/detail template mapping.
 - Initialize active plugins and remove plugin hooks when they are disabled.
 - Rebuild frontend routes after theme switching or relevant setting changes.
 
@@ -44,4 +44,3 @@ The extension model is deliberately simple:
 - Shared behavior is exposed by core-level helpers and hook names.
 
 This keeps the architecture open to third-party packages without creating hidden dependencies between themes and plugins.
-

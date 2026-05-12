@@ -19,7 +19,7 @@
                                                            │
                 ┌──────────────────────────────────────────▼──────────┐
                 │              BaseTheme 运行时引擎                    │
-                │  自定义路由 → Rewrite 解析 → 模板层级 → SEO 注入     │
+                │  自定义路由 → Rewrite 解析 → 动态模板映射 → SEO 注入 │
                 └─────────────────────────┬───────────────────────────┘
                                           │
           ┌──────────┬──────────┬─────────┼──────────┬──────────┐
@@ -51,7 +51,7 @@ main.go
        ├→ engine.LoadAllThemes()                // 6. 注册主题 + 激活配置主题
        │    ├→ Registry.Clear()                 //    清理旧注册
        │    ├→ registerCoreTypes()              //    重注册 post/contact_message/category/tag（核心类型不丢失）
-       │    ├→ LoadFileConfig(theme.toml)        //    读取主题声明的内容类型/菜单元信息
+       │    ├→ LoadFileConfig(theme.toml)        //    读取主题声明的内容类型/菜单/模板映射
        │    ├→ RegisterContentTypesFromConfig()  //    按 [[content_types]] 注册主题内容类型
        │    └→ theme.Setup()                    //    主题运行时初始化（菜单位置、设置、hook）
        ├→ engine.LoadAllPlugins()               // 7. 注册插件 + 激活已启用插件
@@ -68,7 +68,7 @@ main.go
 ## 关键解耦点
 
 - **核心类型保护** — 引擎在 `Registry.Clear()` 后自动 `registerCoreTypes()`，`post` / `contact_message` / `category` / `tag` 跨主题切换永久保留
-- **主题内容模型配置化** — 主题自定义内容类型由 `theme.toml` 的 `[[content_types]]` 声明，后台菜单、CRUD、REST API 和 Rewrite 统一从注册表读取
+- **主题内容模型配置化** — 主题自定义内容类型由 `theme.toml` 的 `[[content_types]]` 声明，后台菜单、CRUD、REST API、Rewrite 和模板映射统一从注册表读取
 - **主题热切换** — 后台一键切主题，core 重建路由 + 刷新缓存，无需重启
 - **插件热拔插** — 插件 `Activate` 时记录所有 `hook.Handle`，`Deactivate` 时按 handle 摘除，运行时即可完整下线
 - **前台插槽契约** — 主题在基础布局声明 `theme.head.end` / `theme.body.open` / `theme.footer.end` / `header.nav.after`，插件只对这些稳定语义位置输出 HTML

@@ -17,12 +17,12 @@
         <div class="as-card-grid">
             {{range .Products}}
             <article class="as-content-card as-content-card-large">
-                <a href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}" class="as-card-media">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{end}}</a>
+                <a href="{{langPrefixURL $.Ctx (contentURL . "product")}}" class="as-card-media">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{end}}</a>
                 <div class="as-card-body">
                     <span>0{{.SortOrder}}</span>
-                    <h3><a href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}">{{.Title}}</a></h3>
+                    <h3><a href="{{langPrefixURL $.Ctx (contentURL . "product")}}">{{.Title}}</a></h3>
                     <p>{{if .Excerpt}}{{.Excerpt}}{{else}}{{truncate (stripTags .Description) 150}}{{end}}</p>
-                    <a class="as-text-link" href="{{langPrefixURL $.Ctx (printf "/products/%s" .Slug)}}">{{T $.Ctx "btn_learn_more"}} ↗</a>
+                    <a class="as-text-link" href="{{langPrefixURL $.Ctx (contentURL . "product")}}">{{T $.Ctx "btn_learn_more"}} ↗</a>
                 </div>
             </article>
             {{end}}

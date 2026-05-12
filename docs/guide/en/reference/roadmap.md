@@ -11,7 +11,7 @@
 - Table-prefix system for core, plugin, and theme isolation.
 - BaseTheme runtime with template fallback and SEO injection.
 - Core content types that survive theme switching.
-- Theme-declared content types through `theme.toml`.
+- Theme-declared content types through `theme.toml`, including rewrite slugs and template mapping.
 - Taxonomy archives, fallback templates, tags on details, redirects, and sitemap generation.
 - Content Scope API.
 - WPML-like multilingual plugin.

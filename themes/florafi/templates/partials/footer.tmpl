@@ -6,9 +6,9 @@
     </div>
     <p>{{settingOr .Settings "footer_text" "Built for stability. Designed for growth."}}</p>
     <div class="ff-footer-links">
-        <a href="{{langPrefixURL $.Ctx "/products"}}">USD Flora</a>
-        <a href="{{langPrefixURL $.Ctx "/services"}}">Business</a>
-        <a href="{{langPrefixURL $.Ctx "/blog"}}">Developers</a>
+        <a href="{{langPrefixURL $.Ctx (archiveURL "product")}}">USD Flora</a>
+        <a href="{{langPrefixURL $.Ctx (archiveURL "service")}}">Business</a>
+        <a href="{{langPrefixURL $.Ctx (archiveURL "post")}}">Developers</a>
         <a href="{{langPrefixURL $.Ctx "/contact"}}">Contact</a>
     </div>
 </footer>

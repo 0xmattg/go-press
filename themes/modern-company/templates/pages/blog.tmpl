@@ -17,9 +17,9 @@
     <div class="container">
         <!-- Category Filter -->
         <div class="blog-filter">
-            <a href="{{langPrefixURL $.Ctx "/blog"}}" class="filter-btn {{if eq .ActiveCat ""}}active{{end}}">{{T $.Ctx "filter_all"}}</a>
+            <a href="{{langPrefixURL $.Ctx (archiveURL "post")}}" class="filter-btn {{if eq .ActiveCat ""}}active{{end}}">{{T $.Ctx "filter_all"}}</a>
             {{range .Categories}}
-            <a href="{{langPrefixURL $.Ctx "/blog"}}?category={{.Slug}}" class="filter-btn {{if eq $.ActiveCat .Slug}}active{{end}}">{{.Name}}</a>
+            <a href="{{langPrefixURL $.Ctx (archiveURL "post")}}?category={{.Slug}}" class="filter-btn {{if eq $.ActiveCat .Slug}}active{{end}}">{{.Name}}</a>
             {{end}}
         </div>
 
@@ -43,7 +43,7 @@
                     </div>
                     <h3>{{.Title}}</h3>
                     <p>{{truncate .Excerpt 150}}</p>
-                    <a href="{{langPrefixURL $.Ctx (printf "/blog/%s" .Slug)}}" class="card-link">{{T $.Ctx "btn_read_more"}}</a>
+                    <a href="{{langPrefixURL $.Ctx (contentURL . "post")}}" class="card-link">{{T $.Ctx "btn_read_more"}}</a>
                 </div>
             </article>
             {{end}}
@@ -52,7 +52,7 @@
         {{if eq (len .Posts) 0}}
         <div class="text-center" style="padding: 3rem 0;">
             <p>{{T $.Ctx "empty_no_posts_category"}}</p>
-            <a href="{{langPrefixURL $.Ctx "/blog"}}" class="btn btn-secondary">{{T $.Ctx "btn_view_all_posts"}}</a>
+            <a href="{{langPrefixURL $.Ctx (archiveURL "post")}}" class="btn btn-secondary">{{T $.Ctx "btn_view_all_posts"}}</a>
         </div>
         {{end}}
     </div>

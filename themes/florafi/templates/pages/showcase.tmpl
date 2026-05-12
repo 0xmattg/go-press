@@ -18,7 +18,7 @@
     </div>
     <div class="ff-case-grid">
         {{range .Showcases}}
-        <a class="ff-case-card" href="{{langPrefixURL $.Ctx (printf "/showcase/%s" .Slug)}}">
+        <a class="ff-case-card" href="{{langPrefixURL $.Ctx (contentURL . "showcase")}}">
             <div class="ff-case-media">
                 {{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="ff-card-icon">◎</span>{{end}}
             </div>

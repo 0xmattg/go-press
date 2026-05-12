@@ -5,7 +5,7 @@ GoPress themes are Go packages that register themselves with the engine. A theme
 ## Main Features
 
 - `BaseTheme` runtime for rewrite resolution, template fallback, SEO injection, and common helpers.
-- Theme-declared content types from `theme.toml`.
+- Theme-declared content types from `theme.toml`, including rewrite slugs and optional page-template mapping.
 - WordPress-like template hierarchy.
 - Built-in fallback templates for archives, singles, and taxonomy pages.
 - Standard frontend hook slots for plugins.
@@ -26,9 +26,28 @@ GoPress themes are Go packages that register themselves with the engine. A theme
 | `terra-trail` | Terra Trail | Outdoor travel. |
 | `go-press-landing` | GoPress Landing | SaaS landing page. |
 
+## Dynamic Content Routing
+
+Core does not assume a site must have `product`, `service`, or `showcase`. The only always-registered editorial content type is `post`; themes add their own content types through `theme.toml`.
+
+For each registered content type, `rewrite_slug` defines the public archive/detail URL shape, and optional `templates` selects the theme page bundles used for archive and detail rendering:
+
+```toml
+[[content_types]]
+name = "module"
+label = "Module"
+label_plural = "Modules"
+has_archive = true
+rewrite_slug = "modules"
+templates = { archive = "products", single = "product-detail" }
+```
+
+With that configuration, `/modules` and `/modules/{slug}` resolve to the `module` content type while reusing `templates/pages/products.tmpl` and `templates/pages/product-detail.tmpl`. If `templates` is omitted, BaseTheme tries conventional names derived from the content type and rewrite slug before falling back to generic archive/single templates and built-in fallback pages.
+
+Templates should generate content links with `archiveURL` and `contentURL` instead of hard-coding `/products`, `/services`, or similar paths.
+
 New themes should prefer the `BaseTheme + gin.H` path unless they have a strong reason to maintain a custom PageService.
 
 ## Theme and Plugin Boundary
 
 Themes should expose semantic hook slots and use core helpers. Plugins should inject through those slots. Neither side should import the other.
-

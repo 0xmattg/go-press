@@ -7,7 +7,7 @@
 
 <section class="ce-showcase-grid">
     {{range $i, $item := .Showcases}}
-    <a class="ce-showcase-card" href="{{langPrefixURL $.Ctx (printf "/showcase/%s" $item.Slug)}}">
+    <a class="ce-showcase-card" href="{{langPrefixURL $.Ctx (contentURL $item "showcase")}}">
         <div class="ce-card-media">
             {{if $item.ImageURL}}{{responsiveImage $item.ImageURL $item.Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{end}}
         </div>

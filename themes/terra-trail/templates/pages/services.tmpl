@@ -7,7 +7,7 @@
 
 <section class="tt-transport-page">
     {{range $i, $svc := .Services}}
-    <a class="tt-transport-large {{if eq $i 0}}active{{end}}" href="{{langPrefixURL $.Ctx (printf "/services/%s" $svc.Slug)}}">
+    <a class="tt-transport-large {{if eq $i 0}}active{{end}}" href="{{langPrefixURL $.Ctx (contentURL $svc "service")}}">
         <i>{{if eq $i 0}}✈{{else if eq $i 1}}▣{{else if eq $i 2}}▤{{else}}⌁{{end}}</i>
         <div>
             <small>{{printf "Step %02d" (add $i 1)}}</small>

@@ -9,13 +9,13 @@
         <div class="ce-hero-copy">
             <h1>{{settingOr $s "home_hero_title" "Find Premium Commercial Properties"}}</h1>
             <p>{{settingOr $s "home_hero_subtitle" "Compare office, retail, and mixed-use spaces with clear market guidance and curated local options."}}</p>
-            <a class="ce-primary-btn" href="{{langPrefixURL .Ctx (settingOr $s "home_hero_btn_link" "/showcase")}}">{{settingOr $s "home_hero_btn_text" "Search"}}</a>
+            <a class="ce-primary-btn" href="{{langPrefixURL .Ctx (settingOr $s "home_hero_btn_link" (archiveURL "showcase"))}}">{{settingOr $s "home_hero_btn_text" "Search"}}</a>
         </div>
         <div class="ce-search-panel" role="search" aria-label="Property search">
             <div class="ce-search-row">
                 <span aria-hidden="true">⌕</span>
                 <input type="search" value="{{settingOr $s "home_search_placeholder" "Downtown offices, retail corridors, flex space"}}" aria-label="Search properties">
-                <a href="{{langPrefixURL .Ctx "/showcase"}}">{{settingOr $s "home_search_button" "Search Now"}}</a>
+                <a href="{{langPrefixURL .Ctx (archiveURL "showcase")}}">{{settingOr $s "home_search_button" "Search Now"}}</a>
             </div>
             <div class="ce-filter-row">
                 <span><small>Location</small>{{settingOr $s "home_filter_1" "Central"}}</span>
@@ -33,7 +33,7 @@
     <div class="ce-property-cards">
         {{range $i, $p := .Products}}
         {{if lt $i 3}}
-        <a class="ce-property-card" href="{{langPrefixURL $.Ctx (printf "/products/%s" $p.Slug)}}">
+        <a class="ce-property-card" href="{{langPrefixURL $.Ctx (contentURL $p "product")}}">
             <div class="ce-property-media">
                 {{if $p.ImageURL}}{{responsiveImage $p.ImageURL $p.Title "" "(max-width: 768px) 100vw, 31vw" "lazy"}}{{end}}
             </div>
@@ -53,7 +53,7 @@
 <section class="ce-nearby-panel">
     {{range $i, $item := .Showcases}}
     {{if eq $i 0}}
-    <a class="ce-nearby-media" href="{{langPrefixURL $.Ctx (printf "/showcase/%s" $item.Slug)}}">
+    <a class="ce-nearby-media" href="{{langPrefixURL $.Ctx (contentURL $item "showcase")}}">
         {{if $item.ImageURL}}{{responsiveImage $item.ImageURL $item.Title "" "(max-width: 768px) 100vw, 45vw" "lazy"}}{{end}}
     </a>
     <div class="ce-nearby-copy">
@@ -63,7 +63,7 @@
             <strong>{{settingOr $s "home_nearby_metric" "0.02"}}</strong>
             <span>{{settingOr $s "home_nearby_label" "Median vacancy shift across tracked corridors this quarter"}}</span>
         </div>
-        <a class="ce-primary-btn ce-inline" href="{{langPrefixURL $.Ctx (printf "/showcase/%s" $item.Slug)}}">{{settingOr $s "home_nearby_btn" "View Report"}}</a>
+        <a class="ce-primary-btn ce-inline" href="{{langPrefixURL $.Ctx (contentURL $item "showcase")}}">{{settingOr $s "home_nearby_btn" "View Report"}}</a>
     </div>
     {{end}}
     {{end}}
