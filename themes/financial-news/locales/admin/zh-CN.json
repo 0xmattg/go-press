@@ -1,0 +1,11 @@
+{
+  "theme.settings.back": "返回主题管理",
+  "theme.settings.cancel": "取消",
+  "theme.settings.save": "保存设置",
+  "theme.settings.text.brand": "品牌与页脚",
+  "theme.settings.text.footer_text": "页脚版权文案",
+  "theme.settings.text.site_description": "站点描述",
+  "theme.settings.text.site_description_placeholder": "财经新闻、市场分析与投资洞察。",
+  "theme.settings.text.site_name": "站点名称",
+  "theme.settings.title": "%s - 主题设置"
+}

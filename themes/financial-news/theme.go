@@ -28,6 +28,7 @@ type FinancialNewsTheme struct {
 }
 
 var _ coreTheme.Theme = (*FinancialNewsTheme)(nil)
+var _ coreTheme.SettingsProvider = (*FinancialNewsTheme)(nil)
 
 // New creates a new FinancialNewsTheme.
 func New(engine *core.Engine, themeDir string) *FinancialNewsTheme {
@@ -118,6 +119,8 @@ func (t *FinancialNewsTheme) Setup(app coreTheme.App) {
 		return
 	}
 
+	registerTranslatableOptions()
+
 	t.engine.Menus.RegisterLocation("top-nav", "顶部导航")
 	t.engine.Menus.RegisterLocation("sidebar", "侧边栏")
 	t.engine.Menus.RegisterLocation("footer", "底部导航")
@@ -141,4 +144,9 @@ func (t *FinancialNewsTheme) TemplateDir() string {
 
 func (t *FinancialNewsTheme) StaticDir() string {
 	return filepath.Join(t.ThemeDir, "static")
+}
+
+// SettingsTemplatePath returns the path to the admin settings template.
+func (t *FinancialNewsTheme) SettingsTemplatePath() string {
+	return filepath.Join(t.ThemeDir, "templates", "admin", "theme_settings.tmpl")
 }

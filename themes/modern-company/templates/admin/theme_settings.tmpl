@@ -31,15 +31,9 @@
 <div class="ts-panel active" id="tab-company">
     <h3 class="ts-section-title">{{X $ "theme.settings.text.013" "公司基本信息"}}</h3>
     <p class="ts-hint">{{X $ "theme.settings.text.014" "这些信息用于网站页脚、联系页面和 SEO 元数据。"}}</p>
-    <div class="ts-grid-2">
-        <div class="ts-field">
-            <label>{{X $ "theme.settings.text.015" "公司名称"}}</label>
-            <input type="text" name="company_name" value="{{index $s "company_name"}}" placeholder="{{X $ "theme.settings.text.146" "如：Hurricane Techs"}}">
-        </div>
-        <div class="ts-field">
-            <label>{{X $ "theme.settings.text.016" "公司邮箱"}}</label>
-            <input type="email" name="company_email" value="{{index $s "company_email"}}" placeholder="info@example.com">
-        </div>
+    <div class="ts-field">
+        <label>{{X $ "theme.settings.text.016" "公司邮箱"}}</label>
+        <input type="email" name="company_email" value="{{index $s "company_email"}}" placeholder="info@example.com">
     </div>
     <div class="ts-grid-2">
         <div class="ts-field">
@@ -67,7 +61,7 @@
     </div>
     <div class="ts-field">
         <label>{{X $ "theme.settings.text.020" "页脚文案"}}</label>
-        <input type="text" name="footer_text" value="{{index $s "footer_text"}}" placeholder="© 2003-2026 Company Name. All rights reserved.">
+        <input type="text" name="footer_copyright_text" value="{{index $s "footer_copyright_text"}}" placeholder="{{X $ "theme.settings.text.153" "Hurricane Techs. All rights reserved. Cleanroom Solutions Since 2003."}}">
     </div>
     <h4 style="margin:1.5rem 0 0.75rem; font-size:0.95rem; color:#475569;">{{X $ "theme.settings.text.021" "社交媒体链接"}}</h4>
     <div class="ts-grid-2">
@@ -205,16 +199,29 @@
 <!-- ============ TAB: Hero carousel ============ -->
 <div class="ts-panel" id="tab-hero">
     <h3 class="ts-section-title">{{X $ "theme.settings.text.049" "Hero 轮播图设置"}}</h3>
-    <p class="ts-hint">{{X $ "theme.settings.text.050" "最多 3 张轮播图，每张可设置标签、标题、描述、背景图和按钮。"}}</p>
+    <p class="ts-hint">{{X $ "theme.settings.text.050" "最多 6 张轮播图，每张可设置标签、标题、描述、背景图和按钮。默认展示 3 张。"}}</p>
 
-    <div class="ts-field">
-        <label>{{X $ "theme.settings.text.149" "Hero 自动切换间隔（毫秒）"}}</label>
-        <input type="number" name="home_hero_interval_ms" value="{{settingOr $s "home_hero_interval_ms" "5000"}}" min="1000" step="500" placeholder="5000">
-        <p class="ts-hint">{{X $ "theme.settings.text.150" "默认 5000 毫秒；数值越大，每张 Hero 图停留越久。"}}</p>
+    <div class="ts-hero-controls">
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.149" "Hero 自动切换间隔（毫秒）"}}</label>
+            <input type="number" name="home_hero_interval_ms" value="{{settingOr $s "home_hero_interval_ms" "5000"}}" min="1000" step="500" placeholder="5000">
+            <p class="ts-hint">{{X $ "theme.settings.text.150" "默认 5000 毫秒；数值越大，每张 Hero 图停留越久。"}}</p>
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "theme.settings.text.151" "Hero 轮播图展示数量"}}</label>
+            {{$heroCount := settingOr $s "home_hero_count" "3"}}
+            <select name="home_hero_count" id="home_hero_count">
+                {{range $i := seq 6}}
+                {{$count := printf "%d" (add $i 1)}}
+                <option value="{{$count}}" {{if eq $heroCount $count}}selected{{end}}>{{$count}}</option>
+                {{end}}
+            </select>
+            <p class="ts-hint">{{X $ "theme.settings.text.152" "默认 3 张；选择 4-6 后，下方会显示对应的新增轮播配置。"}}</p>
+        </div>
     </div>
 
-    {{range $i := seq 3}}
-    <div class="ts-slide-block">
+    {{range $i := seq 6}}
+    <div class="ts-slide-block hero-slide-settings" data-hero-slide-index="{{add $i 1}}">
         <h4 class="ts-slide-title">{{X $ "theme.settings.dynamic.slide" "轮播图 %d" (add $i 1)}}</h4>
         <div class="ts-grid-2">
             <div class="ts-field">
@@ -754,6 +761,7 @@
 .ts-field input[type="text"],
 .ts-field input[type="email"],
 .ts-field input[type="url"],
+.ts-field input[type="number"],
 .ts-field textarea,
 .ts-field select {
     width: 100%;
@@ -773,6 +781,11 @@
     box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
 }
 .ts-field textarea { resize: vertical; }
+.ts-hero-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
 .ts-grid-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -851,6 +864,7 @@
 .scheme-desc { font-size:0.8rem; color:#64748b; line-height:1.4; }
 
 @media (max-width: 768px) {
+    .ts-hero-controls,
     .ts-grid-2 { grid-template-columns: 1fr; }
     .ts-tabs { flex-wrap: wrap; }
 }
@@ -866,6 +880,22 @@ document.querySelectorAll('.ts-tab').forEach(function(tab) {
         document.getElementById('tab-' + this.dataset.tab).classList.add('active');
     });
 });
+
+function updateHeroSlideSettings() {
+    var select = document.getElementById('home_hero_count');
+    var count = select ? parseInt(select.value, 10) : 3;
+    if (!Number.isFinite(count)) count = 3;
+    count = Math.min(Math.max(count, 1), 6);
+    document.querySelectorAll('.hero-slide-settings').forEach(function(block) {
+        var index = parseInt(block.dataset.heroSlideIndex, 10);
+        block.style.display = index <= count ? '' : 'none';
+    });
+}
+var heroCountSelect = document.getElementById('home_hero_count');
+if (heroCountSelect) {
+    heroCountSelect.addEventListener('change', updateHeroSlideSettings);
+    updateHeroSlideSettings();
+}
 // Color scheme selection
 document.querySelectorAll('.scheme-option input[type="radio"]').forEach(function(radio) {
     radio.addEventListener('change', function() {

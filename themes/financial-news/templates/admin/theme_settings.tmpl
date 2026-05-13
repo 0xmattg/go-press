@@ -1,0 +1,41 @@
+{{define "content"}}
+{{$s := .Settings}}
+<div class="content-header">
+    <div style="display:flex; align-items:center; gap:1rem;">
+        <a href="/admin/themes" class="btn btn-secondary" style="display:inline-flex; align-items:center; gap:.4rem; text-decoration:none;">← {{X $ "theme.settings.back" "返回主题管理"}}</a>
+        <h2>{{X $ "theme.settings.title" "%s - 主题设置" .ThemeName}}</h2>
+    </div>
+</div>
+
+<form method="POST" action="/admin/themes/{{.ThemeSlug}}/settings" class="fn-settings-form">
+    <section class="fn-admin-card">
+        <h3>{{X $ "theme.settings.text.brand" "品牌与页脚"}}</h3>
+        <div class="fn-admin-grid">
+            <label>{{X $ "theme.settings.text.site_name" "站点名称"}}
+                <input type="text" name="site_name" value="{{index $s "site_name"}}" placeholder="FinNews">
+            </label>
+            <label>{{X $ "theme.settings.text.site_description" "站点描述"}}
+                <input type="text" name="site_description" value="{{index $s "site_description"}}" placeholder="{{X $ "theme.settings.text.site_description_placeholder" "Financial news, market analysis, and investment insights."}}">
+            </label>
+        </div>
+        <label>{{X $ "theme.settings.text.footer_text" "页脚版权文案"}}
+            <input type="text" name="footer_text" value="{{index $s "footer_text"}}" placeholder="© 2026 FinNews. All rights reserved.">
+        </label>
+    </section>
+
+    <div class="form-actions" style="margin-top:1rem;">
+        <button type="submit" class="btn btn-primary">{{X $ "theme.settings.save" "保存设置"}}</button>
+        <a href="/admin/themes" class="btn btn-secondary">{{X $ "theme.settings.cancel" "取消"}}</a>
+    </div>
+</form>
+
+<style>
+.fn-settings-form { max-width: 960px; }
+.fn-admin-card { margin: 0 0 1rem; padding: 1.25rem; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; }
+.fn-admin-card h3 { margin: 0 0 1rem; font-size: 1rem; color: #0f172a; }
+.fn-admin-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.fn-admin-card label { display: grid; gap: .4rem; margin-bottom: 1rem; color: #475569; font-weight: 600; }
+.fn-admin-card input { width: 100%; border: 1px solid #d1d5db; border-radius: 8px; padding: .65rem .75rem; font: inherit; }
+@media (max-width: 760px) { .fn-admin-grid { grid-template-columns: 1fr; } }
+</style>
+{{end}}

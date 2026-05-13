@@ -63,7 +63,7 @@
     </div>
     <div class="footer-bottom">
         <div class="container">
-            <p>&copy; {{.Settings.company_year}} Hurricane Techs. All rights reserved. Cleanroom Solutions Since 2003.</p>
+            <p>&copy; {{.Settings.company_year}} {{settingOr .Settings "footer_copyright_text" "Hurricane Techs. All rights reserved. Cleanroom Solutions Since 2003."}}</p>
         </div>
     </div>
 </footer>

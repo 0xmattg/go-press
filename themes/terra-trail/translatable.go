@@ -35,8 +35,6 @@ func registerTranslatableOptions() {
 		"home_filter_2",
 		"home_filter_3",
 		"home_filter_4",
-		"home_about_title",
-		"home_about_desc",
 		"home_products_label",
 		"home_products_title",
 		"home_products_desc",
@@ -58,7 +56,6 @@ func registerTranslatableOptions() {
 	}
 
 	for _, n := range []string{"1", "2", "3", "4"} {
-		option.RegisterTranslatable("home_stat_"+n+"_label", "home", "home_stat_"+n+"_label")
 		option.RegisterTranslatable("about_stat_"+n+"_label", "about", "about_stat_"+n+"_label")
 	}
 

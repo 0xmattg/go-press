@@ -2,46 +2,77 @@
 {{$s := .Settings}}
 <!-- Hero Section -->
 <section class="hero">
+    {{$heroCount := settingIntBetween $s "home_hero_count" 3 1 6}}
     <div class="hero-slider" id="hero-slider" data-interval-ms="{{settingOr $s "home_hero_interval_ms" "5000"}}">
-        <div class="hero-slide active">
-            {{responsiveImagePriority (settingOr $s "home_hero_1_image" "https://images.unsplash.com/photo-1584677123573-7446380b6d69?w=1600&h=900&fit=crop&q=80") (settingOr $s "home_hero_1_title" "Cleanroom Construction & HEPA Filter Systems") "hero-image" "100vw"}}
+        {{range $idx := seq 6}}
+        {{if le $idx $heroCount}}
+        {{$imageKey := printf "home_hero_%d_image" $idx}}
+        {{$labelKey := printf "home_hero_%d_label" $idx}}
+        {{$titleKey := printf "home_hero_%d_title" $idx}}
+        {{$descKey := printf "home_hero_%d_desc" $idx}}
+        {{$btn1TextKey := printf "home_hero_%d_btn1_text" $idx}}
+        {{$btn1LinkKey := printf "home_hero_%d_btn1_link" $idx}}
+        {{$btn2TextKey := printf "home_hero_%d_btn2_text" $idx}}
+        {{$btn2LinkKey := printf "home_hero_%d_btn2_link" $idx}}
+        {{$defaultImage := ""}}
+        {{$defaultLabel := ""}}
+        {{$defaultTitle := ""}}
+        {{$defaultDesc := ""}}
+        {{$defaultBtn1Text := "Get a Quote"}}
+        {{$defaultBtn1Link := "/contact"}}
+        {{$defaultBtn2Text := "Learn More"}}
+        {{$defaultBtn2Link := "/about"}}
+        {{if eq $idx 1}}
+            {{$defaultImage = "https://images.unsplash.com/photo-1584677123573-7446380b6d69?w=1600&h=900&fit=crop&q=80"}}
+            {{$defaultLabel = "Cleanroom Engineering Experts"}}
+            {{$defaultTitle = "Cleanroom Construction & HEPA Filter Systems"}}
+            {{$defaultDesc = "Professional turnkey cleanroom solutions from design to installation, serving pharmaceutical, food, and tech industries globally since 2003."}}
+            {{$defaultBtn2Text = "Our Products"}}
+            {{$defaultBtn2Link = archiveURL "product"}}
+        {{else if eq $idx 2}}
+            {{$defaultImage = "https://images.unsplash.com/photo-1513828583688-c52646db42da?w=1600&h=900&fit=crop&q=80"}}
+            {{$defaultLabel = "ISO-Certified Quality"}}
+            {{$defaultTitle = "ISO-Certified Air Purification Solutions"}}
+            {{$defaultDesc = "High-efficiency filters, laminar flow hoods, air showers, and complete purification equipment manufactured in Wuxi, China."}}
+            {{$defaultBtn1Text = "Our Services"}}
+            {{$defaultBtn1Link = archiveURL "service"}}
+        {{else if eq $idx 3}}
+            {{$defaultImage = "https://images.unsplash.com/photo-1559744339-9ea435c9b2b4?w=1600&h=900&fit=crop&q=80"}}
+            {{$defaultLabel = "120+ Professionals"}}
+            {{$defaultTitle = "Precision Engineering for Critical Environments"}}
+            {{$defaultDesc = "Over 120 skilled professionals delivering Class 100 to Class 300,000 cleanroom systems with strict quality standards."}}
+            {{$defaultBtn1Text = "View Projects"}}
+            {{$defaultBtn1Link = archiveURL "showcase"}}
+            {{$defaultBtn2Text = "Contact Us"}}
+            {{$defaultBtn2Link = "/contact"}}
+        {{end}}
+        {{$image := settingOr $s $imageKey $defaultImage}}
+        {{$label := settingOr $s $labelKey $defaultLabel}}
+        {{$title := settingOr $s $titleKey $defaultTitle}}
+        {{$desc := settingOr $s $descKey $defaultDesc}}
+        {{if or (le $idx 3) (or $image (or $label (or $title $desc)))}}
+        <div class="hero-slide{{if eq $idx 1}} active{{end}}">
+            {{if $image}}
+                {{if eq $idx 1}}
+                {{responsiveImagePriority $image $title "hero-image" "100vw"}}
+                {{else}}
+                {{responsiveImage $image $title "hero-image" "100vw" "lazy"}}
+                {{end}}
+            {{end}}
             <div class="hero-overlay"></div>
             <div class="container">
-                <span class="hero-label">{{settingOr $s "home_hero_1_label" "Cleanroom Engineering Experts"}}</span>
-                <h1>{{settingOr $s "home_hero_1_title" "Cleanroom Construction & HEPA Filter Systems"}}</h1>
-                <p>{{settingOr $s "home_hero_1_desc" "Professional turnkey cleanroom solutions from design to installation, serving pharmaceutical, food, and tech industries globally since 2003."}}</p>
+                {{if $label}}<span class="hero-label">{{$label}}</span>{{end}}
+                {{if $title}}<h1>{{$title}}</h1>{{end}}
+                {{if $desc}}<p>{{$desc}}</p>{{end}}
                 <div class="hero-btns">
-                    <a href="{{settingOr $s "home_hero_1_btn1_link" "/contact"}}" class="btn btn-primary btn-lg">{{settingOr $s "home_hero_1_btn1_text" "Get a Quote"}}</a>
-                    <a href="{{langPrefixURL $.Ctx (settingOr $s "home_hero_1_btn2_link" (archiveURL "product"))}}" class="btn btn-outline btn-lg">{{settingOr $s "home_hero_1_btn2_text" "Our Products"}}</a>
+                    <a href="{{langPrefixURL $.Ctx (settingOr $s $btn1LinkKey $defaultBtn1Link)}}" class="btn btn-primary btn-lg">{{settingOr $s $btn1TextKey $defaultBtn1Text}}</a>
+                    <a href="{{langPrefixURL $.Ctx (settingOr $s $btn2LinkKey $defaultBtn2Link)}}" class="btn btn-outline btn-lg">{{settingOr $s $btn2TextKey $defaultBtn2Text}}</a>
                 </div>
             </div>
         </div>
-        <div class="hero-slide">
-            {{responsiveImage (settingOr $s "home_hero_2_image" "https://images.unsplash.com/photo-1513828583688-c52646db42da?w=1600&h=900&fit=crop&q=80") (settingOr $s "home_hero_2_title" "ISO-Certified Air Purification Solutions") "hero-image" "100vw" "lazy"}}
-            <div class="hero-overlay"></div>
-            <div class="container">
-                <span class="hero-label">{{settingOr $s "home_hero_2_label" "ISO-Certified Quality"}}</span>
-                <h1>{{settingOr $s "home_hero_2_title" "ISO-Certified Air Purification Solutions"}}</h1>
-                <p>{{settingOr $s "home_hero_2_desc" "High-efficiency filters, laminar flow hoods, air showers, and complete purification equipment manufactured in Wuxi, China."}}</p>
-                <div class="hero-btns">
-                    <a href="{{langPrefixURL $.Ctx (settingOr $s "home_hero_2_btn1_link" (archiveURL "service"))}}" class="btn btn-primary btn-lg">{{settingOr $s "home_hero_2_btn1_text" "Our Services"}}</a>
-                    <a href="{{settingOr $s "home_hero_2_btn2_link" "/about"}}" class="btn btn-outline btn-lg">{{settingOr $s "home_hero_2_btn2_text" "Learn More"}}</a>
-                </div>
-            </div>
-        </div>
-        <div class="hero-slide">
-            {{responsiveImage (settingOr $s "home_hero_3_image" "https://images.unsplash.com/photo-1559744339-9ea435c9b2b4?w=1600&h=900&fit=crop&q=80") (settingOr $s "home_hero_3_title" "Precision Engineering for Critical Environments") "hero-image" "100vw" "lazy"}}
-            <div class="hero-overlay"></div>
-            <div class="container">
-                <span class="hero-label">{{settingOr $s "home_hero_3_label" "120+ Professionals"}}</span>
-                <h1>{{settingOr $s "home_hero_3_title" "Precision Engineering for Critical Environments"}}</h1>
-                <p>{{settingOr $s "home_hero_3_desc" "Over 120 skilled professionals delivering Class 100 to Class 300,000 cleanroom systems with strict quality standards."}}</p>
-                <div class="hero-btns">
-                    <a href="{{langPrefixURL $.Ctx (settingOr $s "home_hero_3_btn1_link" (archiveURL "showcase"))}}" class="btn btn-primary btn-lg">{{settingOr $s "home_hero_3_btn1_text" "View Projects"}}</a>
-                    <a href="{{settingOr $s "home_hero_3_btn2_link" "/contact"}}" class="btn btn-outline btn-lg">{{settingOr $s "home_hero_3_btn2_text" "Contact Us"}}</a>
-                </div>
-            </div>
-        </div>
+        {{end}}
+        {{end}}
+        {{end}}
     </div>
     <div class="hero-dots" id="hero-dots"></div>
     <div class="hero-accent-strip"></div>

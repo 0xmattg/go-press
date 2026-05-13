@@ -54,7 +54,8 @@ func New(engine *core.Engine, themeDir string) *ModernCompanyTheme {
 		"stripTags": func(s string) string {
 			return strings.TrimSpace(reHTMLTags.ReplaceAllString(s, " "))
 		},
-		"isMenuActive": isMenuActive,
+		"isMenuActive":      isMenuActive,
+		"settingIntBetween": settingIntBetween,
 		// whatsappLink turns a free-form WhatsApp number (e.g. "+86 510 8321 0000")
 		// into a wa.me deep link by stripping every non-digit. Returns "" when the
 		// input has no digits so callers can omit the link entirely.
@@ -101,8 +102,9 @@ func NewWithDB(db *gorm.DB, themeDir string) *ModernCompanyTheme {
 			}
 			return tm.Format("January 2, 2006")
 		},
-		"stripTags":    func(s string) string { return strings.TrimSpace(reHTMLTags.ReplaceAllString(s, " ")) },
-		"isMenuActive": isMenuActive,
+		"stripTags":         func(s string) string { return strings.TrimSpace(reHTMLTags.ReplaceAllString(s, " ")) },
+		"isMenuActive":      isMenuActive,
+		"settingIntBetween": settingIntBetween,
 		"whatsappLink": func(s string) string {
 			digits := reNonDigit.ReplaceAllString(s, "")
 			if digits == "" {

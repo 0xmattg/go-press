@@ -43,18 +43,6 @@
     </section>
 
     <section class="tt-admin-card">
-        <h3>{{X $ "theme.settings.text.237" "首页简介与指标"}}</h3>
-        <label>{{X $ "theme.settings.text.238" "简介标题"}}<input name="home_about_title" value="{{index $s "home_about_title"}}" placeholder="Every Step of the Way"></label>
-        <label>{{X $ "theme.settings.text.239" "简介文字"}}<textarea name="home_about_desc" rows="3">{{index $s "home_about_desc"}}</textarea></label>
-        <div class="tt-admin-grid">
-            {{range $i := seq 4}}
-            <label>{{X $ "theme.settings.dynamic.metric_number_i" "指标 %d 数字" $i}}<input name="home_stat_{{$i}}_number" value="{{index $s (printf "home_stat_%d_number" $i)}}"></label>
-            <label>{{X $ "theme.settings.dynamic.metric_label_i" "指标 %d 标签" $i}}<input name="home_stat_{{$i}}_label" value="{{index $s (printf "home_stat_%d_label" $i)}}"></label>
-            {{end}}
-        </div>
-    </section>
-
-    <section class="tt-admin-card">
         <h3>{{X $ "theme.settings.text.240" "内容区标题"}}</h3>
         <div class="tt-admin-grid">
             <label>{{X $ "theme.settings.text.306" "套餐区小标题"}}<input name="home_products_label" value="{{index $s "home_products_label"}}" placeholder="Tour Package"></label>
