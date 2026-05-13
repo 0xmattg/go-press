@@ -29,10 +29,6 @@ key = "company_description"
 value = "A digital guild for founders who need strategy, design, content, and launch systems to move as one."
 
 [[settings]]
-key = "company_year"
-value = "2026"
-
-[[settings]]
 key = "footer_text"
 value = "© 2026 Atelier Slate. All rights reserved."
 

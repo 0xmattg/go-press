@@ -3,6 +3,7 @@ package moderncompany
 import (
 	"html/template"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -49,7 +50,8 @@ func DefaultFuncMap() template.FuncMap {
 			}
 			return def
 		},
-		"isMenuActive": isMenuActive,
+		"settingIntBetween": settingIntBetween,
+		"isMenuActive":      isMenuActive,
 	}
 }
 
@@ -73,4 +75,25 @@ func isMenuActive(activePage, url string) bool {
 		return activePage == "home"
 	}
 	return seg == activePage
+}
+
+func settingIntBetween(m map[string]string, key string, def, min, max int) int {
+	if min > max {
+		min, max = max, min
+	}
+	v := def
+	if m != nil {
+		if raw := strings.TrimSpace(m[key]); raw != "" {
+			if parsed, err := strconv.Atoi(raw); err == nil {
+				v = parsed
+			}
+		}
+	}
+	if v < min {
+		return min
+	}
+	if v > max {
+		return max
+	}
+	return v
 }

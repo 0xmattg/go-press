@@ -12,10 +12,6 @@ key   = "site_description"
 value = "A progressive stablecoin ecosystem designed to move value and power real economies."
 
 [[settings]]
-key   = "company_name"
-value = "FloraFi"
-
-[[settings]]
 key   = "company_email"
 value = "hello@florafi.example"
 
@@ -26,10 +22,6 @@ value = "+1 555 0128"
 [[settings]]
 key   = "company_address"
 value = "New York, Singapore, and remote"
-
-[[settings]]
-key   = "company_description"
-value = "FloraFi helps businesses, treasury teams, and developers move stable value with transparent yield and simple digital-dollar rails."
 
 [[settings]]
 key   = "footer_text"
@@ -230,10 +222,6 @@ value = "2"
 [[settings]]
 key   = "about_intro_image"
 value = "https://images.unsplash.com/photo-1559526324-593bc073d938?w=900&h=700&fit=crop&q=80"
-
-[[settings]]
-key   = "showcase_layout"
-value = "grid"
 
 # ---------- Categories ----------
 [[categories]]

@@ -11,26 +11,6 @@ value = "NovaPulse AI"
 key   = "site_description"
 value = "Enterprise-grade platform for deploying, monitoring, and scaling machine learning models in production."
 
-[[settings]]
-key   = "company_email"
-value = "hello@novapulse.ai"
-
-[[settings]]
-key   = "company_phone"
-value = "+1 (415) 555-0199"
-
-[[settings]]
-key   = "social_x"
-value = "https://x.com/novapulse"
-
-[[settings]]
-key   = "social_github"
-value = "https://github.com/novapulse"
-
-[[settings]]
-key   = "footer_text"
-value = "© 2026 NovaPulse AI. All rights reserved."
-
 # ---------- Theme Settings ----------
 [[settings]]
 key   = "theme_color_scheme"

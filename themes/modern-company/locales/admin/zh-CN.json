@@ -152,5 +152,8 @@
   "theme.settings.text.148": "/products 或 /services/cleanroom-design",
   "theme.settings.text.149": "Hero 自动切换间隔（毫秒）",
   "theme.settings.text.150": "默认 5000 毫秒；数值越大，每张 Hero 图停留越久。",
+  "theme.settings.text.151": "Hero 轮播图展示数量",
+  "theme.settings.text.152": "默认 3 张；选择 4-6 后，下方会显示对应的新增轮播配置。",
+  "theme.settings.text.153": "Hurricane Techs. All rights reserved. Cleanroom Solutions Since 2003.",
   "theme.settings.title": "%s - 主题设置"
 }

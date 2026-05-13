@@ -24,6 +24,10 @@ key   = "company_address"
 value = "Yanqiao Industrial Park, Wuxi, Jiangsu Province 214174, China"
 
 [[settings]]
+key   = "footer_copyright_text"
+value = "Hurricane Techs. All rights reserved. Cleanroom Solutions Since 2003."
+
+[[settings]]
 key   = "social_linkedin"
 value = "https://linkedin.com/company/hurricane-techs"
 
@@ -32,8 +36,8 @@ key   = "social_wechat"
 value = "HurricaneTechs"
 
 [[settings]]
-key   = "footer_text"
-value = "© 2003–2026 Wuxi Hurricane Purification Technology Equipment Co., Ltd. All rights reserved."
+key   = "home_hero_count"
+value = "3"
 
 # ---------- Categories ----------
 [[categories]]

@@ -112,15 +112,11 @@
 
         <section class="ff-admin-card ff-admin-wide">
             <h3>{{X $ "theme.settings.text.299" "公司与页脚"}}</h3>
-            <div class="form-row">
-                <div class="form-group"><label>{{X $ "theme.settings.text.015" "公司名称"}}</label><input type="text" name="company_name" value="{{index $s "company_name"}}" placeholder="FloraFi"></div>
-                <div class="form-group"><label>{{X $ "theme.settings.text.016" "公司邮箱"}}</label><input type="email" name="company_email" value="{{index $s "company_email"}}" placeholder="hello@florafi.example"></div>
-            </div>
+            <div class="form-group"><label>{{X $ "theme.settings.text.016" "公司邮箱"}}</label><input type="email" name="company_email" value="{{index $s "company_email"}}" placeholder="hello@florafi.example"></div>
             <div class="form-row">
                 <div class="form-group"><label>{{X $ "theme.settings.text.248" "电话"}}</label><input type="text" name="company_phone" value="{{index $s "company_phone"}}" placeholder="+1 555 0100"></div>
                 <div class="form-group"><label>{{X $ "theme.settings.text.249" "地址"}}</label><input type="text" name="company_address" value="{{index $s "company_address"}}" placeholder="New York / Singapore"></div>
             </div>
-            <div class="form-group"><label>{{X $ "theme.settings.text.300" "公司描述"}}</label><textarea name="company_description" rows="2">{{index $s "company_description"}}</textarea></div>
             <div class="form-group"><label>{{X $ "theme.settings.text.020" "页脚文案"}}</label><input type="text" name="footer_text" value="{{index $s "footer_text"}}" placeholder="Built for stability. Designed for growth."></div>
         </section>
     </div>

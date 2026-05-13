@@ -42,26 +42,10 @@
     </section>
 
     <section class="ce-admin-card">
-        <h3>{{X $ "theme.settings.text.237" "首页简介与指标"}}</h3>
-        <label>{{X $ "theme.settings.text.238" "简介标题"}}<input name="home_about_title" value="{{index $s "home_about_title"}}" placeholder="For every commercial move"></label>
-        <label>{{X $ "theme.settings.text.239" "简介文字"}}<textarea name="home_about_desc" rows="3">{{index $s "home_about_desc"}}</textarea></label>
-        <div class="ce-admin-grid">
-            {{range $i := seq 4}}
-            <label>{{X $ "theme.settings.dynamic.metric_number_i" "指标 %d 数字" $i}}<input name="home_stat_{{$i}}_number" value="{{index $s (printf "home_stat_%d_number" $i)}}"></label>
-            <label>{{X $ "theme.settings.dynamic.metric_label_i" "指标 %d 标签" $i}}<input name="home_stat_{{$i}}_label" value="{{index $s (printf "home_stat_%d_label" $i)}}"></label>
-            {{end}}
-        </div>
-    </section>
-
-    <section class="ce-admin-card">
         <h3>{{X $ "theme.settings.text.240" "内容区标题"}}</h3>
         <div class="ce-admin-grid">
             <label>{{X $ "theme.settings.text.259" "物业卡片区标题"}}<input name="home_products_title" value="{{index $s "home_products_title"}}" placeholder="For every commercial move"></label>
-            <label>{{X $ "theme.settings.text.241" "服务区标题"}}<input name="home_services_title" value="{{index $s "home_services_title"}}" placeholder="Commercial services we provide"></label>
-            <label>{{X $ "theme.settings.text.260" "房源区标题"}}<input name="home_showcase_title" value="{{index $s "home_showcase_title"}}" placeholder="Featured spaces and market areas"></label>
-            <label>{{X $ "theme.settings.text.261" "房源区按钮"}}<input name="home_showcase_btn" value="{{index $s "home_showcase_btn"}}" placeholder="View More Listings"></label>
         </div>
-        <label>{{X $ "theme.settings.text.262" "房源区说明"}}<textarea name="home_showcase_subtitle" rows="3">{{index $s "home_showcase_subtitle"}}</textarea></label>
         <div class="ce-admin-grid">
             <label>{{X $ "theme.settings.text.263" "底部搜索标题"}}<input name="home_nearby_title" value="{{index $s "home_nearby_title"}}" placeholder="Search Offices & Retail Spaces Near You"></label>
             <label>{{X $ "theme.settings.text.264" "底部搜索按钮"}}<input name="home_nearby_btn" value="{{index $s "home_nearby_btn"}}" placeholder="View Report"></label>

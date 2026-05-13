@@ -108,68 +108,12 @@ key   = "home_filter_4"
 value = "$45/sf"
 
 [[settings]]
-key   = "home_about_title"
-value = "For every commercial move"
-
-[[settings]]
-key   = "home_about_desc"
-value = "Civic Estate combines local brokerage knowledge, property data, and clean CMS-managed content so teams can shortlist spaces faster."
-
-[[settings]]
-key   = "home_stat_1_number"
-value = "1.8M"
-
-[[settings]]
-key   = "home_stat_1_label"
-value = "Sq ft actively tracked across core districts"
-
-[[settings]]
-key   = "home_stat_2_number"
-value = "420+"
-
-[[settings]]
-key   = "home_stat_2_label"
-value = "Verified commercial listings reviewed"
-
-[[settings]]
-key   = "home_stat_3_number"
-value = "96%"
-
-[[settings]]
-key   = "home_stat_3_label"
-value = "Clients shortlist spaces within two weeks"
-
-[[settings]]
-key   = "home_stat_4_number"
-value = "18"
-
-[[settings]]
-key   = "home_stat_4_label"
-value = "Metro markets supported by advisors"
-
-[[settings]]
-key   = "home_services_title"
-value = "Commercial services we provide"
-
-[[settings]]
 key   = "home_services_max"
 value = "4"
 
 [[settings]]
 key   = "home_products_title"
 value = "For every commercial move"
-
-[[settings]]
-key   = "home_showcase_title"
-value = "Featured spaces and market areas"
-
-[[settings]]
-key   = "home_showcase_subtitle"
-value = "Explore curated office towers, storefront corridors, flex properties, and tenant-ready spaces managed through GoPress content."
-
-[[settings]]
-key   = "home_showcase_btn"
-value = "View More Listings"
 
 [[settings]]
 key   = "home_showcases_max"

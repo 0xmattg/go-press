@@ -1,0 +1,11 @@
+{
+  "theme.settings.back": "Back to Themes",
+  "theme.settings.cancel": "Cancel",
+  "theme.settings.save": "Save Settings",
+  "theme.settings.text.brand": "Brand and Footer",
+  "theme.settings.text.footer_text": "Footer Copyright Text",
+  "theme.settings.text.site_description": "Site Description",
+  "theme.settings.text.site_description_placeholder": "Financial news, market analysis, and investment insights.",
+  "theme.settings.text.site_name": "Site Name",
+  "theme.settings.title": "%s - Theme Settings"
+}

@@ -6,9 +6,7 @@ import "go-press/core/option"
 // Called during Setup() so Core and multilang plugin can route translations.
 func registerTranslatableOptions() {
 	// Company info
-	option.RegisterTranslatable("company_name", "company", "公司名称")
 	option.RegisterTranslatable("company_address", "company", "公司地址")
-	option.RegisterTranslatable("company_description", "company", "公司简介")
 	option.RegisterTranslatable("footer_text", "company", "页脚文案")
 
 	// Brand
