@@ -185,7 +185,8 @@ archive
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Title}} - {{settingOr .Settings "site_name" "My Theme"}}</title>
+    {{$fallbackTitle := printf "%s - %s" .Title (settingOr .Settings "site_name" "My Theme")}}
+    <title>{{pageTitleFor . $fallbackTitle}}</title>
     {{with seoHeadFor .}}{{.}}{{else}}<meta name="description" content="{{settingOr $.Settings "site_description" "My theme default description."}}">{{end}}
     <link rel="stylesheet" href="/static/css/style.css">
     {{renderHook "theme.head.end" .}}

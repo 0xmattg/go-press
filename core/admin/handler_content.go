@@ -179,6 +179,7 @@ func (h *Handler) ContentNew(c *gin.Context) {
 		"TypeDef":   typeDef,
 		"TypeName":  typeName,
 		"Slug":      slug,
+		"HookItem":  (*content.Content)(nil),
 		"BackURL":   listURLWithFilter(slug, filterQuery),
 		"BackQuery": filterQuery,
 	}
@@ -253,6 +254,7 @@ func (h *Handler) ContentCreate(c *gin.Context) {
 			"TypeDef": typeDef, "TypeName": typeName, "Slug": slug,
 			"Item":      view,
 			"Error":     adminT(lang, "error.create_failed", err.Error()),
+			"HookItem":  item,
 			"BackURL":   listURLWithFilter(slug, filterQuery),
 			"BackQuery": filterQuery,
 		}
@@ -339,6 +341,7 @@ func (h *Handler) ContentEdit(c *gin.Context) {
 		"Slug":            slug,
 		"Item":            view,
 		"PermalinkPrefix": permalinkPrefix,
+		"HookItem":        item,
 		"BackURL":         listURLWithFilter(slug, filterQuery),
 		"BackQuery":       filterQuery,
 	}
@@ -416,6 +419,7 @@ func (h *Handler) ContentUpdate(c *gin.Context) {
 			"TypeDef": typeDef, "TypeName": typeName, "Slug": slug,
 			"Item":      view,
 			"Error":     adminT(lang, "error.update_failed", err.Error()),
+			"HookItem":  item,
 			"BackURL":   listURLWithFilter(slug, filterQuery),
 			"BackQuery": filterQuery,
 		}

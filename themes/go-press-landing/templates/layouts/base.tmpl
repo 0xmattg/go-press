@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Title}} - {{settingOr .Settings "site_name" "GoPress"}}</title>
+    {{$fallbackTitle := printf "%s - %s" .Title (settingOr .Settings "site_name" "GoPress")}}
+    <title>{{pageTitleFor . $fallbackTitle}}</title>
     {{$siteIcon := settingOr .Settings "site_icon" ""}}
     {{with seoHeadFor .}}{{.}}{{else}}
     <meta name="description" content="{{settingOr $.Settings "site_description" "NovaPulse AI — Enterprise-grade platform for deploying, monitoring, and scaling machine learning models in production."}}">

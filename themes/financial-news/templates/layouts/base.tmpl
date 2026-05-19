@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Title}} | {{settingOr .Settings "site_name" "FinNews"}}</title>
+    {{$fallbackTitle := printf "%s | %s" .Title (settingOr .Settings "site_name" "FinNews")}}
+    <title>{{pageTitleFor . $fallbackTitle}}</title>
     {{$siteIcon := settingOr .Settings "site_icon" ""}}
     {{with seoHeadFor .}}{{.}}{{else}}
     <meta name="description" content="{{settingOr $.Settings "site_description" "Financial news, market analysis, and investment insights."}}">

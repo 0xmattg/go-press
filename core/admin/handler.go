@@ -708,6 +708,7 @@ func (h *Handler) render(c *gin.Context, name string, data gin.H) {
 
 	adminLang := h.svc.AdminLanguage()
 	data["AdminLanguage"] = adminLang
+	data["Ctx"] = c
 	data["CurrentRole"] = c.GetString("admin_role")
 	data["CurrentUser"] = c.GetString("admin_username")
 	data["MenuItems"] = h.buildMenuItems(adminLang)

@@ -112,6 +112,12 @@ func CommonFuncMap() template.FuncMap {
 		"seoHeadFor": func(data interface{}) template.HTML {
 			return ""
 		},
+		"pageTitleFor": func(data interface{}, fallback string) string {
+			if title := pageTitleFromData(data); title != "" {
+				return title
+			}
+			return fallback
+		},
 		"menuByLocation": func(location string) *menu.Menu {
 			return nil
 		},
@@ -166,6 +172,60 @@ func CommonFuncMap() template.FuncMap {
 			return seg == activePage
 		},
 	}
+}
+
+func pageTitleFromData(data interface{}) string {
+	if data == nil {
+		return ""
+	}
+	v := reflect.ValueOf(data)
+	v = unwrapTemplateValue(v)
+	if !v.IsValid() {
+		return ""
+	}
+
+	var meta reflect.Value
+	switch v.Kind() {
+	case reflect.Map:
+		meta = v.MapIndex(reflect.ValueOf("SEO"))
+	case reflect.Struct:
+		meta = v.FieldByName("SEO")
+	default:
+		return ""
+	}
+	return titleFromMetaValue(meta)
+}
+
+func titleFromMetaValue(v reflect.Value) string {
+	v = unwrapTemplateValue(v)
+	if !v.IsValid() {
+		return ""
+	}
+
+	var title reflect.Value
+	switch v.Kind() {
+	case reflect.Map:
+		title = v.MapIndex(reflect.ValueOf("Title"))
+	case reflect.Struct:
+		title = v.FieldByName("Title")
+	default:
+		return ""
+	}
+	title = unwrapTemplateValue(title)
+	if !title.IsValid() || title.Kind() != reflect.String {
+		return ""
+	}
+	return strings.TrimSpace(title.String())
+}
+
+func unwrapTemplateValue(v reflect.Value) reflect.Value {
+	for v.IsValid() && (v.Kind() == reflect.Interface || v.Kind() == reflect.Ptr) {
+		if v.IsNil() {
+			return reflect.Value{}
+		}
+		v = v.Elem()
+	}
+	return v
 }
 
 func stringField(item interface{}, name string) string {

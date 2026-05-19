@@ -6,7 +6,8 @@
     {{if not $hero}}{{$hero = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1800&h=980&fit=crop&q=84"}}{{end}}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Title}} - {{settingOr .Settings "site_name" "TerraTrail"}}</title>
+    {{$fallbackTitle := printf "%s - %s" .Title (settingOr .Settings "site_name" "TerraTrail")}}
+    <title>{{pageTitleFor . $fallbackTitle}}</title>
     {{$siteIcon := settingOr .Settings "site_icon" ""}}
     {{with seoHeadFor .}}{{.}}{{else}}
     <meta name="description" content="{{settingOr $.Settings "site_description" "Curated mountain tours, transport planning, and destination guides for modern travelers."}}">

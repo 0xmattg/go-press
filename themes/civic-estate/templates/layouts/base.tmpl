@@ -6,7 +6,8 @@
     {{if not $hero}}{{$hero = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1800&h=980&fit=crop&q=84"}}{{end}}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Title}} - {{settingOr .Settings "site_name" "Civic Estate"}}</title>
+    {{$fallbackTitle := printf "%s - %s" .Title (settingOr .Settings "site_name" "Civic Estate")}}
+    <title>{{pageTitleFor . $fallbackTitle}}</title>
     {{$siteIcon := settingOr .Settings "site_icon" ""}}
     {{with seoHeadFor .}}{{.}}{{else}}
     <meta name="description" content="{{settingOr $.Settings "site_description" "Commercial property search, leasing advisory, and market-ready real-estate intelligence."}}">
