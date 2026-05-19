@@ -159,7 +159,7 @@ Every plugin-friendly theme should declare:
 {{renderHook "header.nav.after" .}}
 ```
 
-Use `seoHeadFor`, `settingOr`, `archiveURL`, `contentURL`, `currentLang`, `langPrefixURL`, `menuByLocation`, and the responsive image helpers from the core funcmap instead of implementing theme-local equivalents.
+Use `pageTitleFor`, `seoHeadFor`, `settingOr`, `archiveURL`, `contentURL`, `currentLang`, `langPrefixURL`, `menuByLocation`, and the responsive image helpers from the core funcmap instead of implementing theme-local equivalents.
 
 ## Demo Data
 

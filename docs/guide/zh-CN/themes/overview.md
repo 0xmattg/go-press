@@ -12,7 +12,7 @@ GoPress 的主题系统借鉴 WordPress 设计：主题是一个 Go 包，通过
 - **Theme 接口** — 实现 `Name()` / `Setup()` / `ServeHTTP()` / `TemplateFuncs()` 即可
 - **App 接口** — 主题通过 `theme.App` 接口访问 DB、ContentRepo、RewriteEngine、SEOBuilder、MediaRepo、HookBus 等引擎能力
 - **模板层级回退** — 类 WordPress 的模板查找：`single-{type}-{slug}.tmpl` → `single-{type}.tmpl` → `single.tmpl` → `index.tmpl`
-- **统一模板函数（Single-Source FuncMap）** — `CommonFuncMap()` + BaseTheme 的引擎感知 helpers（`buildURL`、`archiveURL`、`contentURL`、`seoHead`、`menuByLocation`、`T`、`currentLang`、`langPrefixURL`、`renderHook`、`isMenuActive`、`responsiveImage`、`responsiveImagePriority`、`responsiveImagePreload`）通过 `BaseFuncMap()` 统一下发。**所有主题、所有模板加载路径共享同一份 funcmap**
+- **统一模板函数（Single-Source FuncMap）** — `CommonFuncMap()` + BaseTheme 的引擎感知 helpers（`buildURL`、`archiveURL`、`contentURL`、`pageTitleFor`、`seoHeadFor`、`seoHead`、`menuByLocation`、`T`、`currentLang`、`langPrefixURL`、`renderHook`、`isMenuActive`、`responsiveImage`、`responsiveImagePriority`、`responsiveImagePreload`）通过 `BaseFuncMap()` 统一下发。**所有主题、所有模板加载路径共享同一份 funcmap**
 - **前台模板 Hook 插槽** — 主题在语义位置声明 `{{renderHook "theme.head.end" .}}` / `{{renderHook "theme.body.open" .}}` / `{{renderHook "theme.footer.end" .}}` / `{{renderHook "header.nav.after" .}}` 等标准插槽，插件注册同名 filter 输出 HTML
 - **LoadPageBundle 核心级页面模板编译器** — `core/theme/page_bundle.go` 提供 `LoadPageBundle(theme, pages)` 和 `LoadAllPageBundles(theme)`：自动发现 `layouts/base.tmpl` + `partials/*.tmpl` + `pages/*.tmpl`，对每个页面独立编译（允许不同页面重新定义同名 block）
 - **自定义路由 + 动态路由** — 静态页面（`/about`）通过 `AddRoute()` 注册，动态 URL（例如主题声明的 `product` 对应 `/products/:slug`）由 Rewrite 引擎按当前内容类型配置自动解析；`product` / `service` / `showcase` 只是常见示例，不是 core 固定模型
@@ -127,6 +127,6 @@ e.Hooks.RemoveFilter(handle)
 ## 下一步
 
 - [创建主题](creating-themes.md) — 完整 step-by-step 教程
-- [SEO 接入规范](seo-integration.md) — `<title>` / `<meta description>` / `seoHeadFor` 契约
+- [SEO 接入规范](seo-integration.md) — `<title>` / `<meta description>` / `pageTitleFor` / `seoHeadFor` 契约
 - [图片接入规范](image-pipeline.md) — `responsiveImage` 等 helper 用法
 - [媒体变体管线](media-variants.md) — 上传后自动生成的 thumb / 480w / WebP 等变体

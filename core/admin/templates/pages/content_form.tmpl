@@ -105,7 +105,7 @@
         {{end}}
 
         {{/* Plugin extension slot — meta boxes contributed by plugins (e.g. seo-extras). */}}
-        {{renderHook "admin.content_form.fields" .Item .TypeDef}}
+        {{renderHook "admin.content_form.fields" .Ctx .HookItem .TypeDef}}
 
         {{range $tf := .TaxForms}}
         <div class="form-group">

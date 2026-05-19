@@ -10,19 +10,20 @@ System Settings
   -> ApplySiteOptionOverrides
   -> optional seo.content.meta filters
   -> data["SEO"] or PageData.SEO
-  -> {{seoHeadFor .}}
-  -> HTML head, including favicon links when site_icon is set
+  -> {{pageTitleFor . $fallbackTitle}} and {{seoHeadFor .}}
+  -> HTML head, including <title> and favicon links when site_icon is set
 ```
 
 ## Required Contracts
 
-### Use `site_name` for titles
+### Use `pageTitleFor` for document titles
 
-```html
-<title>{{.Title}} - {{settingOr .Settings "site_name" "My Theme"}}</title>
+```gotemplate
+{{$fallbackTitle := printf "%s - %s" .Title (settingOr .Settings "site_name" "My Theme")}}
+<title>{{pageTitleFor . $fallbackTitle}}</title>
 ```
 
-Do not hard-code the brand name in `<title>`, and do not use theme-local keys such as `company_name` for SEO titles.
+`pageTitleFor` is a core page-metadata helper, not a plugin dependency. It returns the current page title from core metadata when available, including values changed by optional filters, and otherwise returns the theme fallback. Do not hard-code the brand name in `<title>`, and do not use theme-local keys such as `company_name` for document titles.
 
 ### Use `seoHeadFor`
 

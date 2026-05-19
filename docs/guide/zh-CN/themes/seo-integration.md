@@ -25,20 +25,21 @@ core ApplySiteOptionOverrides
 data["SEO"] = SEOMeta{...}            （BaseTheme 路径自动注入）
 data.PageData.SEO = SEOMeta{...}      （自定义 struct 主题手动注入）
                            ▼
-template: {{with seoHeadFor .}}{{.}}{{else}}<meta description fallback>{{end}}
+template: {{pageTitleFor . $fallbackTitle}} + {{with seoHeadFor .}}{{.}}{{else}}<meta description fallback>{{end}}
                            ▼
-HTML <head>: <meta description> + <link canonical> + og:* + JSON-LD + favicon links
+HTML <head>: <title> + <meta description> + <link canonical> + og:* + JSON-LD + favicon links
 ```
 
 ## 必须遵守的三条契约
 
-### 1. `<title>` 拼接走 `site_name`
+### 1. `<title>` 走 `pageTitleFor` + 主题 fallback
 
-不要硬编码品牌字、不要发明 `company_name` 之类的本地 key：
+`pageTitleFor` 是 core 的页面标题 helper，不是 SEO 插件依赖。它会优先使用 core 注入的页面 metadata 标题；如果没有，就返回主题传入的 fallback。因此插件禁用时页面标题仍然正常。不要硬编码品牌字、不要发明 `company_name` 之类的本地 key：
 
-```html
-<!-- ✅ 正确：core 唯一来源 + 主题兜底默认 -->
-<title>{{.Title}} - {{settingOr .Settings "site_name" "My Theme Default"}}</title>
+```gotemplate
+<!-- ✅ 正确：core 页面标题 + 主题兜底默认 -->
+{{$fallbackTitle := printf "%s - %s" .Title (settingOr .Settings "site_name" "My Theme Default")}}
+<title>{{pageTitleFor . $fallbackTitle}}</title>
 
 <!-- ❌ 错：硬编码 -->
 <title>{{.Title}} - Hurricane Techs</title>
@@ -91,7 +92,8 @@ func (t *MyTheme) ServeHTTP(c *gin.Context) {
 
 ```html
 <!-- templates/layouts/base.tmpl -->
-<title>{{.Title}} - {{settingOr .Settings "site_name" "My Theme"}}</title>
+{{$fallbackTitle := printf "%s - %s" .Title (settingOr .Settings "site_name" "My Theme")}}
+<title>{{pageTitleFor . $fallbackTitle}}</title>
 {{$siteIcon := settingOr .Settings "site_icon" ""}}
 {{with seoHeadFor .}}{{.}}{{else}}
 <meta name="description" content="{{settingOr $.Settings "site_description" "..."}}">

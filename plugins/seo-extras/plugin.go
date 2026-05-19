@@ -106,9 +106,9 @@ func (p *Plugin) Deactivate(app plugin.App) {
 }
 
 // renderMetaBox returns the meta box HTML appended to whatever earlier
-// filters returned. Filter args are: (*content.Content, *content.ContentTypeDef).
-// On the create form .Item is nil, so we treat metaMap as empty — the form
-// renders with all blanks and saveFields handles the first persist normally.
+// filters returned. Filter args are: (*gin.Context, *content.Content,
+// *content.ContentTypeDef). On the create form the content arg is nil, so the
+// form renders with all blanks and saveFields handles the first persist normally.
 func (p *Plugin) renderMetaBox(value interface{}, args ...interface{}) interface{} {
 	if p.engine == nil || !p.engine.PluginManager.IsActive(PluginName) {
 		return value
@@ -122,16 +122,24 @@ func (p *Plugin) renderMetaBox(value interface{}, args ...interface{}) interface
 		existing = template.HTML(v)
 	}
 
-	// args[0] may be *content.Content (edit) or nil (create). Pre-fill the
-	// form with stored values when editing.
+	// The admin hook contract passes core content directly. This plugin does
+	// not inspect admin view models, so it stays independent of admin UI shape.
 	var meta map[string]string
-	if len(args) > 0 {
-		if item, ok := args[0].(*content.Content); ok && item != nil && item.ID != 0 {
-			meta, _ = p.engine.Content.GetMeta(item.ID)
-		}
+	if item := firstContentArg(args); item != nil && item.ID != 0 {
+		meta, _ = p.engine.Content.GetMeta(item.ID)
 	}
 
 	return existing + buildMetaBoxHTML(meta)
+}
+
+func firstContentArg(args []interface{}) *content.Content {
+	for _, arg := range args {
+		item, ok := arg.(*content.Content)
+		if ok {
+			return item
+		}
+	}
+	return nil
 }
 
 // saveFields writes the four SEO override fields to gp_content_meta. Empty

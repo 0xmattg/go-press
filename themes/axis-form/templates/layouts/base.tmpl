@@ -6,7 +6,8 @@
     {{if not $hero}}{{$hero = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1800&h=980&fit=crop&q=84"}}{{end}}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Title}} - {{settingOr .Settings "site_name" "Axis Form"}}</title>
+    {{$fallbackTitle := printf "%s - %s" .Title (settingOr .Settings "site_name" "Axis Form")}}
+    <title>{{pageTitleFor . $fallbackTitle}}</title>
     {{$siteIcon := settingOr .Settings "site_icon" ""}}
     {{with seoHeadFor .}}{{.}}{{else}}
     <meta name="description" content="{{settingOr $.Settings "site_description" "Architecture, interiors, planning, and project management for enduring spaces."}}">

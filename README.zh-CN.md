@@ -213,7 +213,7 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 ### 主题与插件
 
 - **BaseTheme 运行时引擎** — 嵌入即获得配置驱动 URL 解析、动态归档/详情渲染、模板层级回退（WordPress 风格）和 SEO 自动注入
-- **统一 FuncMap** — `BaseFuncMap()` 单一来源下发：`buildURL` / `archiveURL` / `contentURL` / `seoHeadFor` / `menuByLocation` / `T` / `currentLang` / `langPrefixURL` / `renderHook` / `responsiveImage*`
+- **统一 FuncMap** — `BaseFuncMap()` 单一来源下发：`buildURL` / `archiveURL` / `contentURL` / `pageTitleFor` / `seoHeadFor` / `menuByLocation` / `T` / `currentLang` / `langPrefixURL` / `renderHook` / `responsiveImage*`
 - **主题模板插槽** — `theme.head.end` / `theme.body.open` / `theme.footer.end` / `header.nav.after` 组成前台插件接入契约，主题只声明语义位置，插件按需输出 HTML
 - **响应式图片管线** — 上传时生成 WebP + JPG/PNG 变体（thumb/480w/768w/1024w/1440w/full），模板用 `responsiveImage` 输出 `<picture>`
 - **插件热拔插** — `Bus.AddAction/AddFilter` 返回 `Handle`，`Deactivate` 中 `Remove*` 干净下线，运行时即时切换无需重启
