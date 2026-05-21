@@ -229,6 +229,7 @@ type PageService struct {
 	seoBuilder *rewrite.SEOBuilder
 	registry   *content.Registry
 	hookBus    *hook.Bus
+	i18nMgr    *coreI18n.Manager
 	// reqCtx is set by ForRequest(c). It is needed by detail-page lookups
 	// (FindBySlugScoped) so per-language slug disambiguation works. Nil for
 	// non-request usages (CLI / tests) — scoped APIs treat nil as "no scope".
@@ -245,6 +246,7 @@ func NewPageService(engine *core.Engine) *PageService {
 		seoBuilder:  engine.SEO,
 		registry:    engine.Registry,
 		hookBus:     engine.Hooks,
+		i18nMgr:     engine.I18n,
 	}
 }
 
@@ -284,7 +286,7 @@ func (s *PageService) buildArchiveSEO(typeName string) rewrite.SEOMeta {
 	if typeDef == nil {
 		return rewrite.SEOMeta{}
 	}
-	seo := s.seoBuilder.ForArchive(typeDef)
+	seo := s.seoBuilder.ForArchiveTitle(typeDef, coreTheme.LocalizedArchiveTitle(s.reqCtx, s.i18nMgr, typeDef))
 	s.applySEOOverrides(&seo)
 	return seo
 }
@@ -308,26 +310,7 @@ func (s *PageService) buildContentSEO(item *content.Content, typeName string) re
 // site_description). Mirrors core/theme.ApplySiteOptionOverrides so the two
 // render paths produce identical SEO output.
 func (s *PageService) applySEOOverrides(seo *rewrite.SEOMeta) {
-	if seo == nil || s.options == nil {
-		return
-	}
-	if name := s.options.Get("site_name"); name != "" && seo.OGType == "website" {
-		seo.Title = name
-		seo.OGTitle = name
-	}
-	if seo.Description == "" {
-		if d := s.options.Get("site_description"); d != "" {
-			seo.Description = d
-			if seo.OGDescription == "" {
-				seo.OGDescription = d
-			}
-		}
-	}
-	// site_icon: system setting always wins when non-empty; otherwise leaves
-	// whatever the theme may have set, falling back to no favicon.
-	if icon := strings.TrimSpace(s.options.Get("site_icon")); icon != "" {
-		seo.SiteIcon = icon
-	}
+	coreTheme.ApplySiteOptionOverridesFromOptions(s.options, s.seoBuilder, seo)
 }
 
 // ForRequest returns a clone of PageService with request-scoped content filters applied.

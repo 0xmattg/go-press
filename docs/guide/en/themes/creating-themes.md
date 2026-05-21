@@ -62,6 +62,7 @@ author = "Me"
 name = "product"
 label = "Product"
 label_plural = "Products"
+archive_title_key = "page_title_product"
 supports = ["title", "content", "excerpt", "thumbnail", "sort_order"]
 taxonomies = ["category", "tag"]
 has_archive = true
@@ -92,6 +93,7 @@ When the visual template name differs from the content type name, add an explici
 name = "module"
 label = "Module"
 label_plural = "Modules"
+archive_title_key = "page_title_module"
 supports = ["title", "content", "excerpt", "thumbnail", "sort_order"]
 taxonomies = ["category", "tag"]
 has_archive = true
@@ -101,7 +103,7 @@ menu_icon = "blocks"
 menu_order = 1
 ```
 
-This keeps the content model (`module`), public URLs (`/modules`), and presentation templates (`products`, `product-detail`) independently configurable. It is useful when a theme reuses an existing layout for a differently named business concept.
+This keeps the content model (`module`), public URLs (`/modules`), and presentation templates (`products`, `product-detail`) independently configurable. It is useful when a theme reuses an existing layout for a differently named business concept. `archive_title_key` points to a theme locale key used for archive `<title>` and Open Graph title, so multilingual pages do not fall back to the static `label_plural` text.
 
 ## Template Hierarchy
 
@@ -148,6 +150,18 @@ Inside templates, prefer core URL helpers:
 
 `archiveURL` and `contentURL` consult the rewrite registry, so a later `rewrite_slug` change or content-type rename does not require template edits.
 
+For navigation active state, compare the current request URL with the menu item URL through core:
+
+```gotemplate
+{{with menuByLocation "header"}}
+  {{range .Items}}
+    <a href="{{.URL}}" class="{{if isMenuURLActive $.Ctx .URL}}active{{end}}">{{.Title}}</a>
+  {{end}}
+{{end}}
+```
+
+Avoid hard-coded checks such as `.ActivePage == "products"` in reusable themes. Menu labels, content type names, and rewrite slugs are configuration, not theme code contracts.
+
 ## Base Layout Contract
 
 Every plugin-friendly theme should declare:
@@ -159,7 +173,7 @@ Every plugin-friendly theme should declare:
 {{renderHook "header.nav.after" .}}
 ```
 
-Use `pageTitleFor`, `seoHeadFor`, `settingOr`, `archiveURL`, `contentURL`, `currentLang`, `langPrefixURL`, `menuByLocation`, and the responsive image helpers from the core funcmap instead of implementing theme-local equivalents.
+Use `pageTitleFor`, `seoHeadFor`, `settingOr`, `archiveURL`, `contentURL`, `isMenuURLActive`, `currentLang`, `langPrefixURL`, `menuByLocation`, and the responsive image helpers from the core funcmap instead of implementing theme-local equivalents.
 
 ## Demo Data
 

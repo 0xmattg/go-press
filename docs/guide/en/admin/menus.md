@@ -34,10 +34,12 @@ Themes call `menuByLocation` in templates. Core resolves the correct menu for th
 ```gotemplate
 {{with menuByLocation "header"}}
   {{range .Items}}
-    <a href="{{.URL}}">{{.Title}}</a>
+    <a href="{{.URL}}" class="{{if isMenuURLActive $.Ctx .URL}}active{{end}}">{{.Title}}</a>
   {{end}}
 {{end}}
 ```
+
+Active navigation state should be derived from the current request URL and the menu item URL. Do not hard-code content type names, menu labels, or theme-specific page identifiers in reusable theme templates.
 
 ## Multilingual Menus
 

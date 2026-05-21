@@ -125,17 +125,18 @@ type FileConfig struct {
 // intentionally mirror the content registry shape while keeping TOML-specific
 // naming such as rewrite_slug.
 type ContentTypeConfig struct {
-	Name        string                 `toml:"name"`
-	Label       string                 `toml:"label"`
-	LabelPlural string                 `toml:"label_plural"`
-	Supports    []string               `toml:"supports"`
-	MetaFields  []content.MetaFieldDef `toml:"meta_fields"`
-	Taxonomies  []string               `toml:"taxonomies"`
-	HasArchive  bool                   `toml:"has_archive"`
-	RewriteSlug string                 `toml:"rewrite_slug"`
-	Templates   TemplateConfig         `toml:"templates"`
-	MenuIcon    string                 `toml:"menu_icon"`
-	MenuOrder   int                    `toml:"menu_order"`
+	Name            string                 `toml:"name"`
+	Label           string                 `toml:"label"`
+	LabelPlural     string                 `toml:"label_plural"`
+	ArchiveTitleKey string                 `toml:"archive_title_key"`
+	Supports        []string               `toml:"supports"`
+	MetaFields      []content.MetaFieldDef `toml:"meta_fields"`
+	Taxonomies      []string               `toml:"taxonomies"`
+	HasArchive      bool                   `toml:"has_archive"`
+	RewriteSlug     string                 `toml:"rewrite_slug"`
+	Templates       TemplateConfig         `toml:"templates"`
+	MenuIcon        string                 `toml:"menu_icon"`
+	MenuOrder       int                    `toml:"menu_order"`
 }
 
 // TemplateConfig optionally maps a content type to existing page templates.
@@ -195,14 +196,15 @@ func RegisterContentTypesFromConfig(registry *content.Registry, cfg *FileConfig)
 		}
 
 		registry.RegisterType(content.ContentTypeDef{
-			Name:        ct.Name,
-			Label:       label,
-			LabelPlural: labelPlural,
-			Supports:    append([]string(nil), ct.Supports...),
-			MetaFields:  append([]content.MetaFieldDef(nil), ct.MetaFields...),
-			Taxonomies:  append([]string(nil), ct.Taxonomies...),
-			HasArchive:  ct.HasArchive,
-			Rewrite:     content.RewriteRule{Slug: ct.RewriteSlug},
+			Name:            ct.Name,
+			Label:           label,
+			LabelPlural:     labelPlural,
+			ArchiveTitleKey: ct.ArchiveTitleKey,
+			Supports:        append([]string(nil), ct.Supports...),
+			MetaFields:      append([]content.MetaFieldDef(nil), ct.MetaFields...),
+			Taxonomies:      append([]string(nil), ct.Taxonomies...),
+			HasArchive:      ct.HasArchive,
+			Rewrite:         content.RewriteRule{Slug: ct.RewriteSlug},
 			Templates: content.TemplateDef{
 				Archive: ct.Templates.Archive,
 				Single:  ct.Templates.Single,

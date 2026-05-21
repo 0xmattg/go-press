@@ -2,6 +2,7 @@ package theme
 
 import (
 	"html/template"
+	"net/url"
 	"reflect"
 	"strings"
 	"time"
@@ -74,6 +75,7 @@ func CommonFuncMap() template.FuncMap {
 		"langPrefixURL": func(c *gin.Context, path string) string {
 			return path
 		},
+		"isMenuURLActive": isMenuURLActive,
 		"buildURL": func(contentType, slug string) string {
 			if slug == "" {
 				return "/"
@@ -148,10 +150,9 @@ func CommonFuncMap() template.FuncMap {
 				return t.Format("01-02 15:04")
 			}
 		},
-		// isMenuActive determines whether a menu URL matches the active page,
-		// tolerating an optional 2-letter language prefix (e.g. /zh/blog).
-		// Common to multiple themes — kept here so headers/footers can use it
-		// uniformly.
+		// isMenuActive is kept for compatibility with older themes that only
+		// pass a semantic ActivePage value. New request-aware themes should use
+		// isMenuURLActive so active state follows configured rewrite URLs.
 		"isMenuActive": func(activePage, url string) bool {
 			if activePage == "" || url == "" {
 				return false
@@ -172,6 +173,77 @@ func CommonFuncMap() template.FuncMap {
 			return seg == activePage
 		},
 	}
+}
+
+func isMenuURLActive(c *gin.Context, menuURL string) bool {
+	if c == nil || c.Request == nil || menuURL == "" {
+		return false
+	}
+
+	current := comparableMenuPath(c.Request.URL.Path, "")
+	target := comparableMenuPath(menuURL, c.Request.Host)
+	if current == "" || target == "" {
+		return false
+	}
+	if target == "/" {
+		return current == "/"
+	}
+	return current == target || strings.HasPrefix(current, target+"/")
+}
+
+func comparableMenuPath(raw, currentHost string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return ""
+	}
+
+	parsed, err := url.Parse(raw)
+	if err == nil {
+		if parsed.Scheme != "" && parsed.Scheme != "http" && parsed.Scheme != "https" {
+			return ""
+		}
+		if parsed.Host != "" && currentHost != "" && !strings.EqualFold(parsed.Host, currentHost) {
+			return ""
+		}
+		raw = parsed.Path
+	}
+
+	if raw == "" {
+		raw = "/"
+	}
+	if !strings.HasPrefix(raw, "/") {
+		raw = "/" + raw
+	}
+
+	raw = strings.TrimRight(raw, "/")
+	if raw == "" {
+		raw = "/"
+	}
+	return stripMenuLanguagePrefix(raw)
+}
+
+func stripMenuLanguagePrefix(path string) string {
+	if path == "/" {
+		return path
+	}
+	trimmed := strings.TrimPrefix(path, "/")
+	parts := strings.SplitN(trimmed, "/", 2)
+	if len(parts[0]) != 2 || !isASCIILetters(parts[0]) {
+		return path
+	}
+	if len(parts) == 1 || parts[1] == "" {
+		return "/"
+	}
+	return "/" + strings.TrimRight(parts[1], "/")
+}
+
+func isASCIILetters(s string) bool {
+	for _, r := range s {
+		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') {
+			return false
+		}
+	}
+	return true
 }
 
 func pageTitleFromData(data interface{}) string {

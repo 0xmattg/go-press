@@ -51,25 +51,5 @@ func DefaultFuncMap() template.FuncMap {
 			}
 			return s
 		},
-		"isMenuActive": func(activePage, url string) bool {
-			if activePage == "" || url == "" {
-				return false
-			}
-			url = strings.TrimRight(url, "/")
-			if url == "" {
-				return activePage == "home"
-			}
-			path := strings.TrimPrefix(url, "/")
-			parts := strings.SplitN(path, "/", 3)
-			seg := parts[0]
-			// Skip 2-letter language prefix (e.g. "zh", "en")
-			if len(seg) == 2 && len(parts) > 1 {
-				seg = parts[1]
-			}
-			if seg == "" || (len(parts[0]) == 2 && len(parts) == 1) {
-				return activePage == "home"
-			}
-			return seg == activePage
-		},
 	}
 }

@@ -10,6 +10,7 @@ GoPress themes are Go packages that register themselves with the engine. A theme
 - Built-in fallback templates for archives, singles, and taxonomy pages.
 - Standard frontend hook slots for plugins.
 - Menu locations and language-aware menu rendering.
+- URL-based active menu helper from the core funcmap.
 - Responsive image helpers backed by media variants.
 - Demo data import through `DemoDataProvider`.
 
@@ -37,6 +38,7 @@ For each registered content type, `rewrite_slug` defines the public archive/deta
 name = "module"
 label = "Module"
 label_plural = "Modules"
+archive_title_key = "page_title_module"
 has_archive = true
 rewrite_slug = "modules"
 templates = { archive = "products", single = "product-detail" }
@@ -45,6 +47,8 @@ templates = { archive = "products", single = "product-detail" }
 With that configuration, `/modules` and `/modules/{slug}` resolve to the `module` content type while reusing `templates/pages/products.tmpl` and `templates/pages/product-detail.tmpl`. If `templates` is omitted, BaseTheme tries conventional names derived from the content type and rewrite slug before falling back to generic archive/single templates and built-in fallback pages.
 
 Templates should generate content links with `archiveURL` and `contentURL` instead of hard-coding `/products`, `/services`, or similar paths.
+
+Navigation active state should also come from core helpers. Use `isMenuURLActive .Ctx menuURL` against menu item URLs instead of comparing `.ActivePage` to theme-specific content type names or labels. The helper follows the current request URL, rewrite slugs, language prefixes, and detail-page paths.
 
 New themes should prefer the `BaseTheme + gin.H` path unless they have a strong reason to maintain a custom PageService.
 

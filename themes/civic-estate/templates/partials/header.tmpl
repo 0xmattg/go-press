@@ -10,12 +10,12 @@
     </button>
     <nav class="ce-nav" aria-label="Primary navigation">
         <ul class="ce-nav-list">
-            <li><a class="{{if eq .ActivePage "about"}}active{{end}}" href="{{langPrefixURL .Ctx "/about"}}">{{settingOr $s "nav_about" "About"}}</a></li>
-            <li><a class="{{if eq .ActivePage "products"}}active{{end}}" href="{{langPrefixURL .Ctx (archiveURL "product")}}">{{settingOr $s "nav_process" "Types"}}</a></li>
-            <li><a class="{{if eq .ActivePage "showcase"}}active{{end}}" href="{{langPrefixURL .Ctx (archiveURL "showcase")}}">{{settingOr $s "nav_showcase" "Areas"}}</a></li>
-            <li><a class="{{if eq .ActivePage "services"}}active{{end}}" href="{{langPrefixURL .Ctx (archiveURL "service")}}">{{settingOr $s "nav_services" "Services"}}</a></li>
-            <li><a class="{{if eq .ActivePage "blog"}}active{{end}}" href="{{langPrefixURL .Ctx (archiveURL "post")}}">{{settingOr $s "nav_blog" "Market Notes"}}</a></li>
-            <li><a class="{{if eq .ActivePage "contact"}}active{{end}}" href="{{langPrefixURL .Ctx "/contact"}}">{{settingOr $s "nav_contact" "Contact"}}</a></li>
+            <li><a class="{{if isMenuURLActive .Ctx "/about"}}active{{end}}" href="{{langPrefixURL .Ctx "/about"}}">{{settingOr $s "nav_about" "About"}}</a></li>
+            <li><a class="{{if isMenuURLActive .Ctx (archiveURL "product")}}active{{end}}" href="{{langPrefixURL .Ctx (archiveURL "product")}}">{{settingOr $s "nav_process" "Types"}}</a></li>
+            <li><a class="{{if isMenuURLActive .Ctx (archiveURL "showcase")}}active{{end}}" href="{{langPrefixURL .Ctx (archiveURL "showcase")}}">{{settingOr $s "nav_showcase" "Areas"}}</a></li>
+            <li><a class="{{if isMenuURLActive .Ctx (archiveURL "service")}}active{{end}}" href="{{langPrefixURL .Ctx (archiveURL "service")}}">{{settingOr $s "nav_services" "Services"}}</a></li>
+            <li><a class="{{if isMenuURLActive .Ctx (archiveURL "post")}}active{{end}}" href="{{langPrefixURL .Ctx (archiveURL "post")}}">{{settingOr $s "nav_blog" "Market Notes"}}</a></li>
+            <li><a class="{{if isMenuURLActive .Ctx "/contact"}}active{{end}}" href="{{langPrefixURL .Ctx "/contact"}}">{{settingOr $s "nav_contact" "Contact"}}</a></li>
             {{renderHook "header.nav.after" .}}
         </ul>
     </nav>

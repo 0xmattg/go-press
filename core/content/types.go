@@ -32,17 +32,18 @@ type MetaFieldDef struct {
 // drives admin navigation, CRUD forms, REST API exposure, rewrite URLs, archive
 // rendering, sitemap entries, and taxonomy pickers.
 type ContentTypeDef struct {
-	Name        string         `json:"name"`
-	Label       string         `json:"label"`
-	LabelPlural string         `json:"label_plural"`
-	Supports    []string       `json:"supports"` // "title","content","excerpt","thumbnail","meta"
-	MetaFields  []MetaFieldDef `json:"meta_fields"`
-	Taxonomies  []string       `json:"taxonomies"`
-	HasArchive  bool           `json:"has_archive"`
-	Rewrite     RewriteRule    `json:"rewrite"`
-	Templates   TemplateDef    `json:"templates"`
-	MenuIcon    string         `json:"menu_icon"` // optional: built-in icon key or raw SVG
-	MenuOrder   int            `json:"menu_order"`
+	Name            string         `json:"name"`
+	Label           string         `json:"label"`
+	LabelPlural     string         `json:"label_plural"`
+	ArchiveTitleKey string         `json:"archive_title_key"`
+	Supports        []string       `json:"supports"` // "title","content","excerpt","thumbnail","meta"
+	MetaFields      []MetaFieldDef `json:"meta_fields"`
+	Taxonomies      []string       `json:"taxonomies"`
+	HasArchive      bool           `json:"has_archive"`
+	Rewrite         RewriteRule    `json:"rewrite"`
+	Templates       TemplateDef    `json:"templates"`
+	MenuIcon        string         `json:"menu_icon"` // optional: built-in icon key or raw SVG
+	MenuOrder       int            `json:"menu_order"`
 }
 
 // TemplateDef optionally maps a content type to theme page template names.

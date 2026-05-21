@@ -10,8 +10,10 @@
   "filter_all": "全部",
 
   "page_title_articles": "新闻资讯",
+  "page_title_blog": "新闻资讯",
   "page_title_analysis": "深度分析",
   "page_desc_analysis": "专业分析师团队，深入解读市场趋势",
+  "page_title_market_update": "行情快讯",
   "page_title_market": "行情快讯",
   "page_desc_market": "实时市场动态，快速掌握行情变化",
   "page_title_about": "关于 FinNews",

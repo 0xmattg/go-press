@@ -9,6 +9,7 @@ import (
 	"go-press/core/option"
 	"go-press/core/rewrite"
 	"go-press/core/taxonomy"
+	coreTheme "go-press/core/theme"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -116,21 +117,7 @@ func (s *PageService) buildHomeSEO() rewrite.SEOMeta {
 		return rewrite.SEOMeta{}
 	}
 	seo := s.seoBuilder.ForHome(s.options.Get("site_description"))
-	if name := s.options.Get("site_name"); name != "" && seo.OGType == "website" {
-		seo.Title = name
-		seo.OGTitle = name
-	}
-	if seo.Description == "" {
-		if d := s.options.Get("site_description"); d != "" {
-			seo.Description = d
-			if seo.OGDescription == "" {
-				seo.OGDescription = d
-			}
-		}
-	}
-	if icon := strings.TrimSpace(s.options.Get("site_icon")); icon != "" {
-		seo.SiteIcon = icon
-	}
+	coreTheme.ApplySiteOptionOverridesFromOptions(s.options, s.seoBuilder, &seo)
 	return seo
 }
 

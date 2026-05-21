@@ -217,7 +217,7 @@ go run ./cmd/gendoc/
 ### Themes and Plugins
 
 - **BaseTheme runtime** — embed it to get config-driven URL resolution, dynamic archive/detail rendering, WordPress-style fallback hierarchy, and automatic SEO integration.
-- **Unified FuncMap** — `BaseFuncMap()` provides `buildURL`, `archiveURL`, `contentURL`, `pageTitleFor`, `seoHeadFor`, `menuByLocation`, `T`, `currentLang`, `langPrefixURL`, `renderHook`, and `responsiveImage*`.
+- **Unified FuncMap** — `BaseFuncMap()` provides `buildURL`, `archiveURL`, `contentURL`, `pageTitleFor`, `seoHeadFor`, `menuByLocation`, `isMenuURLActive`, `T`, `currentLang`, `langPrefixURL`, `renderHook`, and `responsiveImage*`.
 - **Theme template slots** — `theme.head.end`, `theme.body.open`, `theme.footer.end`, and `header.nav.after` define semantic insertion points for plugins.
 - **Responsive image pipeline** — uploads generate WebP and JPG/PNG variants (`thumb`, `480w`, `768w`, `1024w`, `1440w`, `full`), and templates output `<picture>` through `responsiveImage`.
 - **Hot-pluggable plugins** — `Bus.AddAction/AddFilter` return handles; `Deactivate` removes hooks cleanly without restarting the process.

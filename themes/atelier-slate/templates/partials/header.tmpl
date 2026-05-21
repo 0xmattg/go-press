@@ -21,15 +21,15 @@
             {{$headerMenu := menuByLocation "header"}}
             {{if $headerMenu}}
                 {{range $headerMenu.Items}}
-                <a href="{{.URL}}" class="{{if isMenuActive $.ActivePage .URL}}active{{end}}" {{if eq .Target "_blank"}}target="_blank" rel="noopener"{{end}}>{{.Title}}</a>
+                <a href="{{.URL}}" class="{{if isMenuURLActive $.Ctx .URL}}active{{end}}" {{if eq .Target "_blank"}}target="_blank" rel="noopener"{{end}}>{{.Title}}</a>
                 {{end}}
             {{else}}
-                <a href="{{langPrefixURL $.Ctx "/"}}" class="{{if eq .ActivePage "home"}}active{{end}}">{{T $.Ctx "nav_home"}}</a>
-                <a href="{{langPrefixURL $.Ctx (archiveURL "service")}}" class="{{if eq .ActivePage "services"}}active{{end}}">{{T $.Ctx "nav_services"}}</a>
-                <a href="{{langPrefixURL $.Ctx (archiveURL "product")}}" class="{{if eq .ActivePage "products"}}active{{end}}">{{T $.Ctx "nav_products"}}</a>
-                <a href="{{langPrefixURL $.Ctx (archiveURL "showcase")}}" class="{{if eq .ActivePage "showcase"}}active{{end}}">{{T $.Ctx "nav_projects"}}</a>
-                <a href="{{langPrefixURL $.Ctx (archiveURL "post")}}" class="{{if eq .ActivePage "blog"}}active{{end}}">{{T $.Ctx "nav_news"}}</a>
-                <a href="{{langPrefixURL $.Ctx "/about"}}" class="{{if eq .ActivePage "about"}}active{{end}}">{{T $.Ctx "nav_about"}}</a>
+                <a href="{{langPrefixURL $.Ctx "/"}}" class="{{if isMenuURLActive $.Ctx "/"}}active{{end}}">{{T $.Ctx "nav_home"}}</a>
+                <a href="{{langPrefixURL $.Ctx (archiveURL "service")}}" class="{{if isMenuURLActive $.Ctx (archiveURL "service")}}active{{end}}">{{T $.Ctx "nav_services"}}</a>
+                <a href="{{langPrefixURL $.Ctx (archiveURL "product")}}" class="{{if isMenuURLActive $.Ctx (archiveURL "product")}}active{{end}}">{{T $.Ctx "nav_products"}}</a>
+                <a href="{{langPrefixURL $.Ctx (archiveURL "showcase")}}" class="{{if isMenuURLActive $.Ctx (archiveURL "showcase")}}active{{end}}">{{T $.Ctx "nav_projects"}}</a>
+                <a href="{{langPrefixURL $.Ctx (archiveURL "post")}}" class="{{if isMenuURLActive $.Ctx (archiveURL "post")}}active{{end}}">{{T $.Ctx "nav_news"}}</a>
+                <a href="{{langPrefixURL $.Ctx "/about"}}" class="{{if isMenuURLActive $.Ctx "/about"}}active{{end}}">{{T $.Ctx "nav_about"}}</a>
             {{end}}
             {{renderHook "header.nav.after" .}}
         </nav>
