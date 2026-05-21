@@ -11,14 +11,14 @@
                 {{$topNav := menuByLocation "top-nav"}}
                 {{if $topNav}}
                     {{range $topNav.Items}}
-                    <li><a href="{{.URL}}" class="nav-link{{if isMenuActive $.ActivePage .URL}} active{{end}}" {{if eq .Target "_blank"}}target="_blank" rel="noopener"{{end}}>{{.Title}}</a></li>
+                    <li><a href="{{.URL}}" class="nav-link{{if isMenuURLActive $.Ctx .URL}} active{{end}}" {{if eq .Target "_blank"}}target="_blank" rel="noopener"{{end}}>{{.Title}}</a></li>
                     {{end}}
                 {{else}}
-                <li><a href="/" class="nav-link{{if eq .ActivePage "home"}} active{{end}}">{{T $.Ctx "nav_home"}}</a></li>
-                <li><a href="/articles" class="nav-link{{if eq .ActivePage "articles"}} active{{end}}">{{T $.Ctx "nav_articles"}}</a></li>
-                <li><a href="/market" class="nav-link{{if eq .ActivePage "market"}} active{{end}}">{{T $.Ctx "nav_market"}}</a></li>
-                <li><a href="/analysis" class="nav-link{{if eq .ActivePage "analysis"}} active{{end}}">{{T $.Ctx "nav_analysis"}}</a></li>
-                <li><a href="/about" class="nav-link{{if eq .ActivePage "about"}} active{{end}}">{{T $.Ctx "nav_about"}}</a></li>
+                <li><a href="/" class="nav-link{{if isMenuURLActive $.Ctx "/"}} active{{end}}">{{T $.Ctx "nav_home"}}</a></li>
+                <li><a href="/articles" class="nav-link{{if isMenuURLActive $.Ctx "/articles"}} active{{end}}">{{T $.Ctx "nav_articles"}}</a></li>
+                <li><a href="/market" class="nav-link{{if isMenuURLActive $.Ctx "/market"}} active{{end}}">{{T $.Ctx "nav_market"}}</a></li>
+                <li><a href="/analysis" class="nav-link{{if isMenuURLActive $.Ctx "/analysis"}} active{{end}}">{{T $.Ctx "nav_analysis"}}</a></li>
+                <li><a href="/about" class="nav-link{{if isMenuURLActive $.Ctx "/about"}} active{{end}}">{{T $.Ctx "nav_about"}}</a></li>
                 {{end}}
                 {{renderHook "header.nav.after" .}}
                 </ul>

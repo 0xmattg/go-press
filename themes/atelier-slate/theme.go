@@ -54,8 +54,7 @@ func New(engine *core.Engine, themeDir string) *AtelierSlateTheme {
 		"stripTags": func(s string) string {
 			return strings.TrimSpace(reHTMLTags.ReplaceAllString(s, " "))
 		},
-		"isMenuActive": isMenuActive,
-		"socialLinks":  atelierSocialLinks,
+		"socialLinks": atelierSocialLinks,
 		// whatsappLink turns a free-form WhatsApp number (e.g. "+86 510 8321 0000")
 		// into a wa.me deep link by stripping every non-digit. Returns "" when the
 		// input has no digits so callers can omit the link entirely.
@@ -102,9 +101,8 @@ func NewWithDB(db *gorm.DB, themeDir string) *AtelierSlateTheme {
 			}
 			return tm.Format("January 2, 2006")
 		},
-		"stripTags":    func(s string) string { return strings.TrimSpace(reHTMLTags.ReplaceAllString(s, " ")) },
-		"isMenuActive": isMenuActive,
-		"socialLinks":  atelierSocialLinks,
+		"stripTags":   func(s string) string { return strings.TrimSpace(reHTMLTags.ReplaceAllString(s, " ")) },
+		"socialLinks": atelierSocialLinks,
 		"whatsappLink": func(s string) string {
 			digits := reNonDigit.ReplaceAllString(s, "")
 			if digits == "" {

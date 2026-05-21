@@ -41,12 +41,14 @@ func (t *MyTheme) Setup(app coreTheme.App) {
 {{if $menu}}
     <ul class="nav-menu">
         {{range $menu.Items}}
-            <li><a href="{{.URL}}">{{.Title}}</a></li>
+            <li><a href="{{.URL}}" class="{{if isMenuURLActive $.Ctx .URL}}active{{end}}">{{.Title}}</a></li>
         {{end}}
         {{renderHook "header.nav.after" .}}
     </ul>
 {{end}}
 ```
+
+当前菜单高亮应基于当前请求 URL 与菜单项 URL 判断，不要在可复用主题里写死内容类型名、菜单标题或 `.ActivePage` 标识。
 
 ## 多语言菜单
 

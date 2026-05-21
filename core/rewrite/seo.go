@@ -47,6 +47,14 @@ func NewSEOBuilder(siteURL, siteName string, rewrite *Engine) *SEOBuilder {
 	}
 }
 
+// SiteName returns the static site name used when this builder was created.
+func (b *SEOBuilder) SiteName() string {
+	if b == nil {
+		return ""
+	}
+	return b.siteName
+}
+
 // ForContent generates metadata for a single content page.
 //
 // The canonical URL is derived from the rewrite engine so SEO output stays in
@@ -79,12 +87,21 @@ func (b *SEOBuilder) ForContent(c *content.Content, typeDef *content.ContentType
 
 // ForArchive generates SEO metadata for an archive page.
 func (b *SEOBuilder) ForArchive(typeDef *content.ContentTypeDef) SEOMeta {
+	return b.ForArchiveTitle(typeDef, typeDef.LabelPlural)
+}
+
+// ForArchiveTitle generates SEO metadata for an archive page with a localized
+// presentation title supplied by the theme runtime.
+func (b *SEOBuilder) ForArchiveTitle(typeDef *content.ContentTypeDef, archiveTitle string) SEOMeta {
+	if archiveTitle == "" {
+		archiveTitle = typeDef.LabelPlural
+	}
 	url := b.siteURL + b.rewrite.BuildArchiveURL(typeDef.Name)
 	return SEOMeta{
-		Title:        typeDef.LabelPlural + " | " + b.siteName,
-		Description:  typeDef.LabelPlural,
+		Title:        archiveTitle + " | " + b.siteName,
+		Description:  archiveTitle,
 		CanonicalURL: url,
-		OGTitle:      typeDef.LabelPlural,
+		OGTitle:      archiveTitle,
 		OGType:       "website",
 		Robots:       "index,follow",
 	}

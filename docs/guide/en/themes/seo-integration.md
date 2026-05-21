@@ -48,16 +48,30 @@ The admin **System Settings** page stores the site favicon in `site_icon`. Theme
 
 With `BaseTheme + gin.H`, GoPress injects SEO automatically for home, archive, taxonomy, and single pages.
 
+For archive pages, set `archive_title_key` on `[[content_types]]` when the frontend title should come from theme locales:
+
+```toml
+[[content_types]]
+name = "service"
+label_plural = "服务列表"
+archive_title_key = "page_title_service"
+rewrite_slug = "services"
+```
+
+Core resolves that key through the current request language before building the archive SEO title. If the key is absent, core tries generic keys such as `page_title_<rewrite_slug>` and then falls back to `label_plural`.
+
 ## Custom PageData Path
 
-Custom PageService themes must attach `rewrite.SEOMeta` to their page data and call:
+Custom PageService themes must attach `rewrite.SEOMeta` to their page data and reuse core helpers:
 
 ```go
-coreTheme.ApplySiteOptionOverrides(app, &seo)
+title := coreTheme.LocalizedArchiveTitle(c, i18nMgr, typeDef)
+seo := seoBuilder.ForArchiveTitle(typeDef, title)
+coreTheme.ApplySiteOptionOverridesFromOptions(options, seoBuilder, &seo)
 coreTheme.ApplyContentMetaSEO(hooks, contentRepo, &seo, item)
 ```
 
-`ApplySiteOptionOverrides` applies runtime settings such as `site_name`, `site_description`, and `site_icon`. The second call is what allows plugins such as `seo-extras` to patch per-content SEO output.
+`LocalizedArchiveTitle` keeps archive titles language-aware. `ApplySiteOptionOverridesFromOptions` applies runtime settings such as `site_name`, `site_description`, and `site_icon` without removing the page-specific title prefix. `ApplyContentMetaSEO` is what allows plugins such as `seo-extras` to patch per-content SEO output.
 
 ## Per-content SEO
 

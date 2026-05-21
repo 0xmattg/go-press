@@ -79,6 +79,7 @@ author = "Me"
 name = "product"
 label = "产品"
 label_plural = "产品列表"
+archive_title_key = "page_title_product"
 supports = ["title", "content", "excerpt", "thumbnail", "sort_order"]
 taxonomies = ["category", "tag"]
 has_archive = true
@@ -116,6 +117,7 @@ label = "顶部导航"
 name = "module"
 label = "模块"
 label_plural = "核心模块"
+archive_title_key = "page_title_module"
 supports = ["title", "content", "excerpt", "thumbnail", "sort_order"]
 taxonomies = ["category", "tag"]
 has_archive = true
@@ -125,7 +127,7 @@ menu_icon = "blocks"
 menu_order = 1
 ```
 
-这样数据模型是 `module`，前台 URL 是 `/modules` / `/modules/{slug}`，视觉层复用 `products` / `product-detail` 页面模板。内容模型、URL slug 和模板名互相独立，统一由 core 注册表驱动。
+这样数据模型是 `module`，前台 URL 是 `/modules` / `/modules/{slug}`，视觉层复用 `products` / `product-detail` 页面模板。内容模型、URL slug 和模板名互相独立，统一由 core 注册表驱动。`archive_title_key` 指向主题 locales 里的标题 key，用于归档页 `<title>` / Open Graph 标题，避免多语言站点直接使用静态 `label_plural`。
 
 ## 模板命名约定
 
@@ -174,6 +176,18 @@ archive
 ```
 
 `archiveURL` 和 `contentURL` 会读取 Rewrite 注册表；后续把 `rewrite_slug = "products"` 改成 `catalog` 时，模板不需要跟着硬改。
+
+导航当前页状态同样应走 core helper，让模板只关心菜单 URL，不关心业务内容类型名或菜单标题：
+
+```gotemplate
+{{with menuByLocation "header"}}
+    {{range .Items}}
+        <a href="{{.URL}}" class="{{if isMenuURLActive $.Ctx .URL}}active{{end}}">{{.Title}}</a>
+    {{end}}
+{{end}}
+```
+
+不要在通用主题里写 `.ActivePage == "products"` 这类判断。菜单名称、内容类型名和 `rewrite_slug` 都是配置，不应成为模板代码里的固定契约。
 
 ## 基础布局契约
 

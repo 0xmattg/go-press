@@ -2,7 +2,6 @@ package financialnews
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -136,6 +135,7 @@ type PageService struct {
 	seoBuilder *rewrite.SEOBuilder
 	registry   *content.Registry
 	hookBus    *hook.Bus
+	i18nMgr    *coreI18n.Manager
 	reqCtx     *gin.Context // set by ForRequest, enables FindBySlugScoped
 }
 
@@ -148,6 +148,7 @@ func NewPageService(engine *core.Engine) *PageService {
 		seoBuilder:  engine.SEO,
 		registry:    engine.Registry,
 		hookBus:     engine.Hooks,
+		i18nMgr:     engine.I18n,
 	}
 }
 
@@ -186,7 +187,7 @@ func (s *PageService) buildArchiveSEO(typeName string) rewrite.SEOMeta {
 	if typeDef == nil {
 		return rewrite.SEOMeta{}
 	}
-	seo := s.seoBuilder.ForArchive(typeDef)
+	seo := s.seoBuilder.ForArchiveTitle(typeDef, coreTheme.LocalizedArchiveTitle(s.reqCtx, s.i18nMgr, typeDef))
 	s.applySEOOverrides(&seo)
 	return seo
 }
@@ -206,24 +207,7 @@ func (s *PageService) buildContentSEO(item *content.Content, typeName string) re
 }
 
 func (s *PageService) applySEOOverrides(seo *rewrite.SEOMeta) {
-	if seo == nil || s.options == nil {
-		return
-	}
-	if name := s.options.Get("site_name"); name != "" && seo.OGType == "website" {
-		seo.Title = name
-		seo.OGTitle = name
-	}
-	if seo.Description == "" {
-		if d := s.options.Get("site_description"); d != "" {
-			seo.Description = d
-			if seo.OGDescription == "" {
-				seo.OGDescription = d
-			}
-		}
-	}
-	if icon := strings.TrimSpace(s.options.Get("site_icon")); icon != "" {
-		seo.SiteIcon = icon
-	}
+	coreTheme.ApplySiteOptionOverridesFromOptions(s.options, s.seoBuilder, seo)
 }
 
 // ForRequest returns a clone of PageService with request-scoped content filters applied.

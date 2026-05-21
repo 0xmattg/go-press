@@ -14,14 +14,14 @@
             {{$headerMenu := menuByLocation "header"}}
             {{if $headerMenu}}
                 {{range $headerMenu.Items}}
-                <li><a href="{{.URL}}" class="{{if isMenuActive $.ActivePage .URL}}active{{end}}" {{if eq .Target "_blank"}}target="_blank" rel="noopener"{{end}}>{{.Title}}</a></li>
+                <li><a href="{{.URL}}" class="{{if isMenuURLActive $.Ctx .URL}}active{{end}}" {{if eq .Target "_blank"}}target="_blank" rel="noopener"{{end}}>{{.Title}}</a></li>
                 {{end}}
             {{else}}
-                <li><a href="{{langPrefixURL $.Ctx (archiveURL "product")}}" class="{{if eq .ActivePage "products"}}active{{end}}">{{settingOr .Settings "home_nav_1_text" "USD Flora"}}</a></li>
-                <li><a href="{{langPrefixURL $.Ctx (archiveURL "service")}}" class="{{if eq .ActivePage "services"}}active{{end}}">{{settingOr .Settings "home_nav_2_text" "Business"}}</a></li>
-                <li><a href="{{langPrefixURL $.Ctx (archiveURL "showcase")}}" class="{{if eq .ActivePage "showcase"}}active{{end}}">{{settingOr .Settings "home_nav_3_text" "Treasury"}}</a></li>
-                <li><a href="{{langPrefixURL $.Ctx (archiveURL "post")}}" class="{{if eq .ActivePage "blog"}}active{{end}}">{{settingOr .Settings "home_nav_4_text" "Developers"}}</a></li>
-                <li><a href="{{langPrefixURL $.Ctx "/about"}}" class="{{if eq .ActivePage "about"}}active{{end}}">{{settingOr .Settings "home_nav_5_text" "About us"}}</a></li>
+                <li><a href="{{langPrefixURL $.Ctx (archiveURL "product")}}" class="{{if isMenuURLActive $.Ctx (archiveURL "product")}}active{{end}}">{{settingOr .Settings "home_nav_1_text" "USD Flora"}}</a></li>
+                <li><a href="{{langPrefixURL $.Ctx (archiveURL "service")}}" class="{{if isMenuURLActive $.Ctx (archiveURL "service")}}active{{end}}">{{settingOr .Settings "home_nav_2_text" "Business"}}</a></li>
+                <li><a href="{{langPrefixURL $.Ctx (archiveURL "showcase")}}" class="{{if isMenuURLActive $.Ctx (archiveURL "showcase")}}active{{end}}">{{settingOr .Settings "home_nav_3_text" "Treasury"}}</a></li>
+                <li><a href="{{langPrefixURL $.Ctx (archiveURL "post")}}" class="{{if isMenuURLActive $.Ctx (archiveURL "post")}}active{{end}}">{{settingOr .Settings "home_nav_4_text" "Developers"}}</a></li>
+                <li><a href="{{langPrefixURL $.Ctx "/about"}}" class="{{if isMenuURLActive $.Ctx "/about"}}active{{end}}">{{settingOr .Settings "home_nav_5_text" "About us"}}</a></li>
             {{end}}
             {{renderHook "header.nav.after" .}}
         </ul>

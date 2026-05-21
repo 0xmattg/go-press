@@ -42,8 +42,10 @@ e.Hooks.ApplyFilter(name, value, args...) interface{}
 
 ```gotemplate
 <ul class="nav-menu">
-    <li><a href="{{langPrefixURL .Ctx "/"}}">{{T .Ctx "nav_home"}}</a></li>
-    <li><a href="{{langPrefixURL .Ctx "/about"}}">{{T .Ctx "nav_about"}}</a></li>
+    {{$homeURL := langPrefixURL .Ctx "/"}}
+    {{$aboutURL := langPrefixURL .Ctx "/about"}}
+    <li><a href="{{$homeURL}}" class="{{if isMenuURLActive .Ctx $homeURL}}active{{end}}">{{T .Ctx "nav_home"}}</a></li>
+    <li><a href="{{$aboutURL}}" class="{{if isMenuURLActive .Ctx $aboutURL}}active{{end}}">{{T .Ctx "nav_about"}}</a></li>
     {{renderHook "header.nav.after" .}}
 </ul>
 ```

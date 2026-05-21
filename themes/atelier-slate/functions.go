@@ -121,29 +121,6 @@ func DefaultFuncMap() template.FuncMap {
 			}
 			return def
 		},
-		"isMenuActive": isMenuActive,
-		"socialLinks":  atelierSocialLinks,
+		"socialLinks": atelierSocialLinks,
 	}
-}
-
-// isMenuActive reports whether the active page matches a menu URL,
-// accounting for an optional 2-letter language prefix (e.g. "/zh/blog").
-func isMenuActive(activePage, url string) bool {
-	if activePage == "" || url == "" {
-		return false
-	}
-	url = strings.TrimRight(url, "/")
-	if url == "" {
-		return activePage == "home"
-	}
-	path := strings.TrimPrefix(url, "/")
-	parts := strings.SplitN(path, "/", 3)
-	seg := parts[0]
-	if len(seg) == 2 && len(parts) > 1 {
-		seg = parts[1]
-	}
-	if seg == "" || (len(parts[0]) == 2 && len(parts) == 1) {
-		return activePage == "home"
-	}
-	return seg == activePage
 }

@@ -10,8 +10,10 @@
   "filter_all": "All",
 
   "page_title_articles": "News",
+  "page_title_blog": "News",
   "page_title_analysis": "In-Depth Analysis",
   "page_desc_analysis": "Professional analyst team, in-depth market trend interpretation",
+  "page_title_market_update": "Market Updates",
   "page_title_market": "Market Updates",
   "page_desc_market": "Real-time market dynamics, stay on top of changes",
   "page_title_about": "About FinNews",

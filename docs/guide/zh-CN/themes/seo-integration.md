@@ -14,7 +14,7 @@ admin 「系统设置 > 网站设置」
                            ▼
 core SEOBuilder (per-page)
   ├── ForHome(siteDescription)            → home
-  ├── ForArchive(typeDef)                 → /products, /blog ...
+  ├── ForArchiveTitle(typeDef, title)     → /products, /blog ...
   └── ForContent(item, typeDef)           → /products/:slug, /blog/:slug ...
                            ▼
 core ApplySiteOptionOverrides
@@ -78,6 +78,18 @@ HTML <head>: <title> + <meta description> + <link canonical> + og:* + JSON-LD + 
 
 新主题强烈推荐这条路径——SEO 注入完全免费，未来 core 长出新能力（比如 og:image 兜底、per-page robots）也是零改动跟上。
 
+归档页标题如果需要多语言，内容类型应在 `theme.toml` 里声明 `archive_title_key`：
+
+```toml
+[[content_types]]
+name = "service"
+label_plural = "服务列表"
+archive_title_key = "page_title_service"
+rewrite_slug = "services"
+```
+
+BaseTheme 会按当前请求语言从主题 locales 读取该 key，用它生成归档页 `<title>` / Open Graph 标题。未配置时，core 会尝试 `page_title_<rewrite_slug>` 这类通用 key，最后才回退到 `label_plural`。
+
 ```go
 // theme.go
 type MyTheme struct {
@@ -123,23 +135,33 @@ type PageData struct {
     // ...
 }
 
-// 2. PageService 引用 SEOBuilder + Registry + HookBus
+// 2. PageService 引用 SEOBuilder + Registry + HookBus + I18n
 type PageService struct {
     options    *option.Store
     seoBuilder *rewrite.SEOBuilder   // engine.SEO
     registry   *content.Registry     // engine.Registry
     hookBus    *hook.Bus             // engine.Hooks
     contentRepo *content.Repository  // engine.Content
+    i18nMgr    *coreI18n.Manager     // engine.I18n
+    reqCtx     *gin.Context          // ForRequest(c) 注入
 }
 
 // 3. 各 Get*Data 方法构建 SEO
+func (s *PageService) buildArchiveSEO(typeName string) rewrite.SEOMeta {
+    typeDef := s.registry.GetType(typeName)
+    title := coreTheme.LocalizedArchiveTitle(s.reqCtx, s.i18nMgr, typeDef)
+    seo := s.seoBuilder.ForArchiveTitle(typeDef, title)
+    coreTheme.ApplySiteOptionOverridesFromOptions(s.options, s.seoBuilder, &seo)
+    return seo
+}
+
 // 下面以主题声明的 product 内容类型为例；product 不是 core 内置类型。
 func (s *PageService) GetProductDetail(slug string) (*ProductDetailData, error) {
     item, _ := s.contentRepo.FindBySlugScoped(s.reqCtx, "product", slug)
     typeDef := s.registry.GetType("product")
 
     seo := s.seoBuilder.ForContent(item, typeDef)
-    coreTheme.ApplySiteOptionOverrides(app, &seo)                            // admin site_name/site_description/site_icon 覆盖
+    coreTheme.ApplySiteOptionOverridesFromOptions(s.options, s.seoBuilder, &seo) // admin site_name/site_description/site_icon 覆盖
     coreTheme.ApplyContentMetaSEO(s.hookBus, s.contentRepo, &seo, item)     // ← 让 SEO 插件能 patch
 
     data := &ProductDetailData{ /* ... */ }
@@ -148,9 +170,10 @@ func (s *PageService) GetProductDetail(slug string) (*ProductDetailData, error) 
 }
 ```
 
-两个 helper 必须都调：
+这些 core helper 不要在主题里复制实现：
 
-- **`ApplySiteOptionOverrides`** — 把 admin 的 `site_name` 覆盖到 `seo.Title` / `seo.OGTitle`，在 `seo.Description` 为空时回填 `site_description`，并把 `site_icon` 写入 `seo.SiteIcon`
+- **`LocalizedArchiveTitle`** — 按当前请求语言读取 `archive_title_key` 或 `page_title_<rewrite_slug>`，让归档页标题跟随 locales
+- **`ApplySiteOptionOverridesFromOptions`** — 替换标题里的站点名后缀，在 `seo.Description` 为空时回填 `site_description`，并把 `site_icon` 写入 `seo.SiteIcon`
 - **`ApplyContentMetaSEO`** — 触发 `seo.content.meta` filter 链，让 [seo-extras 插件](../plugins/seo-extras.md) 这类 per-content SEO 覆盖插件能修改 SEOMeta
 
 `BaseTheme + gin.H` 主题完全不用关心，core 的 `renderSingle` 已经替你调好了。这又是一个倾向 BaseTheme 的理由——插件生态默认就工作。

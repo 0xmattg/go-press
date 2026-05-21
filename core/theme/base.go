@@ -12,6 +12,7 @@ import (
 
 	"go-press/core/content"
 	"go-press/core/hook"
+	coreI18n "go-press/core/i18n"
 	"go-press/core/menu"
 	"go-press/core/rewrite"
 	"go-press/core/taxonomy"
@@ -419,7 +420,7 @@ func (b *BaseTheme) renderArchive(c *gin.Context, route *rewrite.ResolvedRoute) 
 
 	data := b.buildBaseData("")
 	if typeDef != nil {
-		data["Title"] = typeDef.LabelPlural
+		data["Title"] = LocalizedArchiveTitle(c, b.App.I18nManager(), typeDef)
 	}
 	data["ActivePage"] = route.ContentType
 	items := b.contentViews(c, result.Items)
@@ -436,7 +437,7 @@ func (b *BaseTheme) renderArchive(c *gin.Context, route *rewrite.ResolvedRoute) 
 
 	// Inject SEO
 	if b.App.SEOBuilder() != nil && typeDef != nil {
-		seo := b.App.SEOBuilder().ForArchive(typeDef)
+		seo := b.App.SEOBuilder().ForArchiveTitle(typeDef, LocalizedArchiveTitle(c, b.App.I18nManager(), typeDef))
 		ApplySiteOptionOverrides(b.App, &seo)
 		data["SEO"] = seo
 	}
@@ -954,22 +955,29 @@ func addLegacySingleAliases(data gin.H, item map[string]interface{}) {
 
 // ApplySiteOptionOverrides reconciles SEO metadata with admin-managed
 // site options. SEOBuilder is constructed once at boot from cfg.Site.Name,
-// so its Title/OGTitle/JSON-LD reference the static config value. When the
-// admin updates site_name or site_description at runtime, those should win
-// over the SEOBuilder defaults; this helper applies that override and
-// fills empty descriptions from site_description so meta tags are never
-// blank when an admin value is available. Exported so themes with their
-// own custom render paths (e.g. modern-company) can reuse the same logic.
+// so generated titles may contain the static config value. When the admin
+// updates site_name at runtime, only the site-name portion should change:
+// archive/content titles keep their page-specific prefix. Empty descriptions
+// are filled from site_description so meta tags are never blank when an admin
+// value is available. Exported so themes with their own custom render paths
+// can reuse the same logic.
 func ApplySiteOptionOverrides(app App, seo *rewrite.SEOMeta) {
-	if app == nil || seo == nil || app.OptionsStore() == nil {
+	if app == nil {
 		return
 	}
-	opts := app.OptionsStore()
-	if name := opts.Get("site_name"); name != "" {
-		if seo.OGType == "website" {
-			seo.Title = name
-			seo.OGTitle = name
-		}
+	ApplySiteOptionOverridesFromOptions(app.OptionsStore(), app.SEOBuilder(), seo)
+}
+
+// ApplySiteOptionOverridesFromOptions applies runtime site options to SEO
+// metadata. It is exported for themes with custom PageService render paths so
+// they do not need to duplicate core SEO override logic.
+func ApplySiteOptionOverridesFromOptions(opts interface{ Get(string) string }, builder *rewrite.SEOBuilder, seo *rewrite.SEOMeta) {
+	if opts == nil || seo == nil {
+		return
+	}
+	if name := strings.TrimSpace(opts.Get("site_name")); name != "" {
+		seo.Title = replaceSEOTitleSiteName(seo.Title, builder.SiteName(), name)
+		seo.OGTitle = replaceSEOTitleSiteName(seo.OGTitle, builder.SiteName(), name)
 	}
 	if seo.Description == "" {
 		if d := opts.Get("site_description"); d != "" {
@@ -984,6 +992,88 @@ func ApplySiteOptionOverrides(app App, seo *rewrite.SEOMeta) {
 	if icon := strings.TrimSpace(opts.Get("site_icon")); icon != "" {
 		seo.SiteIcon = icon
 	}
+}
+
+// LocalizedArchiveTitle returns the current-language presentation title for a
+// content archive. Themes can set archive_title_key in theme.toml; otherwise
+// core tries stable generic message IDs derived from rewrite/template/type
+// names before falling back to the configured label_plural.
+func LocalizedArchiveTitle(c *gin.Context, mgr *coreI18n.Manager, typeDef *content.ContentTypeDef) string {
+	if typeDef == nil {
+		return ""
+	}
+	fallback := typeDef.LabelPlural
+	if fallback == "" {
+		fallback = typeDef.Label
+	}
+	if mgr == nil || c == nil {
+		return fallback
+	}
+	for _, key := range archiveTitleKeys(typeDef) {
+		if key == "" {
+			continue
+		}
+		if title := mgr.Translate(c, key); title != "" && title != key {
+			return title
+		}
+	}
+	return fallback
+}
+
+func archiveTitleKeys(typeDef *content.ContentTypeDef) []string {
+	keys := []string{typeDef.ArchiveTitleKey}
+	if slug := normalizeMessageKeyPart(typeDef.Rewrite.Slug); slug != "" {
+		keys = append(keys, "page_title_"+slug)
+	}
+	if tmpl := normalizeMessageKeyPart(typeDef.Templates.Archive); tmpl != "" {
+		keys = append(keys, "page_title_"+tmpl)
+	}
+	if name := normalizeMessageKeyPart(typeDef.Name); name != "" {
+		keys = append(keys, "page_title_"+name)
+	}
+	return keys
+}
+
+func normalizeMessageKeyPart(s string) string {
+	s = strings.TrimSpace(strings.ToLower(s))
+	var b strings.Builder
+	lastUnderscore := false
+	for _, r := range s {
+		isWord := (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9')
+		if isWord {
+			b.WriteRune(r)
+			lastUnderscore = false
+			continue
+		}
+		if !lastUnderscore && b.Len() > 0 {
+			b.WriteByte('_')
+			lastUnderscore = true
+		}
+	}
+	return strings.Trim(b.String(), "_")
+}
+
+func replaceSEOTitleSiteName(title, oldName, newName string) string {
+	title = strings.TrimSpace(title)
+	oldName = strings.TrimSpace(oldName)
+	newName = strings.TrimSpace(newName)
+	if title == "" || oldName == "" || newName == "" {
+		return title
+	}
+	if title == oldName {
+		return newName
+	}
+	for _, sep := range []string{" | ", " - "} {
+		suffix := sep + oldName
+		if strings.HasSuffix(title, suffix) {
+			pageTitle := strings.TrimSpace(strings.TrimSuffix(title, suffix))
+			if pageTitle == "" {
+				return newName
+			}
+			return pageTitle + sep + newName
+		}
+	}
+	return title
 }
 
 // ApplyContentMetaSEO runs the SEOContentMeta filter so plugins can override
