@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}} - {{.SiteName}} CMS</title>
-    <link rel="stylesheet" href="/static/admin/css/admin.css?v=42">
+    <link rel="stylesheet" href="/static/admin/css/admin.css?v=43">
 </head>
 <body class="admin-body">
     <aside class="sidebar" id="sidebar">
@@ -130,9 +130,12 @@
         generateSitemap: {{jsT . "action.generate_sitemap"}},
         requestFailed: {{jsT . "error.request_failed"}},
         progressWorkingTitle: {{jsT . "progress.working_title"}},
-        progressWorkingMessage: {{jsT . "progress.working_message"}}
+        progressWorkingMessage: {{jsT . "progress.working_message"}},
+        editorHtmlSourceTitle: {{jsT . "editor.html_source_title"}},
+        editorHtmlSourceLabel: {{jsT . "editor.html_source_label"}},
+        editorVisualModeTitle: {{jsT . "editor.visual_mode_title"}}
     };
     </script>
-    <script src="/static/admin/js/admin.js?v=11"></script>
+    <script src="/static/admin/js/admin.js?v=12"></script>
 </body>
 </html>{{end}}

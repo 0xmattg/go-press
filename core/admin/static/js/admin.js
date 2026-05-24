@@ -116,9 +116,13 @@ function adminFormat(template) {
                                 [{ 'indent': '-1' }, { 'indent': '+1' }],
                                 ['blockquote', 'code-block'],
                                 ['link', 'image'],
-                                ['clean']
+                                ['clean'],
+                                ['html-source']
                             ],
                             handlers: {
+                                'html-source': function() {
+                                    toggleSourceMode();
+                                },
                                 image: function() {
                                     var q = quill;
                                     openMediaPicker(function(url, item) {
@@ -145,11 +149,94 @@ function adminFormat(template) {
                     }
                 });
 
+                var sourceTextarea = document.createElement('textarea');
+                sourceTextarea.className = 'html-source-editor';
+                sourceTextarea.setAttribute('aria-label', adminText('editorHtmlSourceLabel', 'HTML source'));
+                sourceTextarea.setAttribute('spellcheck', 'false');
+                sourceTextarea.style.display = 'none';
+                editorDiv.parentNode.insertBefore(sourceTextarea, editorDiv.nextSibling);
+
+                var sourceMode = false;
+                var toolbar = editorDiv.previousElementSibling;
+                if (!toolbar || !toolbar.classList.contains('ql-toolbar')) {
+                    toolbar = editorDiv.parentNode.querySelector('.ql-toolbar');
+                }
+                var sourceButton = toolbar ? toolbar.querySelector('.ql-html-source') : null;
+
+                if (sourceButton) {
+                    sourceButton.setAttribute('type', 'button');
+                    sourceButton.setAttribute('aria-pressed', 'false');
+                    var sourceGroup = sourceButton.closest('.ql-formats');
+                    if (sourceGroup) {
+                        sourceGroup.classList.add('ql-html-source-group');
+                    }
+                }
+
+                function setToolbarDisabled(disabled) {
+                    if (!toolbar) return;
+                    toolbar.querySelectorAll('button, select').forEach(function(control) {
+                        if (control === sourceButton) return;
+                        control.disabled = disabled;
+                        control.classList.toggle('ql-source-disabled', disabled);
+                    });
+                }
+
+                function setSourceButtonActive(active) {
+                    if (!sourceButton) return;
+                    var label = active
+                        ? adminText('editorVisualModeTitle', 'Return to visual editor')
+                        : adminText('editorHtmlSourceTitle', 'View HTML source');
+                    sourceButton.textContent = label;
+                    sourceButton.classList.toggle('ql-active', active);
+                    sourceButton.setAttribute('aria-pressed', active ? 'true' : 'false');
+                    sourceButton.setAttribute('aria-label', label);
+                }
+
+                setSourceButtonActive(false);
+
+                function enterSourceMode() {
+                    sourceTextarea.value = quill.root.innerHTML;
+                    textarea.value = sourceTextarea.value;
+                    editorDiv.style.display = 'none';
+                    sourceTextarea.style.display = 'block';
+                    sourceMode = true;
+                    setToolbarDisabled(true);
+                    setSourceButtonActive(true);
+                    sourceTextarea.focus();
+                }
+
+                function exitSourceMode() {
+                    var html = sourceTextarea.value;
+                    textarea.value = html;
+                    quill.root.innerHTML = html;
+                    quill.update('silent');
+                    sourceTextarea.style.display = 'none';
+                    editorDiv.style.display = '';
+                    sourceMode = false;
+                    setToolbarDisabled(false);
+                    setSourceButtonActive(false);
+                    quill.focus();
+                }
+
+                function toggleSourceMode() {
+                    if (sourceMode) {
+                        exitSourceMode();
+                    } else {
+                        enterSourceMode();
+                    }
+                }
+
+                sourceTextarea.addEventListener('input', function() {
+                    if (sourceMode) {
+                        textarea.value = sourceTextarea.value;
+                    }
+                });
+
                 // Sync HTML back to textarea on form submit
-                var form = document.getElementById('contentForm');
+                var form = textarea.closest('form') || document.getElementById('contentForm');
                 if (form) {
                     form.addEventListener('submit', function() {
-                        textarea.value = quill.root.innerHTML;
+                        textarea.value = sourceMode ? sourceTextarea.value : quill.root.innerHTML;
                     });
                 }
             });
