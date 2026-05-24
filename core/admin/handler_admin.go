@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"go-press/config"
 	"go-press/core/hook"
 	"go-press/core/option"
 	"go-press/core/user"
@@ -38,7 +39,8 @@ func (h *Handler) SettingUpdate(c *gin.Context) {
 	if !h.checkPermission(c, "setting", "update") {
 		return
 	}
-	items := h.svc.GetAllSettings(h.svc.AdminLanguage())
+	adminLang := h.svc.AdminLanguage()
+	items := h.svc.GetAllSettings(adminLang)
 	for _, s := range items {
 		if s.ReadOnly {
 			continue
@@ -49,6 +51,10 @@ func (h *Handler) SettingUpdate(c *gin.Context) {
 			if c.PostForm(s.Key) != "" {
 				newValue = "1"
 			}
+		}
+		if s.Key == "site_timezone" && !config.IsValidTimezone(newValue) {
+			c.Redirect(http.StatusFound, "/admin/settings?error="+url.QueryEscape(adminT(adminLang, "error.invalid_timezone")))
+			return
 		}
 		if newValue != s.Value {
 			h.svc.UpdateSetting(s.Key, newValue)
@@ -61,7 +67,7 @@ func (h *Handler) SettingUpdate(c *gin.Context) {
 	h.invalidatePageCache()
 	h.fireOptionsBulkUpdated(c)
 	h.logAction(c, "update", "setting", 0, "system settings updated")
-	c.Redirect(http.StatusFound, "/admin/settings?success="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "notice.settings_updated")))
+	c.Redirect(http.StatusFound, "/admin/settings?success="+url.QueryEscape(adminT(adminLang, "notice.settings_updated")))
 }
 
 // SitemapGenerate generates a static sitemap.xml file in the project root.

@@ -15,6 +15,7 @@ func TestSaveWritesConfigWithSecurePermissions(t *testing.T) {
 			Name:     "Example",
 			URL:      "http://localhost:8080",
 			Language: "zh-CN",
+			Timezone: "Asia/Shanghai",
 			Theme:    "modern-company",
 		},
 		Server: ServerConfig{
@@ -63,5 +64,8 @@ func TestSaveWritesConfigWithSecurePermissions(t *testing.T) {
 	}
 	if !loaded.Install.Completed {
 		t.Fatalf("loaded install completion = false, want true")
+	}
+	if loaded.Site.Timezone != cfg.Site.Timezone {
+		t.Fatalf("loaded timezone = %q, want %q", loaded.Site.Timezone, cfg.Site.Timezone)
 	}
 }

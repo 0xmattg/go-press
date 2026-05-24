@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"time"
 	"unicode"
 
 	"go-press/core/content"
@@ -103,6 +104,22 @@ func (b *BaseTheme) LoadTemplates(t Theme) {
 func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 	engineFuncs := template.FuncMap{}
 	if b.App != nil {
+		siteLoc := b.App.SiteLocation()
+		if siteLoc == nil {
+			siteLoc = time.Local
+		}
+		engineFuncs["formatDate"] = func(t *time.Time) string {
+			if t == nil {
+				return ""
+			}
+			return t.In(siteLoc).Format("Jan 2, 2006")
+		}
+		engineFuncs["formatDateTime"] = func(t *time.Time) string {
+			if t == nil {
+				return ""
+			}
+			return t.In(siteLoc).Format("2006-01-02 15:04")
+		}
 		rw := b.App.RewriteEngine()
 		seo := b.App.SEOBuilder()
 		if rw != nil {

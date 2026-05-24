@@ -267,6 +267,30 @@ func (t *MyTheme) DemoSeedPath() string {
 - 全主题共用的"站点名称 / 简介" **不要** 用 `company_name` 之类的本地 key 收集，统一走 admin「系统设置 > 网站设置」的 `site_name` / `site_description`。详见 [SEO 接入规范](seo-integration.md)
 - 把 `home_logo_image` / `home_logo_combined_image` 这类图片字段配上「选择图片」按钮调用 `openMediaPicker(callback)`
 
+## 日期与站点时区
+
+新主题展示内容发布时间时，优先使用 `BaseFuncMap()` 提供的 `formatDate` / `formatDateTime`。这两个 helper 会读取 admin「系统设置 > 网站设置」里的 `site_timezone`，把数据库中的 UTC 时间转换到站点时区后再输出。
+
+如果主题确实需要自定义日期格式函数，不要直接 `tm.Format(...)`，应先转到 `engine.SiteLocation()`：
+
+```go
+func New(engine *core.Engine, themeDir string) *MyTheme {
+    t := &MyTheme{engine: engine}
+    t.InitBase(engine, themeDir, template.FuncMap{
+        "formatLongDate": func(tm *time.Time) string {
+            if tm == nil {
+                return ""
+            }
+            return tm.In(engine.SiteLocation()).Format("2006-01-02")
+        },
+    })
+    t.LoadTemplates(t)
+    return t
+}
+```
+
+这样新主题、后台列表和 sitemap 使用的是同一套发布时间语义：输入按站点时区解析，数据库统一存 UTC，展示再按站点时区转换。老站点没有 `site_timezone` 时会回退到服务器本地时区，建议在系统设置里保存一个明确值。
+
 ## 推荐：BaseTheme + gin.H 路径
 
 新主题强烈推荐这条路径——SEO 注入完全免费，未来 core 长出新能力（比如 og:image 兜底、per-page robots）也是零改动跟上：

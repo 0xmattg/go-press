@@ -622,6 +622,7 @@ func (e *Engine) SetupAdmin() {
 		e.Auth,
 		e.RBAC,
 		e.Config.Site.Name,
+		e.Config.Site.Timezone,
 		e.Config.CMS,
 		e.Registry,
 	)
@@ -986,6 +987,25 @@ func (e *Engine) MenuStore() *menu.Store             { return e.Menus }
 func (e *Engine) MediaRepo() *media.Repository       { return e.Media }
 func (e *Engine) I18nManager() *coreI18n.Manager     { return e.I18n }
 func (e *Engine) HookBus() *hook.Bus                 { return e.Hooks }
+
+func (e *Engine) SiteTimezone() string {
+	if e != nil && e.Options != nil {
+		if tz := strings.TrimSpace(e.Options.Get("site_timezone")); tz != "" && config.IsValidTimezone(tz) {
+			return tz
+		}
+	}
+	if e != nil && e.Config != nil {
+		if tz := strings.TrimSpace(e.Config.Site.Timezone); tz != "" && config.IsValidTimezone(tz) {
+			return tz
+		}
+	}
+	return config.DefaultTimezoneName()
+}
+
+func (e *Engine) SiteLocation() *time.Location {
+	loc, _ := config.LoadTimezone(e.SiteTimezone())
+	return loc
+}
 
 // Compile-time check: Engine implements theme.App.
 var _ coreTheme.App = (*Engine)(nil)

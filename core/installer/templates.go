@@ -207,6 +207,74 @@ const layoutTemplate = `
 			font-weight: 600;
 			margin-bottom: .35rem;
 		}
+		.form-label-row {
+			display: flex;
+			align-items: center;
+			gap: .4rem;
+			margin-bottom: .35rem;
+		}
+		.form-label-row label {
+			margin-bottom: 0;
+		}
+		.info-popover {
+			position: relative;
+			display: inline-flex;
+			align-items: center;
+		}
+		.info-trigger {
+			width: 18px;
+			height: 18px;
+			border: 1px solid #cbd5e1;
+			border-radius: 999px;
+			background: #f8fafc;
+			color: var(--text-muted);
+			font-size: .72rem;
+			font-weight: 700;
+			line-height: 1;
+			cursor: help;
+		}
+		.info-trigger:hover,
+		.info-trigger:focus {
+			border-color: var(--primary);
+			color: var(--primary);
+			outline: none;
+			box-shadow: 0 0 0 3px rgba(37, 99, 235, .1);
+		}
+		.info-bubble {
+			position: absolute;
+			left: 50%;
+			bottom: calc(100% + 8px);
+			z-index: 10;
+			width: min(280px, 70vw);
+			padding: .55rem .65rem;
+			border: 1px solid var(--border);
+			border-radius: var(--radius);
+			background: #0f172a;
+			color: #fff;
+			font-size: .75rem;
+			font-weight: 500;
+			line-height: 1.55;
+			box-shadow: 0 10px 24px rgba(15, 23, 42, .18);
+			opacity: 0;
+			pointer-events: none;
+			transform: translate(-50%, 4px);
+			transition: opacity .15s, transform .15s;
+		}
+		.info-bubble::after {
+			content: "";
+			position: absolute;
+			left: 50%;
+			top: 100%;
+			border-width: 6px 6px 0;
+			border-style: solid;
+			border-color: #0f172a transparent transparent;
+			transform: translateX(-50%);
+		}
+		.info-popover:hover .info-bubble,
+		.info-trigger:focus + .info-bubble {
+			opacity: 1;
+			transform: translate(-50%, 0);
+		}
 		.form-group input,
 		.form-group select {
 			width: 100%;
@@ -580,6 +648,31 @@ const siteTemplate = `
 			<select id="language" name="language">
 				<option value="zh-CN" {{if eq .Site.Language "zh-CN"}}selected{{end}}>简体中文</option>
 				<option value="en" {{if eq .Site.Language "en"}}selected{{end}}>English</option>
+			</select>
+		</div>
+		<div class="form-group">
+			<div class="form-label-row">
+				<label for="timezone">{{T .Lang "site.timezone"}}</label>
+				<span class="info-popover">
+					<button class="info-trigger" type="button" aria-label="{{T .Lang "site.timezone_help"}}">i</button>
+					<span class="info-bubble" role="tooltip">{{T .Lang "site.timezone_help"}}</span>
+				</span>
+			</div>
+			<select id="timezone" name="timezone">
+				<option value="Local" {{if eq .Site.Timezone "Local"}}selected{{end}}>Server local time</option>
+				<option value="UTC" {{if eq .Site.Timezone "UTC"}}selected{{end}}>UTC</option>
+				<option value="Asia/Shanghai" {{if eq .Site.Timezone "Asia/Shanghai"}}selected{{end}}>Asia/Shanghai</option>
+				<option value="Asia/Hong_Kong" {{if eq .Site.Timezone "Asia/Hong_Kong"}}selected{{end}}>Asia/Hong_Kong</option>
+				<option value="Asia/Tokyo" {{if eq .Site.Timezone "Asia/Tokyo"}}selected{{end}}>Asia/Tokyo</option>
+				<option value="Asia/Singapore" {{if eq .Site.Timezone "Asia/Singapore"}}selected{{end}}>Asia/Singapore</option>
+				<option value="Asia/Dubai" {{if eq .Site.Timezone "Asia/Dubai"}}selected{{end}}>Asia/Dubai</option>
+				<option value="Europe/London" {{if eq .Site.Timezone "Europe/London"}}selected{{end}}>Europe/London</option>
+				<option value="Europe/Berlin" {{if eq .Site.Timezone "Europe/Berlin"}}selected{{end}}>Europe/Berlin</option>
+				<option value="America/New_York" {{if eq .Site.Timezone "America/New_York"}}selected{{end}}>America/New_York</option>
+				<option value="America/Chicago" {{if eq .Site.Timezone "America/Chicago"}}selected{{end}}>America/Chicago</option>
+				<option value="America/Denver" {{if eq .Site.Timezone "America/Denver"}}selected{{end}}>America/Denver</option>
+				<option value="America/Los_Angeles" {{if eq .Site.Timezone "America/Los_Angeles"}}selected{{end}}>America/Los_Angeles</option>
+				<option value="Australia/Sydney" {{if eq .Site.Timezone "Australia/Sydney"}}selected{{end}}>Australia/Sydney</option>
 			</select>
 		</div>
 		<div class="form-group">

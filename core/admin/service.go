@@ -26,17 +26,18 @@ import (
 
 // Service provides admin business logic using GoPress core subsystems.
 type Service struct {
-	db          *gorm.DB
-	contentRepo *content.Repository
-	taxRepo     *taxonomy.Repository
-	userRepo    *user.Repository
-	mediaRepo   *coreMedia.Repository
-	options     *option.Store
-	auth        *user.Auth
-	rbac        *user.RBAC
-	siteName    string
-	config      config.CMSConfig
-	registry    *content.Registry
+	db           *gorm.DB
+	contentRepo  *content.Repository
+	taxRepo      *taxonomy.Repository
+	userRepo     *user.Repository
+	mediaRepo    *coreMedia.Repository
+	options      *option.Store
+	auth         *user.Auth
+	rbac         *user.RBAC
+	siteName     string
+	siteTimezone string
+	config       config.CMSConfig
+	registry     *content.Registry
 
 	mediaVariantJobMu sync.Mutex
 	mediaVariantJob   MediaVariantJob
@@ -65,21 +66,23 @@ func NewService(
 	auth *user.Auth,
 	rbac *user.RBAC,
 	siteName string,
+	siteTimezone string,
 	cfg config.CMSConfig,
 	registry *content.Registry,
 ) *Service {
 	return &Service{
-		db:          db,
-		contentRepo: contentRepo,
-		taxRepo:     taxRepo,
-		userRepo:    userRepo,
-		mediaRepo:   mediaRepo,
-		options:     options,
-		auth:        auth,
-		rbac:        rbac,
-		siteName:    siteName,
-		config:      cfg,
-		registry:    registry,
+		db:           db,
+		contentRepo:  contentRepo,
+		taxRepo:      taxRepo,
+		userRepo:     userRepo,
+		mediaRepo:    mediaRepo,
+		options:      options,
+		auth:         auth,
+		rbac:         rbac,
+		siteName:     siteName,
+		siteTimezone: strings.TrimSpace(siteTimezone),
+		config:       cfg,
+		registry:     registry,
 	}
 }
 
@@ -361,6 +364,7 @@ var settingLabelMap = map[string]string{
 	"site_description":    "field.site_description",
 	"site_icon":           "field.site_icon",
 	"site_language":       "field.site_language",
+	"site_timezone":       "field.site_timezone",
 	"powered_by_gopress":  "field.powered_by_gopress",
 	"admin_language":      "field.admin_language",
 	"active_theme":        "field.active_theme",
@@ -386,6 +390,7 @@ var settingDescriptionMap = map[string]string{
 	"admin_language":     "help.admin_language",
 	"powered_by_gopress": "help.powered_by_gopress",
 	"site_language":      "help.site_language",
+	"site_timezone":      "help.site_timezone",
 	"site_icon":          "help.site_icon",
 	"demo_imported":      "help.demo_imported",
 }
@@ -477,6 +482,7 @@ var coreSettingKeys = map[string]bool{
 	"site_description":   true,
 	"site_icon":          true,
 	"site_language":      true,
+	"site_timezone":      true,
 	"powered_by_gopress": true,
 	"admin_language":     true,
 	"admin_email":        true,
@@ -514,6 +520,7 @@ func (s *Service) GetAllSettings(lang string) []SettingItemView {
 		"site_description":   "",
 		"site_icon":          "",
 		"site_language":      "",
+		"site_timezone":      s.defaultSiteTimezone(),
 		"powered_by_gopress": "1",
 		"admin_language":     defaultAdminLanguage,
 		"admin_email":        "",
@@ -560,7 +567,7 @@ func settingGroup(key string) string {
 }
 
 func settingInputType(key string) string {
-	if key == "admin_language" {
+	if key == "admin_language" || key == "site_timezone" {
 		return "select"
 	}
 	if key == "site_icon" {
@@ -576,7 +583,56 @@ func settingOptions(key string) []SettingOptionView {
 	if key == "admin_language" {
 		return adminSupportedLanguages()
 	}
+	if key == "site_timezone" {
+		return supportedTimezones()
+	}
 	return nil
+}
+
+func (s *Service) defaultSiteTimezone() string {
+	if s == nil {
+		return config.DefaultTimezoneName()
+	}
+	if tz := strings.TrimSpace(s.siteTimezone); tz != "" {
+		return tz
+	}
+	return config.DefaultTimezoneName()
+}
+
+func (s *Service) SiteTimezone() string {
+	if s == nil {
+		return config.DefaultTimezoneName()
+	}
+	if s.options != nil {
+		if tz := strings.TrimSpace(s.options.Get("site_timezone")); tz != "" && config.IsValidTimezone(tz) {
+			return tz
+		}
+	}
+	if tz := strings.TrimSpace(s.siteTimezone); tz != "" && config.IsValidTimezone(tz) {
+		return tz
+	}
+	return config.DefaultTimezoneName()
+}
+
+func (s *Service) SiteLocation() *time.Location {
+	loc, _ := config.LoadTimezone(s.SiteTimezone())
+	return loc
+}
+
+func (s *Service) ParseAdminDateTimeInput(value string) (time.Time, error) {
+	t, err := time.ParseInLocation("2006-01-02T15:04", value, s.SiteLocation())
+	if err != nil {
+		return time.Time{}, err
+	}
+	return t.UTC(), nil
+}
+
+func (s *Service) FormatAdminDateTime(t time.Time) string {
+	return t.In(s.SiteLocation()).Format("2006-01-02 15:04")
+}
+
+func (s *Service) FormatAdminDateTimeInput(t time.Time) string {
+	return t.In(s.SiteLocation()).Format("2006-01-02T15:04")
 }
 
 func (s *Service) UpdateSetting(key, value string) {

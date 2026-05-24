@@ -3,6 +3,7 @@ package theme
 import (
 	"html/template"
 	"path/filepath"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"go-press/core/content"
@@ -57,6 +58,10 @@ type App interface {
 
 	// HookBus returns the core hook bus for theme/plugin extension points.
 	HookBus() *hook.Bus
+
+	// SiteLocation returns the configured site timezone location used for
+	// public date formatting.
+	SiteLocation() *time.Location
 }
 
 // Theme is the runtime contract every GoPress theme must implement.

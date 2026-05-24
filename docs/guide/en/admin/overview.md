@@ -17,7 +17,7 @@ The admin CRUD surface is data-driven. A content type declared in `theme.toml` c
 
 ## Settings
 
-System settings are split into website settings and admin settings. Website settings affect the public site, SEO metadata, sitemap, favicon, and branding options. The `site_icon` value is the shared favicon source for all themes. Admin settings control the CMS interface, including the admin language.
+System settings are split into website settings and admin settings. Website settings affect the public site, SEO metadata, sitemap, favicon, publish-time timezone, and branding options. The `site_icon` value is the shared favicon source for all themes. `site_timezone` is the shared timezone used to parse admin publish-time inputs and format content dates in admin lists and themes; timestamps are stored in UTC. Admin settings control the CMS interface, including the admin language.
 
 ## Extension Points
 

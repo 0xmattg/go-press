@@ -175,6 +175,30 @@ Every plugin-friendly theme should declare:
 
 Use `pageTitleFor`, `seoHeadFor`, `settingOr`, `archiveURL`, `contentURL`, `isMenuURLActive`, `currentLang`, `langPrefixURL`, `menuByLocation`, and the responsive image helpers from the core funcmap instead of implementing theme-local equivalents.
 
+## Dates And Site Timezone
+
+Use `formatDate` and `formatDateTime` from `BaseFuncMap()` when rendering content publish times. These helpers read `site_timezone` from System Settings, convert UTC timestamps from the database into the site timezone, and then format the value for templates.
+
+If a theme needs a custom date formatter, convert through `engine.SiteLocation()` before formatting:
+
+```go
+func New(engine *core.Engine, themeDir string) *MyTheme {
+    t := &MyTheme{engine: engine}
+    t.InitBase(engine, themeDir, template.FuncMap{
+        "formatLongDate": func(tm *time.Time) string {
+            if tm == nil {
+                return ""
+            }
+            return tm.In(engine.SiteLocation()).Format("2006-01-02")
+        },
+    })
+    t.LoadTemplates(t)
+    return t
+}
+```
+
+This keeps the contract consistent across the admin, frontend, and sitemap path: inputs are parsed in the site timezone, stored as UTC, and displayed in the site timezone. Existing sites without `site_timezone` fall back to the server local timezone until an explicit value is saved.
+
 ## Demo Data
 
 Implement `DemoSeedPath()` to enable one-click demo import from the admin:

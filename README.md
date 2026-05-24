@@ -199,7 +199,7 @@ go run ./cmd/gendoc/
 
 ### URL and SEO
 
-- **Shared site metadata** — admin-managed `site_name` and `site_description` are used across themes.
+- **Shared site metadata** — admin-managed `site_name`, `site_description`, and `site_timezone` are used across themes; publish times are entered and displayed in the site timezone while stored as UTC.
 - **SEOBuilder** — home, archive, and single pages generate meta descriptions, canonical links, Open Graph tags, and JSON-LD.
 - **`seoHeadFor` helper** — reflection-based and safe for both `gin.H` and custom structs.
 - **Per-content SEO overrides** — the bundled `seo-extras` plugin adds Yoast-style fields for title, description, Open Graph image, and robots.

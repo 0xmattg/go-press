@@ -172,6 +172,9 @@ func TestInstallerSitePageCarriesSelectedAdminLanguage(t *testing.T) {
 	if !strings.Contains(body, `<option value="zh-CN" selected>`) {
 		t.Fatalf("site language does not default to selected language: %s", body)
 	}
+	if !strings.Contains(body, `name="timezone"`) {
+		t.Fatalf("site page does not render timezone selector: %s", body)
+	}
 }
 
 func TestInstallerDatabaseTestValidatesRequiredFields(t *testing.T) {
