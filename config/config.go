@@ -21,6 +21,7 @@ type SiteConfig struct {
 	Name     string `mapstructure:"name" toml:"name"`
 	URL      string `mapstructure:"url" toml:"url"`
 	Language string `mapstructure:"language" toml:"language"`
+	Timezone string `mapstructure:"timezone" toml:"timezone"`
 	Theme    string `mapstructure:"theme" toml:"theme"`
 }
 

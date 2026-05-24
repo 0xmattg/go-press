@@ -10,9 +10,9 @@ GoPress 的主题系统借鉴 WordPress 设计：主题是一个 Go 包，通过
 - **内置回退模板** — 当主题未提供对应模板时，BaseTheme 自动使用内置的分类归档、单页、列表回退模板，避免 404
 - **详情页标签展示** — 任意挂载 `tag` 分类法的内容详情页都可以显示关联 Tags，链接到对应分类归档页
 - **Theme 接口** — 实现 `Name()` / `Setup()` / `ServeHTTP()` / `TemplateFuncs()` 即可
-- **App 接口** — 主题通过 `theme.App` 接口访问 DB、ContentRepo、RewriteEngine、SEOBuilder、MediaRepo、HookBus 等引擎能力
+- **App 接口** — 主题通过 `theme.App` 接口访问 DB、ContentRepo、RewriteEngine、SEOBuilder、MediaRepo、HookBus、SiteLocation 等引擎能力
 - **模板层级回退** — 类 WordPress 的模板查找：`single-{type}-{slug}.tmpl` → `single-{type}.tmpl` → `single.tmpl` → `index.tmpl`
-- **统一模板函数（Single-Source FuncMap）** — `CommonFuncMap()` + BaseTheme 的引擎感知 helpers（`buildURL`、`archiveURL`、`contentURL`、`pageTitleFor`、`seoHeadFor`、`seoHead`、`menuByLocation`、`isMenuURLActive`、`T`、`currentLang`、`langPrefixURL`、`renderHook`、`responsiveImage`、`responsiveImagePriority`、`responsiveImagePreload`）通过 `BaseFuncMap()` 统一下发。**所有主题、所有模板加载路径共享同一份 funcmap**。`isMenuActive` 仅保留给旧主题兼容，新主题应使用请求感知的 `isMenuURLActive`
+- **统一模板函数（Single-Source FuncMap）** — `CommonFuncMap()` + BaseTheme 的引擎感知 helpers（`buildURL`、`archiveURL`、`contentURL`、`pageTitleFor`、`seoHeadFor`、`seoHead`、`menuByLocation`、`isMenuURLActive`、`formatDate`、`formatDateTime`、`T`、`currentLang`、`langPrefixURL`、`renderHook`、`responsiveImage`、`responsiveImagePriority`、`responsiveImagePreload`）通过 `BaseFuncMap()` 统一下发。**所有主题、所有模板加载路径共享同一份 funcmap**。`formatDate` / `formatDateTime` 会按 `site_timezone` 展示内容时间；`isMenuActive` 仅保留给旧主题兼容，新主题应使用请求感知的 `isMenuURLActive`
 - **前台模板 Hook 插槽** — 主题在语义位置声明 `{{renderHook "theme.head.end" .}}` / `{{renderHook "theme.body.open" .}}` / `{{renderHook "theme.footer.end" .}}` / `{{renderHook "header.nav.after" .}}` 等标准插槽，插件注册同名 filter 输出 HTML
 - **LoadPageBundle 核心级页面模板编译器** — `core/theme/page_bundle.go` 提供 `LoadPageBundle(theme, pages)` 和 `LoadAllPageBundles(theme)`：自动发现 `layouts/base.tmpl` + `partials/*.tmpl` + `pages/*.tmpl`，对每个页面独立编译（允许不同页面重新定义同名 block）
 - **自定义路由 + 动态路由** — 静态页面（`/about`）通过 `AddRoute()` 注册，动态 URL（例如主题声明的 `product` 对应 `/products/:slug`）由 Rewrite 引擎按当前内容类型配置自动解析；`product` / `service` / `showcase` 只是常见示例，不是 core 固定模型

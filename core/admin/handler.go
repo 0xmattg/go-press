@@ -244,12 +244,12 @@ func (h *Handler) buildFuncMap() {
 		"formatDate": func(t interface{}) string {
 			switch v := t.(type) {
 			case time.Time:
-				return v.Format("2006-01-02 15:04")
+				return h.svc.FormatAdminDateTime(v)
 			case *time.Time:
 				if v == nil {
 					return ""
 				}
-				return v.Format("2006-01-02 15:04")
+				return h.svc.FormatAdminDateTime(*v)
 			default:
 				return ""
 			}
@@ -258,7 +258,7 @@ func (h *Handler) buildFuncMap() {
 			if t == nil {
 				return ""
 			}
-			return t.Format("2006-01-02T15:04")
+			return h.svc.FormatAdminDateTimeInput(*t)
 		},
 		"timeAgoCN": func(t interface{}) string {
 			return formatAdminTimeAgo("zh-CN", t)

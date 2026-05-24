@@ -49,7 +49,7 @@ func New(engine *core.Engine, themeDir string) *AxisFormTheme {
 			if tm == nil {
 				return ""
 			}
-			return tm.Format("January 2, 2006")
+			return tm.In(engine.SiteLocation()).Format("January 2, 2006")
 		},
 		"stripTags": func(s string) string {
 			return strings.TrimSpace(reHTMLTags.ReplaceAllString(s, " "))

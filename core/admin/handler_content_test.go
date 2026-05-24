@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -44,6 +45,28 @@ func TestEnsurePublishedAtForPublishedLeavesDraftUnset(t *testing.T) {
 
 	if item.PublishedAt != nil {
 		t.Fatal("PublishedAt should remain nil for draft content")
+	}
+}
+
+func TestAdminDateTimeInputRoundTripsInLocalTime(t *testing.T) {
+	svc := &Service{siteTimezone: "Asia/Shanghai"}
+
+	parsed, err := svc.ParseAdminDateTimeInput("2026-05-25T07:56")
+	if err != nil {
+		t.Fatalf("parse admin datetime input: %v", err)
+	}
+
+	if got := parsed.Location(); got != time.UTC {
+		t.Fatalf("expected UTC storage location, got %v", got)
+	}
+	if got := parsed.Format("2006-01-02 15:04"); got != "2026-05-24 23:56" {
+		t.Fatalf("unexpected UTC instant: %s", got)
+	}
+	if got := svc.FormatAdminDateTimeInput(parsed); got != "2026-05-25T07:56" {
+		t.Fatalf("datetime-local value should round trip, got %q", got)
+	}
+	if got := svc.FormatAdminDateTime(parsed); got != "2026-05-25 07:56" {
+		t.Fatalf("admin display time should use local time, got %q", got)
 	}
 }
 

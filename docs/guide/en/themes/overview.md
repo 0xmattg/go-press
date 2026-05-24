@@ -11,6 +11,7 @@ GoPress themes are Go packages that register themselves with the engine. A theme
 - Standard frontend hook slots for plugins.
 - Menu locations and language-aware menu rendering.
 - URL-based active menu helper from the core funcmap.
+- Site-timezone-aware `formatDate` and `formatDateTime` helpers from `BaseFuncMap`.
 - Responsive image helpers backed by media variants.
 - Demo data import through `DemoDataProvider`.
 

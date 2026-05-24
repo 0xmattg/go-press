@@ -13,6 +13,13 @@
             <label>{{.Label}}</label>
             {{if .ReadOnly}}
             <input type="text" name="{{.Key}}" value="{{.Value}}" readonly disabled class="setting-input-readonly" title="{{T $ "help.readonly_setting"}}">
+            {{else if eq .InputType "select"}}
+            {{$setting := .}}
+            <select name="{{.Key}}" class="form-control">
+                {{range .Options}}
+                <option value="{{.Value}}" {{if eq $setting.Value .Value}}selected{{end}}>{{.Label}}</option>
+                {{end}}
+            </select>
             {{else if eq .InputType "media"}}
             <div style="display:flex; gap:0.5rem; align-items:flex-start;">
                 <input type="text" id="setting-{{.Key}}" name="{{.Key}}" value="{{.Value}}" placeholder="/uploads/favicon.png">
@@ -46,9 +53,10 @@
         <div class="form-group settings-item">
             <label>{{.Label}}</label>
             {{if eq .InputType "select"}}
+            {{$setting := .}}
             <select name="{{.Key}}" class="form-control">
                 {{range .Options}}
-                <option value="{{.Value}}" {{if eq $.AdminLanguage .Value}}selected{{end}}>{{.Label}}</option>
+                <option value="{{.Value}}" {{if eq $setting.Value .Value}}selected{{end}}>{{.Label}}</option>
                 {{end}}
             </select>
             {{else}}

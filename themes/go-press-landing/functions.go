@@ -10,13 +10,16 @@ import (
 var reHTMLTags = regexp.MustCompile(`<[^>]*>`)
 
 // DefaultFuncMap returns template helper functions for the landing theme.
-func DefaultFuncMap() template.FuncMap {
+func DefaultFuncMap(loc *time.Location) template.FuncMap {
+	if loc == nil {
+		loc = time.UTC
+	}
 	return template.FuncMap{
 		"formatDate": func(t *time.Time) string {
 			if t == nil {
 				return ""
 			}
-			return t.Format("Jan 2, 2006")
+			return t.In(loc).Format("Jan 2, 2006")
 		},
 		"truncate": func(s string, n int) string {
 			if len(s) <= n {

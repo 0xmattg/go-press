@@ -3,6 +3,7 @@ package gopresslanding
 import (
 	"html/template"
 	"path/filepath"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -37,7 +38,7 @@ func New(engine *core.Engine, themeDir string) *LandingTheme {
 		handler: handler,
 	}
 
-	t.InitBase(engine, themeDir, DefaultFuncMap())
+	t.InitBase(engine, themeDir, DefaultFuncMap(engine.SiteLocation()))
 	t.handler.loadTemplates(t.TemplateFuncs())
 
 	// Single-page: only the root route
@@ -52,7 +53,7 @@ func NewWithDB(db *gorm.DB, themeDir string) *LandingTheme {
 	svc := NewPageServiceDB(db)
 	handler := NewHandler(svc, themeDir, nil)
 	t := &LandingTheme{handler: handler}
-	t.InitBase(nil, themeDir, DefaultFuncMap())
+	t.InitBase(nil, themeDir, DefaultFuncMap(time.UTC))
 	t.handler.loadTemplates(t.TemplateFuncs())
 	t.AddRoute("GET", "/", t.handler.Home)
 	return t

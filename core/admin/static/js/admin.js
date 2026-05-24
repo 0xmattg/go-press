@@ -157,6 +157,8 @@ function adminFormat(template) {
                 editorDiv.parentNode.insertBefore(sourceTextarea, editorDiv.nextSibling);
 
                 var sourceMode = false;
+                var sourceHTML = textarea.value;
+                var visualDirty = false;
                 var toolbar = editorDiv.previousElementSibling;
                 if (!toolbar || !toolbar.classList.contains('ql-toolbar')) {
                     toolbar = editorDiv.parentNode.querySelector('.ql-toolbar');
@@ -195,7 +197,7 @@ function adminFormat(template) {
                 setSourceButtonActive(false);
 
                 function enterSourceMode() {
-                    sourceTextarea.value = quill.root.innerHTML;
+                    sourceTextarea.value = sourceHTML;
                     textarea.value = sourceTextarea.value;
                     editorDiv.style.display = 'none';
                     sourceTextarea.style.display = 'block';
@@ -207,6 +209,8 @@ function adminFormat(template) {
 
                 function exitSourceMode() {
                     var html = sourceTextarea.value;
+                    sourceHTML = html;
+                    visualDirty = false;
                     textarea.value = html;
                     quill.root.innerHTML = html;
                     quill.update('silent');
@@ -228,15 +232,28 @@ function adminFormat(template) {
 
                 sourceTextarea.addEventListener('input', function() {
                     if (sourceMode) {
-                        textarea.value = sourceTextarea.value;
+                        sourceHTML = sourceTextarea.value;
+                        textarea.value = sourceHTML;
                     }
+                });
+
+                quill.on('text-change', function(_delta, _oldDelta, source) {
+                    if (sourceMode || source !== 'user') return;
+                    visualDirty = true;
+                    sourceHTML = quill.root.innerHTML;
+                    textarea.value = sourceHTML;
                 });
 
                 // Sync HTML back to textarea on form submit
                 var form = textarea.closest('form') || document.getElementById('contentForm');
                 if (form) {
                     form.addEventListener('submit', function() {
-                        textarea.value = sourceMode ? sourceTextarea.value : quill.root.innerHTML;
+                        if (sourceMode) {
+                            sourceHTML = sourceTextarea.value;
+                        } else if (visualDirty) {
+                            sourceHTML = quill.root.innerHTML;
+                        }
+                        textarea.value = sourceHTML;
                     });
                 }
             });

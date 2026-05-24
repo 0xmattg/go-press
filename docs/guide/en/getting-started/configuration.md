@@ -44,11 +44,15 @@ mode = "debug"
 ```toml
 [site]
 name = "My GoPress Site"
+url = "https://example.com"
 theme = "atelier-slate"
 language = "en"
+timezone = "UTC"
 ```
 
 The active theme is loaded by slug. Public site language and admin interface language can also be managed from the admin UI after installation.
+
+`timezone` should be an IANA timezone name such as `UTC`, `Asia/Shanghai`, or `America/New_York`, or `Local` to follow the server timezone. Admin publish-time inputs are parsed in the site timezone and stored as UTC timestamps; admin and frontend displays convert them back through the same site timezone. Existing sites without this key fall back to the server local timezone until an explicit value is saved in System Settings.
 
 ## Cache
 
@@ -67,4 +71,3 @@ When Redis is not configured, GoPress keeps the in-process memory cache path act
 - `sitemap.xml` can be generated from the admin UI.
 
 For public repositories, site-specific configuration and generated runtime files should stay ignored by Git.
-

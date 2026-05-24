@@ -195,7 +195,7 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 
 ### URL / SEO
 
-- **统一站点信息** — admin「系统设置 > 网站设置」`site_name` / `site_description`，全主题共用一份来源
+- **统一站点信息** — admin「系统设置 > 网站设置」`site_name` / `site_description` / `site_timezone`，全主题共用一份来源；发布时间按站点时区输入和展示，数据库统一存 UTC
 - **SEOBuilder** — home/archive/single 三类页面统一生成 `<meta description>` + `<link canonical>` + `og:*` + JSON-LD（Article/WebSite schema）
 - **`seoHeadFor` 模板助手** — reflection-based 安全实现，对 `gin.H` 和自定义 struct 都不会因字段缺失白屏
 - **Per-content SEO 覆盖** — 内置 `seo-extras` 插件提供 Yoast 风格 4 字段覆盖（Title / Description / OG Image / Robots），核心通过 `seo.content.meta` filter 开放扩展

@@ -35,6 +35,25 @@ func adminSupportedLanguages() []SettingOptionView {
 	}
 }
 
+func supportedTimezones() []SettingOptionView {
+	return []SettingOptionView{
+		{Value: "Local", Label: "Server local time"},
+		{Value: "UTC", Label: "UTC"},
+		{Value: "Asia/Shanghai", Label: "Asia/Shanghai"},
+		{Value: "Asia/Hong_Kong", Label: "Asia/Hong_Kong"},
+		{Value: "Asia/Tokyo", Label: "Asia/Tokyo"},
+		{Value: "Asia/Singapore", Label: "Asia/Singapore"},
+		{Value: "Asia/Dubai", Label: "Asia/Dubai"},
+		{Value: "Europe/London", Label: "Europe/London"},
+		{Value: "Europe/Berlin", Label: "Europe/Berlin"},
+		{Value: "America/New_York", Label: "America/New_York"},
+		{Value: "America/Chicago", Label: "America/Chicago"},
+		{Value: "America/Denver", Label: "America/Denver"},
+		{Value: "America/Los_Angeles", Label: "America/Los_Angeles"},
+		{Value: "Australia/Sydney", Label: "Australia/Sydney"},
+	}
+}
+
 func adminT(lang, key string, args ...interface{}) string {
 	return adminCatalog.T(lang, key, args...)
 }

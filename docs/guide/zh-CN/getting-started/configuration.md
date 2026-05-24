@@ -9,6 +9,7 @@ GoPress 使用 TOML 作为配置格式。每个站点一份独立的 `config.tom
 name = "My Website"
 url = "https://example.com"
 language = "zh"
+timezone = "Asia/Shanghai"
 theme = "modern-company"
 
 [server]
@@ -50,6 +51,7 @@ completed = true
 
 - `name` / `url` — 给 SEOBuilder 的静态 baseline；admin「系统设置 > 网站设置」中的 `site_name` / `site_description` 会在运行时覆盖渲染层（详见 [SEO 接入规范](../themes/seo-integration.md)）
 - `language` — 默认语言代码（如 `zh`、`en`），影响 i18n 默认 fallback 和多语言插件的默认语言
+- `timezone` — 站点时区，使用 IANA 时区名（如 `Asia/Shanghai`、`America/New_York`）或 `Local`。后台发布时间输入会按该时区解析后以 UTC 存储，前台和后台展示再转回该时区。老站点没有该字段时会兼容回退到服务器本地时区；建议在「系统设置 > 网站设置」里保存一次明确值。
 - `theme` — 启动时激活的主题 slug
 
 ### `[pg]`

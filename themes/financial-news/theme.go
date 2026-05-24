@@ -45,7 +45,7 @@ func New(engine *core.Engine, themeDir string) *FinancialNewsTheme {
 			if tm == nil {
 				return ""
 			}
-			return tm.Format("2006年01月02日 15:04")
+			return tm.In(engine.SiteLocation()).Format("2006年01月02日 15:04")
 		},
 		"timeAgo": func(tm *time.Time) string {
 			if tm == nil {
@@ -64,7 +64,7 @@ func New(engine *core.Engine, themeDir string) *FinancialNewsTheme {
 				return strings.TrimRight(strings.TrimRight(
 					time.Duration(h).String(), "0"), ".") + " 小时前"
 			default:
-				return tm.Format("01-02 15:04")
+				return tm.In(engine.SiteLocation()).Format("01-02 15:04")
 			}
 		},
 	})

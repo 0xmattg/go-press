@@ -234,13 +234,13 @@ func (h *Handler) ContentCreate(c *gin.Context) {
 	}
 	if hasSupport(typeDef.Supports, "publish_date") {
 		if pubDate := c.PostForm("published_at"); pubDate != "" {
-			t, err := time.Parse("2006-01-02T15:04", pubDate)
+			t, err := h.svc.ParseAdminDateTimeInput(pubDate)
 			if err == nil {
 				item.PublishedAt = &t
 			}
 		} else if item.Status == content.StatusPublished {
 			// Auto-set publish time when status is published but no date given
-			now := time.Now()
+			now := time.Now().UTC()
 			item.PublishedAt = &now
 		}
 	}
@@ -294,6 +294,7 @@ func ensurePublishedAtForPublished(item *content.Content) {
 		return
 	}
 	now := time.Now()
+	now = now.UTC()
 	item.PublishedAt = &now
 }
 
@@ -396,14 +397,14 @@ func (h *Handler) ContentUpdate(c *gin.Context) {
 	}
 	if hasSupport(typeDef.Supports, "publish_date") {
 		if pubDate := c.PostForm("published_at"); pubDate != "" {
-			t, err := time.Parse("2006-01-02T15:04", pubDate)
+			t, err := h.svc.ParseAdminDateTimeInput(pubDate)
 			if err == nil {
 				item.PublishedAt = &t
 			}
 		} else if item.Status == content.StatusPublished {
 			// Auto-set publish time when status is published but no date given
 			if item.PublishedAt == nil {
-				now := time.Now()
+				now := time.Now().UTC()
 				item.PublishedAt = &now
 			}
 		} else {

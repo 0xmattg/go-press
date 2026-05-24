@@ -92,6 +92,7 @@ type siteValues struct {
 	SiteURL       string
 	Tagline       string
 	Language      string
+	Timezone      string
 	AdminLanguage string
 	Theme         string
 	AdminUsername string
@@ -347,6 +348,7 @@ func (i *Installer) SiteSubmit(c *gin.Context) {
 		SiteURL:       strings.TrimSpace(c.PostForm("site_url")),
 		Tagline:       strings.TrimSpace(c.PostForm("tagline")),
 		Language:      strings.TrimSpace(c.PostForm("language")),
+		Timezone:      strings.TrimSpace(c.PostForm("timezone")),
 		AdminLanguage: normalizeInstallerLanguage(adminLanguage),
 		Theme:         strings.TrimSpace(c.PostForm("theme")),
 		AdminUsername: strings.TrimSpace(c.PostForm("admin_username")),
@@ -355,7 +357,11 @@ func (i *Installer) SiteSubmit(c *gin.Context) {
 	adminPassword := c.PostForm("admin_password")
 	adminPasswordConfirm := c.PostForm("admin_password_confirm")
 
-	if values.SiteName == "" || values.SiteURL == "" || values.Language == "" || values.Theme == "" || values.AdminUsername == "" || values.AdminEmail == "" || adminPassword == "" {
+	if values.Timezone == "" {
+		values.Timezone = config.DefaultTimezoneName()
+	}
+
+	if values.SiteName == "" || values.SiteURL == "" || values.Language == "" || values.Timezone == "" || values.Theme == "" || values.AdminUsername == "" || values.AdminEmail == "" || adminPassword == "" {
 		i.render(c, http.StatusBadRequest, pageData{
 			Title:        installerT(lang, "title.site"),
 			Heading:      installerT(lang, "site.heading"),
@@ -366,6 +372,23 @@ func (i *Installer) SiteSubmit(c *gin.Context) {
 			ConfigPath:   i.configPath,
 			BootError:    i.bootError,
 			Error:        installerT(lang, "error.site_required"),
+			Site:         values,
+			ThemeOptions: i.themeOptions,
+		})
+		return
+	}
+
+	if !config.IsValidTimezone(values.Timezone) {
+		i.render(c, http.StatusBadRequest, pageData{
+			Title:        installerT(lang, "title.site"),
+			Heading:      installerT(lang, "site.heading"),
+			Lead:         installerT(lang, "site.lead"),
+			Page:         "site",
+			Step:         2,
+			Lang:         lang,
+			ConfigPath:   i.configPath,
+			BootError:    i.bootError,
+			Error:        installerT(lang, "error.timezone_invalid"),
 			Site:         values,
 			ThemeOptions: i.themeOptions,
 		})
@@ -409,6 +432,7 @@ func (i *Installer) SiteSubmit(c *gin.Context) {
 	cfg.Site.Name = values.SiteName
 	cfg.Site.URL = values.SiteURL
 	cfg.Site.Language = values.Language
+	cfg.Site.Timezone = values.Timezone
 	cfg.Site.Theme = values.Theme
 
 	finalConfigPath, err := i.prepareSiteConfigPath(values.SiteURL, lang)
@@ -544,6 +568,7 @@ func (i *Installer) initializeSite(cfg *config.Config, values siteValues, adminP
 		"site_name":        values.SiteName,
 		"site_description": values.Tagline,
 		"site_language":    cfg.Site.Language,
+		"site_timezone":    cfg.Site.Timezone,
 		"admin_language":   normalizeInstallerLanguage(values.AdminLanguage),
 		"admin_email":      values.AdminEmail,
 	}
@@ -610,6 +635,9 @@ func applyDefaults(cfg *config.Config) *config.Config {
 	}
 	if cfg.Site.Language == "" {
 		cfg.Site.Language = "zh-CN"
+	}
+	if cfg.Site.Timezone == "" {
+		cfg.Site.Timezone = config.DefaultTimezoneName()
 	}
 	if cfg.Site.Theme == "" {
 		cfg.Site.Theme = "modern-company"
@@ -681,6 +709,7 @@ func siteValuesFromConfig(cfg *config.Config, installerLang string) siteValues {
 		SiteName:      cfg.Site.Name,
 		SiteURL:       cfg.Site.URL,
 		Language:      installerLang,
+		Timezone:      cfg.Site.Timezone,
 		AdminLanguage: installerLang,
 		Theme:         cfg.Site.Theme,
 		AdminUsername: "admin",
