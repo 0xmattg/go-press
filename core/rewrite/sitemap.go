@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -283,6 +284,10 @@ func (sg *SitemapGenerator) GenerateToFile(path string) (int, error) {
 
 	data, err := xml.MarshalIndent(set, "", "  ")
 	if err != nil {
+		return 0, err
+	}
+
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return 0, err
 	}
 

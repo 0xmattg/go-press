@@ -392,7 +392,7 @@ func (b *BaseTheme) renderHome(c *gin.Context) {
 		return
 	}
 
-	data := b.buildBaseData("Home")
+	data := b.buildBaseData(c, "Home")
 
 	// Inject SEO
 	if b.App != nil && b.App.SEOBuilder() != nil {
@@ -435,7 +435,7 @@ func (b *BaseTheme) renderArchive(c *gin.Context, route *rewrite.ResolvedRoute) 
 		return
 	}
 
-	data := b.buildBaseData("")
+	data := b.buildBaseData(c, "")
 	if typeDef != nil {
 		data["Title"] = LocalizedArchiveTitle(c, b.App.I18nManager(), typeDef)
 	}
@@ -525,7 +525,7 @@ func (b *BaseTheme) renderSingle(c *gin.Context, route *rewrite.ResolvedRoute) {
 		}
 	}
 
-	data := b.buildBaseData(item.Title)
+	data := b.buildBaseData(c, item.Title)
 	view := b.contentView(c, *item)
 	related := b.relatedContentViews(c, route.ContentType, item.ID, 3)
 	data["ActivePage"] = route.ContentType
@@ -607,7 +607,7 @@ func (b *BaseTheme) renderTaxonomy(c *gin.Context, route *rewrite.ResolvedRoute)
 		taxLabel = taxDef.Label
 	}
 
-	data := b.buildBaseData(termName)
+	data := b.buildBaseData(c, termName)
 	data["TaxSlug"] = route.TaxSlug
 	data["TermSlug"] = route.TermSlug
 	data["TaxLabel"] = taxLabel
@@ -643,7 +643,7 @@ func (b *BaseTheme) render404(c *gin.Context) {
 		c.String(http.StatusNotFound, "404 - Page Not Found")
 		return
 	}
-	data := b.buildBaseData("Page Not Found")
+	data := b.buildBaseData(c, "Page Not Found")
 	c.Status(http.StatusNotFound)
 	c.Header("Content-Type", "text/html; charset=utf-8")
 	if err := tmpl.Execute(c.Writer, data); err != nil {
@@ -663,13 +663,14 @@ func (b *BaseTheme) registeredTypeNames() []string {
 }
 
 // buildBaseData returns common template data shared by all pages.
-func (b *BaseTheme) buildBaseData(title string) gin.H {
+func (b *BaseTheme) buildBaseData(c *gin.Context, title string) gin.H {
 	data := gin.H{
 		"Title": title,
 	}
 	if b.App != nil && b.App.OptionsStore() != nil {
 		data["Settings"] = b.App.OptionsStore().All()
 	}
+	data["RecentPosts"] = b.recentPostViews(c, 3)
 	return data
 }
 
@@ -862,6 +863,22 @@ func (b *BaseTheme) relatedContentViews(c *gin.Context, contentType string, excl
 		}
 	}
 	return b.contentViews(c, filtered)
+}
+
+func (b *BaseTheme) recentPostViews(c *gin.Context, limit int) []map[string]interface{} {
+	if limit <= 0 || b.App == nil || b.App.Database() == nil {
+		return nil
+	}
+	items, err := content.NewQuery(content.ScopedDB(c, b.App.Database())).
+		Type("post").
+		Published().
+		OrderBy("published_at", "DESC").
+		Limit(limit).
+		Get()
+	if err != nil {
+		return nil
+	}
+	return b.contentViews(c, items)
 }
 
 func (b *BaseTheme) termViews(contentID uint, taxName string) []map[string]interface{} {

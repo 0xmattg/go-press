@@ -78,10 +78,11 @@ go-press/
 │       ├── register.go         #     init() 自注册
 │       └── templates/admin/    #     插件设置页模板（三个代码片段 textarea）
 │
-├── sites/                      # 站点配置（Web 安装器自动生成）
-│   └── localhost/              #   本地开发站点
-│       └── config.toml         #     站点配置文件
-│
+	├── sites/                      # 站点配置（Web 安装器自动生成）
+	│   └── localhost/              #   本地开发站点
+	│       ├── config.toml         #     站点配置文件
+	│       └── public/             #     站点级公开生成物（sitemap.xml、robots.txt、llms.txt 等）
+	│
 ├── pkg/                        # ========== 基础设施 ==========
 │   ├── dbprefix/               #   表前缀工具（Set/Get/Table/PluginTable/ThemeTable）
 │   ├── logger/                 #   结构化日志 (slog)

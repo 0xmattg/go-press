@@ -70,7 +70,8 @@ func (h *Handler) SettingUpdate(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/admin/settings?success="+url.QueryEscape(adminT(adminLang, "notice.settings_updated")))
 }
 
-// SitemapGenerate generates a static sitemap.xml file in the project root.
+// SitemapGenerate generates a static sitemap.xml file under the active site's
+// public directory.
 func (h *Handler) SitemapGenerate(c *gin.Context) {
 	if !h.checkPermission(c, "setting", "update") {
 		return

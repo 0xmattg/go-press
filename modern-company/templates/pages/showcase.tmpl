@@ -1,0 +1,76 @@
+{{define "content"}}
+<!-- Page Banner -->
+<section class="page-banner page-banner-showcase">
+    <span class="banner-watermark">{{T $.Ctx "page_title_projects"}}</span>
+    <div class="container">
+        <span class="section-label">{{T $.Ctx "page_label_portfolio"}}</span>
+        <h1>{{T $.Ctx "page_title_projects"}}</h1>
+        <p class="banner-subtitle">500+ cleanroom projects delivered across pharmaceutical, electronics, food, and biotech industries</p>
+        <div class="breadcrumb">
+            <a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a> <span>/</span> <span>{{T $.Ctx "page_title_projects"}}</span>
+        </div>
+    </div>
+    <div class="page-banner-accent"></div>
+</section>
+
+<section class="section showcase-section{{if eq (settingOr .Settings "showcase_layout" "grid") "mosaic"}} showcase-section-mosaic{{end}}">
+    <div class="container">
+        <div class="section-header centered">
+            <span class="section-label">{{T $.Ctx "section_portfolio"}}</span>
+            <h2>{{T $.Ctx "section_valuable_works"}}</h2>
+            <p>Selected cleanroom and purification projects delivered for clients across multiple industries</p>
+        </div>
+        {{if eq (settingOr .Settings "showcase_layout" "grid") "mosaic"}}
+        <div class="showcase-mosaic">
+            {{range $i, $item := .Showcases}}
+            <a href="{{langPrefixURL $.Ctx (contentURL $item "showcase")}}" class="showcase-mosaic-item" style="text-decoration:none;color:inherit;">
+                <div class="showcase-mosaic-photo">
+                    {{if $item.ImageURL}}
+                    {{responsiveImage $item.ImageURL $item.Title "" "(max-width: 768px) 100vw, (max-width: 1200px) 45vw, 560px" "lazy"}}
+                    {{else}}
+                    <div class="product-placeholder">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                    </div>
+                    {{end}}
+                </div>
+                <div class="showcase-mosaic-panel">
+                    {{if $item.Location}}<span class="showcase-mosaic-kicker">{{upper $item.Location}}</span>{{end}}
+                    <h3>{{$item.Title}}</h3>
+                    <p>{{truncate (stripTags $item.Description) 108}}</p>
+                    {{if $item.Client}}<span class="showcase-mosaic-client">{{T $.Ctx "label_client"}}: {{$item.Client}}</span>{{end}}
+                    <span class="showcase-mosaic-link">{{T $.Ctx "btn_view_details"}} <span aria-hidden="true">→</span></span>
+                </div>
+            </a>
+            {{end}}
+        </div>
+        {{else}}
+        <div class="showcase-grid">
+            {{range .Showcases}}
+            <a href="{{langPrefixURL $.Ctx (contentURL . "showcase")}}" class="showcase-card" style="text-decoration:none;color:inherit;">
+                <div class="showcase-image">
+                    {{if .ImageURL}}
+                    {{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}
+                    {{else}}
+                    <div class="product-placeholder">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                    </div>
+                    {{end}}
+                    <div class="showcase-overlay">
+                        <span>{{T $.Ctx "btn_view_details"}}</span>
+                    </div>
+                </div>
+                <div class="showcase-info">
+                    <h3>{{.Title}}</h3>
+                    <p>{{truncate (stripTags .Description) 100}}</p>
+                    <div class="showcase-meta">
+                        {{if .Client}}<span><strong>{{T $.Ctx "label_client"}}:</strong> {{.Client}}</span>{{end}}
+                        {{if .Location}}<span><strong>{{T $.Ctx "label_location"}}:</strong> {{.Location}}</span>{{end}}
+                    </div>
+                </div>
+            </a>
+            {{end}}
+        </div>
+        {{end}}
+    </div>
+</section>
+{{end}}

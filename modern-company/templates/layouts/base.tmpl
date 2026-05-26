@@ -1,0 +1,35 @@
+{{define "base"}}<!DOCTYPE html>
+<html lang="{{currentLang .Ctx}}"{{if index .Settings "theme_color_scheme"}} data-color-scheme="{{index .Settings "theme_color_scheme"}}"{{end}}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{$fallbackTitle := printf "%s - %s" .Title (settingOr .Settings "site_name" "Modern Company")}}
+    <title>{{pageTitleFor . $fallbackTitle}}</title>
+    {{$siteIcon := settingOr .Settings "site_icon" ""}}
+    {{with seoHeadFor .}}{{.}}{{else}}
+    <meta name="description" content="{{settingOr $.Settings "site_description" "Modern company website powered by GoPress."}}">
+    {{if $siteIcon}}<link rel="icon" href="{{$siteIcon}}">
+    <link rel="apple-touch-icon" href="{{$siteIcon}}">{{end}}
+    {{end}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    {{if eq .ActivePage "home"}}{{responsiveImagePreload (settingOr .Settings "home_hero_1_image" "https://images.unsplash.com/photo-1584677123573-7446380b6d69?w=1600&h=900&fit=crop&q=80") "100vw"}}{{end}}
+    <link rel="stylesheet" href="/static/css/style.css?v=69">
+    {{renderHook "theme.head.end" .}}
+</head>
+<body>
+    {{renderHook "theme.body.open" .}}
+    {{template "header" .}}
+
+    <main>
+        {{template "content" .}}
+    </main>
+
+    {{template "footer" .}}
+
+    <button id="scroll-top" class="scroll-top" aria-label="Scroll to top">&#8679;</button>
+    <script src="/static/js/main.js?v=4"></script>
+    {{renderHook "theme.footer.end" .}}
+</body>
+</html>{{end}}

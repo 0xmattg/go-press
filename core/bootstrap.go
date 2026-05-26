@@ -26,6 +26,7 @@ func BuildAndBootstrap(cfg *config.Config, configPath string, seed bool) (*Engin
 	}
 
 	engine := New(cfg, database)
+	engine.SiteDir = filepath.Dir(configPath)
 
 	if err := engine.Migrate(); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
