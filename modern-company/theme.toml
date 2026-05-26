@@ -1,0 +1,61 @@
+[theme]
+name = "Modern Company"
+version = "1.0.0"
+description = "A modern, professional company website theme for GoPress."
+author = "Hurricane Techs"
+
+# Content types supported by the theme.
+[[content_types]]
+name = "product"
+label = "产品"
+label_plural = "产品列表"
+archive_title_key = "page_title_product"
+supports = ["title", "content", "excerpt", "thumbnail", "sort_order"]
+taxonomies = ["category", "tag"]
+has_archive = true
+rewrite_slug = "products"
+menu_icon = "blocks"
+menu_order = 1
+
+[[content_types]]
+name = "service"
+label = "服务"
+label_plural = "服务列表"
+archive_title_key = "page_title_service"
+supports = ["title", "content", "excerpt", "thumbnail", "sort_order"]
+taxonomies = ["category", "tag"]
+has_archive = true
+rewrite_slug = "services"
+menu_icon = "edit"
+menu_order = 2
+
+[[content_types]]
+name = "showcase"
+label = "案例"
+label_plural = "案例展示"
+archive_title_key = "page_title_showcase"
+supports = ["title", "content", "excerpt", "thumbnail", "sort_order"]
+taxonomies = ["category", "tag"]
+has_archive = true
+rewrite_slug = "showcase"
+menu_icon = "collection"
+menu_order = 3
+
+[[content_types.meta_fields]]
+key = "client"
+label = "客户"
+type = "string"
+
+[[content_types.meta_fields]]
+key = "location"
+label = "位置"
+type = "string"
+
+# Menu locations supported by the theme.
+[[menu_locations]]
+name = "header"
+label = "顶部导航"
+
+[[menu_locations]]
+name = "footer"
+label = "底部导航"

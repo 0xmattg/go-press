@@ -68,6 +68,6 @@ When Redis is not configured, GoPress keeps the in-process memory cache path act
 
 - `uploads/` stores uploaded media and generated variants.
 - `sites/{host}/config.toml` stores site configuration.
-- `sitemap.xml` can be generated from the admin UI.
+- `sites/{host}/public/` stores site-scoped generated public files such as `sitemap.xml`.
 
 For public repositories, site-specific configuration and generated runtime files should stay ignored by Git.

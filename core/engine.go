@@ -61,6 +61,11 @@ type Engine struct {
 	Config *config.Config
 	DB     *gorm.DB
 
+	// SiteDir is the directory containing the active site's config.toml.
+	// Site-scoped generated files should be written under this directory, not
+	// into the shared application root.
+	SiteDir string
+
 	// Core subsystems are long-lived services shared by admin, themes, plugins,
 	// REST APIs, and front-end rendering.
 	Hooks    *hook.Bus
@@ -111,6 +116,16 @@ type Engine struct {
 	// theme switch. cmd/server uses it to swap the active HTTP handler without
 	// restarting the process.
 	OnRouterRebuild func(http.Handler)
+}
+
+// SitePublicPath returns a path below the active site's public directory.
+//
+// Use this for site-scoped generated files such as sitemap.xml, robots.txt,
+// llms.txt, or similar public artifacts. The directory is derived from the
+// active config path so multiple sites can share one application root safely.
+func (e *Engine) SitePublicPath(parts ...string) string {
+	elems := append([]string{e.SiteDir, "public"}, parts...)
+	return filepath.Join(elems...)
 }
 
 // New creates a new Engine with the given config and database.
@@ -803,7 +818,7 @@ func (e *Engine) SetupAdmin() {
 	// Inject sitemap generation callback (uses shared generator with transformers)
 	h.SetSitemapCallbacks(&admin.SitemapCallbacks{
 		GenerateFn: func() (int, error) {
-			return e.Sitemap.GenerateToFile("sitemap.xml")
+			return e.Sitemap.GenerateToFile(e.SitePublicPath("sitemap.xml"))
 		},
 	})
 

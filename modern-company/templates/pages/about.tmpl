@@ -1,0 +1,160 @@
+{{define "content"}}
+{{$s := .Settings}}
+<!-- Page Banner -->
+<section class="page-banner page-banner-about">
+    <span class="banner-watermark">{{T $.Ctx "page_label_about"}}</span>
+    <div class="container">
+        <span class="section-label">{{T $.Ctx "page_label_about"}}</span>
+        <h1>{{settingOr $s "about_banner_title" "About Hurricane Techs"}}</h1>
+        <p class="banner-subtitle">{{settingOr $s "about_banner_subtitle" "Over 20 Years of Cleanroom Engineering Excellence"}}</p>
+        <div class="breadcrumb">
+            <a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a> <span>/</span> <span>{{T $.Ctx "nav_about"}}</span>
+        </div>
+    </div>
+    <div class="page-banner-accent"></div>
+</section>
+
+<!-- Who We Are -->
+<section class="section">
+    <div class="container">
+        <div class="about-section">
+            <div class="about-image-wrap">
+                {{responsiveImage (settingOr $s "about_intro_image" "https://hurricanetechs.com/static/uploads/2026/04/c1ab9c45b18af6f0470f32b8ebba496a.png") "Hurricane Techs Factory" "" "(max-width: 768px) 100vw, 50vw" "lazy"}}
+                <div class="about-badge">
+                    <span class="badge-number">{{settingOr $s "about_intro_badge_number" "20+"}}</span>
+                    <span class="badge-text">{{settingOr $s "about_intro_badge_text" "Years"}}</span>
+                </div>
+            </div>
+            <div class="about-content">
+                <div class="section-header">
+                    <span class="section-label">{{settingOr $s "about_intro_label" (T $.Ctx "section_who_we_are")}}</span>
+                    <h2>{{settingOr $s "about_intro_title" (T $.Ctx "section_quality_commitment")}}</h2>
+                </div>
+                <p>{{settingOr $s "about_intro_p1" "Wuxi Hurricane Purification Technology Equipment Co., Ltd., founded in August 2003, is located in Wuxi Yanqiao Industrial Park. We specialize in the design, production, installation, and testing of air purification engineering projects ranging from Class 100 to Class 300,000."}}</p>
+                <p>{{settingOr $s "about_intro_p2" "With a team of more than 120 skilled professionals, the company holds certifications for air conditioning purification engineering construction, safety management, and project management, and is ISO9001 certified."}}</p>
+                <a href="{{langPrefixURL $.Ctx (settingOr $s "about_intro_btn_link" "/contact")}}" class="btn btn-primary">{{settingOr $s "about_intro_btn_text" (T $.Ctx "btn_get_in_touch")}}</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats -->
+<section class="section section-dark">
+    <div class="container">
+        <div class="stats-row">
+            <div class="stat-item">
+                <span class="stat-number">{{settingOr $s "about_stat_1_number" "20+"}}</span>
+                <span class="stat-label">{{settingOr $s "about_stat_1_label" (T $.Ctx "stat_label_years_exp")}}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{settingOr $s "about_stat_2_number" "120+"}}</span>
+                <span class="stat-label">{{settingOr $s "about_stat_2_label" (T $.Ctx "stat_label_team_members")}}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{settingOr $s "about_stat_3_number" "500+"}}</span>
+                <span class="stat-label">{{settingOr $s "about_stat_3_label" (T $.Ctx "stat_label_projects_delivered")}}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{settingOr $s "about_stat_4_number" "ISO"}}</span>
+                <span class="stat-label">{{settingOr $s "about_stat_4_label" (T $.Ctx "stat_label_iso_certified")}}</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Principles -->
+<section class="section section-light">
+    <div class="container">
+        <div class="section-header centered">
+            <span class="section-label">{{settingOr $s "about_principles_label" (T $.Ctx "section_our_process")}}</span>
+            <h2>{{settingOr $s "about_principles_title" (T $.Ctx "section_principles")}}</h2>
+        </div>
+        <div class="principles-list">
+            <div class="principle-item">
+                <span class="principle-num">01</span>
+                <div>
+                    <h3>{{settingOr $s "about_principle_1_title" "Precision-Driven Design"}}</h3>
+                    <p>{{settingOr $s "about_principle_1_desc" "Precision-driven design for critical cleanroom environments, ensuring every specification meets the highest standards."}}</p>
+                </div>
+            </div>
+            <div class="principle-item">
+                <span class="principle-num">02</span>
+                <div>
+                    <h3>{{settingOr $s "about_principle_2_title" "ISO-Certified Standards"}}</h3>
+                    <p>{{settingOr $s "about_principle_2_desc" "Commitment to ISO-certified manufacturing standards across all products and engineering processes."}}</p>
+                </div>
+            </div>
+            <div class="principle-item">
+                <span class="principle-num">03</span>
+                <div>
+                    <h3>{{settingOr $s "about_principle_3_title" "End-to-End Service"}}</h3>
+                    <p>{{settingOr $s "about_principle_3_desc" "Comprehensive service from initial consultation and design through manufacturing to on-site installation."}}</p>
+                </div>
+            </div>
+            <div class="principle-item">
+                <span class="principle-num">04</span>
+                <div>
+                    <h3>{{settingOr $s "about_principle_4_title" "Custom Solutions"}}</h3>
+                    <p>{{settingOr $s "about_principle_4_desc" "Tailored solutions for pharmaceutical, food processing, electronics, and biotechnology industries."}}</p>
+                </div>
+            </div>
+            <div class="principle-item">
+                <span class="principle-num">05</span>
+                <div>
+                    <h3>{{settingOr $s "about_principle_5_title" "Safety & Performance"}}</h3>
+                    <p>{{settingOr $s "about_principle_5_desc" "Safety, efficiency, and long-term performance at the core of every project we undertake."}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Experience -->
+<section class="section">
+    <div class="container">
+        <div class="section-header centered">
+            <span class="section-label">{{settingOr $s "about_exp_label" (T $.Ctx "section_expertise")}}</span>
+            <h2>{{settingOr $s "about_exp_title" (T $.Ctx "section_industrial_exp")}}</h2>
+        </div>
+        <div class="experience-grid">
+            <div class="exp-card">
+                <div class="exp-icon">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 20h20M5 20V8l7-5 7 5v12"/><rect x="9" y="12" width="6" height="8"/></svg>
+                </div>
+                <h3>{{settingOr $s "about_exp_1_title" "Cleanroom Design & Engineering"}}</h3>
+                <p>{{settingOr $s "about_exp_1_desc" "Complete design solutions for cleanroom environments across multiple ISO classifications."}}</p>
+            </div>
+            <div class="exp-card">
+                <div class="exp-icon">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                </div>
+                <h3>{{settingOr $s "about_exp_2_title" "Air Filtration Manufacturing"}}</h3>
+                <p>{{settingOr $s "about_exp_2_desc" "Production of HEPA/ULPA filters and filtration systems meeting international standards."}}</p>
+            </div>
+            <div class="exp-card">
+                <div class="exp-icon">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                </div>
+                <h3>{{settingOr $s "about_exp_3_title" "HVAC Integration"}}</h3>
+                <p>{{settingOr $s "about_exp_3_desc" "Precision HVAC systems for controlled temperature, humidity, and pressure environments."}}</p>
+            </div>
+            <div class="exp-card">
+                <div class="exp-icon">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                </div>
+                <h3>{{settingOr $s "about_exp_4_title" "Project Management"}}</h3>
+                <p>{{settingOr $s "about_exp_4_desc" "On-time delivery with certified project managers overseeing every phase of construction."}}</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="section cta-section text-center">
+    <div class="container">
+        <h2>{{settingOr $s "about_cta_title" "Ready to Start Your Project?"}}</h2>
+        <p>{{settingOr $s "about_cta_desc" "Contact us for a free consultation and let our team build your ideal cleanroom environment."}}</p>
+        <a href="{{langPrefixURL $.Ctx (settingOr $s "about_cta_btn_link" "/contact")}}" class="btn btn-primary btn-lg">{{settingOr $s "about_cta_btn_text" "Get a Free Quote"}}</a>
+    </div>
+</section>
+{{end}}

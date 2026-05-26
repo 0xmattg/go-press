@@ -74,9 +74,13 @@ completed = true
 
 ```
 sites/
-├── localhost/config.toml
+├── localhost/
+│   ├── config.toml
+│   └── public/              # 站点级生成物，如 sitemap.xml
 ├── staging.gopress.xyz/config.toml
 └── prod.gopress.xyz/config.toml
 ```
 
 启动时通过 `-config <path>` 指定具体哪个生效。多站点可指向同一 PG 实例不同 `database` 或同一 `database` 不同 `table_prefix`。
+
+后台生成的 `sitemap.xml` 会写入当前站点目录下的 `public/`，例如 `sites/prod.gopress.xyz/public/sitemap.xml`。后续 `robots.txt`、`llms.txt` 等站点级公开生成物也应放在同一目录，避免多个站点共享应用根目录时互相覆盖。

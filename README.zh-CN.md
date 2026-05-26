@@ -200,6 +200,7 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 - **`seoHeadFor` 模板助手** — reflection-based 安全实现，对 `gin.H` 和自定义 struct 都不会因字段缺失白屏
 - **Per-content SEO 覆盖** — 内置 `seo-extras` 插件提供 Yoast 风格 4 字段覆盖（Title / Description / OG Image / Robots），核心通过 `seo.content.meta` filter 开放扩展
 - **Sitemap 多语言 hreflang** — `SitemapGenerator.AddTransformer()` 让多语言插件按需贡献 `<xhtml:link hreflang>` 备选链接
+- **站点级公开生成物** — 后台生成的 sitemap 文件写入 `sites/{host}/public/`，多站点部署互不覆盖
 - **301/302 重定向** — 数据库驱动 + 内存缓存 + 命中计数
 
 ### 后台 CMS

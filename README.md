@@ -204,6 +204,7 @@ go run ./cmd/gendoc/
 - **`seoHeadFor` helper** — reflection-based and safe for both `gin.H` and custom structs.
 - **Per-content SEO overrides** — the bundled `seo-extras` plugin adds Yoast-style fields for title, description, Open Graph image, and robots.
 - **Multilingual sitemap support** — `SitemapGenerator.AddTransformer()` lets the multilingual plugin contribute `hreflang` alternates.
+- **Site-scoped public artifacts** — admin-generated sitemap files are written under `sites/{host}/public/`, keeping multi-site deployments isolated.
 - **Redirect manager** — database-backed 301/302 redirects with in-memory lookup and hit counts.
 
 ### Admin CMS

@@ -56,3 +56,5 @@ The `seo.content.meta` filter allows plugins to modify SEO output after core bui
 ## Sitemap and Redirects
 
 Sitemap generation reads registered content types and their rewrite configuration, taxonomy URLs, and route transformers. Redirect rules are stored separately and are resolved before normal rewrite handling.
+
+`/sitemap.xml` is served dynamically by the active site process. The admin "Generate Sitemap" action writes a static copy to the active site's `public/` directory, for example `sites/example.com/public/sitemap.xml`, so multiple sites can share one application root without overwriting each other's generated files. Future site-scoped public artifacts such as `robots.txt` or `llms.txt` should use the same directory.
