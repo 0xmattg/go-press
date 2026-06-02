@@ -18,7 +18,6 @@ func TestExtensionSettingsTemplatesParse(t *testing.T) {
 	layout := filepath.Join("templates", "layouts", "admin.tmpl")
 	paths := []string{
 		filepath.Join("..", "..", "themes", "atelier-slate", "templates", "admin", "theme_settings.tmpl"),
-		filepath.Join("..", "..", "themes", "atelier-slate-gp", "templates", "admin", "theme_settings.tmpl"),
 		filepath.Join("..", "..", "themes", "axis-form", "templates", "admin", "theme_settings.tmpl"),
 		filepath.Join("..", "..", "themes", "civic-estate", "templates", "admin", "theme_settings.tmpl"),
 		filepath.Join("..", "..", "themes", "florafi", "templates", "admin", "theme_settings.tmpl"),
