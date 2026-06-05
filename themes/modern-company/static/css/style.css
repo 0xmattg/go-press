@@ -43,6 +43,9 @@
 html { scroll-behavior:smooth; font-size:16px; }
 
 body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
     font-family: var(--font);
     color: var(--text);
     background: var(--white);
@@ -50,6 +53,8 @@ body {
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
 }
+
+main { flex: 1 0 auto; }
 
 img { max-width:100%; height:auto; display:block; }
 a { color: var(--accent); text-decoration:none; transition: color var(--transition); }
@@ -2150,7 +2155,7 @@ h1,h2,h3,h4,h5 { line-height:1.25; color: var(--primary); font-weight:700; }
 
 .blog-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 32px;
 }
 .blog-card {
@@ -2984,6 +2989,7 @@ h1,h2,h3,h4,h5 { line-height:1.25; color: var(--primary); font-weight:700; }
     .footer-grid { grid-template-columns: 1fr 1fr; gap:32px; }
     .stats-row { grid-template-columns: repeat(2, 1fr); }
     .section-header h2 { font-size: 2.2rem; }
+    .blog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .related-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .showcase-mosaic {
         grid-template-columns: repeat(2, minmax(0, 1fr));

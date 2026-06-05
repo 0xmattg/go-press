@@ -101,6 +101,10 @@
   "archive_label_category": "Category",
   "archive_label_tag": "Tag",
   "archive_items_found": "items found",
+  "content_type.post": "Article",
+  "content_type.product": "Product",
+  "content_type.service": "Service",
+  "content_type.showcase": "Project",
 
   "label_client": "Client",
   "label_location": "Location"

@@ -77,6 +77,14 @@ label = "Header Navigation"
 
 Core types such as `post` and `contact_message` should not be redeclared by themes. `product` is only an example custom content type; GoPress does not require a theme to provide products, services, or showcases.
 
+For frontend multilingual labels, add `content_type.<name>` entries to the theme locale files. BaseTheme uses those keys for content type badges on taxonomy archives and falls back to `label` when a locale key is missing:
+
+```json
+{
+  "content_type.product": "Product"
+}
+```
+
 ### Rewrite Slugs And Template Mapping
 
 `rewrite_slug` is the public URL base for a content type. The example above produces:
@@ -149,6 +157,8 @@ Inside templates, prefer core URL helpers:
 ```
 
 `archiveURL` and `contentURL` consult the rewrite registry, so a later `rewrite_slug` change or content-type rename does not require template edits.
+
+Dynamic archive pages also honor query-string filters for taxonomies declared on the content type. For example, a `post` type with `taxonomies = ["category", "tag"]` can be filtered with `/blog?category=industry-news` or `/blog?tag=cleanroom`. Query parameters for taxonomies not registered on that content type are ignored.
 
 For navigation active state, compare the current request URL with the menu item URL through core:
 

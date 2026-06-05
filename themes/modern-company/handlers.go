@@ -144,7 +144,8 @@ func (h *Handler) Showcase(c *gin.Context) {
 // Blog renders the blog listing page.
 func (h *Handler) Blog(c *gin.Context) {
 	category := c.Query("category")
-	data, err := h.pageService.ForRequest(c).GetBlogData(category)
+	tag := c.Query("tag")
+	data, err := h.pageService.ForRequest(c).GetBlogData(category, tag)
 	if err != nil {
 		log.Printf("[modern-company] Error getting blog data: %v", err)
 		c.String(http.StatusInternalServerError, "Internal server error")

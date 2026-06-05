@@ -101,6 +101,14 @@ label = "顶部导航"
 
 `product` 只是一个常见示例，不是 core 的固定假设。主题可以声明 `module`、`project`、`case_study`、`destination` 等任意业务内容类型。
 
+前台多语言展示名应写在主题 locale 文件中，key 约定为 `content_type.<name>`。BaseTheme 会用这些 key 渲染分类归档页上的内容类型徽标，缺失时回退到 `theme.toml` 里的 `label`：
+
+```json
+{
+  "content_type.product": "产品"
+}
+```
+
 ### Rewrite Slug 与模板映射
 
 `rewrite_slug` 是该内容类型的公开 URL base。上面的 `product` 配置会生成：
@@ -176,6 +184,8 @@ archive
 ```
 
 `archiveURL` 和 `contentURL` 会读取 Rewrite 注册表；后续把 `rewrite_slug = "products"` 改成 `catalog` 时，模板不需要跟着硬改。
+
+动态归档页也会识别该内容类型声明过的 taxonomy query 参数。例如 `post` 声明了 `taxonomies = ["category", "tag"]` 时，`/blog?category=industry-news` 和 `/blog?tag=cleanroom` 会应用对应过滤；未挂载到该内容类型的 taxonomy query 会被忽略。
 
 导航当前页状态同样应走 core helper，让模板只关心菜单 URL，不关心业务内容类型名或菜单标题：
 

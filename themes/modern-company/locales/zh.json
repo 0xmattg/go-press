@@ -101,6 +101,10 @@
   "archive_label_category": "分类",
   "archive_label_tag": "标签",
   "archive_items_found": "个结果",
+  "content_type.post": "文章",
+  "content_type.product": "产品",
+  "content_type.service": "服务",
+  "content_type.showcase": "案例",
 
   "label_client": "客户",
   "label_location": "地点"

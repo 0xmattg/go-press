@@ -24,6 +24,8 @@ A theme content type definition drives more than admin fields. The same registry
 
 This means `product`, `service`, and `showcase` are conventional example types, not core requirements. A theme can declare `module`, `project`, `case_study`, or any other type and still receive the same routing/rendering/admin behavior.
 
+Taxonomy archives aggregate content across registered content types. Type badges are localized through the active theme's `content_type.<name>` locale key and fall back to the registry `label` when no translation exists. Dynamic content archives also support query-string filtering for taxonomies declared on the content type, such as `/blog?category=industry-news` or `/blog?tag=cleanroom`.
+
 ## Runtime Boundaries
 
 GoPress keeps a strict boundary:

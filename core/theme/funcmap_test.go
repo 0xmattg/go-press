@@ -128,6 +128,27 @@ func TestLocalizedArchiveTitleFallsBackToRewriteMessageKey(t *testing.T) {
 	}
 }
 
+func TestLocalizedContentTypeLabelUsesMessageKey(t *testing.T) {
+	mgr := coreI18n.NewManager("en")
+	mgr.AddMessages("en", []*goi18n.Message{{ID: "content_type.product", Other: "Product"}})
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	typeDef := &content.ContentTypeDef{Name: "product", Label: "产品"}
+
+	if got := LocalizedContentTypeLabel(c, mgr, typeDef); got != "Product" {
+		t.Fatalf("LocalizedContentTypeLabel() = %q, want Product", got)
+	}
+}
+
+func TestLocalizedContentTypeLabelFallsBackToRegistryLabel(t *testing.T) {
+	mgr := coreI18n.NewManager("en")
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	typeDef := &content.ContentTypeDef{Name: "product", Label: "产品"}
+
+	if got := LocalizedContentTypeLabel(c, mgr, typeDef); got != "产品" {
+		t.Fatalf("LocalizedContentTypeLabel() = %q, want 产品", got)
+	}
+}
+
 func TestIsMenuURLActiveMatchesCurrentRequestPath(t *testing.T) {
 	fn := CommonFuncMap()["isMenuURLActive"].(func(*gin.Context, string) bool)
 	tests := []struct {

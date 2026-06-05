@@ -1,6 +1,7 @@
 package theme
 
 import (
+	"net/http/httptest"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -112,6 +113,28 @@ func TestArchiveOrderDefaultsToPublishedAt(t *testing.T) {
 	}
 	if got := archiveOrderDir(typeDef); got != "DESC" {
 		t.Fatalf("archiveOrderDir = %q, want DESC", got)
+	}
+}
+
+func TestArchiveQueryTaxonomyFilterUsesRegisteredTaxonomyQuery(t *testing.T) {
+	c := &gin.Context{}
+	c.Request = httptest.NewRequest("GET", "/blog?tag=hvac", nil)
+	typeDef := &content.ContentTypeDef{Taxonomies: []string{"category", "tag"}}
+
+	taxonomy, term := archiveQueryTaxonomyFilter(c, typeDef)
+	if taxonomy != "tag" || term != "hvac" {
+		t.Fatalf("archiveQueryTaxonomyFilter() = (%q, %q), want (tag, hvac)", taxonomy, term)
+	}
+}
+
+func TestArchiveQueryTaxonomyFilterIgnoresUnregisteredQuery(t *testing.T) {
+	c := &gin.Context{}
+	c.Request = httptest.NewRequest("GET", "/blog?tag=hvac", nil)
+	typeDef := &content.ContentTypeDef{Taxonomies: []string{"category"}}
+
+	taxonomy, term := archiveQueryTaxonomyFilter(c, typeDef)
+	if taxonomy != "" || term != "" {
+		t.Fatalf("archiveQueryTaxonomyFilter() = (%q, %q), want empty filter", taxonomy, term)
 	}
 }
 
