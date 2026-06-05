@@ -425,8 +425,13 @@ func (b *BaseTheme) renderArchive(c *gin.Context, route *rewrite.ResolvedRoute) 
 	}
 	perPage := 20
 
-	result, err := content.NewQuery(content.ScopedDB(c, b.App.Database())).
-		Type(route.ContentType).Published().
+	q := content.NewQuery(content.ScopedDB(c, b.App.Database())).
+		Type(route.ContentType).Published()
+	activeTaxonomy, activeTerm := archiveQueryTaxonomyFilter(c, typeDef)
+	if activeTaxonomy != "" && activeTerm != "" {
+		q = q.Taxonomy(activeTaxonomy, activeTerm)
+	}
+	result, err := q.
 		OrderBy(archiveOrderField(typeDef), archiveOrderDir(typeDef)).
 		Paginate(page, perPage)
 	if err != nil {
@@ -443,6 +448,17 @@ func (b *BaseTheme) renderArchive(c *gin.Context, route *rewrite.ResolvedRoute) 
 	items := b.contentViews(c, result.Items)
 	data["ContentType"] = route.ContentType
 	data["TypeDef"] = typeDef
+	data["ActiveTaxonomy"] = activeTaxonomy
+	data["ActiveTerm"] = activeTerm
+	data["ActiveTermSlug"] = activeTerm
+	data["ActiveCat"] = ""
+	data["ActiveTag"] = ""
+	if activeTaxonomy == "category" {
+		data["ActiveCat"] = activeTerm
+	}
+	if activeTaxonomy == "tag" {
+		data["ActiveTag"] = activeTerm
+	}
 	data["Items"] = items
 	data[pluralAlias(route.ContentType)] = items
 	addLegacyListAliases(data, items)
@@ -739,6 +755,18 @@ func archiveOrderDir(typeDef *content.ContentTypeDef) string {
 	return "DESC"
 }
 
+func archiveQueryTaxonomyFilter(c *gin.Context, typeDef *content.ContentTypeDef) (string, string) {
+	if c == nil || typeDef == nil {
+		return "", ""
+	}
+	for _, taxName := range typeDef.Taxonomies {
+		if term := strings.TrimSpace(c.Query(taxName)); term != "" {
+			return taxName, term
+		}
+	}
+	return "", ""
+}
+
 func contentTypeSupports(typeDef *content.ContentTypeDef, feature string) bool {
 	if typeDef == nil {
 		return false
@@ -830,7 +858,7 @@ func (b *BaseTheme) taxonomyArchiveViews(c *gin.Context, items []content.Content
 		view["ContentType"] = contentType
 		view["TypeLabel"] = contentType
 		if typeDef := b.App.ContentRegistry().GetType(contentType); typeDef != nil {
-			view["TypeLabel"] = typeDef.Label
+			view["TypeLabel"] = LocalizedContentTypeLabel(c, b.App.I18nManager(), typeDef)
 		}
 		if rw := b.App.RewriteEngine(); rw != nil {
 			view["DetailURL"] = rw.BuildURL(contentType, slug)
@@ -1050,6 +1078,28 @@ func LocalizedArchiveTitle(c *gin.Context, mgr *coreI18n.Manager, typeDef *conte
 		if title := mgr.Translate(c, key); title != "" && title != key {
 			return title
 		}
+	}
+	return fallback
+}
+
+// LocalizedContentTypeLabel returns the current-language singular display label
+// for a content type. Theme locale files can provide content_type.<name>; when
+// absent, the registry label remains the source of truth.
+func LocalizedContentTypeLabel(c *gin.Context, mgr *coreI18n.Manager, typeDef *content.ContentTypeDef) string {
+	if typeDef == nil {
+		return ""
+	}
+	fallback := typeDef.Label
+	if fallback == "" {
+		fallback = typeDef.Name
+	}
+	if mgr == nil || c == nil || typeDef.Name == "" {
+		return fallback
+	}
+	key := "content_type." + typeDef.Name
+	label := mgr.Translate(c, key)
+	if label != "" && label != key {
+		return label
 	}
 	return fallback
 }

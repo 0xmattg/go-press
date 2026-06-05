@@ -16,17 +16,11 @@ func TestExtensionSettingsTemplatesParse(t *testing.T) {
 		filepath.Join("templates"),
 	)
 	layout := filepath.Join("templates", "layouts", "admin.tmpl")
-	paths := []string{
-		filepath.Join("..", "..", "themes", "atelier-slate", "templates", "admin", "theme_settings.tmpl"),
-		filepath.Join("..", "..", "themes", "atelier-slate-gp", "templates", "admin", "theme_settings.tmpl"),
-		filepath.Join("..", "..", "themes", "axis-form", "templates", "admin", "theme_settings.tmpl"),
-		filepath.Join("..", "..", "themes", "civic-estate", "templates", "admin", "theme_settings.tmpl"),
-		filepath.Join("..", "..", "themes", "florafi", "templates", "admin", "theme_settings.tmpl"),
-		filepath.Join("..", "..", "themes", "go-press-landing", "templates", "admin", "theme_settings.tmpl"),
-		filepath.Join("..", "..", "themes", "modern-company", "templates", "admin", "theme_settings.tmpl"),
-		filepath.Join("..", "..", "themes", "terra-trail", "templates", "admin", "theme_settings.tmpl"),
-		filepath.Join("..", "..", "plugins", "multilang", "templates", "admin", "settings.tmpl"),
-		filepath.Join("..", "..", "plugins", "code-snippets", "templates", "admin", "settings.tmpl"),
+
+	paths := append(globSettingsTemplates(t, filepath.Join("..", "..", "themes", "*", "templates", "admin", "theme_settings.tmpl")),
+		globSettingsTemplates(t, filepath.Join("..", "..", "plugins", "*", "templates", "admin", "settings.tmpl"))...)
+	if len(paths) == 0 {
+		t.Fatal("no extension settings templates found")
 	}
 	for _, path := range paths {
 		t.Run(path, func(t *testing.T) {
@@ -35,4 +29,13 @@ func TestExtensionSettingsTemplatesParse(t *testing.T) {
 			}
 		})
 	}
+}
+
+func globSettingsTemplates(t *testing.T, pattern string) []string {
+	t.Helper()
+	paths, err := filepath.Glob(pattern)
+	if err != nil {
+		t.Fatalf("glob extension settings templates %q: %v", pattern, err)
+	}
+	return paths
 }

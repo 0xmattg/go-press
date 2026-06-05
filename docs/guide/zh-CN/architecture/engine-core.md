@@ -10,8 +10,9 @@ GoPress 的引擎核心提供了所有 CMS 功能赖以运行的基础能力。
 - **配置驱动路由/模板** — 同一个 `ContentTypeDef` 同时驱动后台导航、CRUD 表单、REST API、Rewrite、Sitemap、分类归档和 BaseTheme 动态归档/详情渲染；`rewrite_slug` 控制公开 URL，`templates = { archive = "...", single = "..." }` 可把内容类型映射到指定页面模板
 - **链式查询构建器** — 以主题声明的 `product` 内容类型为例：`ContentQuery.Type("product").Published().Taxonomy("category", "hepa").Paginate(1, 20)`
 - **分类法系统** — 支持层级分类和标签，多对多关联，自动计数；主题内容类型通过 `theme.toml` 的 `taxonomies = ["category", "tag"]` 挂载核心分类法
-- **分类归档页** — `/category/{slug}` 和 `/tag/{slug}` 跨内容类型聚合展示，类型标签来自当前注册的 `ContentTypeDef`
+- **分类归档页** — `/category/{slug}` 和 `/tag/{slug}` 跨内容类型聚合展示，类型标签优先使用当前主题 locale 的 `content_type.<name>`，缺失时回退到当前注册的 `ContentTypeDef.Label`
 - **分类法类型过滤** — 归档页自动过滤当前主题未注册的内容类型，主题切换后仅显示有效内容
+- **动态归档过滤** — BaseTheme 动态归档页会识别该内容类型已声明的 taxonomy query，例如 `/blog?category=industry-news`、`/blog?tag=cleanroom`；未挂载到该内容类型的 taxonomy query 会被忽略
 
 `product` / `service` / `showcase` 是示例主题常用约定，不是 core 必须存在的模型。主题可以声明 `module`、`project`、`case_study` 等任意类型，并获得同样的后台、API、路由和模板渲染能力。
 

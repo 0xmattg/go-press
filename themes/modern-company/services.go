@@ -151,6 +151,7 @@ type BlogData struct {
 	Categories []CategoryView
 	Tags       []TagView
 	ActiveCat  string
+	ActiveTag  string
 }
 
 type ContactData struct {
@@ -487,13 +488,15 @@ func (s *PageService) GetShowcaseData() (*ShowcaseData, error) {
 	return data, nil
 }
 
-func (s *PageService) GetBlogData(categorySlug string) (*BlogData, error) {
+func (s *PageService) GetBlogData(categorySlug, tagSlug string) (*BlogData, error) {
 	q := content.NewQuery(s.db).
 		Type("post").Published().
 		OrderBy("published_at", "DESC")
 
 	if categorySlug != "" {
 		q = q.Taxonomy("category", categorySlug)
+	} else if tagSlug != "" {
+		q = q.Taxonomy("tag", tagSlug)
 	}
 
 	posts, err := q.Get()
@@ -523,6 +526,7 @@ func (s *PageService) GetBlogData(categorySlug string) (*BlogData, error) {
 		Categories: toCategoryViews(allCats),
 		Tags:       toTagViews(allTags),
 		ActiveCat:  categorySlug,
+		ActiveTag:  tagSlug,
 	}
 	data.SEO = s.buildArchiveSEO("post")
 	return data, nil
@@ -727,13 +731,6 @@ func (s *PageService) GetTaxonomyArchive(taxonomyType, termSlug string) (*Taxono
 		return nil, err
 	}
 
-	// Type label map
-	typeLabels := map[string]string{
-		"product":  "Product",
-		"service":  "Service",
-		"showcase": "Project",
-		"post":     "Article",
-	}
 	// Type → rewrite slug map for building detail URLs
 	typeRewrite := map[string]string{
 		"product":  "products",
@@ -761,7 +758,7 @@ func (s *PageService) GetTaxonomyArchive(taxonomyType, termSlug string) (*Taxono
 			Excerpt:     excerpt,
 			ImageURL:    c.ImageURL,
 			ContentType: c.Type,
-			TypeLabel:   typeLabels[c.Type],
+			TypeLabel:   s.localizedContentTypeLabel(c.Type),
 			DetailURL:   "/" + rewrite + "/" + c.Slug,
 			PublishedAt: c.PublishedAt,
 			CreatedAt:   c.CreatedAt,
@@ -816,6 +813,17 @@ func (s *PageService) getContentList(contentType, orderField, orderDir string) (
 		Status(content.StatusPublished).
 		OrderBy(orderField, orderDir).
 		Get()
+}
+
+func (s *PageService) localizedContentTypeLabel(contentType string) string {
+	if s.registry == nil {
+		return contentType
+	}
+	typeDef := s.registry.GetType(contentType)
+	if typeDef == nil {
+		return contentType
+	}
+	return coreTheme.LocalizedContentTypeLabel(s.reqCtx, s.i18nMgr, typeDef)
 }
 
 // ======== Model Converters ========
