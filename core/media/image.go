@@ -1,6 +1,8 @@
 package media
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"image"
 	"image/color"
@@ -60,6 +62,80 @@ func GetImageDimensions(path string) (int, int, error) {
 		return 0, 0, fmt.Errorf("image dimensions are invalid or too large: %dx%d", cfg.Width, cfg.Height)
 	}
 	return cfg.Width, cfg.Height, nil
+}
+
+// GenerateFaviconICO creates a single-image ICO file containing PNG data.
+// Images larger than 256 pixels are scaled down while preserving aspect ratio.
+func GenerateFaviconICO(srcPath, dstPath string) error {
+	img, _, err := decodeImage(srcPath)
+	if err != nil {
+		return err
+	}
+
+	width := img.Bounds().Dx()
+	height := img.Bounds().Dy()
+	if width <= 0 || height <= 0 {
+		return fmt.Errorf("favicon source has invalid dimensions")
+	}
+	if width > 256 || height > 256 {
+		scale := math.Min(256/float64(width), 256/float64(height))
+		width = int(math.Round(float64(width) * scale))
+		height = int(math.Round(float64(height) * scale))
+		if width < 1 {
+			width = 1
+		}
+		if height < 1 {
+			height = 1
+		}
+		img = resizeBilinear(img, width, height, false)
+	}
+
+	var pngData bytes.Buffer
+	if err := png.Encode(&pngData, img); err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(filepath.Dir(dstPath), 0o755); err != nil {
+		return err
+	}
+	tmp, err := os.CreateTemp(filepath.Dir(dstPath), ".favicon-*.ico")
+	if err != nil {
+		return err
+	}
+	tmpPath := tmp.Name()
+	defer os.Remove(tmpPath)
+
+	if err := writeICO(tmp, width, height, pngData.Bytes()); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmpPath, dstPath)
+}
+
+func writeICO(dst *os.File, width, height int, imageData []byte) error {
+	if _, err := dst.Write([]byte{0, 0, 1, 0, 1, 0}); err != nil {
+		return err
+	}
+
+	entry := make([]byte, 16)
+	if width < 256 {
+		entry[0] = byte(width)
+	}
+	if height < 256 {
+		entry[1] = byte(height)
+	}
+	binary.LittleEndian.PutUint16(entry[4:6], 1)
+	binary.LittleEndian.PutUint16(entry[6:8], 32)
+	binary.LittleEndian.PutUint32(entry[8:12], uint32(len(imageData)))
+	binary.LittleEndian.PutUint32(entry[12:16], 22)
+	if _, err := dst.Write(entry); err != nil {
+		return err
+	}
+	_, err := dst.Write(imageData)
+	return err
 }
 
 // GenerateResponsiveVariants creates resized derivatives next to the original file.

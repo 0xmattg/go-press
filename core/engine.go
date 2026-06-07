@@ -535,6 +535,13 @@ func (e *Engine) SetupRouter() *gin.Engine {
 		c.String(http.StatusOK, "User-agent: *\nAllow: /\nSitemap: %s/sitemap.xml\n", e.Config.Site.URL)
 	})
 
+	// Site favicon generated from the site_icon setting.
+	serveFavicon := func(c *gin.Context) {
+		c.File(e.SitePublicPath("favicon.ico"))
+	}
+	r.GET("/favicon.ico", serveFavicon)
+	r.HEAD("/favicon.ico", serveFavicon)
+
 	// All static files through a unified handler
 	r.GET("/static/*filepath", e.serveStatic)
 
@@ -639,6 +646,7 @@ func (e *Engine) SetupAdmin() {
 		e.Config.Site.Name,
 		e.Config.Site.Timezone,
 		e.Config.CMS,
+		e.SitePublicPath(),
 		e.Registry,
 	)
 	h := admin.NewHandler(svc, e.Registry, "core/admin/templates")

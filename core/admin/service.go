@@ -26,18 +26,19 @@ import (
 
 // Service provides admin business logic using GoPress core subsystems.
 type Service struct {
-	db           *gorm.DB
-	contentRepo  *content.Repository
-	taxRepo      *taxonomy.Repository
-	userRepo     *user.Repository
-	mediaRepo    *coreMedia.Repository
-	options      *option.Store
-	auth         *user.Auth
-	rbac         *user.RBAC
-	siteName     string
-	siteTimezone string
-	config       config.CMSConfig
-	registry     *content.Registry
+	db            *gorm.DB
+	contentRepo   *content.Repository
+	taxRepo       *taxonomy.Repository
+	userRepo      *user.Repository
+	mediaRepo     *coreMedia.Repository
+	options       *option.Store
+	auth          *user.Auth
+	rbac          *user.RBAC
+	siteName      string
+	siteTimezone  string
+	config        config.CMSConfig
+	sitePublicDir string
+	registry      *content.Registry
 
 	mediaVariantJobMu sync.Mutex
 	mediaVariantJob   MediaVariantJob
@@ -68,21 +69,23 @@ func NewService(
 	siteName string,
 	siteTimezone string,
 	cfg config.CMSConfig,
+	sitePublicDir string,
 	registry *content.Registry,
 ) *Service {
 	return &Service{
-		db:           db,
-		contentRepo:  contentRepo,
-		taxRepo:      taxRepo,
-		userRepo:     userRepo,
-		mediaRepo:    mediaRepo,
-		options:      options,
-		auth:         auth,
-		rbac:         rbac,
-		siteName:     siteName,
-		siteTimezone: strings.TrimSpace(siteTimezone),
-		config:       cfg,
-		registry:     registry,
+		db:            db,
+		contentRepo:   contentRepo,
+		taxRepo:       taxRepo,
+		userRepo:      userRepo,
+		mediaRepo:     mediaRepo,
+		options:       options,
+		auth:          auth,
+		rbac:          rbac,
+		siteName:      siteName,
+		siteTimezone:  strings.TrimSpace(siteTimezone),
+		config:        cfg,
+		sitePublicDir: sitePublicDir,
+		registry:      registry,
 	}
 }
 
@@ -641,6 +644,28 @@ func (s *Service) UpdateSetting(key, value string) {
 
 func (s *Service) CreateSetting(key, value string) {
 	s.options.Set(key, value)
+}
+
+// SyncSiteIcon generates public/favicon.ico from the uploaded image selected
+// in the site_icon setting. Clearing the setting removes the generated file.
+func (s *Service) SyncSiteIcon(publicURL string) error {
+	outputPath := filepath.Join(s.sitePublicDir, "favicon.ico")
+	publicURL = strings.TrimSpace(publicURL)
+	if publicURL == "" {
+		if err := os.Remove(outputPath); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+		return nil
+	}
+	if strings.HasPrefix(publicURL, "/uploads/") {
+		publicURL = "/static" + publicURL
+	}
+
+	sourcePath, ok := s.mediaDiskPath(publicURL)
+	if !ok {
+		return fmt.Errorf("site icon must be an uploaded image")
+	}
+	return coreMedia.GenerateFaviconICO(sourcePath, outputPath)
 }
 
 // GetOption returns a single option value by key.

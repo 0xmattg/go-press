@@ -42,6 +42,17 @@ func (h *Handler) SettingUpdate(c *gin.Context) {
 	adminLang := h.svc.AdminLanguage()
 	items := h.svc.GetAllSettings(adminLang)
 	for _, s := range items {
+		if s.Key != "site_icon" || s.ReadOnly {
+			continue
+		}
+		newValue := c.PostForm(s.Key)
+		if err := h.svc.SyncSiteIcon(newValue); err != nil {
+			c.Redirect(http.StatusFound, "/admin/settings?error="+url.QueryEscape(err.Error()))
+			return
+		}
+		break
+	}
+	for _, s := range items {
 		if s.ReadOnly {
 			continue
 		}
