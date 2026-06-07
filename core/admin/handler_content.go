@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"go-press/core/content"
@@ -56,6 +57,220 @@ func listRedirectURL(slug string, filterQuery template.URL, flashKey, flashValue
 	}
 	u += sep + flashKey + "=" + url.QueryEscape(flashValue)
 	return u
+}
+
+func cleanListQuery(c *gin.Context, dropPage bool) url.Values {
+	q := c.Request.URL.Query()
+	q.Del("success")
+	q.Del("error")
+	q.Del("screen_options")
+	q.Del("columns")
+	q.Del("per_page")
+	if dropPage {
+		q.Del("page")
+	}
+	return q
+}
+
+func cleanListQueryString(c *gin.Context, dropPage bool) string {
+	return cleanListQuery(c, dropPage).Encode()
+}
+
+func redirectToCleanList(c *gin.Context, slug string) {
+	q := cleanListQueryString(c, true)
+	target := "/admin/" + slug
+	if q != "" {
+		target += "?" + q
+	}
+	c.Redirect(http.StatusFound, target)
+}
+
+func hiddenInputsFromQuery(q url.Values) []AdminHiddenInput {
+	return hiddenInputsFromQueryExcept(q, nil)
+}
+
+func hiddenInputsFromQueryExcept(q url.Values, omit map[string]bool) []AdminHiddenInput {
+	var inputs []AdminHiddenInput
+	for key, values := range q {
+		if key == "" {
+			continue
+		}
+		if omit != nil && omit[key] {
+			continue
+		}
+		for _, value := range values {
+			inputs = append(inputs, AdminHiddenInput{Name: key, Value: value})
+		}
+	}
+	return inputs
+}
+
+func parseAdminPage(c *gin.Context) int {
+	page, err := strconv.Atoi(c.Query("page"))
+	if err != nil || page < 1 {
+		return 1
+	}
+	return page
+}
+
+func (h *Handler) contentListColumns(lang string, typeName string, typeDef *content.ContentTypeDef, taxDefs []*content.TaxonomyDef) []AdminListColumn {
+	columns := []AdminListColumn{
+		{Key: "id", Label: "ID"},
+		{Key: "title", Label: adminT(lang, "content.title")},
+		{Key: "status", Label: adminT(lang, "content.status")},
+	}
+	if hasSupport(typeDef.Supports, "sort_order") {
+		columns = append(columns, AdminListColumn{Key: "sort_order", Label: adminT(lang, "content.sort_order")})
+	}
+	columns = append(columns, AdminListColumn{Key: "author", Label: adminT(lang, "content.author")})
+	for _, field := range typeDef.MetaFields {
+		columns = append(columns, AdminListColumn{
+			Key:   "meta:" + field.Key,
+			Label: h.metaFieldLabel(lang, typeName, field.Key, field.Label),
+		})
+	}
+	for _, tax := range taxDefs {
+		columns = append(columns, AdminListColumn{
+			Key:   "tax:" + tax.Name,
+			Label: adminTaxonomyLabel(lang, tax.Name, tax.Label),
+		})
+	}
+	if hasSupport(typeDef.Supports, "publish_date") {
+		columns = append(columns, AdminListColumn{Key: "published_at", Label: adminT(lang, "content.publish_at")})
+	} else {
+		columns = append(columns, AdminListColumn{Key: "created_at", Label: adminT(lang, "content.created_at")})
+	}
+	columns = append(columns,
+		AdminListColumn{Key: "updated_at", Label: adminT(lang, "content.updated_at")},
+		AdminListColumn{Key: "actions", Label: adminT(lang, "field.actions")},
+	)
+	return columns
+}
+
+func contentListDateField(typeDef *content.ContentTypeDef) string {
+	if hasSupport(typeDef.Supports, "publish_date") {
+		return "published_at"
+	}
+	return "created_at"
+}
+
+func contentListFilterTaxonomy(taxDefs []*content.TaxonomyDef) *content.TaxonomyDef {
+	if len(taxDefs) == 0 {
+		return nil
+	}
+	for _, tax := range taxDefs {
+		if tax.Hierarchical {
+			return tax
+		}
+	}
+	return taxDefs[0]
+}
+
+func monthOptionLabel(lang, value string) string {
+	t, err := time.Parse("2006-01", value)
+	if err != nil {
+		return value
+	}
+	if strings.HasPrefix(lang, "zh") {
+		return fmt.Sprintf("%d年 %d月", t.Year(), int(t.Month()))
+	}
+	return t.Format("January 2006")
+}
+
+func (h *Handler) contentListFilters(c *gin.Context, slug string, typeName string, dateField string, taxDef *content.TaxonomyDef) AdminContentListFilters {
+	lang := h.svc.AdminLanguage()
+	selectedDate := strings.TrimSpace(c.Query("date"))
+	filters := AdminContentListFilters{
+		ActionURL: "/admin/" + slug,
+		DateOptions: []AdminListFilterOption{{
+			Value:    "",
+			Label:    adminT(lang, "screen.all_dates"),
+			Selected: selectedDate == "",
+		}},
+	}
+	if months, err := h.svc.ListContentMonthsScoped(c, typeName, dateField); err == nil {
+		for _, month := range months {
+			filters.DateOptions = append(filters.DateOptions, AdminListFilterOption{
+				Value:    month,
+				Label:    monthOptionLabel(lang, month),
+				Selected: selectedDate == month,
+			})
+		}
+	}
+
+	if taxDef != nil {
+		selectedTerm := strings.TrimSpace(c.Query("term"))
+		filters.TaxonomyLabel = adminT(lang, "screen.all_categories")
+		if taxDef.LabelPlural != "" {
+			filters.TaxonomyLabel = adminT(lang, "screen.all_taxonomy", adminTaxonomyLabel(lang, taxDef.Name, taxDef.LabelPlural))
+		}
+		filters.TaxonomyOptions = append(filters.TaxonomyOptions, AdminListFilterOption{
+			Value:    "",
+			Label:    filters.TaxonomyLabel,
+			Selected: selectedTerm == "",
+		})
+		if items, err := h.svc.ListTaxonomy(taxDef.Name); err == nil {
+			for _, item := range h.svc.ToTaxonomyItemViews(items) {
+				filters.TaxonomyOptions = append(filters.TaxonomyOptions, AdminListFilterOption{
+					Value:    item.Slug,
+					Label:    item.Name,
+					Selected: selectedTerm == item.Slug,
+				})
+			}
+		}
+	}
+
+	return filters
+}
+
+func buildAdminPagination(c *gin.Context, result *content.PaginatedResult) AdminPaginationView {
+	totalPages := result.TotalPages
+	if totalPages < 1 {
+		totalPages = 1
+	}
+	page := result.Page
+	if page < 1 {
+		page = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+
+	buildURL := func(targetPage int) string {
+		if targetPage < 1 {
+			targetPage = 1
+		}
+		if targetPage > totalPages {
+			targetPage = totalPages
+		}
+		q := cleanListQuery(c, false)
+		q.Set("page", strconv.Itoa(targetPage))
+		path := c.Request.URL.Path
+		if enc := q.Encode(); enc != "" {
+			return path + "?" + enc
+		}
+		return path
+	}
+
+	var from, to int64
+	if result.Total > 0 && len(result.Items) > 0 {
+		from = int64((page-1)*result.PerPage) + 1
+		to = from + int64(len(result.Items)) - 1
+	}
+
+	return AdminPaginationView{
+		Total:      result.Total,
+		Page:       page,
+		PerPage:    result.PerPage,
+		TotalPages: totalPages,
+		From:       from,
+		To:         to,
+		Offset:     (page - 1) * result.PerPage,
+		FirstURL:   buildURL(1),
+		PrevURL:    buildURL(page - 1),
+		NextURL:    buildURL(page + 1),
+		LastURL:    buildURL(totalPages),
+	}
 }
 
 func (h *Handler) resolveCurrentAdminUserID(c *gin.Context) uint {
@@ -119,8 +334,6 @@ func (h *Handler) ContentList(c *gin.Context) {
 		orderDir = "ASC"
 	}
 
-	items, _ := h.svc.ListContentScoped(c, typeName, orderField, orderDir)
-	views := h.svc.ToDynamicContentViews(items, typeDef)
 	slug := AdminSlug(typeName)
 
 	// Collect taxonomy definitions for table header
@@ -130,6 +343,59 @@ func (h *Handler) ContentList(c *gin.Context) {
 			taxDefs = append(taxDefs, td)
 		}
 	}
+
+	lang := h.svc.AdminLanguage()
+	screenKey := "content." + typeName
+	columns := h.contentListColumns(lang, typeName, typeDef, taxDefs)
+	if c.Query("screen_options") == "1" {
+		if err := h.svc.SaveAdminListOptions(screenKey, columns, c.QueryArray("columns"), c.Query("per_page"), defaultAdminListPerPage); err != nil {
+			c.Redirect(http.StatusFound, "/admin/"+slug+"?error="+url.QueryEscape(err.Error()))
+			return
+		}
+		redirectToCleanList(c, slug)
+		return
+	}
+
+	screenOptions := h.svc.LoadAdminListOptions(screenKey, columns, defaultAdminListPerPage)
+	screenOptions.ActionURL = "/admin/" + slug
+	visibleColumns := adminVisibleColumnMap(screenOptions.Columns)
+	visibleColumnCount := adminVisibleColumnCount(screenOptions.Columns)
+	tableColumnCount := visibleColumnCount
+	if hasSupport(typeDef.Supports, "sort_order") {
+		tableColumnCount++
+	}
+
+	searchQuery := strings.TrimSpace(c.Query("q"))
+	dateField := contentListDateField(typeDef)
+	filterTax := contentListFilterTaxonomy(taxDefs)
+	filterTaxName := ""
+	if filterTax != nil {
+		filterTaxName = filterTax.Name
+	}
+	selectedTerm := strings.TrimSpace(c.Query("term"))
+	selectedDate := strings.TrimSpace(c.Query("date"))
+	page := parseAdminPage(c)
+	result, err := h.svc.ListContentPageScoped(c, typeName, orderField, orderDir, page, screenOptions.PerPage, searchQuery, filterTaxName, selectedTerm, selectedDate, dateField)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	if result.TotalPages > 0 && result.Page > result.TotalPages {
+		q := cleanListQuery(c, false)
+		q.Set("page", strconv.Itoa(result.TotalPages))
+		target := c.Request.URL.Path
+		if enc := q.Encode(); enc != "" {
+			target += "?" + enc
+		}
+		c.Redirect(http.StatusFound, target)
+		return
+	}
+
+	views := h.svc.ToDynamicContentViews(result.Items, typeDef)
+	pagination := buildAdminPagination(c, result)
+	filters := h.contentListFilters(c, slug, typeName, dateField, filterTax)
+	reorderQuery := cleanListQuery(c, false)
+	reorderQuery.Set("offset", strconv.Itoa(pagination.Offset))
 
 	// Collect filter tabs from any plugin that hooks admin.content_list.tabs
 	// (e.g. multilang contributes per-language tabs). Empty when no plugin
@@ -143,17 +409,28 @@ func (h *Handler) ContentList(c *gin.Context) {
 		}
 	}
 
-	lang := h.svc.AdminLanguage()
 	h.render(c, "content_list", gin.H{
-		"Title":     h.contentTypeLabel(lang, typeName, typeDef.LabelPlural),
-		"Active":    slug,
-		"Items":     views,
-		"TypeDef":   typeDef,
-		"TypeName":  typeName,
-		"Slug":      slug,
-		"TaxDefs":   taxDefs,
-		"Tabs":      tabs,
-		"BackQuery": listFilterQuery(c),
+		"Title":               h.contentTypeLabel(lang, typeName, typeDef.LabelPlural),
+		"Active":              slug,
+		"Items":               views,
+		"TypeDef":             typeDef,
+		"TypeName":            typeName,
+		"Slug":                slug,
+		"TaxDefs":             taxDefs,
+		"Tabs":                tabs,
+		"BackQuery":           listFilterQuery(c),
+		"SearchQuery":         searchQuery,
+		"ScreenOptions":       screenOptions,
+		"VisibleColumns":      visibleColumns,
+		"VisibleColumnCount":  visibleColumnCount,
+		"TableColumnCount":    tableColumnCount,
+		"Pagination":          pagination,
+		"SearchHiddenInputs":  hiddenInputsFromQueryExcept(cleanListQuery(c, true), map[string]bool{"q": true}),
+		"OptionsHiddenInputs": hiddenInputsFromQuery(cleanListQuery(c, true)),
+		"PageHiddenInputs":    hiddenInputsFromQuery(cleanListQuery(c, true)),
+		"Filters":             filters,
+		"FilterHiddenInputs":  hiddenInputsFromQueryExcept(cleanListQuery(c, true), map[string]bool{"date": true, "term": true}),
+		"ReorderQuery":        template.URL(reorderQuery.Encode()),
 	})
 }
 
@@ -542,7 +819,8 @@ func (h *Handler) ContentReorder(c *gin.Context) {
 		return
 	}
 
-	if err := h.svc.ReorderContent(typeName, req.IDs); err != nil {
+	offset, _ := strconv.Atoi(c.Query("offset"))
+	if err := h.svc.ReorderContent(typeName, req.IDs, offset); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

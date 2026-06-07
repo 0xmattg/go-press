@@ -62,6 +62,20 @@ function adminFormat(template) {
         });
     });
 
+    // WordPress-style screen options panel. Pages opt in by rendering a panel
+    // with the id referenced by data-screen-options-toggle[aria-controls].
+    document.querySelectorAll('[data-screen-options-toggle]').forEach(function(btn) {
+        var panelID = btn.getAttribute('aria-controls');
+        var panel = panelID ? document.getElementById(panelID) : null;
+        if (!panel) return;
+        btn.addEventListener('click', function() {
+            var expanded = btn.getAttribute('aria-expanded') === 'true';
+            btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+            panel.hidden = expanded;
+            btn.classList.toggle('active', !expanded);
+        });
+    });
+
     // Auto-generate slug from title
     var titleInput = document.getElementById('title');
     var slugInput = document.getElementById('slug');

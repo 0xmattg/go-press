@@ -15,6 +15,10 @@ The sidebar is generated from core content types, active theme metadata, plugin 
 
 The admin CRUD surface is data-driven. A content type declared in `theme.toml` can automatically receive list, create, edit, delete, media, taxonomy, sorting, REST, and rewrite behavior depending on its `supports` and `taxonomies` settings.
 
+Content list pages include WordPress-style **Screen Options**. The column checkboxes are generated from the current page's actual columns, including core fields, content meta fields, and taxonomies attached to that content type. The selected columns and items-per-page value are stored per list key and are applied to server-side pagination.
+
+List search is server-side and searches titles only, matching the admin placeholder. Date and taxonomy filters are also generated from the current content type: available months come from existing rows, and the taxonomy dropdown uses the first hierarchical taxonomy attached to the type, falling back to the first taxonomy when no hierarchical taxonomy exists. Search, tabs, date filters, taxonomy filters, and pagination compose into one query so totals and page counts stay accurate.
+
 ## Settings
 
 System settings are split into website settings and admin settings. Website settings affect the public site, SEO metadata, sitemap, favicon, publish-time timezone, and branding options. The `site_icon` value is the shared favicon source for all themes. `site_timezone` is the shared timezone used to parse admin publish-time inputs and format content dates in admin lists and themes; timestamps are stored in UTC. Admin settings control the CMS interface, including the admin language.

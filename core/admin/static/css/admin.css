@@ -648,6 +648,90 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .content-header-actions { display: flex; align-items: center; justify-content: flex-end; gap: .5rem; margin-left: auto; }
 .btn-back { white-space: nowrap; }
 
+/* ==================== Screen Options ==================== */
+.screen-options-shell {
+    margin: -1rem 0 -1rem;
+    min-height: 34px;
+}
+.screen-options-panel {
+    padding: 1rem 1.25rem 1.1rem;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-top: none;
+    border-bottom: none;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+}
+.screen-options-panel[hidden] { display: none; }
+.screen-options-form {
+    display: grid;
+    gap: 1rem;
+}
+.screen-options-section h3 {
+    margin-bottom: .55rem;
+    font-size: .9rem;
+    font-weight: 700;
+}
+.screen-options-columns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .65rem 1.2rem;
+}
+.screen-options-check {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    color: #334155;
+    white-space: nowrap;
+}
+.screen-options-check input {
+    width: 16px;
+    height: 16px;
+}
+.screen-options-check input:disabled + span {
+    color: #94a3b8;
+}
+.screen-options-pagination-setting label {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+}
+.screen-options-pagination-setting input {
+    width: 80px;
+    height: 34px;
+    padding: 0 .55rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+}
+.screen-options-actions {
+    display: flex;
+    justify-content: flex-start;
+}
+.screen-options-tab-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: -1px;
+}
+.screen-options-panel[hidden] + .screen-options-tab-row {
+    margin-top: 0;
+}
+.screen-options-toggle {
+    height: 34px;
+    padding: 0 .85rem;
+    border: 1px solid #cbd5e1;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    background: #fff;
+    color: #475569;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+}
+.screen-options-toggle:hover,
+.screen-options-toggle.active {
+    color: #1e293b;
+    background: #f8fafc;
+}
+
 /* Content list toolbar — wraps the tab strip on the left and the per-tab
    title-search box on the right, sharing a single bottom border so the active
    tab's accent visually merges with it. */
@@ -746,6 +830,78 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 /* When tabs are present, snap the list card to the tab bar */
 .content-list-tabs + .card { border-top-left-radius: 0; border-top-right-radius: 0; }
 .content-list-toolbar + .card { border-top-left-radius: 0; border-top-right-radius: 0; }
+
+.content-list-topline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    min-height: 40px;
+    padding: .45rem 0;
+}
+.content-list-filters {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+.content-list-filter-select {
+    height: 34px;
+    min-width: 140px;
+    padding: 0 2rem 0 .65rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #fff;
+    color: #1e293b;
+    font-size: .86rem;
+}
+.admin-pagination {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    color: #334155;
+    font-size: .85rem;
+}
+.admin-pagination-total {
+    margin-right: .35rem;
+    color: #475569;
+}
+.admin-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    background: #fff;
+    color: #334155;
+    text-decoration: none;
+    font-size: 1rem;
+    line-height: 1;
+}
+.admin-page-btn:hover {
+    background: #f8fafc;
+    color: #1e293b;
+}
+.admin-page-btn.disabled {
+    pointer-events: none;
+    opacity: .48;
+}
+.admin-page-form {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+}
+.admin-page-input {
+    width: 48px;
+    height: 32px;
+    padding: 0 .35rem;
+    text-align: center;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    background: #fff;
+}
 
 /* ==================== Content List Drag-to-Sort ==================== */
 .sortable-list .drag-col { width: 28px; padding: 0 !important; }

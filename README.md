@@ -212,6 +212,7 @@ go run ./cmd/gendoc/
 - **Data-driven CRUD** — admin list/edit screens are generated from the registered `ContentType` definitions.
 - **Theme-declared content models** — `theme.toml` drives admin navigation, CRUD, REST API exposure, rewrite rules, template mapping, and menu icons.
 - **RBAC** — `admin`, `editor`, `author`, and `subscriber` roles enforced throughout the admin surface.
+- **List screen options and pagination** — content lists support dynamic column visibility, title search, date/taxonomy filters, and server-side pagination.
 - **Drag sorting and rich text** — Quill 2.0 editor, media picker, and HTML5 drag-and-drop ordering.
 - **Admin extension points** — hooks such as `admin.HookContentListTabs`, `admin.HookContentPermalinkPrefix`, `admin.content_form.fields`, and `admin.content.saved`.
 
