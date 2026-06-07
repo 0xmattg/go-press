@@ -3,6 +3,7 @@ package content
 import (
 	"fmt"
 	"math"
+	"time"
 
 	"go-press/pkg/dbprefix"
 
@@ -95,11 +96,31 @@ func (q *ContentQuery) Slug(slug string) *ContentQuery {
 	return q
 }
 
-// Search performs a ILIKE search on title and content.
+// Search performs a case-insensitive search on title and content.
 func (q *ContentQuery) Search(keyword string) *ContentQuery {
 	tbl := dbprefix.Table("contents")
 	pattern := "%" + keyword + "%"
-	q.db = q.db.Where("("+tbl+".title ILIKE ? OR "+tbl+".content ILIKE ?)", pattern, pattern)
+	q.db = q.db.Where("(LOWER("+tbl+".title) LIKE LOWER(?) OR LOWER("+tbl+".content) LIKE LOWER(?))", pattern, pattern)
+	return q
+}
+
+// SearchTitle performs a case-insensitive search on title only.
+func (q *ContentQuery) SearchTitle(keyword string) *ContentQuery {
+	tbl := dbprefix.Table("contents")
+	pattern := "%" + keyword + "%"
+	q.db = q.db.Where("LOWER("+tbl+".title) LIKE LOWER(?)", pattern)
+	return q
+}
+
+// DateRange filters content rows by a known content table timestamp column.
+func (q *ContentQuery) DateRange(field string, start, end time.Time) *ContentQuery {
+	tbl := dbprefix.Table("contents")
+	if field == "published_at" {
+		expr := "COALESCE(" + tbl + ".published_at, " + tbl + ".created_at)"
+		q.db = q.db.Where(expr+" >= ? AND "+expr+" < ?", start, end)
+		return q
+	}
+	q.db = q.db.Where(tbl+"."+field+" >= ? AND "+tbl+"."+field+" < ?", start, end)
 	return q
 }
 

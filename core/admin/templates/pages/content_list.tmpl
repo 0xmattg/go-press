@@ -1,11 +1,51 @@
 {{define "content"}}
+<div class="screen-options-shell">
+{{with .ScreenOptions}}
+<div class="screen-options-panel" id="screenOptionsPanel" hidden>
+    <form method="GET" action="{{.ActionURL}}" class="screen-options-form">
+        <input type="hidden" name="screen_options" value="1">
+        {{range $.OptionsHiddenInputs}}
+        <input type="hidden" name="{{.Name}}" value="{{.Value}}">
+        {{end}}
+        <div class="screen-options-section">
+            <h3>{{T $ "screen.columns"}}</h3>
+            <div class="screen-options-columns">
+                {{range .Columns}}
+                <label class="screen-options-check">
+                    <input type="checkbox" name="columns" value="{{.Key}}" {{if .Visible}}checked{{end}} {{if .Required}}disabled{{end}}>
+                    <span>{{.Label}}</span>
+                </label>
+                {{end}}
+            </div>
+        </div>
+        <div class="screen-options-section screen-options-pagination-setting">
+            <h3>{{T $ "screen.pagination"}}</h3>
+            <label>
+                <span>{{T $ "screen.per_page"}}</span>
+                <input type="number" name="per_page" min="1" max="200" value="{{.PerPage}}">
+            </label>
+        </div>
+        <div class="screen-options-actions">
+            <button type="submit" class="btn btn-secondary">{{T $ "action.apply"}}</button>
+        </div>
+    </form>
+</div>
+{{end}}
+    <div class="screen-options-tab-row">
+        <button type="button" class="screen-options-toggle" data-screen-options-toggle aria-expanded="false" aria-controls="screenOptionsPanel">
+            {{T . "screen.options"}} <span aria-hidden="true">▾</span>
+        </button>
+    </div>
+</div>
 <div class="content-header">
-    <h2>{{adminContentTypeLabel .AdminLanguage .TypeName .TypeDef.LabelPlural}}</h2>
-    {{if .TypeDef.HasArchive}}
-    {{if can .CurrentRole .TypeName "create"}}
-    <a href="/admin/{{.Slug}}/new{{if .BackQuery}}?{{.BackQuery}}{{end}}" class="btn btn-primary">{{T . "content.new" (adminContentTypeLabel .AdminLanguage .TypeName .TypeDef.Label)}}</a>
-    {{end}}
-    {{end}}
+    <div class="content-header-left">
+        <h2>{{adminContentTypeLabel .AdminLanguage .TypeName .TypeDef.LabelPlural}}</h2>
+        {{if .TypeDef.HasArchive}}
+        {{if can .CurrentRole .TypeName "create"}}
+        <a href="/admin/{{.Slug}}/new{{if .BackQuery}}?{{.BackQuery}}{{end}}" class="btn btn-primary">{{T . "content.new" (adminContentTypeLabel .AdminLanguage .TypeName .TypeDef.Label)}}</a>
+        {{end}}
+        {{end}}
+    </div>
 </div>
 <div class="content-list-toolbar">
     {{if .Tabs}}
@@ -18,70 +58,96 @@
         {{end}}
     </div>
     {{end}}
-    <div class="content-list-search" role="search" data-content-list-search>
-        <input type="search" placeholder="{{T . "content.search_by_title"}}" class="content-list-search-input" aria-label="{{T . "content.search_by_title"}}" data-search-input>
-        <button type="button" class="btn btn-secondary content-list-search-btn" aria-label="{{T . "action.search"}}" data-search-commit>
+    <form method="GET" action="/admin/{{.Slug}}" class="content-list-search" role="search">
+        {{range .SearchHiddenInputs}}
+        <input type="hidden" name="{{.Name}}" value="{{.Value}}">
+        {{end}}
+        <input type="search" name="q" value="{{.SearchQuery}}" placeholder="{{T . "content.search_by_title"}}" class="content-list-search-input" aria-label="{{T . "content.search_by_title"}}">
+        <button type="submit" class="btn btn-secondary content-list-search-btn" aria-label="{{T . "action.search"}}">
             <svg viewBox="0 0 20 20" fill="none" width="16" height="16" aria-hidden="true">
                 <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="2"/>
                 <path d="M14 14l3.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
         </button>
-    </div>
+    </form>
+</div>
+<div class="content-list-topline">
+    {{with .Filters}}
+    <form method="GET" action="{{.ActionURL}}" class="content-list-filters">
+        {{range $.FilterHiddenInputs}}
+        <input type="hidden" name="{{.Name}}" value="{{.Value}}">
+        {{end}}
+        <select name="date" class="content-list-filter-select" aria-label="{{T $ "screen.all_dates"}}">
+            {{range .DateOptions}}
+            <option value="{{.Value}}" {{if .Selected}}selected{{end}}>{{.Label}}</option>
+            {{end}}
+        </select>
+        {{if .TaxonomyOptions}}
+        <select name="term" class="content-list-filter-select" aria-label="{{.TaxonomyLabel}}">
+            {{range .TaxonomyOptions}}
+            <option value="{{.Value}}" {{if .Selected}}selected{{end}}>{{.Label}}</option>
+            {{end}}
+        </select>
+        {{end}}
+        <button type="submit" class="btn btn-secondary">{{T $ "action.filter"}}</button>
+    </form>
+    {{end}}
+    {{template "admin_pagination" .}}
 </div>
 <div class="card">
     <table class="data-table content-list-table{{if hasSupport .TypeDef.Supports "sort_order"}} sortable-list{{end}}"
-           {{if hasSupport .TypeDef.Supports "sort_order"}}data-reorder-url="/admin/{{.Slug}}/reorder"{{end}}>
+           {{if hasSupport .TypeDef.Supports "sort_order"}}data-reorder-url="/admin/{{.Slug}}/reorder{{if .ReorderQuery}}?{{.ReorderQuery}}{{end}}"{{end}}>
         <thead>
             <tr>
                 {{if hasSupport .TypeDef.Supports "sort_order"}}<th class="drag-col" title="{{T . "content.drag_to_sort"}}"></th>{{end}}
-                <th>ID</th>
-                <th>{{T . "content.title"}}</th>
-                <th>{{T . "content.status"}}</th>
+                {{if index .VisibleColumns "id"}}<th>ID</th>{{end}}
+                {{if index .VisibleColumns "title"}}<th>{{T . "content.title"}}</th>{{end}}
+                {{if index .VisibleColumns "status"}}<th>{{T . "content.status"}}</th>{{end}}
                 {{if hasSupport .TypeDef.Supports "sort_order"}}
-                <th>{{T . "content.sort_order"}}</th>
+                {{if index .VisibleColumns "sort_order"}}<th>{{T . "content.sort_order"}}</th>{{end}}
                 {{end}}
-                <th>{{T . "content.author"}}</th>
+                {{if index .VisibleColumns "author"}}<th>{{T . "content.author"}}</th>{{end}}
                 {{range .TypeDef.MetaFields}}
-                <th>{{.Label}}</th>
+                {{if index $.VisibleColumns (printf "meta:%s" .Key)}}<th>{{adminMetaFieldLabel $ $.TypeName .Key .Label}}</th>{{end}}
                 {{end}}
                 {{range .TaxDefs}}
-                <th>{{.Label}}</th>
+                {{if index $.VisibleColumns (printf "tax:%s" .Name)}}<th>{{adminTaxonomyLabel $.AdminLanguage .Name .Label}}</th>{{end}}
                 {{end}}
                 {{if hasSupport .TypeDef.Supports "publish_date"}}
-                <th>{{T . "content.publish_at"}}</th>
+                {{if index .VisibleColumns "published_at"}}<th>{{T . "content.publish_at"}}</th>{{end}}
                 {{end}}
                 {{if not (hasSupport .TypeDef.Supports "publish_date")}}
-                <th>{{T . "content.created_at"}}</th>
+                {{if index .VisibleColumns "created_at"}}<th>{{T . "content.created_at"}}</th>{{end}}
                 {{end}}
-                <th>{{T . "content.updated_at"}}</th>
-                <th>{{T . "field.actions"}}</th>
+                {{if index .VisibleColumns "updated_at"}}<th>{{T . "content.updated_at"}}</th>{{end}}
+                {{if index .VisibleColumns "actions"}}<th>{{T . "field.actions"}}</th>{{end}}
             </tr>
         </thead>
         <tbody>
             {{range $item := .Items}}
             <tr {{if hasSupport $.TypeDef.Supports "sort_order"}}data-id="{{$item.ID}}" draggable="true"{{end}}>
                 {{if hasSupport $.TypeDef.Supports "sort_order"}}<td class="drag-handle" title="{{T $ "content.drag_to_sort"}}">⋮⋮</td>{{end}}
-                <td>{{$item.ID}}</td>
-                <td class="title-cell" data-title="{{$item.Title}}"><a href="{{if $.TypeDef.Rewrite.Slug}}/{{$.TypeDef.Rewrite.Slug}}/{{$item.Slug}}{{else}}/{{$.TypeName}}/{{$item.Slug}}{{end}}" target="_blank" class="content-title-link">{{$item.Title}}</a></td>
-                <td><span class="badge badge-{{$item.Status}}">{{if eq $item.Status "published"}}{{T $ "content.status.published"}}{{else if eq $item.Status "draft"}}{{T $ "content.status.draft"}}{{else if eq $item.Status "archived"}}{{T $ "content.status.archived"}}{{else}}{{$item.Status}}{{end}}</span></td>
+                {{if index $.VisibleColumns "id"}}<td>{{$item.ID}}</td>{{end}}
+                {{if index $.VisibleColumns "title"}}<td class="title-cell" data-title="{{$item.Title}}"><a href="{{if $.TypeDef.Rewrite.Slug}}/{{$.TypeDef.Rewrite.Slug}}/{{$item.Slug}}{{else}}/{{$.TypeName}}/{{$item.Slug}}{{end}}" target="_blank" class="content-title-link">{{$item.Title}}</a></td>{{end}}
+                {{if index $.VisibleColumns "status"}}<td><span class="badge badge-{{$item.Status}}">{{if eq $item.Status "published"}}{{T $ "content.status.published"}}{{else if eq $item.Status "draft"}}{{T $ "content.status.draft"}}{{else if eq $item.Status "archived"}}{{T $ "content.status.archived"}}{{else}}{{$item.Status}}{{end}}</span></td>{{end}}
                 {{if hasSupport $.TypeDef.Supports "sort_order"}}
-                <td class="sort-order-cell">{{$item.SortOrder}}</td>
+                {{if index $.VisibleColumns "sort_order"}}<td class="sort-order-cell">{{$item.SortOrder}}</td>{{end}}
                 {{end}}
-                <td>{{$item.AuthorName}}</td>
+                {{if index $.VisibleColumns "author"}}<td>{{$item.AuthorName}}</td>{{end}}
                 {{range $field := $.TypeDef.MetaFields}}
-                <td>{{metaVal $item.Meta $field.Key}}</td>
+                {{if index $.VisibleColumns (printf "meta:%s" $field.Key)}}<td>{{metaVal $item.Meta $field.Key}}</td>{{end}}
                 {{end}}
                 {{range $tax := $.TaxDefs}}
-                <td>{{firstTaxName $item.Taxonomies $tax.Name}}</td>
+                {{if index $.VisibleColumns (printf "tax:%s" $tax.Name)}}<td>{{firstTaxName $item.Taxonomies $tax.Name}}</td>{{end}}
                 {{end}}
                 {{if hasSupport $.TypeDef.Supports "publish_date"}}
-                <td>{{if $item.PublishedAt}}{{formatDate $item.PublishedAt}}{{else}}<span class="badge badge-draft">{{T $ "content.status.draft"}}</span>{{end}}</td>
+                {{if index $.VisibleColumns "published_at"}}<td>{{if $item.PublishedAt}}{{formatDate $item.PublishedAt}}{{else}}<span class="badge badge-draft">{{T $ "content.status.draft"}}</span>{{end}}</td>{{end}}
                 {{end}}
                 {{if not (hasSupport $.TypeDef.Supports "publish_date")}}
-                <td>{{formatDate $item.CreatedAt}}</td>
+                {{if index $.VisibleColumns "created_at"}}<td>{{formatDate $item.CreatedAt}}</td>{{end}}
                 {{end}}
-                <td><span title="{{formatDate $item.UpdatedAt}}">{{timeAgo $.AdminLanguage $item.UpdatedAt}}</span></td>
-                <td class="actions">
+                {{if index $.VisibleColumns "updated_at"}}<td><span title="{{formatDate $item.UpdatedAt}}">{{timeAgo $.AdminLanguage $item.UpdatedAt}}</span></td>{{end}}
+                {{if index $.VisibleColumns "actions"}}<td class="actions">
                     {{if $.TypeDef.HasArchive}}
                     {{if can $.CurrentRole $.TypeName "update"}}
                     <a href="/admin/{{$.Slug}}/{{$item.ID}}/edit{{if $.BackQuery}}?{{$.BackQuery}}{{end}}" class="btn btn-sm">{{T $ "action.edit"}}</a>
@@ -96,12 +162,32 @@
                         <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('{{T $ "confirm.delete"}}')">{{T $ "action.delete"}}</button>
                     </form>
                     {{end}}
-                </td>
+                </td>{{end}}
             </tr>
             {{else}}
-            <tr><td colspan="20" class="empty-msg">{{T . "content.empty" (adminContentTypeLabel .AdminLanguage .TypeName .TypeDef.Label)}}</td></tr>
+            <tr><td colspan="{{.TableColumnCount}}" class="empty-msg">{{T . "content.empty" (adminContentTypeLabel .AdminLanguage .TypeName .TypeDef.Label)}}</td></tr>
             {{end}}
         </tbody>
     </table>
 </div>
+{{end}}
+
+{{define "admin_pagination"}}
+{{with .Pagination}}
+<div class="admin-pagination" aria-label="{{T $ "screen.pagination"}}">
+    <span class="admin-pagination-total">{{T $ "screen.total_items" .Total}}</span>
+    <a class="admin-page-btn{{if le .Page 1}} disabled{{end}}" href="{{.FirstURL}}" aria-label="{{T $ "screen.first_page"}}">«</a>
+    <a class="admin-page-btn{{if le .Page 1}} disabled{{end}}" href="{{.PrevURL}}" aria-label="{{T $ "action.previous_page"}}">‹</a>
+    <form method="GET" action="/admin/{{$.Slug}}" class="admin-page-form">
+        {{range $.PageHiddenInputs}}
+        <input type="hidden" name="{{.Name}}" value="{{.Value}}">
+        {{end}}
+        <span>{{T $ "screen.page_prefix"}}</span>
+        <input type="number" name="page" min="1" max="{{.TotalPages}}" value="{{.Page}}" class="admin-page-input" aria-label="{{T $ "screen.current_page"}}">
+        <span>{{T $ "screen.page_of" .TotalPages}}</span>
+    </form>
+    <a class="admin-page-btn{{if ge .Page .TotalPages}} disabled{{end}}" href="{{.NextURL}}" aria-label="{{T $ "action.next_page"}}">›</a>
+    <a class="admin-page-btn{{if ge .Page .TotalPages}} disabled{{end}}" href="{{.LastURL}}" aria-label="{{T $ "screen.last_page"}}">»</a>
+</div>
+{{end}}
 {{end}}

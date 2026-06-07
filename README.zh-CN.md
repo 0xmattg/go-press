@@ -208,6 +208,7 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 - **数据驱动 CRUD** — 按 ContentType 注册表自动生成列表/编辑界面，零样板代码
 - **主题内容模型配置化** — `theme.toml` 的 `[[content_types]]` 驱动后台导航、CRUD、REST API、Rewrite、模板映射和菜单图标
 - **RBAC 权限** — admin/editor/author/subscriber，全后台 `checkPermission` 加固
+- **列表显示选项与分页** — 内容列表支持按当前页面动态列生成显示选项、标题搜索、日期/分类筛选和服务端分页
 - **拖拽排序 + 富文本** — Quill 2.0 编辑器、媒体选择器、内容列表 HTML5 DnD
 - **后台扩展点** — `admin.HookContentListTabs` / `admin.HookContentPermalinkPrefix` / `admin.content_form.fields` / `admin.content.saved` 等通用 hook，多语言/SEO 等插件按需注入
 

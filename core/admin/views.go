@@ -27,6 +27,61 @@ type DynamicContentView struct {
 	Taxonomies  map[string][]TaxonomyItemView // taxonomy type name -> items
 }
 
+// AdminListColumn declares one configurable table column for an admin list page.
+type AdminListColumn struct {
+	Key      string
+	Label    string
+	Required bool
+	Visible  bool
+}
+
+// AdminListScreenOptions describes the reusable "Screen Options" panel for
+// admin list pages. Pages provide columns dynamically; the container only
+// renders and persists the chosen state.
+type AdminListScreenOptions struct {
+	Key            string
+	ActionURL      string
+	Columns        []AdminListColumn
+	PerPage        int
+	PerPageChoices []int
+}
+
+// AdminPaginationView contains service-side pagination metadata and URLs.
+type AdminPaginationView struct {
+	Total      int64
+	Page       int
+	PerPage    int
+	TotalPages int
+	From       int64
+	To         int64
+	Offset     int
+	FirstURL   string
+	PrevURL    string
+	NextURL    string
+	LastURL    string
+}
+
+// AdminListFilterOption is one selectable value in a list filter dropdown.
+type AdminListFilterOption struct {
+	Value    string
+	Label    string
+	Selected bool
+}
+
+// AdminContentListFilters describes the basic filters above a content table.
+type AdminContentListFilters struct {
+	ActionURL       string
+	DateOptions     []AdminListFilterOption
+	TaxonomyLabel   string
+	TaxonomyOptions []AdminListFilterOption
+}
+
+// AdminHiddenInput preserves non-page query parameters inside small GET forms.
+type AdminHiddenInput struct {
+	Name  string
+	Value string
+}
+
 // TaxonomyItemView is a generic taxonomy term view.
 type TaxonomyItemView struct {
 	ID   uint

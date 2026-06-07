@@ -161,6 +161,62 @@ func (s *Service) ListContentScoped(c *gin.Context, contentType, orderField, ord
 		Get()
 }
 
+func (s *Service) ListContentPageScoped(c *gin.Context, contentType, orderField, orderDir string, page, perPage int, search string, taxonomyName string, termSlug string, dateMonth string, dateField string) (*content.PaginatedResult, error) {
+	db := content.ScopedDB(c, s.db)
+	q := content.NewQuery(db).Type(contentType)
+	if strings.TrimSpace(search) != "" {
+		q.SearchTitle(search)
+	}
+	if strings.TrimSpace(taxonomyName) != "" && strings.TrimSpace(termSlug) != "" {
+		q.Taxonomy(taxonomyName, termSlug)
+	}
+	if start, end, ok := parseAdminListMonth(dateMonth); ok {
+		q.DateRange(adminListDateField(dateField), start, end)
+	}
+	return q.OrderBy(orderField, orderDir).Paginate(page, perPage)
+}
+
+func (s *Service) ListContentMonthsScoped(c *gin.Context, contentType, dateField string) ([]string, error) {
+	db := content.ScopedDB(c, s.db)
+	items, err := content.NewQuery(db).
+		Type(contentType).
+		OrderBy(adminListDateField(dateField), "DESC").
+		Get()
+	if err != nil {
+		return nil, err
+	}
+	seen := make(map[string]bool)
+	var months []string
+	for _, item := range items {
+		t := item.CreatedAt
+		if adminListDateField(dateField) == "published_at" && item.PublishedAt != nil {
+			t = *item.PublishedAt
+		}
+		key := t.Format("2006-01")
+		if !seen[key] {
+			seen[key] = true
+			months = append(months, key)
+		}
+	}
+	sort.Sort(sort.Reverse(sort.StringSlice(months)))
+	return months, nil
+}
+
+func adminListDateField(field string) string {
+	if field == "published_at" {
+		return "published_at"
+	}
+	return "created_at"
+}
+
+func parseAdminListMonth(value string) (time.Time, time.Time, bool) {
+	t, err := time.Parse("2006-01", strings.TrimSpace(value))
+	if err != nil {
+		return time.Time{}, time.Time{}, false
+	}
+	return t, t.AddDate(0, 1, 0), true
+}
+
 func (s *Service) GetContent(id uint) (*content.Content, error) {
 	return s.contentRepo.FindByID(id)
 }
@@ -180,15 +236,18 @@ func (s *Service) DeleteContent(id uint) error {
 // ReorderContent assigns sort_order = 1..N to the given IDs in sequence,
 // inside a single transaction. The type filter protects against stray IDs
 // from other content types accidentally hijacking sort slots.
-func (s *Service) ReorderContent(contentType string, ids []uint) error {
+func (s *Service) ReorderContent(contentType string, ids []uint, offset int) error {
 	if contentType == "" || len(ids) == 0 {
 		return nil
+	}
+	if offset < 0 {
+		offset = 0
 	}
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		for i, id := range ids {
 			if err := tx.Model(&content.Content{}).
 				Where("id = ? AND type = ?", id, contentType).
-				Update("sort_order", i+1).Error; err != nil {
+				Update("sort_order", offset+i+1).Error; err != nil {
 				return err
 			}
 		}
