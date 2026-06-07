@@ -70,7 +70,8 @@ func skipPoweredByPath(path string) bool {
 		strings.HasPrefix(path, "/swagger/") ||
 		path == "/health" ||
 		path == "/sitemap.xml" ||
-		path == "/robots.txt"
+		path == "/robots.txt" ||
+		path == "/favicon.ico"
 }
 
 func injectPoweredBy(body []byte) []byte {

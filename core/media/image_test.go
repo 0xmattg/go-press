@@ -1,13 +1,53 @@
 package media
 
 import (
+	"bytes"
+	"encoding/binary"
 	"image"
 	"image/color"
 	"image/jpeg"
+	"image/png"
 	"os"
 	"path/filepath"
 	"testing"
 )
+
+func TestGenerateFaviconICO(t *testing.T) {
+	dir := t.TempDir()
+	src := filepath.Join(dir, "source.png")
+	dst := filepath.Join(dir, "public", "favicon.ico")
+
+	img := image.NewRGBA(image.Rect(0, 0, 192, 192))
+	img.Set(0, 0, color.RGBA{R: 255, A: 255})
+	f, err := os.Create(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := png.Encode(f, img); err != nil {
+		f.Close()
+		t.Fatal(err)
+	}
+	if err := f.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := GenerateFaviconICO(src, dst); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(dst)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(data) < 30 || !bytes.Equal(data[:6], []byte{0, 0, 1, 0, 1, 0}) {
+		t.Fatalf("invalid ICO header")
+	}
+	if got := binary.LittleEndian.Uint32(data[18:22]); got != 22 {
+		t.Fatalf("image offset = %d, want 22", got)
+	}
+	if !bytes.Equal(data[22:30], []byte("\x89PNG\r\n\x1a\n")) {
+		t.Fatalf("ICO image payload is not PNG: %v", data[22:30])
+	}
+}
 
 func TestGenerateResponsiveVariants(t *testing.T) {
 	dir := t.TempDir()
