@@ -14,6 +14,7 @@ import (
 	"go-press/core/content"
 	"go-press/core/hook"
 	coreI18n "go-press/core/i18n"
+	"go-press/core/mail"
 	"go-press/core/menu"
 	"go-press/core/rewrite"
 	"go-press/core/taxonomy"
@@ -77,6 +78,17 @@ func (b *BaseTheme) AddRoute(method, path string, handler gin.HandlerFunc) {
 		b.CustomRoutes[path] = make(map[string]gin.HandlerFunc)
 	}
 	b.CustomRoutes[path][method] = handler
+}
+
+// MailSender returns the core mail sender for theme-owned workflows.
+//
+// Prefer using it from handlers or services after user input has been validated.
+// Templates should not send mail directly.
+func (b *BaseTheme) MailSender() mail.Sender {
+	if b == nil || b.App == nil {
+		return nil
+	}
+	return b.App.MailSender()
 }
 
 // LoadTemplates compiles all templates using the core TemplateEngine

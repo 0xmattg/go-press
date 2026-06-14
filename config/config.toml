@@ -34,3 +34,16 @@ jwt_secret = "go-press-change-this-secret-in-production"
 jwt_expire_hours = 24
 upload_dir = "web/static/uploads"
 upload_max_size_mb = 10
+
+[mail]
+driver = "go-mail"
+enabled = false
+host = ""
+port = 587
+encryption = "starttls"
+username = ""
+mail_key = ""
+from_email = ""
+from_name = ""
+reply_to = ""
+timeout_seconds = 10

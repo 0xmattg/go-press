@@ -1,6 +1,7 @@
 package florafi
 
 import (
+	"context"
 	"strconv"
 	"strings"
 	"time"
@@ -707,14 +708,11 @@ func (s *PageService) SubmitContact(name, email, phone, message string) error {
 		Title:   name,
 		Content: message,
 	}
-	if err := s.contentRepo.Create(c); err != nil {
-		return err
-	}
-	_ = s.contentRepo.SaveMeta(c.ID, "email", email)
+	meta := map[string]string{"email": email}
 	if phone != "" {
-		_ = s.contentRepo.SaveMeta(c.ID, "phone", phone)
+		meta["phone"] = phone
 	}
-	return nil
+	return s.contentRepo.CreateWithMeta(context.Background(), c, meta)
 }
 
 // ======== Internal Helpers ========

@@ -135,6 +135,27 @@ type SettingOptionView struct {
 	Label string
 }
 
+// MailSettingsView contains SMTP transport config plus notification switches.
+type MailSettingsView struct {
+	Driver                   string
+	DriverOptions            []SettingOptionView
+	Enabled                  bool
+	Host                     string
+	Port                     int
+	Encryption               string
+	EncryptionOptions        []SettingOptionView
+	Username                 string
+	HasMailKey               bool
+	FromEmail                string
+	FromName                 string
+	ReplyTo                  string
+	TimeoutSeconds           int
+	ContactMessageNotify     bool
+	ContactMessageRecipients string
+	DefaultContactRecipients string
+	TestRecipient            string
+}
+
 // AdminMenuItem represents a dynamic sidebar menu item.
 type AdminMenuItem struct {
 	Label   string

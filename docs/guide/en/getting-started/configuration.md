@@ -64,6 +64,29 @@ redis_addr = ""
 
 When Redis is not configured, GoPress keeps the in-process memory cache path active and degrades gracefully.
 
+## Mail
+
+```toml
+[mail]
+driver = "go-mail"
+enabled = false
+host = "smtp.example.com"
+port = 587
+encryption = "starttls" # starttls / ssl / none
+username = "smtp-user"
+mail_key = "smtp-password-or-app-key"
+from_email = "no-reply@example.com"
+from_name = "My GoPress Site"
+reply_to = ""
+timeout_seconds = 10
+```
+
+Mail transport settings are site-scoped. The admin **Mail Settings** page writes them to the active site's `config.toml`, which is saved with `0600` permissions. `mail_key` is never echoed back in the admin form; leaving the password field blank keeps the existing value.
+
+`driver` selects the SMTP implementation. `go-mail` is the default driver; `stdlib` uses the Go standard-library SMTP branch. `enabled` is the transport-level switch. Notification rules can stay enabled while SMTP delivery is disabled. `encryption` accepts `starttls`, `ssl`, or `none`. New contact-message notifications use the sender email as Reply-To when available.
+
+For Gmail, use `smtp.gmail.com`, port `587`, encryption `starttls`, and set both `username` and `from_email` to the Gmail address. Store the Google App Password in `mail_key`; do not use the normal Google account password.
+
 ## Runtime Files
 
 - `uploads/` stores uploaded media and generated variants.

@@ -1,20 +1,24 @@
 package admin
 
 import (
+	"context"
 	"crypto/rand"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
+	stdmail "net/mail"
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"go-press/config"
 	"go-press/core/content"
+	coreMail "go-press/core/mail"
 	coreMedia "go-press/core/media"
 	"go-press/core/option"
 	"go-press/core/taxonomy"
@@ -36,7 +40,9 @@ type Service struct {
 	rbac          *user.RBAC
 	siteName      string
 	siteTimezone  string
-	config        config.CMSConfig
+	config        *config.Config
+	configPath    string
+	mailer        *coreMail.Service
 	sitePublicDir string
 	registry      *content.Registry
 
@@ -68,7 +74,9 @@ func NewService(
 	rbac *user.RBAC,
 	siteName string,
 	siteTimezone string,
-	cfg config.CMSConfig,
+	cfg *config.Config,
+	configPath string,
+	mailer *coreMail.Service,
 	sitePublicDir string,
 	registry *content.Registry,
 ) *Service {
@@ -84,6 +92,8 @@ func NewService(
 		siteName:      siteName,
 		siteTimezone:  strings.TrimSpace(siteTimezone),
 		config:        cfg,
+		configPath:    configPath,
+		mailer:        mailer,
 		sitePublicDir: sitePublicDir,
 		registry:      registry,
 	}
@@ -651,6 +661,193 @@ func settingOptions(key string) []SettingOptionView {
 	return nil
 }
 
+func (s *Service) MailSettings(lang string) MailSettingsView {
+	cfg := config.MailConfig{}
+	if s.mailer != nil {
+		cfg = s.mailer.Config()
+	} else if s.config != nil {
+		cfg = s.config.Mail
+	}
+	adminEmail := ""
+	if s.options != nil {
+		adminEmail = strings.TrimSpace(s.options.Get("admin_email"))
+	}
+	recipients := adminEmail
+	notify := true
+	if s.options != nil {
+		if v := strings.TrimSpace(s.options.Get("mail.notify_contact_message")); v != "" {
+			notify = v == "1"
+		}
+		if v := strings.TrimSpace(s.options.Get("mail.notify_contact_message_recipients")); v != "" {
+			recipients = v
+		}
+	}
+	testRecipient := firstRecipient(recipients)
+	if testRecipient == "" {
+		testRecipient = adminEmail
+	}
+	return MailSettingsView{
+		Driver:                   coreMail.NormalizeDriver(cfg.Driver),
+		DriverOptions:            mailDriverOptions(lang),
+		Enabled:                  cfg.Enabled,
+		Host:                     cfg.Host,
+		Port:                     cfg.Port,
+		Encryption:               normalizeMailEncryption(cfg.Encryption),
+		EncryptionOptions:        mailEncryptionOptions(lang),
+		Username:                 cfg.Username,
+		HasMailKey:               cfg.MailKey != "",
+		FromEmail:                cfg.FromEmail,
+		FromName:                 cfg.FromName,
+		ReplyTo:                  cfg.ReplyTo,
+		TimeoutSeconds:           cfg.TimeoutSeconds,
+		ContactMessageNotify:     notify,
+		ContactMessageRecipients: recipients,
+		DefaultContactRecipients: adminEmail,
+		TestRecipient:            testRecipient,
+	}
+}
+
+func mailEncryptionOptions(lang string) []SettingOptionView {
+	return []SettingOptionView{
+		{Value: coreMail.EncryptionStartTLS, Label: adminT(lang, "mail.encryption.starttls")},
+		{Value: coreMail.EncryptionSSL, Label: adminT(lang, "mail.encryption.ssl")},
+		{Value: coreMail.EncryptionNone, Label: adminT(lang, "mail.encryption.none")},
+	}
+}
+
+func mailDriverOptions(lang string) []SettingOptionView {
+	return []SettingOptionView{
+		{Value: coreMail.DriverGoMail, Label: adminT(lang, "mail.driver.go_mail")},
+		{Value: coreMail.DriverStdlib, Label: adminT(lang, "mail.driver.stdlib")},
+	}
+}
+
+func (s *Service) UpdateMailSettings(form map[string]string) error {
+	if s.config == nil || s.configPath == "" {
+		return fmt.Errorf("site config is not available")
+	}
+	cfg := s.config.Mail
+	cfg.Driver = coreMail.NormalizeDriver(form["driver"])
+	cfg.Enabled = form["enabled"] == "1"
+	cfg.Host = strings.TrimSpace(form["host"])
+	cfg.Port = parseIntDefault(form["port"], cfg.Port)
+	if cfg.Port <= 0 {
+		cfg.Port = 587
+	}
+	cfg.Encryption = normalizeMailEncryption(form["encryption"])
+	cfg.Username = strings.TrimSpace(form["username"])
+	if form["clear_mail_key"] == "1" {
+		cfg.MailKey = ""
+	} else if key := strings.TrimSpace(form["mail_key"]); key != "" {
+		cfg.MailKey = key
+	}
+	cfg.FromEmail = strings.TrimSpace(form["from_email"])
+	cfg.FromName = strings.TrimSpace(form["from_name"])
+	cfg.ReplyTo = strings.TrimSpace(form["reply_to"])
+	cfg.TimeoutSeconds = parseIntDefault(form["timeout_seconds"], cfg.TimeoutSeconds)
+	if cfg.TimeoutSeconds <= 0 {
+		cfg.TimeoutSeconds = 10
+	}
+	if cfg.TimeoutSeconds > 120 {
+		cfg.TimeoutSeconds = 120
+	}
+	if cfg.Enabled {
+		if err := validateMailAddresses(cfg.FromEmail, cfg.ReplyTo, form["contact_message_recipients"]); err != nil {
+			return err
+		}
+	}
+	s.config.Mail = cfg
+	if err := config.Save(s.configPath, s.config); err != nil {
+		return err
+	}
+	if s.mailer != nil {
+		s.mailer.SetConfig(cfg)
+	}
+	if s.options != nil {
+		notify := "0"
+		if form["contact_message_notify"] == "1" {
+			notify = "1"
+		}
+		if err := s.options.Set("mail.notify_contact_message", notify); err != nil {
+			return err
+		}
+		recipients := strings.TrimSpace(form["contact_message_recipients"])
+		if err := s.options.Set("mail.notify_contact_message_recipients", recipients); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Service) SendTestMail(ctx context.Context, recipient string) error {
+	if s.mailer == nil {
+		return fmt.Errorf("mail service is not available")
+	}
+	recipient = strings.TrimSpace(recipient)
+	if recipient == "" {
+		return fmt.Errorf("recipient email is required")
+	}
+	if _, err := stdmail.ParseAddress(recipient); err != nil {
+		return fmt.Errorf("invalid recipient email: %w", err)
+	}
+	site := s.SiteName()
+	return s.mailer.Send(ctx, coreMail.Message{
+		To:      []string{recipient},
+		Subject: fmt.Sprintf("[%s] GoPress test email", site),
+		Text:    fmt.Sprintf("This is a test email from %s.\n\nIf you received it, the GoPress mail settings are working.", site),
+	})
+}
+
+func validateMailAddresses(fromEmail, replyTo, recipients string) error {
+	if strings.TrimSpace(fromEmail) == "" {
+		return fmt.Errorf("from email is required")
+	}
+	if _, err := stdmail.ParseAddress(fromEmail); err != nil {
+		return fmt.Errorf("invalid from email: %w", err)
+	}
+	if strings.TrimSpace(replyTo) != "" {
+		if _, err := stdmail.ParseAddress(replyTo); err != nil {
+			return fmt.Errorf("invalid reply-to email: %w", err)
+		}
+	}
+	if strings.TrimSpace(recipients) != "" {
+		if _, err := stdmail.ParseAddressList(recipients); err != nil {
+			return fmt.Errorf("invalid notification recipients: %w", err)
+		}
+	}
+	return nil
+}
+
+func normalizeMailEncryption(value string) string {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case coreMail.EncryptionNone:
+		return coreMail.EncryptionNone
+	case coreMail.EncryptionSSL, "tls":
+		return coreMail.EncryptionSSL
+	default:
+		return coreMail.EncryptionStartTLS
+	}
+}
+
+func parseIntDefault(value string, fallback int) int {
+	n, err := strconv.Atoi(strings.TrimSpace(value))
+	if err != nil {
+		return fallback
+	}
+	return n
+}
+
+func firstRecipient(value string) string {
+	for _, part := range strings.FieldsFunc(value, func(r rune) bool {
+		return r == ',' || r == ';' || r == '\n' || r == '\r'
+	}) {
+		if trimmed := strings.TrimSpace(part); trimmed != "" {
+			return trimmed
+		}
+	}
+	return ""
+}
+
 func (s *Service) defaultSiteTimezone() string {
 	if s == nil {
 		return config.DefaultTimezoneName()
@@ -740,9 +937,9 @@ func (s *Service) GetAllOptions() map[string]string {
 // ==================== Media ====================
 
 func (s *Service) UploadFile(file *multipart.FileHeader, userID uint) (*coreMedia.Media, error) {
-	maxSize := int64(s.config.UploadMaxSizeMB) * 1024 * 1024
+	maxSize := int64(s.config.CMS.UploadMaxSizeMB) * 1024 * 1024
 	if file.Size > maxSize {
-		return nil, fmt.Errorf("file size exceeds limit (%d MB)", s.config.UploadMaxSizeMB)
+		return nil, fmt.Errorf("file size exceeds limit (%d MB)", s.config.CMS.UploadMaxSizeMB)
 	}
 
 	ext := strings.ToLower(filepath.Ext(file.Filename))
@@ -757,7 +954,7 @@ func (s *Service) UploadFile(file *multipart.FileHeader, userID uint) (*coreMedi
 
 	filename := randomFilename(ext)
 	dateDir := time.Now().Format("2006/01")
-	uploadPath := filepath.Join(s.config.UploadDir, dateDir)
+	uploadPath := filepath.Join(s.config.CMS.UploadDir, dateDir)
 	if err := os.MkdirAll(uploadPath, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create upload directory: %w", err)
 	}
@@ -945,11 +1142,11 @@ func (s *Service) mediaDiskPath(publicPath string) (string, bool) {
 	if relPath == publicPath || relPath == "" {
 		return "", false
 	}
-	base, err := filepath.Abs(s.config.UploadDir)
+	base, err := filepath.Abs(s.config.CMS.UploadDir)
 	if err != nil {
 		return "", false
 	}
-	fullPath, err := filepath.Abs(filepath.Join(s.config.UploadDir, relPath))
+	fullPath, err := filepath.Abs(filepath.Join(s.config.CMS.UploadDir, relPath))
 	if err != nil {
 		return "", false
 	}

@@ -1,7 +1,10 @@
 package content
 
 import (
+	"context"
 	"fmt"
+
+	"go-press/core/hook"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -13,12 +16,19 @@ import (
 // meta helpers while leaving content-type-specific behavior to the registry,
 // admin service, themes, or plugins.
 type Repository struct {
-	db *gorm.DB
+	db    *gorm.DB
+	hooks *hook.Bus
 }
 
 // NewRepository creates a new content Repository.
 func NewRepository(db *gorm.DB) *Repository {
 	return &Repository{db: db}
+}
+
+// NewRepositoryWithHooks creates a Repository that emits public content hooks
+// after framework-level mutations complete.
+func NewRepositoryWithHooks(db *gorm.DB, hooks *hook.Bus) *Repository {
+	return &Repository{db: db, hooks: hooks}
 }
 
 // Query returns a new unscoped ContentQuery for chainable querying.
@@ -77,6 +87,44 @@ func (r *Repository) FindBySlugScoped(ctx *gin.Context, contentType, slug string
 // Create inserts a new content item and its meta.
 func (r *Repository) Create(c *Content) error {
 	return r.db.Create(c).Error
+}
+
+// CreateWithMeta inserts a new content item, persists the supplied meta keys,
+// and then emits content.created. It is useful for front-end workflows such as
+// contact forms where downstream notifications need the saved meta values.
+func (r *Repository) CreateWithMeta(ctx context.Context, c *Content, meta map[string]string) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if err := r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(c).Error; err != nil {
+			return err
+		}
+		for key, value := range meta {
+			if key == "" {
+				continue
+			}
+			row := ContentMeta{
+				ContentID: c.ID,
+				MetaKey:   key,
+				MetaValue: value,
+			}
+			if err := tx.Create(&row).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+	if r.hooks != nil {
+		metaCopy := make(map[string]string, len(meta))
+		for key, value := range meta {
+			metaCopy[key] = value
+		}
+		r.hooks.DoAction(ctx, hook.ContentCreated, c, metaCopy)
+	}
+	return nil
 }
 
 // Update saves changes to an existing content item.

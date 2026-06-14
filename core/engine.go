@@ -19,8 +19,10 @@ import (
 	"go-press/core/content"
 	"go-press/core/hook"
 	coreI18n "go-press/core/i18n"
+	coreMail "go-press/core/mail"
 	"go-press/core/media"
 	"go-press/core/menu"
+	"go-press/core/notification"
 	"go-press/core/option"
 	"go-press/core/plugin"
 	"go-press/core/rewrite"
@@ -64,7 +66,8 @@ type Engine struct {
 	// SiteDir is the directory containing the active site's config.toml.
 	// Site-scoped generated files should be written under this directory, not
 	// into the shared application root.
-	SiteDir string
+	SiteDir    string
+	ConfigPath string
 
 	// Core subsystems are long-lived services shared by admin, themes, plugins,
 	// REST APIs, and front-end rendering.
@@ -76,6 +79,7 @@ type Engine struct {
 	Cache    *cache.Manager
 	Workers  *worker.Pool
 	Sched    *worker.Scheduler
+	Mail     *coreMail.Service
 
 	// URL / SEO services derive public routes, metadata, redirects, and sitemap
 	// entries from the content registry and repositories.
@@ -178,7 +182,9 @@ func New(cfg *config.Config, db *gorm.DB) *Engine {
 		Workers:  wp,
 		Sched:    sched,
 
-		Content:  content.NewRepository(db),
+		Mail: coreMail.NewService(cfg.Mail, hookBus),
+
+		Content:  content.NewRepositoryWithHooks(db, hookBus),
 		Taxonomy: taxonomy.NewRepository(db),
 		Users:    user.NewRepository(db),
 		Media:    media.NewRepository(db),
@@ -474,6 +480,7 @@ func (e *Engine) Bootstrap() error {
 	e.Sched.Start()
 
 	// 5. Fire init hook
+	notification.NewContactMessageNotifier(e.Hooks, e.Options, e.Mail, e.Workers, e.Config.Site.Name, e.Config.Site.URL).Register()
 	e.Hooks.DoAction(context.Background(), "engine.init")
 
 	logger.Info("GoPress engine bootstrapped")
@@ -645,7 +652,9 @@ func (e *Engine) SetupAdmin() {
 		e.RBAC,
 		e.Config.Site.Name,
 		e.Config.Site.Timezone,
-		e.Config.CMS,
+		e.Config,
+		e.ConfigPath,
+		e.Mail,
 		e.SitePublicPath(),
 		e.Registry,
 	)
@@ -1010,6 +1019,7 @@ func (e *Engine) MenuStore() *menu.Store             { return e.Menus }
 func (e *Engine) MediaRepo() *media.Repository       { return e.Media }
 func (e *Engine) I18nManager() *coreI18n.Manager     { return e.I18n }
 func (e *Engine) HookBus() *hook.Bus                 { return e.Hooks }
+func (e *Engine) MailSender() coreMail.Sender        { return e.Mail }
 
 func (e *Engine) SiteTimezone() string {
 	if e != nil && e.Options != nil {
@@ -1032,3 +1042,4 @@ func (e *Engine) SiteLocation() *time.Location {
 
 // Compile-time check: Engine implements theme.App.
 var _ coreTheme.App = (*Engine)(nil)
+var _ plugin.MailProvider = (*Engine)(nil)

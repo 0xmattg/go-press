@@ -93,6 +93,50 @@ e.Hooks.AddAction(hook.AdminContentSaved, func(_ context.Context, args ...interf
 
 `ContentCreate` 和 `ContentUpdate` 都会触发此 action，所以创建和编辑场景一致。
 
+## 邮件与通知 Hook
+
+GoPress 的邮件能力拆成两层：`core/mail` 只负责邮件对象和 SMTP 投递；通知规则监听 core 事件并调用邮件服务。插件可以过滤邮件对象、监听发送结果，或改写默认联系留言通知的收件人/主题/正文。
+
+| Hook | 类型 | 用途 |
+|---|---|---|
+| `content.created` | action | 内容创建并保存 meta 后触发。args: `*content.Content, map[string]string` |
+| `mail.message` | filter | 发送前修改 `mail.Message` |
+| `mail.before_send` | action | SMTP 投递前观察邮件对象 |
+| `mail.sent` | action | 投递成功后触发 |
+| `mail.failed` | action | 投递失败后触发。args: `mail.Message, error` |
+| `notification.contact_message.recipients` | filter | 修改新联系留言通知收件人，value: `[]string` |
+| `notification.contact_message.subject` | filter | 修改新联系留言通知主题，value: `string` |
+| `notification.contact_message.body` | filter | 修改新联系留言通知正文，value: `string` |
+
+示例：把联系留言通知同时发给销售邮箱：
+
+```go
+e.Hooks.AddFilter(hook.NotificationContactMessageRecipients,
+    func(value interface{}, args ...interface{}) interface{} {
+        recipients, _ := value.([]string)
+        return append(recipients, "sales@example.com")
+    }, 20)
+```
+
+插件如果需要主动发送自己的通知邮件，不要直接访问 SMTP 配置或具体 driver，而是通过 core 暴露的 `mail.Sender` 能力：
+
+```go
+sender := plugin.MailSender(app)
+if sender == nil {
+    return
+}
+
+err := sender.Send(ctx, mail.Message{
+    To:      []string{"admin@example.com"},
+    Subject: "Plugin notification",
+    Text:    "Something happened.",
+})
+```
+
+主题侧也可以通过 `theme.App.MailSender()` 或嵌入 `BaseTheme` 后的 `t.MailSender()` 获取同一个能力，用于主题自有表单或前台 workflow 的通知。主题仍然不应该关心 SMTP 主机、Gmail app key、`go-mail` / `stdlib` 等传输细节；更推荐的默认模式仍是：主题保存内容或触发 core hook，通知规则/插件监听后发邮件。
+
+SMTP 配置、通知开关和投递逻辑都留在 core 或插件扩展点里。
+
 ## 前台模板插槽
 
 虽然不属于"后台"，但同样是 core 暴露的扩展点：

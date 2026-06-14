@@ -580,7 +580,7 @@ func (h *Handler) loadTemplates(dir string) {
 		"dashboard",
 		"content_list", "content_form", "content_detail",
 		"taxonomy_list",
-		"settings", "media",
+		"settings", "mail_settings", "media",
 		"users", "user_form",
 		"themes",
 		"cache_mgmt", "redirects",
@@ -614,6 +614,7 @@ var menuIcons = map[string]string{
 	"cache_mgmt": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="6.8" ry="2.8"/><path d="M5.2 6v6c0 1.6 3 2.8 6.8 2.8s6.8-1.2 6.8-2.8V6"/><path d="M5.2 12v6c0 1.6 3 2.8 6.8 2.8s6.8-1.2 6.8-2.8v-6"/></svg>`,
 	"redirects":  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h10"/><path d="m11 3 4 4-4 4"/><path d="M19 17H9"/><path d="m13 13-4 4 4 4"/></svg>`,
 	"media":      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.2"/><circle cx="9" cy="10" r="1.6"/><path d="m20.5 15.4-4.2-4.2a1.8 1.8 0 0 0-2.5 0l-4.9 4.9"/></svg>`,
+	"mail":       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="2.2"/><path d="m5 7.5 7 5.2 7-5.2"/></svg>`,
 	"settings":   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2.8"/><path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1.8 1.8 0 1 1-2.5 2.5l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a1.8 1.8 0 1 1-3.6 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1.8 1.8 0 1 1-2.5-2.5l.1-.1A1 1 0 0 0 8.6 15a1 1 0 0 0-.9-.6H7.5a1.8 1.8 0 1 1 0-3.6h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1.8 1.8 0 1 1 2.5-2.5l.1.1a1 1 0 0 0 1.1.2h.1a1 1 0 0 0 .6-.9V4a1.8 1.8 0 1 1 3.6 0v.2a1 1 0 0 0 .6.9h.1a1 1 0 0 0 1.1-.2l.1-.1a1.8 1.8 0 1 1 2.5 2.5l-.1.1a1 1 0 0 0-.2 1.1v.1a1 1 0 0 0 .9.6h.2a1.8 1.8 0 1 1 0 3.6h-.2a1 1 0 0 0-.9.6z"/></svg>`,
 	"users":      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.1"/><path d="M5.2 20a6.8 6.8 0 0 1 13.6 0"/></svg>`,
 	"menus":      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`,
@@ -693,6 +694,7 @@ func (h *Handler) buildMenuItems(lang string) []AdminMenuItem {
 	items = append(items, AdminMenuItem{Label: adminT(lang, "nav.cache"), URL: "/admin/cache", Active: "cache_mgmt", Icon: menuIcon("cache_mgmt")})
 	items = append(items, AdminMenuItem{Label: adminT(lang, "nav.redirects"), URL: "/admin/redirects", Active: "redirects", Icon: menuIcon("redirects")})
 	items = append(items, AdminMenuItem{Label: adminT(lang, "nav.media"), URL: "/admin/media", Active: "media", Icon: menuIcon("media")})
+	items = append(items, AdminMenuItem{Label: adminT(lang, "nav.mail"), URL: "/admin/mail", Active: "mail", Icon: menuIcon("mail")})
 	items = append(items, AdminMenuItem{Label: adminT(lang, "nav.settings"), URL: "/admin/settings", Active: "settings", Icon: menuIcon("settings")})
 	items = append(items, AdminMenuItem{Label: adminT(lang, "nav.users"), URL: "/admin/users", Active: "users", Icon: menuIcon("users")})
 

@@ -1,0 +1,120 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>{{T . "mail.title"}}</h2>
+</div>
+
+<div class="card settings-shell">
+    <form method="POST" action="/admin/mail" class="settings-form">
+        {{$mail := .Mail}}
+        <section class="settings-section">
+            <h3 class="settings-section-title">{{T . "mail.smtp_section"}}</h3>
+            <div class="settings-grid">
+                <div class="form-group settings-item">
+                    <label>{{T . "mail.driver"}}</label>
+                    <select name="driver" class="form-control">
+                        {{range $mail.DriverOptions}}
+                        <option value="{{.Value}}" {{if eq $mail.Driver .Value}}selected{{end}}>{{.Label}}</option>
+                        {{end}}
+                    </select>
+                    <small>{{T . "mail.driver_help"}}</small>
+                </div>
+                <div class="form-group settings-item">
+                    <label class="checkbox-label settings-checkbox-label">
+                        <input type="checkbox" name="enabled" value="1" {{if $mail.Enabled}}checked{{end}}>
+                        <span>{{T . "mail.enabled"}}</span>
+                    </label>
+                    <small>{{T . "mail.enabled_help"}}</small>
+                </div>
+                <div class="form-group settings-item">
+                    <label>{{T . "mail.host"}}</label>
+                    <input type="text" name="host" value="{{$mail.Host}}" placeholder="smtp.example.com">
+                </div>
+                <div class="form-group settings-item">
+                    <label>{{T . "mail.port"}}</label>
+                    <input type="number" name="port" value="{{$mail.Port}}" min="1" max="65535" placeholder="587">
+                </div>
+                <div class="form-group settings-item">
+                    <label>{{T . "mail.encryption"}}</label>
+                    <select name="encryption" class="form-control">
+                        {{range $mail.EncryptionOptions}}
+                        <option value="{{.Value}}" {{if eq $mail.Encryption .Value}}selected{{end}}>{{.Label}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="form-group settings-item">
+                    <label>{{T . "mail.username"}}</label>
+                    <input type="text" name="username" value="{{$mail.Username}}" autocomplete="off">
+                </div>
+                <div class="form-group settings-item">
+                    <label>{{T . "mail.mail_key"}}</label>
+                    <input type="password" name="mail_key" value="" autocomplete="new-password" placeholder="{{if $mail.HasMailKey}}{{T . "mail.mail_key_set"}}{{else}}{{T . "mail.mail_key_empty"}}{{end}}">
+                    <small>{{T . "mail.mail_key_help"}}</small>
+                    {{if $mail.HasMailKey}}
+                    <label class="checkbox-label settings-checkbox-label" style="margin-top:0.5rem;">
+                        <input type="checkbox" name="clear_mail_key" value="1">
+                        <span>{{T . "mail.clear_mail_key"}}</span>
+                    </label>
+                    {{end}}
+                </div>
+                <div class="form-group settings-item">
+                    <label>{{T . "mail.from_email"}}</label>
+                    <input type="email" name="from_email" value="{{$mail.FromEmail}}" placeholder="no-reply@example.com">
+                </div>
+                <div class="form-group settings-item">
+                    <label>{{T . "mail.from_name"}}</label>
+                    <input type="text" name="from_name" value="{{$mail.FromName}}" placeholder="{{.SiteName}}">
+                </div>
+                <div class="form-group settings-item">
+                    <label>{{T . "mail.reply_to"}}</label>
+                    <input type="email" name="reply_to" value="{{$mail.ReplyTo}}">
+                    <small>{{T . "mail.reply_to_help"}}</small>
+                </div>
+                <div class="form-group settings-item">
+                    <label>{{T . "mail.timeout_seconds"}}</label>
+                    <input type="number" name="timeout_seconds" value="{{$mail.TimeoutSeconds}}" min="1" max="120">
+                </div>
+            </div>
+        </section>
+
+        <section class="settings-section settings-section-admin">
+            <h3 class="settings-section-title">{{T . "mail.notification_section"}}</h3>
+            <div class="settings-grid">
+                <div class="form-group settings-item">
+                    <label class="checkbox-label settings-checkbox-label">
+                        <input type="checkbox" name="contact_message_notify" value="1" {{if $mail.ContactMessageNotify}}checked{{end}}>
+                        <span>{{T . "mail.contact_message_notify"}}</span>
+                    </label>
+                    <small>{{T . "mail.contact_message_notify_help"}}</small>
+                </div>
+                <div class="form-group settings-item">
+                    <label>{{T . "mail.contact_message_recipients"}}</label>
+                    <input type="text" name="contact_message_recipients" value="{{$mail.ContactMessageRecipients}}" placeholder="{{$mail.DefaultContactRecipients}}">
+                    <small>{{T . "mail.contact_message_recipients_help"}}</small>
+                </div>
+            </div>
+        </section>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{{T . "action.save_settings"}}</button>
+        </div>
+    </form>
+</div>
+
+<div class="card settings-shell">
+    <form method="POST" action="/admin/mail/test" class="settings-form">
+        <section class="settings-section">
+            <h3 class="settings-section-title">{{T . "mail.test_section"}}</h3>
+            <div class="settings-grid">
+                <div class="form-group settings-item">
+                    <label>{{T . "mail.test_recipient"}}</label>
+                    <input type="email" name="test_recipient" value="{{.Mail.TestRecipient}}" required>
+                    <small>{{T . "mail.test_help"}}</small>
+                </div>
+            </div>
+        </section>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-secondary">{{T . "mail.send_test"}}</button>
+        </div>
+    </form>
+</div>
+{{end}}

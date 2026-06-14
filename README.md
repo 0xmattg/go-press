@@ -213,8 +213,9 @@ go run ./cmd/gendoc/
 - **Theme-declared content models** — `theme.toml` drives admin navigation, CRUD, REST API exposure, rewrite rules, template mapping, and menu icons.
 - **RBAC** — `admin`, `editor`, `author`, and `subscriber` roles enforced throughout the admin surface.
 - **List screen options and pagination** — content lists support dynamic column visibility, title search, date/taxonomy filters, and server-side pagination.
+- **Mail settings and notifications** — dedicated SMTP settings page, go-mail SMTP driver with Go stdlib option, site-level `config.toml` storage for `mail.mail_key`, test emails, Gmail-friendly `587 + STARTTLS` setup, and a switch for new contact-message notifications.
 - **Drag sorting and rich text** — Quill 2.0 editor, media picker, and HTML5 drag-and-drop ordering.
-- **Admin extension points** — hooks such as `admin.HookContentListTabs`, `admin.HookContentPermalinkPrefix`, `admin.content_form.fields`, and `admin.content.saved`.
+- **Admin extension points** — hooks such as `admin.HookContentListTabs`, `admin.HookContentPermalinkPrefix`, `admin.content_form.fields`, `admin.content.saved`, and `mail.message`.
 
 ### Themes and Plugins
 

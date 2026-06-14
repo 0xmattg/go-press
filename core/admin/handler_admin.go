@@ -81,6 +81,72 @@ func (h *Handler) SettingUpdate(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/admin/settings?success="+url.QueryEscape(adminT(adminLang, "notice.settings_updated")))
 }
 
+// MailSettings shows SMTP transport and notification settings.
+func (h *Handler) MailSettings(c *gin.Context) {
+	if !h.checkPermission(c, "setting", "read") {
+		return
+	}
+	lang := h.svc.AdminLanguage()
+	h.render(c, "mail_settings", gin.H{
+		"Title":  adminT(lang, "nav.mail"),
+		"Active": "mail",
+		"Mail":   h.svc.MailSettings(lang),
+	})
+}
+
+// MailSettingsSave persists SMTP transport settings to site config.toml and
+// notification switches to options.
+func (h *Handler) MailSettingsSave(c *gin.Context) {
+	if !h.checkPermission(c, "setting", "update") {
+		return
+	}
+	lang := h.svc.AdminLanguage()
+	form := map[string]string{
+		"driver":                     c.PostForm("driver"),
+		"enabled":                    boolPost(c, "enabled"),
+		"host":                       c.PostForm("host"),
+		"port":                       c.PostForm("port"),
+		"encryption":                 c.PostForm("encryption"),
+		"username":                   c.PostForm("username"),
+		"mail_key":                   c.PostForm("mail_key"),
+		"clear_mail_key":             boolPost(c, "clear_mail_key"),
+		"from_email":                 c.PostForm("from_email"),
+		"from_name":                  c.PostForm("from_name"),
+		"reply_to":                   c.PostForm("reply_to"),
+		"timeout_seconds":            c.PostForm("timeout_seconds"),
+		"contact_message_notify":     boolPost(c, "contact_message_notify"),
+		"contact_message_recipients": c.PostForm("contact_message_recipients"),
+	}
+	if err := h.svc.UpdateMailSettings(form); err != nil {
+		c.Redirect(http.StatusFound, "/admin/mail?error="+url.QueryEscape(err.Error()))
+		return
+	}
+	h.logAction(c, "update", "mail", 0, "mail settings updated")
+	c.Redirect(http.StatusFound, "/admin/mail?success="+url.QueryEscape(adminT(lang, "notice.mail_settings_updated")))
+}
+
+// MailTest sends a test email using the currently saved SMTP settings.
+func (h *Handler) MailTest(c *gin.Context) {
+	if !h.checkPermission(c, "setting", "update") {
+		return
+	}
+	lang := h.svc.AdminLanguage()
+	recipient := c.PostForm("test_recipient")
+	if err := h.svc.SendTestMail(c.Request.Context(), recipient); err != nil {
+		c.Redirect(http.StatusFound, "/admin/mail?error="+url.QueryEscape(err.Error()))
+		return
+	}
+	h.logAction(c, "test", "mail", 0, "test email sent")
+	c.Redirect(http.StatusFound, "/admin/mail?success="+url.QueryEscape(adminT(lang, "notice.mail_test_sent", recipient)))
+}
+
+func boolPost(c *gin.Context, key string) string {
+	if c.PostForm(key) != "" {
+		return "1"
+	}
+	return "0"
+}
+
 // SitemapGenerate generates a static sitemap.xml file under the active site's
 // public directory.
 func (h *Handler) SitemapGenerate(c *gin.Context) {
