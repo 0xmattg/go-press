@@ -41,6 +41,19 @@ jwt_expire_hours = 24
 upload_dir = "uploads"
 upload_max_size_mb = 10      # 单文件上传上限；JPEG/PNG 上传后会自动生成响应式变体
 
+[mail]
+driver = "go-mail"
+enabled = false
+host = "smtp.example.com"
+port = 587
+encryption = "starttls"      # starttls / ssl / none
+username = "smtp-user"
+mail_key = "smtp-password-or-app-key"
+from_email = "no-reply@example.com"
+from_name = "My Website"
+reply_to = ""
+timeout_seconds = 10
+
 [install]
 completed = true
 ```
@@ -67,6 +80,20 @@ completed = true
 
 - `jwt_secret` — **生产环境必须替换**，泄露后等于把后台和 API 钥匙交给攻击者
 - `upload_dir` — 上传根目录，子目录按年月组织（`uploads/2026/04/...`）
+
+### `[mail]`
+
+邮件发送配置是站点级配置，后台「邮件设置」页会写入当前站点的 `config.toml`。配置文件由安装器和 `config.Save()` 以 `0600` 权限保存，`mail_key` 不会在后台表单中回显。
+
+- `enabled` — SMTP 总开关。关闭时通知规则仍保存，但不会投递邮件
+- `driver` — SMTP 发信驱动，默认 `go-mail`；可切换为 `stdlib` 使用 Go 标准库 SMTP 分支
+- `host` / `port` / `encryption` — SMTP 服务器、端口和加密方式。`encryption` 支持 `starttls`、`ssl`、`none`
+- `username` / `mail_key` — SMTP 登录凭据；`mail_key` 建议填写邮箱服务商提供的 app password 或 API key
+- `from_email` / `from_name` — 默认发件人
+- `reply_to` — 默认 Reply-To。联系留言通知会优先使用留言人的邮箱作为 Reply-To
+- `timeout_seconds` — SMTP 连接超时
+
+Gmail 常用配置：`host = "smtp.gmail.com"`、`port = 587`、`encryption = "starttls"`，`username` 和 `from_email` 都填写 Gmail 地址，`mail_key` 填 Google 生成的 App Password，不要填 Google 账号登录密码。
 
 ## 多站点配置
 

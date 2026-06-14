@@ -77,6 +77,12 @@ const (
 // edit form (meta boxes) and react to saves without core knowing which fields
 // each plugin owns. Pattern mirrors WordPress's add_meta_box / save_post.
 const (
+	// ContentCreated fires after a content row and any caller-provided meta
+	// have been persisted. Args: (*content.Content, map[string]string meta).
+	// It is intentionally generic so notification services and plugins can
+	// react to framework content events without themes knowing about them.
+	ContentCreated = "content.created"
+
 	// AdminContentFormFields is rendered as an HTML slot inside the admin
 	// content edit form, after the built-in meta fields and before taxonomy
 	// pickers. Filter value is template.HTML (initially empty); args are
@@ -91,6 +97,40 @@ const (
 	// to gp_content_meta with their own keys. Lets plugins own their data
 	// without modifying the core save handler.
 	AdminContentSaved = "admin.content.saved"
+)
+
+// Mail hooks expose the framework mail pipeline. Plugins can adjust the
+// message before transport, observe success/failure, or replace behavior at a
+// higher layer without core depending on a concrete plugin.
+const (
+	// MailMessage filters the mail.Message immediately before sending.
+	// Filter value is mail.Message.
+	MailMessage = "mail.message"
+
+	// MailBeforeSend fires before the transport attempts delivery.
+	// Args: (mail.Message).
+	MailBeforeSend = "mail.before_send"
+
+	// MailSent fires after successful delivery. Args: (mail.Message).
+	MailSent = "mail.sent"
+
+	// MailFailed fires after failed delivery. Args: (mail.Message, error).
+	MailFailed = "mail.failed"
+)
+
+// Notification hooks expose default framework notification rules.
+const (
+	// NotificationContactMessageRecipients filters []string recipients for a
+	// new contact_message notification. Args: (*content.Content, map[string]string meta).
+	NotificationContactMessageRecipients = "notification.contact_message.recipients"
+
+	// NotificationContactMessageSubject filters the subject string.
+	// Args: (*content.Content, map[string]string meta).
+	NotificationContactMessageSubject = "notification.contact_message.subject"
+
+	// NotificationContactMessageBody filters the plain-text body string.
+	// Args: (*content.Content, map[string]string meta).
+	NotificationContactMessageBody = "notification.contact_message.body"
 )
 
 // SEO hooks let plugins override per-page SEOMeta after core SEOBuilder runs.

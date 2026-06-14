@@ -14,6 +14,7 @@ type Config struct {
 	PG      PGConfig      `mapstructure:"pg" toml:"pg"`
 	Redis   RedisConfig   `mapstructure:"redis" toml:"redis"`
 	CMS     CMSConfig     `mapstructure:"cms" toml:"cms"`
+	Mail    MailConfig    `mapstructure:"mail" toml:"mail"`
 	Install InstallConfig `mapstructure:"install" toml:"install"`
 }
 
@@ -58,6 +59,20 @@ type CMSConfig struct {
 	UploadDir       string   `mapstructure:"upload_dir" toml:"upload_dir"`
 	UploadMaxSizeMB int      `mapstructure:"upload_max_size_mb" toml:"upload_max_size_mb"`
 	APIKeys         []string `mapstructure:"api_keys" toml:"api_keys"`
+}
+
+type MailConfig struct {
+	Driver         string `mapstructure:"driver" toml:"driver"`
+	Enabled        bool   `mapstructure:"enabled" toml:"enabled"`
+	Host           string `mapstructure:"host" toml:"host"`
+	Port           int    `mapstructure:"port" toml:"port"`
+	Encryption     string `mapstructure:"encryption" toml:"encryption"`
+	Username       string `mapstructure:"username" toml:"username"`
+	MailKey        string `mapstructure:"mail_key" toml:"mail_key"`
+	FromEmail      string `mapstructure:"from_email" toml:"from_email"`
+	FromName       string `mapstructure:"from_name" toml:"from_name"`
+	ReplyTo        string `mapstructure:"reply_to" toml:"reply_to"`
+	TimeoutSeconds int    `mapstructure:"timeout_seconds" toml:"timeout_seconds"`
 }
 
 type InstallConfig struct {

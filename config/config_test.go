@@ -37,6 +37,16 @@ func TestSaveWritesConfigWithSecurePermissions(t *testing.T) {
 			UploadDir:       "uploads",
 			UploadMaxSizeMB: 10,
 		},
+		Mail: MailConfig{
+			Driver:     "go-mail",
+			Enabled:    true,
+			Host:       "smtp.example.com",
+			Port:       587,
+			Encryption: "starttls",
+			Username:   "smtp-user",
+			MailKey:    "smtp-secret",
+			FromEmail:  "no-reply@example.com",
+		},
 		Install: InstallConfig{
 			Completed:   true,
 			InstalledAt: "2026-04-09T00:00:00Z",
@@ -67,5 +77,11 @@ func TestSaveWritesConfigWithSecurePermissions(t *testing.T) {
 	}
 	if loaded.Site.Timezone != cfg.Site.Timezone {
 		t.Fatalf("loaded timezone = %q, want %q", loaded.Site.Timezone, cfg.Site.Timezone)
+	}
+	if loaded.Mail.MailKey != cfg.Mail.MailKey {
+		t.Fatalf("loaded mail key = %q, want %q", loaded.Mail.MailKey, cfg.Mail.MailKey)
+	}
+	if loaded.Mail.Driver != cfg.Mail.Driver {
+		t.Fatalf("loaded mail driver = %q, want %q", loaded.Mail.Driver, cfg.Mail.Driver)
 	}
 }

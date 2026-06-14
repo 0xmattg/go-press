@@ -9,6 +9,7 @@ import (
 	"go-press/core/content"
 	"go-press/core/hook"
 	coreI18n "go-press/core/i18n"
+	"go-press/core/mail"
 	coreMedia "go-press/core/media"
 	"go-press/core/menu"
 	"go-press/core/option"
@@ -58,6 +59,10 @@ type App interface {
 
 	// HookBus returns the core hook bus for theme/plugin extension points.
 	HookBus() *hook.Bus
+
+	// MailSender returns the configured core mail sender for theme-owned
+	// workflows that need to trigger notification emails.
+	MailSender() mail.Sender
 
 	// SiteLocation returns the configured site timezone location used for
 	// public date formatting.

@@ -35,7 +35,7 @@ func TestSyncSiteIconGeneratesAndRemovesPublicFavicon(t *testing.T) {
 	}
 
 	svc := &Service{
-		config:        config.CMSConfig{UploadDir: uploadDir},
+		config:        &config.Config{CMS: config.CMSConfig{UploadDir: uploadDir}},
 		sitePublicDir: publicDir,
 	}
 	if err := svc.SyncSiteIcon("/uploads/2026/06/icon.png"); err != nil {

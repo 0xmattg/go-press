@@ -80,6 +80,9 @@ func SetupRoutes(r *gin.Engine, h *Handler, auth *user.Auth, registry *content.R
 		// ---- System routes (not content-type driven) ----
 		admin.GET("/settings", h.SettingList)
 		admin.POST("/settings", h.SettingUpdate)
+		admin.GET("/mail", h.MailSettings)
+		admin.POST("/mail", h.MailSettingsSave)
+		admin.POST("/mail/test", h.MailTest)
 		admin.POST("/sitemap/generate", h.SitemapGenerate)
 
 		admin.GET("/media", h.MediaList)
