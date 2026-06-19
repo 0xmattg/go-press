@@ -200,11 +200,11 @@ go run ./cmd/gendoc/
 ### URL and SEO
 
 - **Shared site metadata** — admin-managed `site_name`, `site_description`, and `site_timezone` are used across themes; publish times are entered and displayed in the site timezone while stored as UTC.
-- **SEOBuilder** — home, archive, and single pages generate meta descriptions, canonical links, Open Graph tags, and JSON-LD.
+- **SEOBuilder** — home, archive, and single pages generate meta descriptions, canonical links, Open Graph tags, JSON-LD, and crawler-friendly favicon links.
 - **`seoHeadFor` helper** — reflection-based and safe for both `gin.H` and custom structs.
 - **Per-content SEO overrides** — the bundled `seo-extras` plugin adds Yoast-style fields for title, description, Open Graph image, and robots.
 - **Multilingual sitemap support** — `SitemapGenerator.AddTransformer()` lets the multilingual plugin contribute `hreflang` alternates.
-- **Site-scoped public artifacts** — admin-generated sitemap files are written under `sites/{host}/public/`, keeping multi-site deployments isolated.
+- **Site-scoped public artifacts** — admin-generated sitemap files and favicon assets are written under `sites/{host}/public/`, keeping multi-site deployments isolated.
 - **Redirect manager** — database-backed 301/302 redirects with in-memory lookup and hit counts.
 
 ### Admin CMS

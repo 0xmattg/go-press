@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -534,13 +535,17 @@ func (e *Engine) SetupRouter() *gin.Engine {
 	})
 
 	// XML Sitemap (shared generator on engine — plugins may register transformers)
-	r.GET("/sitemap.xml", e.Sitemap.Handler())
+	serveSitemap := e.Sitemap.Handler()
+	r.GET("/sitemap.xml", serveSitemap)
+	r.HEAD("/sitemap.xml", serveSitemap)
 
 	// robots.txt
-	r.GET("/robots.txt", func(c *gin.Context) {
+	serveRobots := func(c *gin.Context) {
 		c.Header("Content-Type", "text/plain")
 		c.String(http.StatusOK, "User-agent: *\nAllow: /\nSitemap: %s/sitemap.xml\n", e.Config.Site.URL)
-	})
+	}
+	r.GET("/robots.txt", serveRobots)
+	r.HEAD("/robots.txt", serveRobots)
 
 	// Site favicon generated from the site_icon setting.
 	serveFavicon := func(c *gin.Context) {
@@ -551,6 +556,7 @@ func (e *Engine) SetupRouter() *gin.Engine {
 
 	// All static files through a unified handler
 	r.GET("/static/*filepath", e.serveStatic)
+	r.HEAD("/static/*filepath", e.serveStatic)
 
 	// REST API (/api/v1/...)
 	apiGroup := r.Group("/api/v1")
@@ -598,25 +604,47 @@ func (e *Engine) serveStatic(c *gin.Context) {
 
 	// Admin static assets
 	if strings.HasPrefix(fp, "/admin/") {
-		c.File(filepath.Join("core/admin/static", strings.TrimPrefix(fp, "/admin/")))
+		e.serveStaticFile(c, filepath.Join("core/admin/static", strings.TrimPrefix(fp, "/admin/")), c.Query("v") != "")
 		return
 	}
 
 	// User uploads — serve from config upload directory
 	if strings.HasPrefix(fp, "/uploads/") {
 		relPath := strings.TrimPrefix(fp, "/uploads/")
-		c.File(filepath.Join(e.Config.CMS.UploadDir, relPath))
+		e.serveStaticFile(c, filepath.Join(e.Config.CMS.UploadDir, relPath), true)
 		return
 	}
 
 	// Theme static assets — serve from active theme's static directory
 	theme := e.ActiveTheme()
 	if theme != nil {
-		c.File(filepath.Join(theme.StaticDir(), fp))
+		e.serveStaticFile(c, filepath.Join(theme.StaticDir(), strings.TrimPrefix(fp, "/")), c.Query("v") != "")
 		return
 	}
 
-	c.Status(http.StatusNotFound)
+	serveStaticNotFound(c)
+}
+
+func (e *Engine) serveStaticFile(c *gin.Context, filePath string, immutable bool) {
+	info, err := os.Stat(filePath)
+	if err != nil || info.IsDir() {
+		serveStaticNotFound(c)
+		return
+	}
+	if immutable {
+		c.Header("Cache-Control", "public, max-age=31536000, immutable")
+		c.Header("Expires", time.Now().Add(365*24*time.Hour).Format(time.RFC1123))
+	} else {
+		c.Header("Cache-Control", "public, max-age=86400")
+		c.Header("Expires", time.Now().Add(24*time.Hour).Format(time.RFC1123))
+	}
+	c.File(filePath)
+}
+
+func serveStaticNotFound(c *gin.Context) {
+	c.Header("Cache-Control", "no-store")
+	c.Header("Expires", "0")
+	c.String(http.StatusNotFound, "404 page not found")
 }
 
 // themeDispatcher is the NoRoute handler that delegates front-end requests

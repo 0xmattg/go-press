@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"mime"
+	"path"
 	"strings"
 
 	"go-press/core/content"
@@ -143,9 +145,7 @@ func (b *SEOBuilder) RenderHead(meta SEOMeta) template.HTML {
 
 	// Favicon — used by browsers and surfaced in Google search results.
 	if meta.SiteIcon != "" {
-		icon := escAttr(meta.SiteIcon)
-		sb.WriteString(fmt.Sprintf(`<link rel="icon" href="%s">`+"\n", icon))
-		sb.WriteString(fmt.Sprintf(`<link rel="apple-touch-icon" href="%s">`+"\n", icon))
+		sb.WriteString(string(FaviconLinks(meta.SiteIcon)))
 	}
 
 	// Open Graph
@@ -169,6 +169,29 @@ func (b *SEOBuilder) RenderHead(meta SEOMeta) template.HTML {
 		sb.WriteString("\n</script>\n")
 	}
 
+	return template.HTML(sb.String())
+}
+
+// FaviconLinks renders the site icon declarations used by browsers and search
+// engines. The generated /favicon.ico is declared first because crawlers often
+// probe it directly with HEAD before considering image-specific declarations.
+func FaviconLinks(siteIcon string) template.HTML {
+	siteIcon = strings.TrimSpace(siteIcon)
+	if siteIcon == "" {
+		return ""
+	}
+	var sb strings.Builder
+	sb.WriteString(`<link rel="icon" href="/favicon.ico" sizes="any">` + "\n")
+	if siteIcon != "/favicon.ico" {
+		icon := escAttr(siteIcon)
+		typeAttr := ""
+		iconPath := strings.Split(strings.Split(siteIcon, "?")[0], "#")[0]
+		if mimeType := mime.TypeByExtension(path.Ext(iconPath)); mimeType != "" {
+			typeAttr = fmt.Sprintf(` type="%s"`, escAttr(mimeType))
+		}
+		sb.WriteString(fmt.Sprintf(`<link rel="icon"%s sizes="192x192" href="%s">`+"\n", typeAttr, icon))
+		sb.WriteString(fmt.Sprintf(`<link rel="apple-touch-icon" sizes="180x180" href="%s">`+"\n", icon))
+	}
 	return template.HTML(sb.String())
 }
 

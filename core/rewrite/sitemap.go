@@ -156,6 +156,10 @@ func (sg *SitemapGenerator) Handler() gin.HandlerFunc {
 
 		c.Header("Content-Type", "application/xml; charset=utf-8")
 		c.Header("Cache-Control", "public, max-age=3600")
+		if c.Request != nil && c.Request.Method == http.MethodHead {
+			c.Status(http.StatusOK)
+			return
+		}
 
 		data, err := xml.MarshalIndent(set, "", "  ")
 		if err != nil {

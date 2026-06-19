@@ -31,7 +31,7 @@ GoPress 的媒体系统在上传阶段生成前台可直接使用的响应式图
 | `core/media/repository.go` | `FindByPath`、`ListVariants`、`UpsertVariant` 等查询/维护 API |
 | `core/admin/service.go` | 上传后生成变体；删除媒体时清理变体；重建历史图片变体 |
 | `core/theme/images.go` | `responsiveImage` / `responsiveImagePriority` / `responsiveImagePreload` 模板输出 |
-| `pkg/middleware/middleware.go` | `/static/uploads/` 长缓存，带版本参数的静态资源长缓存 |
+| `core/engine.go` | `/static/uploads/` 长缓存，带版本参数的静态资源长缓存；静态文件 `GET` / `HEAD` 一致，缺失文件返回 `no-store` |
 
 ## 存储约定
 
