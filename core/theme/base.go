@@ -156,6 +156,7 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 			}
 		}
 		if seo != nil {
+			engineFuncs["faviconLinks"] = rewrite.FaviconLinks
 			engineFuncs["seoHead"] = func(meta rewrite.SEOMeta) template.HTML {
 				return seo.RenderHead(meta)
 			}

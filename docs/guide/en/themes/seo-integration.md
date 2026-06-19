@@ -33,8 +33,7 @@ System Settings
   {{.}}
 {{else}}
   <meta name="description" content="{{settingOr $.Settings "site_description" "Default description"}}">
-  {{if $siteIcon}}<link rel="icon" href="{{$siteIcon}}">
-  <link rel="apple-touch-icon" href="{{$siteIcon}}">{{end}}
+  {{faviconLinks $siteIcon}}
 {{end}}
 ```
 
@@ -42,7 +41,9 @@ System Settings
 
 ### Use `site_icon` for favicons
 
-The admin **System Settings** page stores the site favicon in `site_icon`. Themes should not introduce theme-local favicon keys. When `SEOMeta.SiteIcon` is set, `seoHeadFor` renders both `<link rel="icon">` and `<link rel="apple-touch-icon">`. When a page has no SEO object and falls back to the `else` branch, the layout should render the same two tags from `site_icon`.
+The admin **System Settings** page stores the site favicon source in `site_icon`. Themes should not introduce theme-local favicon keys. When `SEOMeta.SiteIcon` is set, `seoHeadFor` renders `/favicon.ico` first, then the typed image icon and Apple touch icon. When a page has no SEO object and falls back to the `else` branch, the layout should call `{{faviconLinks $siteIcon}}` so the output stays identical.
+
+The generated `/favicon.ico`, `/static/*` assets, `/sitemap.xml`, and `/robots.txt` support `HEAD` as well as `GET`. Missing static files return `Cache-Control: no-store` so crawler or CDN caches do not keep stale 404 favicon/image checks.
 
 ## BaseTheme Path
 

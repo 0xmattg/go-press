@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"go-press/core/menu"
+	"go-press/core/rewrite"
 
 	"github.com/gin-gonic/gin"
 )
@@ -111,6 +112,7 @@ func CommonFuncMap() template.FuncMap {
 		"renderHook": func(name string, data interface{}) template.HTML {
 			return ""
 		},
+		"faviconLinks": rewrite.FaviconLinks,
 		"seoHeadFor": func(data interface{}) template.HTML {
 			return ""
 		},

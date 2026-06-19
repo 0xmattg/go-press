@@ -58,8 +58,7 @@ HTML <head>: <title> + <meta description> + <link canonical> + og:* + JSON-LD + 
   {{.}}
 {{else}}
   <meta name="description" content="{{settingOr $.Settings "site_description" "My Theme Default"}}">
-  {{if $siteIcon}}<link rel="icon" href="{{$siteIcon}}">
-  <link rel="apple-touch-icon" href="{{$siteIcon}}">{{end}}
+  {{faviconLinks $siteIcon}}
 {{end}}
 ```
 
@@ -69,10 +68,12 @@ HTML <head>: <title> + <meta description> + <link canonical> + og:* + JSON-LD + 
 
 后台「系统设置 > 网站设置」里的 `site_icon` 是全主题统一的网站图标来源。主题不要再发明 `favicon_url`、`theme_icon` 之类的本地 key。
 
-- 正常 SEO 分支：`ApplySiteOptionOverrides` 会把 `site_icon` 写入 `SEOMeta.SiteIcon`，`seoHeadFor` 渲染 `<link rel="icon">` 和 `<link rel="apple-touch-icon">`
-- fallback 分支：如果页面没有 `SEO` 字段，layout 的 `else` 分支仍应直接从 `.Settings["site_icon"]` 输出同样的两个标签
+- 正常 SEO 分支：`ApplySiteOptionOverrides` 会把 `site_icon` 写入 `SEOMeta.SiteIcon`，`seoHeadFor` 会先渲染 `/favicon.ico`，再渲染带 `type` / `sizes` 的图片 icon 和 Apple touch icon
+- fallback 分支：如果页面没有 `SEO` 字段，layout 的 `else` 分支应调用 `{{faviconLinks $siteIcon}}`，确保和 SEO 分支输出一致
 
-浏览器会强缓存 favicon。修改 `site_icon` 后如果标签已经输出但浏览器仍显示旧图标，先强刷或清理站点缓存再验证。
+`/favicon.ico`、`/static/*`、`/sitemap.xml`、`/robots.txt` 都支持 `HEAD` 和 `GET`。静态文件不存在时返回 `Cache-Control: no-store`，避免搜索引擎或中间缓存把 favicon / 图片的 404 结果长期缓存。
+
+浏览器和搜索引擎会强缓存 favicon。修改 `site_icon` 后如果标签已经输出但仍显示旧图标，先强刷或清理站点缓存，再在搜索引擎站长工具中重新抓取关键 URL。
 
 ## 推荐写法：BaseTheme + gin.H
 

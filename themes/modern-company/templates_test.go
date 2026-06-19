@@ -72,6 +72,9 @@ func newBaseTemplateTest(t *testing.T) *template.Template {
 			return fallback
 		},
 		"seoHeadFor": func(interface{}) template.HTML { return "" },
+		"faviconLinks": func(string) template.HTML {
+			return ""
+		},
 		"pageTitleFor": func(data interface{}, fallback string) string {
 			return coreTheme.CommonFuncMap()["pageTitleFor"].(func(interface{}, string) string)(data, fallback)
 		},

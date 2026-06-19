@@ -8,8 +8,7 @@
     {{$siteIcon := settingOr .Settings "site_icon" ""}}
     {{with seoHeadFor .}}{{.}}{{else}}
     <meta name="description" content="{{settingOr $.Settings "site_description" "A strategic digital studio for launch campaigns, product storytelling, and immersive brand systems."}}">
-    {{if $siteIcon}}<link rel="icon" href="{{$siteIcon}}">
-    <link rel="apple-touch-icon" href="{{$siteIcon}}">{{end}}
+    {{faviconLinks $siteIcon}}
     {{end}}
     {{if eq .ActivePage "home"}}<link rel="preload" as="image" href="{{settingOr .Settings "home_hero_1_image" "/static/images/atelier-hero.svg"}}">{{end}}
     <link rel="stylesheet" href="/static/css/style.css?v=9">

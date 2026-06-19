@@ -27,7 +27,7 @@ templates = { archive = "products", single = "product-detail" }
 - **后台一键手动生成** — 「系统设置」中提供按钮触发，静态副本写入当前站点的 `public/sitemap.xml`，例如 `sites/example.com/public/sitemap.xml`
 - **多语言 hreflang** — 核心 `SitemapGenerator` 暴露 `AddTransformer()` Hook 和 `xhtml:link rel="alternate"` 命名空间，多语言插件注册 transformer 后自动为每条 URL 输出 `<xhtml:link hreflang="...">` 备选链接，并把非默认语言版本作为独立 `<url>` 追加，便于 Google 识别翻译组。**主题/核心零改动**
 
-前台 `/sitemap.xml` 仍由当前站点进程动态输出。`public/` 是站点级公开生成物目录，后续 `robots.txt`、`llms.txt` 等也应放在这里，避免多站点共用应用根目录时互相覆盖。
+前台 `/sitemap.xml` 仍由当前站点进程动态输出，并同时支持 `GET` 和 `HEAD`。`public/` 是站点级公开生成物目录，后续 `robots.txt`、`llms.txt` 等也应放在这里，避免多站点共用应用根目录时互相覆盖。
 
 ## SEO Meta
 
@@ -44,7 +44,7 @@ templates = { archive = "products", single = "product-detail" }
 
 浏览器标题、meta description 和 favicon 都从 admin「系统设置 > 网站设置」的 `site_name` / `site_description` / `site_icon` 取（前两者对应 WordPress `blogname` / `blogdescription`），全部主题共用同一来源。
 
-`site_icon` 非空时会输出 `<link rel="icon">` 和 `<link rel="apple-touch-icon">`。留空时各主题各自的兜底字符串接管，避免新装系统出现空标题。
+`site_icon` 非空时会优先输出 `/favicon.ico`，再输出带 `type` / `sizes` 的图片 icon 和 Apple touch icon。留空时各主题各自的兜底字符串接管，避免新装系统出现空标题。
 
 ## Per-content SEO 覆盖（插件路线）
 
