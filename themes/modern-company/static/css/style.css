@@ -2509,6 +2509,38 @@ h1,h2,h3,h4,h5 { line-height:1.25; color: var(--primary); font-weight:700; }
     font-style: italic;
     color: var(--text-secondary);
 }
+
+/* Rich-text tables from the admin editor. The editor only stores semantic
+   table markup; frontend borders and spacing belong to the theme. */
+:where(.post-body, .detail-body) table {
+    width: 100%;
+    margin: 24px 0;
+    border-collapse: collapse;
+    border-spacing: 0;
+    color: var(--text-secondary);
+    line-height: 1.55;
+}
+:where(.post-body, .detail-body) th,
+:where(.post-body, .detail-body) td {
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+}
+:where(.post-body, .detail-body) th {
+    color: var(--primary);
+    background: var(--light);
+    font-weight: 600;
+}
+:where(.post-body, .detail-body) tbody tr:nth-child(even) {
+    background: #fafbfd;
+}
+:where(.post-body, .detail-body) caption {
+    margin-bottom: 10px;
+    color: var(--primary);
+    font-weight: 600;
+    text-align: left;
+}
 .post-tags {
     padding: 20px 0;
     border-top: 1px solid var(--border);
@@ -2650,6 +2682,12 @@ h1,h2,h3,h4,h5 { line-height:1.25; color: var(--primary); font-weight:700; }
     .post-layout { grid-template-columns: 1fr; }
     .post-sidebar { position: static; }
     .detail-content h2 { font-size: 1.5rem; }
+    :where(.post-body, .detail-body) table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
 }
 
 /* ===========================
