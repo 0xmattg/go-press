@@ -326,6 +326,9 @@ func (h *Handler) ContentList(c *gin.Context) {
 		c.String(http.StatusNotFound, "Unknown content type")
 		return
 	}
+	if !h.checkPermission(c, typeName, "read") {
+		return
+	}
 
 	orderField := "created_at"
 	orderDir := "DESC"

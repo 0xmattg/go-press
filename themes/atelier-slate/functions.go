@@ -99,9 +99,6 @@ func DefaultFuncMap() template.FuncMap {
 			}
 			return s[:n] + "..."
 		},
-		"safeHTML": func(s string) template.HTML {
-			return template.HTML(s)
-		},
 		"lower": strings.ToLower,
 		"stripTags": func(s string) string {
 			return strings.TrimSpace(reHTMLTags.ReplaceAllString(s, " "))

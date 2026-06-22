@@ -86,6 +86,7 @@ func (r *Repository) FindBySlugScoped(ctx *gin.Context, contentType, slug string
 
 // Create inserts a new content item and its meta.
 func (r *Repository) Create(c *Content) error {
+	sanitizeContent(c)
 	return r.db.Create(c).Error
 }
 
@@ -96,6 +97,7 @@ func (r *Repository) CreateWithMeta(ctx context.Context, c *Content, meta map[st
 	if ctx == nil {
 		ctx = context.Background()
 	}
+	sanitizeContent(c)
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(c).Error; err != nil {
 			return err
@@ -129,6 +131,7 @@ func (r *Repository) CreateWithMeta(ctx context.Context, c *Content, meta map[st
 
 // Update saves changes to an existing content item.
 func (r *Repository) Update(c *Content) error {
+	sanitizeContent(c)
 	return r.db.Save(c).Error
 }
 

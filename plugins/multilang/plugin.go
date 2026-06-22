@@ -256,16 +256,20 @@ func (p *Plugin) Activate(app plugin.App) {
 			return
 		}
 		r.GET("/lang/:tag", p.handleLangSwitch)
-		// Translation admin API (protected by cookie-based admin session check)
-		r.POST("/admin/plugins/multi-language/translate", p.handleCreateTranslation)
-		r.POST("/admin/plugins/multi-language/unlink", p.handleUnlinkTranslation)
+		contentCreate := admin.RequirePermission(e.Auth, e.RBAC, "content", "create")
+		contentUpdate := admin.RequirePermission(e.Auth, e.RBAC, "content", "update")
+		menuUpdate := admin.RequirePermission(e.Auth, e.RBAC, "menu", "update")
+		pluginUpdate := admin.RequirePermission(e.Auth, e.RBAC, "plugin", "update")
+		// Translation admin API.
+		r.POST("/admin/plugins/multi-language/translate", contentCreate, p.handleCreateTranslation)
+		r.POST("/admin/plugins/multi-language/unlink", contentUpdate, p.handleUnlinkTranslation)
 		// Menu translation admin API
-		r.POST("/admin/plugins/multi-language/menu-translate", p.handleMenuTranslationSave)
-		r.POST("/admin/plugins/multi-language/menu-unlink", p.handleMenuUnlink)
+		r.POST("/admin/plugins/multi-language/menu-translate", menuUpdate, p.handleMenuTranslationSave)
+		r.POST("/admin/plugins/multi-language/menu-unlink", menuUpdate, p.handleMenuUnlink)
 		// String translation admin API
-		r.POST("/admin/plugins/multi-language/string-translate", p.handleStringTranslationSave)
+		r.POST("/admin/plugins/multi-language/string-translate", pluginUpdate, p.handleStringTranslationSave)
 		// Option translation admin API
-		r.POST("/admin/plugins/multi-language/option-translate", p.handleOptionTranslationSave)
+		r.POST("/admin/plugins/multi-language/option-translate", pluginUpdate, p.handleOptionTranslationSave)
 	}, 5))
 
 	// 4c. Re-prime the i18n bundle whenever core admin reports a bulk option

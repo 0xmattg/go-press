@@ -4,7 +4,7 @@ GoPress generates REST endpoints for registered content types and ships Swagger 
 
 ## Features
 
-- Automatic endpoints for core and theme-declared content types.
+- Automatic endpoints for public core and theme-declared content types.
 - Generic content query endpoint.
 - JWT Bearer token and API key authentication.
 - IP-based rate limiting.
@@ -39,10 +39,16 @@ curl http://localhost:8080/api/v1/content \
 
 ## Common Query Parameters
 
+The public REST API only exposes content types with a public archive and only
+returns published content whose publication time has arrived. Internal types
+such as `contact_message`, drafts, archived rows, trash, and scheduled content
+are never exposed by these endpoints. Administrative access must use protected
+admin workflows instead.
+
 | Parameter | Description |
 |---|---|
-| `type` | Content type, such as `post` or a theme-defined type. |
-| `status` | `published`, `draft`, or `archived`. |
+| `type` | Public content type, such as `post` or an archive-enabled theme type. |
+| `status` | Optional; only `published` is accepted. |
 | `search` | Text search. |
 | `taxonomy` | Taxonomy filter such as `category:tech`. |
 | `page` | Page number, starting at 1. |
@@ -57,4 +63,3 @@ go run ./cmd/gendoc
 ```
 
 The command updates `docs/docs.go`, `docs/swagger.json`, and `docs/swagger.yaml`.
-

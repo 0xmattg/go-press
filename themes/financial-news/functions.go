@@ -40,9 +40,6 @@ func DefaultFuncMap() template.FuncMap {
 			}
 			return string(runes[:n]) + "..."
 		},
-		"safeHTML": func(s string) template.HTML {
-			return template.HTML(s)
-		},
 		"lower": strings.ToLower,
 		"seq": func(n int) []int {
 			s := make([]int, n)
