@@ -1,8 +1,10 @@
 package theme
 
 import (
+	"html/template"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"go-press/core/content"
@@ -43,6 +45,25 @@ func TestPageTitleForFallsBackWhenNoTitle(t *testing.T) {
 
 	if got := fn(struct{}{}, "Fallback Title"); got != "Fallback Title" {
 		t.Fatalf("pageTitleFor() = %q, want Fallback Title", got)
+	}
+}
+
+func TestBaseFuncMapDoesNotAllowUnsafeSafeHTMLOverride(t *testing.T) {
+	var base BaseTheme
+	base.InitBase(nil, "", template.FuncMap{
+		"safeHTML": func(s string) template.HTML {
+			return template.HTML(s)
+		},
+	})
+
+	fn := base.BaseFuncMap()["safeHTML"].(func(string) template.HTML)
+	got := string(fn(`<p>Safe</p><script>alert(1)</script>`))
+
+	if strings.Contains(strings.ToLower(got), "<script") {
+		t.Fatalf("unsafe theme override bypassed sanitization: %s", got)
+	}
+	if !strings.Contains(got, "<p>Safe</p>") {
+		t.Fatalf("safe markup was not preserved: %s", got)
 	}
 }
 

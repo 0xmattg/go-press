@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"go-press/core/content"
 	"go-press/core/menu"
 	"go-press/core/rewrite"
 
@@ -37,7 +38,7 @@ func CommonFuncMap() template.FuncMap {
 			return string(runes[:n]) + "..."
 		},
 		"safeHTML": func(s string) template.HTML {
-			return template.HTML(s)
+			return template.HTML(content.SanitizeHTML(s))
 		},
 		"lower": strings.ToLower,
 		"upper": strings.ToUpper,

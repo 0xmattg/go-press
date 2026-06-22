@@ -297,7 +297,13 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 			}
 		}
 	}
-	return MergeFuncMap(CommonFuncMap(), engineFuncs, b.customFuncMap)
+	funcs := MergeFuncMap(CommonFuncMap(), engineFuncs, b.customFuncMap)
+	// safeHTML is a framework trust boundary. Themes may add helpers, but they
+	// must not replace rich-text sanitization with an unchecked conversion.
+	funcs["safeHTML"] = func(s string) template.HTML {
+		return template.HTML(content.SanitizeHTML(s))
+	}
+	return funcs
 }
 
 func templateGinContext(data interface{}) *gin.Context {

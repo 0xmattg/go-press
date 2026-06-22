@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -71,7 +72,7 @@ func toDTO(c *content.Content) contentDTO {
 		Status:    c.Status,
 		Title:     c.Title,
 		Slug:      c.Slug,
-		Content:   c.Content,
+		Content:   content.SanitizeHTML(c.Content),
 		Excerpt:   c.Excerpt,
 		ImageURL:  c.ImageURL,
 		AuthorID:  c.AuthorID,
@@ -112,6 +113,9 @@ func (h *Handler) RegisterRoutes(r *gin.RouterGroup) {
 
 	// Type-specific convenience routes: /api/v1/products, /api/v1/posts, etc.
 	for _, typeDef := range h.registry.AllTypes() {
+		if !isPublicContentType(typeDef) {
+			continue
+		}
 		slug := typeDef.Rewrite.Slug
 		if slug == "" {
 			slug = typeDef.Name
@@ -131,12 +135,12 @@ func (h *Handler) RegisterRoutes(r *gin.RouterGroup) {
 // List handles GET /api/v1/content
 //
 //	@Summary		List content items
-//	@Description	Query content with filters, pagination, and sorting
+//	@Description	Query published public content with filters, pagination, and sorting
 //	@Tags			Content
 //	@Accept			json
 //	@Produce		json
 //	@Param			type		query	string	false	"Content type filter (e.g. product, post, service)"
-//	@Param			status		query	string	false	"Status filter"	default(published)
+//	@Param			status		query	string	false	"Only published is accepted"	default(published)
 //	@Param			search		query	string	false	"Search keyword in title and content"
 //	@Param			taxonomy	query	string	false	"Taxonomy name for filtering (requires term param)"
 //	@Param			term		query	string	false	"Taxonomy term slug (requires taxonomy param)"
@@ -150,23 +154,31 @@ func (h *Handler) RegisterRoutes(r *gin.RouterGroup) {
 //	@Failure		500	{object}	response{error=apiError}
 //	@Router			/content [get]
 func (h *Handler) List(c *gin.Context) {
-	q := h.repo.Query()
-
 	// Content type from route or query param
 	typeName, _ := c.Get("api_type")
 	if typeName == nil || typeName == "" {
 		typeName = c.Query("type")
 	}
 	if t, ok := typeName.(string); ok && t != "" {
-		q = q.Type(t)
+		if !isPublicContentType(h.registry.GetType(t)) {
+			respondError(c, http.StatusNotFound, "not_found", "Content type not found")
+			return
+		}
 	}
 
-	// Status filter (default: published for public API)
+	// Public REST endpoints never expose drafts, archived rows, trash, or
+	// scheduled content. Management access belongs to authenticated admin APIs.
 	status := c.DefaultQuery("status", "published")
-	if status == "published" {
-		q = q.Published()
-	} else if status != "" && status != "all" {
-		q = q.Status(status)
+	if status != "" && status != content.StatusPublished {
+		respondError(c, http.StatusBadRequest, "invalid_status", "Only published content is available")
+		return
+	}
+
+	q := h.repo.Query().Published()
+	if t, ok := typeName.(string); ok && t != "" {
+		q = q.Type(t)
+	} else {
+		q = q.Types(h.publicContentTypeNames())
 	}
 
 	// Search
@@ -250,12 +262,13 @@ func (h *Handler) List(c *gin.Context) {
 //	@Router			/content/{id} [get]
 func (h *Handler) Get(c *gin.Context) {
 	idStr := c.Param("id")
+	requestedType, _ := c.Get("api_type")
 
 	// Try as numeric ID first
 	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err == nil {
 		item, err := h.repo.FindByID(uint(id))
-		if err != nil {
+		if err != nil || !h.canExpose(item, requestedType) {
 			respondError(c, http.StatusNotFound, "not_found", "Content not found")
 			return
 		}
@@ -267,8 +280,12 @@ func (h *Handler) Get(c *gin.Context) {
 	// the request carries a language hint (?lang=zh, /zh/api/... etc).
 	typeName, _ := c.Get("api_type")
 	if t, ok := typeName.(string); ok && t != "" {
+		if !isPublicContentType(h.registry.GetType(t)) {
+			respondError(c, http.StatusNotFound, "not_found", "Content not found")
+			return
+		}
 		item, err := h.repo.FindBySlugScoped(c, t, idStr)
-		if err != nil {
+		if err != nil || !h.canExpose(item, t) {
 			respondError(c, http.StatusNotFound, "not_found", "Content not found")
 			return
 		}
@@ -289,6 +306,38 @@ func (h *Handler) Get(c *gin.Context) {
 //	@Success		200	{object}	response
 //	@Router			/types [get]
 func (h *Handler) Types(c *gin.Context) {
-	types := h.registry.AllTypes()
+	types := make([]*content.ContentTypeDef, 0)
+	for _, typeDef := range h.registry.AllTypes() {
+		if isPublicContentType(typeDef) {
+			types = append(types, typeDef)
+		}
+	}
 	respondOK(c, types)
+}
+
+func isPublicContentType(typeDef *content.ContentTypeDef) bool {
+	return typeDef != nil && typeDef.HasArchive
+}
+
+func (h *Handler) publicContentTypeNames() []string {
+	names := make([]string, 0)
+	for _, typeDef := range h.registry.AllTypes() {
+		if isPublicContentType(typeDef) {
+			names = append(names, typeDef.Name)
+		}
+	}
+	return names
+}
+
+func (h *Handler) canExpose(item *content.Content, requestedType interface{}) bool {
+	if item == nil || !isPublicContentType(h.registry.GetType(item.Type)) {
+		return false
+	}
+	if typeName, ok := requestedType.(string); ok && typeName != "" && item.Type != typeName {
+		return false
+	}
+	if item.Status != content.StatusPublished {
+		return false
+	}
+	return item.PublishedAt == nil || !item.PublishedAt.After(time.Now())
 }

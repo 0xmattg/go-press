@@ -1,6 +1,10 @@
 package theme
 
-import "html/template"
+import (
+	"html/template"
+
+	"go-press/core/content"
+)
 
 // Fallback templates provide minimal but functional rendering when the
 // active theme does not include specific template files. This mirrors
@@ -12,7 +16,9 @@ var fallbackArchiveTmpl *template.Template
 
 func init() {
 	fns := template.FuncMap{
-		"safeHTML": func(s string) template.HTML { return template.HTML(s) },
+		"safeHTML": func(s string) template.HTML {
+			return template.HTML(content.SanitizeHTML(s))
+		},
 	}
 	fallbackTaxonomyTmpl = template.Must(template.New("fallback-taxonomy").Funcs(fns).Parse(fallbackTaxonomyHTML))
 	fallbackSingleTmpl = template.Must(template.New("fallback-single").Funcs(fns).Parse(fallbackSingleHTML))

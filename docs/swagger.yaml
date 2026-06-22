@@ -69,14 +69,14 @@ paths:
     get:
       consumes:
       - application/json
-      description: Query content with filters, pagination, and sorting
+      description: Query published public content with filters, pagination, and sorting
       parameters:
       - description: Content type filter (e.g. product, post, service)
         in: query
         name: type
         type: string
       - default: published
-        description: Status filter
+        description: Only published is accepted
         in: query
         name: status
         type: string

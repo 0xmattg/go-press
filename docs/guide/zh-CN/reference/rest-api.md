@@ -2,9 +2,9 @@
 
 ## REST API 特性
 
-GoPress 为每个注册的 ContentType 自动生成 REST 端点：
+GoPress 为具有公开归档页的 ContentType 自动生成 REST 端点：
 
-- **自动端点** — 核心类型和 `theme.toml` 声明的 ContentType 会自动生成 `GET /api/v1/{type}` 和 `GET /api/v1/{type}/:id`
+- **自动端点** — 公开核心类型和 `theme.toml` 中 `has_archive = true` 的 ContentType 会自动生成 `GET /api/v1/{type}` 和 `GET /api/v1/{type}/:id`
 - **通用查询** — 下面以主题声明的 `product` 内容类型为例：`GET /api/v1/content?type=product&status=published&search=hepa&page=1`
 - **认证** — JWT Bearer Token + API Key 双模式
 - **限流** — 基于 IP 的令牌桶限流
@@ -45,10 +45,14 @@ curl http://localhost:8080/api/v1/content \
 
 ## 通用查询参数
 
+公开 REST API 只返回已到发布时间的 `published` 内容。`contact_message`
+等内部类型，以及草稿、归档、回收站和定时未发布内容不会通过这些端点暴露；
+管理类读取应使用受保护的后台工作流。
+
 | 参数 | 说明 |
 |---|---|
-| `type` | 内容类型，例如核心 `post` / `contact_message`，或当前主题声明的 `product` / 自定义类型 |
-| `status` | `published` / `draft` / `archived` |
+| `type` | 公开内容类型，例如核心 `post`，或主题声明且启用归档的 `product` / 自定义类型 |
+| `status` | 可选；只接受 `published` |
 | `search` | 全文模糊搜索 |
 | `taxonomy` | 分类法过滤，如 `category:tech` |
 | `page` | 分页页码（从 1 开始） |

@@ -850,6 +850,9 @@ func (h *Handler) Logout(c *gin.Context) {
 // ==================== Dashboard ====================
 
 func (h *Handler) Dashboard(c *gin.Context) {
+	if !h.checkPermission(c, "dashboard", "read") {
+		return
+	}
 	stats := h.svc.GetDashboardStats()
 	logs := h.svc.ListRecentAuditLogs(10)
 	lang := h.svc.AdminLanguage()

@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/content": {
             "get": {
-                "description": "Query content with filters, pagination, and sorting",
+                "description": "Query published public content with filters, pagination, and sorting",
                 "consumes": [
                     "application/json"
                 ],
@@ -38,7 +38,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "default": "published",
-                        "description": "Status filter",
+                        "description": "Only published is accepted",
                         "name": "status",
                         "in": "query"
                     },

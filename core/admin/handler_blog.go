@@ -26,6 +26,9 @@ func (h *Handler) TaxonomyList(c *gin.Context) {
 		c.String(http.StatusNotFound, "Unknown taxonomy type")
 		return
 	}
+	if !h.checkPermission(c, taxType, "read") {
+		return
+	}
 
 	slug := AdminSlug(taxType)
 	items, _ := h.svc.ListTaxonomy(taxType)

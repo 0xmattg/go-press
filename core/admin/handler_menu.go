@@ -13,6 +13,9 @@ import (
 
 // MenuList shows the menu management page.
 func (h *Handler) MenuList(c *gin.Context) {
+	if !h.checkPermission(c, "menu", "read") {
+		return
+	}
 	if h.menuCallbacks == nil || h.menuCallbacks.AllFn == nil {
 		c.Redirect(http.StatusFound, "/admin/?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "menu.unavailable")))
 		return
@@ -38,6 +41,9 @@ func (h *Handler) MenuList(c *gin.Context) {
 
 // MenuCreate handles creating a new menu.
 func (h *Handler) MenuCreate(c *gin.Context) {
+	if !h.checkPermission(c, "menu", "update") {
+		return
+	}
 	if h.menuCallbacks == nil || h.menuCallbacks.CreateFn == nil {
 		c.Redirect(http.StatusFound, "/admin/menus?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "menu.unavailable")))
 		return
@@ -62,6 +68,9 @@ func (h *Handler) MenuCreate(c *gin.Context) {
 
 // MenuEdit shows the menu item editing page.
 func (h *Handler) MenuEdit(c *gin.Context) {
+	if !h.checkPermission(c, "menu", "read") {
+		return
+	}
 	if h.menuCallbacks == nil || h.menuCallbacks.GetByIDFn == nil {
 		c.Redirect(http.StatusFound, "/admin/menus?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "menu.unavailable")))
 		return
@@ -100,6 +109,9 @@ func (h *Handler) MenuEdit(c *gin.Context) {
 
 // MenuUpdate handles updating a menu's name/location.
 func (h *Handler) MenuUpdate(c *gin.Context) {
+	if !h.checkPermission(c, "menu", "update") {
+		return
+	}
 	if h.menuCallbacks == nil || h.menuCallbacks.UpdateFn == nil {
 		c.Redirect(http.StatusFound, "/admin/menus?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "menu.unavailable")))
 		return
@@ -149,6 +161,9 @@ func (h *Handler) localizeMenuLocations(locations []MenuLocationInfo, lang strin
 
 // MenuDelete handles deleting a menu.
 func (h *Handler) MenuDelete(c *gin.Context) {
+	if !h.checkPermission(c, "menu", "update") {
+		return
+	}
 	if h.menuCallbacks == nil || h.menuCallbacks.DeleteFn == nil {
 		c.Redirect(http.StatusFound, "/admin/menus?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "menu.unavailable")))
 		return
@@ -171,6 +186,9 @@ func (h *Handler) MenuDelete(c *gin.Context) {
 
 // MenuSaveItems handles saving menu items via JSON (AJAX).
 func (h *Handler) MenuSaveItems(c *gin.Context) {
+	if !h.checkPermission(c, "menu", "update") {
+		return
+	}
 	if h.menuCallbacks == nil || h.menuCallbacks.SaveItemsFn == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": adminT(h.svc.AdminLanguage(), "menu.unavailable")})
 		return
