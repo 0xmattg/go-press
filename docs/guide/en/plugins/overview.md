@@ -25,8 +25,8 @@ Hot disable is an important contract. A disabled plugin should stop affecting ad
 | `multilang` | WPML-like content translation, menu assignment, language-prefixed URLs, and theme setting translations. |
 | `seo-extras` | Yoast-like per-content SEO title, description, Open Graph image, and robots overrides. |
 | `code-snippets` | WPCode-like site-level HTML/JS injection into head, body, and footer slots. |
+| `gopress-analytics` | First-party self-hosted page-view, visitor, trend, and top-page analytics. |
 
 ## Boundary Rule
 
 Plugins should only depend on core packages and public interfaces. They should not import a theme, assume a theme's HTML structure, or scan final HTML responses to patch output.
-

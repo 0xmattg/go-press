@@ -128,7 +128,7 @@ GoPress 支持插件运行时完全热拔插。要做到这一点，插件实现
 
 1. **`AddAction` / `AddFilter` 返回的 `Handle` 必须保存** — 插件结构体里维护一个 `hookHandles []hook.Handle`，每次注册都 append 进去
 2. **`Deactivate` 中按 handle 摘除全部** — 调 `RemoveAction` + `RemoveFilter`（不知道是 action 还是 filter 时两个都调，方法对零值或不匹配的 handle 是 no-op）
-3. **Gin 中间件不能从 router 摘除** — 插件注册的 `gin.HandlerFunc` 必须在函数入口自检 `engine.PluginManager.IsActive(name)`，停用即短路 `c.Next()`
+3. **Gin Router 会在插件启停后重建** — 当前有效插件的 `middleware.early` / `routes.register` 会重新应用；长生命周期或异步插件仍应维护运行态开关，覆盖正在处理的旧请求
 4. **Sitemap transformer / 其他对称 Add/Remove API** — 同样保存 handle，对称摘除
 
 参考 [multilang 插件](multilang.md) 是完整的热拔插实现样板。
@@ -150,4 +150,5 @@ GoPress 支持插件运行时完全热拔插。要做到这一点，插件实现
 | `menu.location.resolve` | filter | 菜单按位置返回前的最终 transform |
 | `admin.content_form.fields` | filter | 内容编辑页 meta box 插槽 |
 | `admin.content.saved` | action | 内容保存后副作用 |
+| `admin.dashboard.widgets` | filter | Dashboard 统计组件插槽，value 为 `template.HTML` |
 | `seo.content.meta` | filter | 单页内容 SEOMeta 渲染前 |

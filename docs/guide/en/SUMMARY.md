@@ -27,10 +27,10 @@
   - [Multilingual Plugin](plugins/multilang.md)
   - [SEO Extras](plugins/seo-extras.md)
   - [Code Snippets](plugins/code-snippets.md)
+  - [GoPress Analytics](plugins/gopress-analytics.md)
 - [Reference](reference/project-structure.md)
   - [Project Structure](reference/project-structure.md)
   - [Database Prefixes](reference/database-prefix.md)
   - [REST API and Swagger](reference/rest-api.md)
   - [Technology Stack and Performance](reference/tech-stack.md)
   - [Roadmap and Contributions](reference/roadmap.md)
-

@@ -1,0 +1,17 @@
+{
+  "plugin.name": "GoPress 访问统计",
+  "plugin.description": "GoPress 官方自托管访问统计：匿名采集 PV、UV、新访客、访问趋势和热门页面。",
+  "plugin.settings.back": "返回插件管理",
+  "plugin.settings.title": "%s - 插件设置",
+  "plugin.settings.save": "保存设置",
+  "plugin.analytics.collection": "数据采集",
+  "plugin.analytics.enabled": "前台访问统计",
+  "plugin.analytics.on": "启用",
+  "plugin.analytics.off": "停用",
+  "plugin.analytics.enabled_help": "仅采集前台成功 HTML 页面，不统计后台、API、静态资源和已识别爬虫。",
+  "plugin.analytics.retention": "原始数据保留期",
+  "plugin.analytics.days": "天",
+  "plugin.analytics.retention_help": "到期后自动删除原始事件、会话、明文 IP 和 User-Agent；每日聚合长期保留。",
+  "plugin.analytics.privacy": "隐私与数据范围",
+  "plugin.analytics.privacy_help": "插件使用第一方 HttpOnly Cookie 区分匿名访客和会话，同时保存 IP、不可逆 IP 哈希及设备信息。统计接口只返回聚合结果，不暴露单个访客记录。部署前请根据所在地法规更新隐私政策和 Cookie 告知。"
+}

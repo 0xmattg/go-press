@@ -22,6 +22,14 @@ type RBAC struct {
 	roles map[string]*RoleDef
 }
 
+// CapabilityGrant records a capability added at runtime by an extension.
+// Added is false when the role already owned the capability before the grant.
+type CapabilityGrant struct {
+	Role  string
+	Cap   string
+	Added bool
+}
+
 // NewRBAC creates a new RBAC manager with default WordPress-style roles.
 func NewRBAC() *RBAC {
 	r := &RBAC{
@@ -40,7 +48,7 @@ func (r *RBAC) registerDefaults() {
 		"taxonomy.create": true, "taxonomy.read": true, "taxonomy.update": true, "taxonomy.delete": true,
 		"media.create": true, "media.read": true, "media.update": true, "media.delete": true,
 		"menu.read": true, "menu.update": true,
-		"user.read": true,
+		"user.read":        true,
 		"comment.moderate": true,
 		"dashboard.read":   true,
 	})
@@ -87,6 +95,40 @@ func (r *RBAC) Can(role, resource, action string) bool {
 	}
 	cap := resource + "." + action
 	return def.Caps[cap]
+}
+
+// GrantCapability adds one capability to an existing role and returns a token
+// that can be used to undo only this grant during extension deactivation.
+func (r *RBAC) GrantCapability(role, resource, action string) CapabilityGrant {
+	capability := resource + "." + action
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	def, ok := r.roles[role]
+	if !ok {
+		return CapabilityGrant{Role: role, Cap: capability}
+	}
+	if def.Caps == nil {
+		def.Caps = make(map[string]bool)
+	}
+	if def.Caps[capability] {
+		return CapabilityGrant{Role: role, Cap: capability}
+	}
+	def.Caps[capability] = true
+	return CapabilityGrant{Role: role, Cap: capability, Added: true}
+}
+
+// RevokeCapabilityGrant removes a capability only when GrantCapability added
+// it. Pre-existing role policy is therefore preserved.
+func (r *RBAC) RevokeCapabilityGrant(grant CapabilityGrant) {
+	if !grant.Added || grant.Role == "" || grant.Cap == "" {
+		return
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if def, ok := r.roles[grant.Role]; ok {
+		delete(def.Caps, grant.Cap)
+	}
 }
 
 // GetRole returns a role definition.

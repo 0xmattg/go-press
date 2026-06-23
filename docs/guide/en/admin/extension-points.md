@@ -27,6 +27,16 @@ Plugins can listen to `admin.content.saved` and persist additional form values. 
 
 The admin exposes `admin.HookContentListTabs` for plugins that need additional list filters. The multilingual plugin uses it to add language tabs and counts to content list pages.
 
+## Dashboard Widgets
+
+Plugins can append trusted dashboard markup through `admin.dashboard.widgets`.
+The filter value is `template.HTML`, and the first argument is the dashboard
+template root. A widget must check the current role before rendering and protect
+every backing API with core authentication plus a specific RBAC capability.
+
+The `gopress-analytics` plugin uses this slot for its traffic summary, while its
+JSON endpoint requires `analytics.read`.
+
 ## Mail and Notification Hooks
 
 Mail is split into two layers: `core/mail` owns message delivery, while notification rules listen to core events and call the mail service. Plugins can filter outgoing messages, observe delivery results, or customize the default contact-message notification.

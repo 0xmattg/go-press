@@ -331,14 +331,8 @@ func (e *Engine) SwitchTheme(name string) error {
 	e.Cache.L2.DeleteByPrefix("frag:")
 	logger.Info("Caches flushed after theme switch", "theme", name)
 
-	// Rebuild router so dynamic admin routes reflect the new registry
-	e.SetupRouter()
-	if e.OnRouterRebuild != nil {
-		e.OnRouterRebuild(e.Router)
-	}
-	if e.server != nil {
-		e.server.Handler = e.Router
-	}
+	// Rebuild router so dynamic admin routes reflect the new registry.
+	e.rebuildRouter()
 
 	return e.Options.Set("active_theme", name)
 }
@@ -597,6 +591,18 @@ func (e *Engine) SetupRouter() *gin.Engine {
 	return r
 }
 
+// rebuildRouter reapplies every active extension's middleware and route hooks,
+// then publishes the replacement handler to the running server.
+func (e *Engine) rebuildRouter() {
+	e.SetupRouter()
+	if e.OnRouterRebuild != nil {
+		e.OnRouterRebuild(e.Router)
+	}
+	if e.server != nil {
+		e.server.Handler = e.Router
+	}
+}
+
 // serveStatic handles all /static/* requests.
 // Routes to admin assets, uploads, or active theme static files.
 func (e *Engine) serveStatic(c *gin.Context) {
@@ -797,6 +803,7 @@ func (e *Engine) SetupAdmin() {
 			if e.Cache != nil {
 				e.Cache.Flush()
 			}
+			e.rebuildRouter()
 			return nil
 		},
 		DeactivateFn: func(name string) error {
@@ -812,6 +819,7 @@ func (e *Engine) SetupAdmin() {
 			if e.Cache != nil {
 				e.Cache.Flush()
 			}
+			e.rebuildRouter()
 			return nil
 		},
 		SettingsTemplateFn: func(slug string) string {

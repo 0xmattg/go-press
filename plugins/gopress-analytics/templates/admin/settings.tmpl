@@ -1,0 +1,47 @@
+{{define "content"}}
+<div class="content-header">
+    <div style="display:flex; align-items:center; gap:1rem;">
+        <a href="/admin/plugins" class="btn btn-secondary" style="text-decoration:none;">← {{X $ "plugin.settings.back" "返回插件管理"}}</a>
+        <h2>{{X $ "plugin.settings.title" "%s - 插件设置" .PluginName}}</h2>
+    </div>
+</div>
+
+<div class="card settings-shell">
+    <form method="POST" action="/admin/plugins/{{.PluginSlug}}/settings" class="settings-form">
+        <section class="settings-section">
+            <h3 class="settings-section-title">{{X $ "plugin.analytics.collection" "数据采集"}}</h3>
+            <div class="settings-grid">
+                <div class="form-group settings-item">
+                    <label for="analyticsEnabled">{{X $ "plugin.analytics.enabled" "前台访问统计"}}</label>
+                    <select id="analyticsEnabled" name="plugin_gopress-analytics_enabled">
+                        <option value="true" {{if .AnalyticsEnabled}}selected{{end}}>{{X $ "plugin.analytics.on" "启用"}}</option>
+                        <option value="false" {{if not .AnalyticsEnabled}}selected{{end}}>{{X $ "plugin.analytics.off" "停用"}}</option>
+                    </select>
+                    <small>{{X $ "plugin.analytics.enabled_help" "仅采集前台成功 HTML 页面，不统计后台、API、静态资源和已识别爬虫。"}}</small>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="retentionDays">{{X $ "plugin.analytics.retention" "原始数据保留期"}}</label>
+                    <select id="retentionDays" name="plugin_gopress-analytics_retention_days">
+                        <option value="30" {{if eq .RetentionDays 30}}selected{{end}}>30 {{X $ "plugin.analytics.days" "天"}}</option>
+                        <option value="60" {{if eq .RetentionDays 60}}selected{{end}}>60 {{X $ "plugin.analytics.days" "天"}}</option>
+                        <option value="90" {{if eq .RetentionDays 90}}selected{{end}}>90 {{X $ "plugin.analytics.days" "天"}}</option>
+                        <option value="180" {{if eq .RetentionDays 180}}selected{{end}}>180 {{X $ "plugin.analytics.days" "天"}}</option>
+                    </select>
+                    <small>{{X $ "plugin.analytics.retention_help" "到期后自动删除原始事件、会话、明文 IP 和 User-Agent；每日聚合长期保留。"}}</small>
+                </div>
+            </div>
+        </section>
+
+        <section class="settings-section settings-section-admin">
+            <h3 class="settings-section-title">{{X $ "plugin.analytics.privacy" "隐私与数据范围"}}</h3>
+            <p style="color:var(--text-muted); line-height:1.65;">
+                {{X $ "plugin.analytics.privacy_help" "插件使用第一方 HttpOnly Cookie 区分匿名访客和会话，同时保存 IP、不可逆 IP 哈希及设备信息。统计接口只返回聚合结果，不暴露单个访客记录。部署前请根据所在地法规更新隐私政策和 Cookie 告知。"}}
+            </p>
+        </section>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{{X $ "plugin.settings.save" "保存设置"}}</button>
+        </div>
+    </form>
+</div>
+{{end}}

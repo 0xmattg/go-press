@@ -1,0 +1,5 @@
+[plugin]
+name = "GoPress Analytics"
+version = "1.0.0"
+description = "First-party self-hosted analytics for page views, visitors, traffic trends, and top pages."
+author = "GoPress Team"

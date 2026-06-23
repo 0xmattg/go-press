@@ -1,0 +1,17 @@
+{
+  "plugin.name": "GoPress Analytics",
+  "plugin.description": "First-party self-hosted analytics for page views, visitors, traffic trends, and top pages.",
+  "plugin.settings.back": "Back to Plugins",
+  "plugin.settings.title": "%s - Plugin Settings",
+  "plugin.settings.save": "Save Settings",
+  "plugin.analytics.collection": "Collection",
+  "plugin.analytics.enabled": "Front-end analytics",
+  "plugin.analytics.on": "Enabled",
+  "plugin.analytics.off": "Disabled",
+  "plugin.analytics.enabled_help": "Collect successful front-end HTML pages only. Admin, API, static assets, and identified bots are excluded.",
+  "plugin.analytics.retention": "Raw data retention",
+  "plugin.analytics.days": "days",
+  "plugin.analytics.retention_help": "Expired raw events, sessions, plain IP addresses, and User-Agent values are deleted automatically. Daily aggregates remain.",
+  "plugin.analytics.privacy": "Privacy and data scope",
+  "plugin.analytics.privacy_help": "The plugin uses first-party HttpOnly cookies to distinguish anonymous visitors and sessions, and stores IP, irreversible IP hashes, and device data. Analytics APIs expose aggregate results only. Update your privacy policy and cookie notice as required by local law."
+}

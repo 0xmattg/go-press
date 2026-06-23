@@ -8,6 +8,16 @@ GoPress 在 core 侧暴露了一组通用扩展点，允许任何插件向 admin
 
 下面按已开放的扩展点逐一介绍。
 
+## Dashboard Widget 插槽
+
+插件可通过 `admin.dashboard.widgets` 向控制面板追加可信的
+`template.HTML` 组件。filter 的第一个参数是 Dashboard 模板根数据，插件
+必须根据 `CurrentRole` 判断是否渲染；组件使用的后台 API 仍须复用 core
+认证与独立 RBAC capability，不能只依赖前端隐藏。
+
+`gopress-analytics` 使用该插槽展示访问趋势，其 JSON 接口要求
+`analytics.read`。
+
 ## 内容列表过滤 Tab
 
 允许任何插件向 admin 列表页注入过滤条：
