@@ -2,7 +2,10 @@ package gopressanalytics
 
 import (
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -44,7 +47,7 @@ type Repository struct {
 func NewRepository(db *gorm.DB) *Repository { return &Repository{db: db} }
 
 func (r *Repository) AutoMigrate() error {
-	return r.db.AutoMigrate(
+	if err := r.db.AutoMigrate(
 		&Event{},
 		&Visitor{},
 		&Session{},
@@ -53,7 +56,110 @@ func (r *Repository) AutoMigrate() error {
 		&DailyMetric{},
 		&DailyPageMetric{},
 		&DailyDimensionMetric{},
+	); err != nil {
+		return err
+	}
+	return r.ensureUniqueIndexes()
+}
+
+type uniqueIndexSpec struct {
+	table   string
+	logical string
+	columns []string
+}
+
+func (r *Repository) ensureUniqueIndexes() error {
+	for _, spec := range analyticsUniqueIndexSpecs() {
+		exists, err := r.hasUniqueIndex(spec)
+		if err != nil {
+			return err
+		}
+		if exists {
+			continue
+		}
+		if err := r.createUniqueIndex(spec); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *Repository) hasUniqueIndex(spec uniqueIndexSpec) (bool, error) {
+	var exists bool
+	err := r.db.Raw(`
+SELECT EXISTS (
+	SELECT 1
+	FROM pg_index i
+	WHERE i.indrelid = to_regclass(?)
+	  AND i.indisunique
+	  AND (
+		SELECT string_agg(a.attname, ',' ORDER BY idxkey.ordinality)
+		FROM unnest(i.indkey) WITH ORDINALITY AS idxkey(attnum, ordinality)
+		JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = idxkey.attnum
+	  ) = ?
+)`, spec.table, strings.Join(spec.columns, ",")).Scan(&exists).Error
+	return exists, err
+}
+
+func (r *Repository) createUniqueIndex(spec uniqueIndexSpec) error {
+	indexName := analyticsUniqueIndexName(spec)
+	quotedColumns := make([]string, 0, len(spec.columns))
+	for _, column := range spec.columns {
+		quotedColumns = append(quotedColumns, quoteIdentifier(column))
+	}
+	sql := fmt.Sprintf(
+		"CREATE UNIQUE INDEX IF NOT EXISTS %s ON %s (%s)",
+		quoteIdentifier(indexName),
+		quoteIdentifier(spec.table),
+		strings.Join(quotedColumns, ", "),
 	)
+	return r.db.Exec(sql).Error
+}
+
+func analyticsUniqueIndexSpecs() []uniqueIndexSpec {
+	return []uniqueIndexSpec{
+		{
+			table: Event{}.TableName(), logical: "event_uuid",
+			columns: []string{"event_uuid"},
+		},
+		{
+			table: Visitor{}.TableName(), logical: "visitor_hash",
+			columns: []string{"visitor_hash"},
+		},
+		{
+			table: Session{}.TableName(), logical: "session_hash",
+			columns: []string{"session_hash"},
+		},
+		{
+			table: VisitorDay{}.TableName(), logical: "visitor_day",
+			columns: []string{"day", "visitor_hash", "language"},
+		},
+		{
+			table: PageVisitorDay{}.TableName(), logical: "page_visitor_day",
+			columns: []string{"day", "path_hash", "visitor_hash", "language"},
+		},
+		{
+			table: DailyMetric{}.TableName(), logical: "daily",
+			columns: []string{"day", "language"},
+		},
+		{
+			table: DailyPageMetric{}.TableName(), logical: "daily_page",
+			columns: []string{"day", "path_hash", "language"},
+		},
+		{
+			table: DailyDimensionMetric{}.TableName(), logical: "daily_dimension",
+			columns: []string{"day", "dimension_type", "dimension_value", "language"},
+		},
+	}
+}
+
+func analyticsUniqueIndexName(spec uniqueIndexSpec) string {
+	sum := sha1.Sum([]byte(spec.table + ":" + strings.Join(spec.columns, ",")))
+	return fmt.Sprintf("uidx_gpa_%s_%s", spec.logical, hex.EncodeToString(sum[:4]))
+}
+
+func quoteIdentifier(identifier string) string {
+	return `"` + strings.ReplaceAll(identifier, `"`, `""`) + `"`
 }
 
 func (r *Repository) RecordBatch(ctx context.Context, events []Event) error {

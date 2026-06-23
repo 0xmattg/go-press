@@ -2,6 +2,7 @@ package gopressanalytics
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -62,5 +63,46 @@ func TestAggregateEventsCompactsRepeatedPageViews(t *testing.T) {
 	}
 	if aggregated.sessions["session-1"].pageViews != 3 {
 		t.Fatalf("session page views = %d, want 3", aggregated.sessions["session-1"].pageViews)
+	}
+}
+
+func TestAnalyticsUniqueIndexSpecsCoverConflictTargets(t *testing.T) {
+	want := map[string]string{
+		Event{}.TableName():                "event_uuid",
+		Visitor{}.TableName():              "visitor_hash",
+		Session{}.TableName():              "session_hash",
+		VisitorDay{}.TableName():           "day,visitor_hash,language",
+		PageVisitorDay{}.TableName():       "day,path_hash,visitor_hash,language",
+		DailyMetric{}.TableName():          "day,language",
+		DailyPageMetric{}.TableName():      "day,path_hash,language",
+		DailyDimensionMetric{}.TableName(): "day,dimension_type,dimension_value,language",
+	}
+	specs := analyticsUniqueIndexSpecs()
+	if len(specs) != len(want) {
+		t.Fatalf("unique index specs = %d, want %d", len(specs), len(want))
+	}
+	for _, spec := range specs {
+		columns := strings.Join(spec.columns, ",")
+		if want[spec.table] != columns {
+			t.Fatalf("unique index spec for %s = %s, want %s", spec.table, columns, want[spec.table])
+		}
+		name := analyticsUniqueIndexName(spec)
+		if len(name) > 63 {
+			t.Fatalf("unique index name %q length = %d, want <= 63", name, len(name))
+		}
+		if !strings.HasPrefix(name, "uidx_gpa_"+spec.logical+"_") {
+			t.Fatalf("unique index name %q missing logical prefix %q", name, spec.logical)
+		}
+		delete(want, spec.table)
+	}
+	if len(want) != 0 {
+		t.Fatalf("missing unique index specs: %#v", want)
+	}
+}
+
+func TestQuoteIdentifierEscapesDoubleQuotes(t *testing.T) {
+	got := quoteIdentifier(`weird"name`)
+	if got != `"weird""name"` {
+		t.Fatalf("quoteIdentifier = %s", got)
 	}
 }
