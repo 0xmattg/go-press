@@ -166,7 +166,7 @@ gopress serve     # 装完之后任意目录都能跑
 | [架构](docs/guide/zh-CN/architecture/overview.md) | 引擎启动流程、内容模型、URL/SEO、缓存、i18n、Content Scope、Hook 系统 |
 | [后台管理](docs/guide/zh-CN/admin/overview.md) | 后台 CMS、扩展点、菜单管理 |
 | [主题开发](docs/guide/zh-CN/themes/overview.md) | 创建主题、SEO 接入规范、图片管线、媒体变体 |
-| [插件开发](docs/guide/zh-CN/plugins/overview.md) | 创建插件、Hook 列表、内置 multilang / seo-extras / code-snippets |
+| [插件开发](docs/guide/zh-CN/plugins/overview.md) | 创建插件、Hook 列表、内置 multilang / seo-extras / code-snippets / gopress-analytics |
 | [参考资料](docs/guide/zh-CN/reference/project-structure.md) | 项目结构、数据库表前缀、REST API、技术栈、路线图 |
 
 API 接口规范单独存放，由 `swag` 从代码注解自动生成：
@@ -233,6 +233,7 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 - **multilang** — WPML 风格内容翻译 + 菜单翻译 + 语言前缀路由 + 智能跳转
 - **seo-extras** — Yoast 风格 per-content SEO 覆盖（4 字段：title/description/og:image/robots）
 - **code-snippets** — WPCode 风格站点级代码注入（`<head>` 末尾、`<body>` 开头、`</body>` 前）
+- **gopress-analytics** — GoPress 官方自托管访问统计，支持 PV、UV、新访客、访问趋势、访客构成和热门页面分析
 
 详见 [docs/guide/zh-CN/plugins/overview.md](docs/guide/zh-CN/plugins/overview.md)。
 

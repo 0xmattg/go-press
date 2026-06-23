@@ -7,6 +7,13 @@ import (
 	"sync/atomic"
 )
 
+// AdminDashboardWidgets is the standard admin dashboard extension slot.
+//
+// Filters receive the accumulated template.HTML value and the dashboard
+// template root as the first argument. Extensions should append their widget
+// markup and return the same conceptual value type.
+const AdminDashboardWidgets = "admin.dashboard.widgets"
+
 // ActionFunc is a side-effect callback invoked by DoAction.
 //
 // Actions do not return values and are best suited for notifications such as

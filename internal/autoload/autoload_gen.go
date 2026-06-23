@@ -9,6 +9,7 @@ package autoload
 import (
 	// Themes
 	_ "go-press/themes/atelier-slate"
+	_ "go-press/themes/atelier-slate-gp"
 	_ "go-press/themes/axis-form"
 	_ "go-press/themes/civic-estate"
 	_ "go-press/themes/financial-news"
@@ -19,6 +20,7 @@ import (
 
 	// Plugins
 	_ "go-press/plugins/code-snippets"
+	_ "go-press/plugins/gopress-analytics"
 	_ "go-press/plugins/multilang"
 	_ "go-press/plugins/seo-extras"
 )

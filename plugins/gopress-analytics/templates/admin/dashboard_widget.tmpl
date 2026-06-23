@@ -1,0 +1,305 @@
+{{define "analytics-dashboard-widget"}}
+<section class="gpa-dashboard" id="gpaDashboard" data-endpoint="/admin/plugins/gopress-analytics/summary">
+    <div class="gpa-heading">
+        <div>
+            <h2>{{.Title}}</h2>
+            <p id="gpaPeriodLabel">30 {{.DaysLabel}}</p>
+        </div>
+        <div class="gpa-periods" role="group" aria-label="{{.DaysLabel}}">
+            <button type="button" data-days="7">7</button>
+            <button type="button" class="active" data-days="30">30</button>
+            <button type="button" data-days="90">90</button>
+        </div>
+    </div>
+
+    <div class="gpa-metrics">
+        <div class="gpa-metric"><span>{{.PVLabel}}</span><strong id="gpaPV">0</strong></div>
+        <div class="gpa-metric"><span>{{.UVLabel}}</span><strong id="gpaUV">0</strong></div>
+        <div class="gpa-metric"><span>{{.NewLabel}}</span><strong id="gpaNew">0</strong></div>
+        <div class="gpa-metric"><span>{{.SessionLabel}}</span><strong id="gpaSessions">0</strong></div>
+    </div>
+
+    <div class="gpa-panels">
+        <div class="gpa-panel gpa-panel-trend">
+            <div class="gpa-panel-head">
+                <div class="gpa-panel-title">{{.TrendLabel}}</div>
+                <div class="gpa-axis-note"><span>{{.YAxisLabel}}</span><span>{{.XAxisLabel}}</span></div>
+            </div>
+            <div class="gpa-chart" id="gpaChart" aria-label="{{.TrendLabel}}"></div>
+        </div>
+        <div class="gpa-panel gpa-panel-compact">
+            <div class="gpa-panel-title">{{.MixLabel}}</div>
+            <div class="gpa-donut-wrap">
+                <div class="gpa-donut" id="gpaDonut"><span id="gpaDonutValue">0%</span></div>
+                <div class="gpa-donut-legend">
+                    <div><i class="gpa-dot gpa-dot-primary"></i><span>{{.NewLabel}}</span><strong id="gpaNewShare">0</strong></div>
+                    <div><i class="gpa-dot gpa-dot-soft"></i><span>{{.ReturnLabel}}</span><strong id="gpaReturnShare">0</strong></div>
+                </div>
+            </div>
+        </div>
+        <div class="gpa-panel gpa-panel-top" id="gpaTopPanel">
+            <div class="gpa-panel-title">{{.TopLabel}}</div>
+            <div class="gpa-top-pages" id="gpaTopPages"></div>
+            <button class="gpa-toggle" id="gpaTopToggle" type="button" hidden></button>
+        </div>
+    </div>
+</section>
+
+<style>
+.gpa-dashboard { margin-bottom: 1.5rem; }
+.gpa-heading { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:.85rem; }
+.gpa-heading h2 { font-size:1rem; line-height:1.3; }
+.gpa-heading p { margin-top:.2rem; color:var(--text-muted); font-size:.76rem; }
+.gpa-periods { display:inline-flex; border:1px solid var(--border); border-radius:6px; overflow:hidden; background:#fff; }
+.gpa-periods button { width:42px; height:32px; border:0; border-right:1px solid var(--border); background:#fff; color:var(--text-muted); cursor:pointer; font-weight:650; }
+.gpa-periods button:last-child { border-right:0; }
+.gpa-periods button.active { background:var(--primary); color:#fff; }
+.gpa-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.75rem; margin-bottom:.75rem; }
+.gpa-metric { min-width:0; padding:1rem; background:#fff; border:1px solid var(--border); border-radius:6px; }
+.gpa-metric span { display:block; color:var(--text-muted); font-size:.76rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.gpa-metric strong { display:block; margin-top:.35rem; color:#0f172a; font-size:1.65rem; line-height:1.15; }
+.gpa-panels { display:grid; grid-template-columns:minmax(360px,1.15fr) minmax(260px,.7fr) minmax(360px,1fr); gap:.75rem; align-items:stretch; }
+.gpa-panel { min-width:0; padding:1rem; background:#fff; border:1px solid var(--border); border-radius:6px; }
+.gpa-panels > .gpa-panel { height:376px; display:flex; flex-direction:column; overflow:hidden; }
+.gpa-panels > .gpa-panel.gpa-expanded { height:auto; overflow:visible; }
+.gpa-panel-compact { padding-bottom:.85rem; }
+.gpa-panel-head { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:.7rem; }
+.gpa-panel-title { margin-bottom:.9rem; font-size:.85rem; font-weight:700; }
+.gpa-panel-head .gpa-panel-title { margin-bottom:0; }
+.gpa-axis-note { display:flex; gap:.75rem; color:var(--text-muted); font-size:.68rem; white-space:nowrap; }
+.gpa-chart { flex:1; min-height:0; display:grid; grid-template-columns:38px minmax(0,1fr); grid-template-rows:minmax(0,1fr) 24px; column-gap:.55rem; row-gap:.35rem; position:relative; overflow:hidden; }
+.gpa-y-axis { grid-column:1; grid-row:1; display:flex; flex-direction:column; justify-content:space-between; align-items:flex-end; color:#94a3b8; font-size:.68rem; padding-bottom:1px; }
+.gpa-plot { grid-column:2; grid-row:1; display:flex; align-items:flex-end; gap:4px; padding-top:8px; border-bottom:1px solid var(--border); background:linear-gradient(to top, #eef2f7 1px, transparent 1px) 0 0 / 100% 50px; }
+.gpa-x-axis { grid-column:2; grid-row:2; position:relative; color:#94a3b8; font-size:.68rem; }
+.gpa-x-axis span { position:absolute; top:0; transform:translateX(-50%); white-space:nowrap; }
+.gpa-x-axis-label { grid-column:2; grid-row:2; align-self:end; justify-self:end; color:#94a3b8; font-size:.66rem; }
+.gpa-y-axis-label { position:absolute; left:0; top:0; color:#94a3b8; font-size:.66rem; }
+.gpa-chart-day { flex:1 1 0; min-width:4px; height:100%; display:flex; align-items:flex-end; position:relative; }
+.gpa-chart-bar { width:100%; min-height:2px; background:linear-gradient(180deg,#60a5fa,#2563eb); border-radius:2px 2px 0 0; transition:height .18s ease; }
+.gpa-chart-day:hover .gpa-chart-bar { background:#1d4ed8; }
+.gpa-chart-tip { display:none; position:absolute; z-index:2; left:50%; bottom:calc(100% + 6px); transform:translateX(-50%); padding:.3rem .45rem; border-radius:4px; background:#0f172a; color:#fff; font-size:.68rem; white-space:nowrap; pointer-events:none; }
+.gpa-chart-day:hover .gpa-chart-tip { display:block; }
+.gpa-donut-wrap { flex:1; display:grid; grid-template-columns:104px minmax(0,1fr); gap:1rem; align-items:center; min-height:0; }
+.gpa-donut { width:96px; height:96px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(#2563eb 0deg,#e2e8f0 0deg); position:relative; }
+.gpa-donut::after { content:""; position:absolute; inset:22px; border-radius:50%; background:#fff; }
+.gpa-donut span { position:relative; z-index:1; color:#0f172a; font-size:1.25rem; font-weight:750; }
+.gpa-donut-legend { display:grid; gap:.55rem; min-width:0; }
+.gpa-donut-legend div { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:.45rem; align-items:center; color:#475569; font-size:.76rem; }
+.gpa-donut-legend span { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.gpa-donut-legend strong { color:#0f172a; }
+.gpa-dot { width:9px; height:9px; border-radius:50%; display:inline-block; }
+.gpa-dot-primary { background:#2563eb; }
+.gpa-dot-soft { background:#93c5fd; }
+.gpa-top-pages { flex:1; min-height:0; overflow:hidden; }
+.gpa-panel-top.gpa-expanded .gpa-top-pages { overflow:visible; }
+.gpa-top-heading { display:grid; grid-template-columns:minmax(0,1fr) 54px 54px; gap:.75rem; margin-bottom:.15rem; color:#94a3b8; font-size:.68rem; text-align:right; }
+.gpa-top-heading span:first-child { text-align:left; }
+.gpa-top-row { display:grid; grid-template-columns:minmax(0,1fr) 54px 54px; gap:.75rem; padding:.48rem 0; border-bottom:1px solid var(--border); align-items:center; }
+.gpa-top-row:last-child { border-bottom:0; }
+.gpa-top-path { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#334155; font-size:.78rem; }
+.gpa-top-count { font-size:.78rem; font-weight:700; color:#0f172a; text-align:right; }
+.gpa-top-uv { color:#64748b; }
+.gpa-top-bar { grid-column:1 / -1; height:9px; border-radius:999px; background:#edf2f7; overflow:hidden; }
+.gpa-top-bar span { display:block; height:100%; min-width:2px; border-radius:inherit; background:linear-gradient(90deg,#38bdf8,#2563eb); }
+.gpa-toggle { align-self:flex-start; margin-top:.65rem; border:0; background:transparent; color:var(--primary); font-size:.75rem; font-weight:700; cursor:pointer; padding:0; }
+.gpa-toggle:hover { text-decoration:underline; }
+.gpa-empty { display:grid; place-items:center; min-height:160px; color:var(--text-muted); font-size:.8rem; }
+.gpa-chart > .gpa-empty { grid-column:1 / -1; grid-row:1 / -1; }
+@media (max-width: 980px) {
+    .gpa-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .gpa-panels { grid-template-columns:1fr; }
+}
+@media (max-width: 520px) {
+    .gpa-heading { align-items:flex-start; }
+    .gpa-metrics { grid-template-columns:1fr 1fr; }
+}
+</style>
+
+<script>
+(function () {
+    var root = document.getElementById("gpaDashboard");
+    if (!root) return;
+    var initial = {{.InitialJSON}};
+    var emptyLabel = {{.EmptyLabel}};
+    var daysLabel = {{.DaysLabel}};
+    var pvLabel = {{.PVLabel}};
+    var uvLabel = {{.UVLabel}};
+    var newLabel = {{.NewLabel}};
+    var returnLabel = {{.ReturnLabel}};
+    var xAxisLabel = {{.XAxisLabel}};
+    var yAxisLabel = {{.YAxisLabel}};
+    var showMoreLabel = {{.ShowMoreLabel}};
+    var showLessLabel = {{.ShowLessLabel}};
+    var numberFormat = new Intl.NumberFormat();
+    var collapsedTopRows = 6;
+    var topPagesExpanded = false;
+    var latestData = initial;
+
+    function shortDate(value) {
+        var parts = String(value || "").split("-");
+        if (parts.length !== 3) return value || "";
+        return Number(parts[1]) + "/" + Number(parts[2]);
+    }
+
+    function render(data) {
+        latestData = data || {};
+        document.getElementById("gpaPV").textContent = numberFormat.format(data.page_views || 0);
+        document.getElementById("gpaUV").textContent = numberFormat.format(data.unique_visitors || 0);
+        document.getElementById("gpaNew").textContent = numberFormat.format(data.new_visitors || 0);
+        document.getElementById("gpaSessions").textContent = numberFormat.format(data.sessions || 0);
+        document.getElementById("gpaPeriodLabel").textContent = (data.days || 30) + " " + daysLabel;
+
+        var uv = data.unique_visitors || 0;
+        var newVisitors = Math.min(data.new_visitors || 0, uv);
+        var returningVisitors = Math.max(uv - newVisitors, 0);
+        var newPercent = uv ? Math.round((newVisitors / uv) * 100) : 0;
+        var donut = document.getElementById("gpaDonut");
+        donut.style.background = "conic-gradient(#2563eb 0 " + newPercent + "%, #93c5fd " + newPercent + "% 100%)";
+        document.getElementById("gpaDonutValue").textContent = newPercent + "%";
+        document.getElementById("gpaNewShare").textContent = numberFormat.format(newVisitors);
+        document.getElementById("gpaReturnShare").textContent = numberFormat.format(returningVisitors);
+        donut.title = newLabel + " " + numberFormat.format(newVisitors) + " · " + returnLabel + " " + numberFormat.format(returningVisitors);
+
+        var chart = document.getElementById("gpaChart");
+        chart.textContent = "";
+        var trend = Array.isArray(data.trend) ? data.trend : [];
+        var max = Math.max.apply(null, trend.map(function (item) { return item.page_views || 0; })) || 0;
+        if (!trend.length || max === 0) {
+            var empty = document.createElement("div");
+            empty.className = "gpa-empty";
+            empty.textContent = emptyLabel;
+            chart.appendChild(empty);
+        } else {
+            var yAxis = document.createElement("div");
+            yAxis.className = "gpa-y-axis";
+            [max, Math.ceil(max / 2), 0].forEach(function (value) {
+                var tick = document.createElement("span");
+                tick.textContent = numberFormat.format(value);
+                yAxis.appendChild(tick);
+            });
+            var plot = document.createElement("div");
+            plot.className = "gpa-plot";
+            trend.forEach(function (item) {
+                var day = document.createElement("div");
+                day.className = "gpa-chart-day";
+                var bar = document.createElement("div");
+                bar.className = "gpa-chart-bar";
+                bar.style.height = Math.max(2, ((item.page_views || 0) / max) * 100) + "%";
+                var tip = document.createElement("span");
+                tip.className = "gpa-chart-tip";
+                tip.textContent = item.day + " · " + pvLabel + " " + numberFormat.format(item.page_views || 0) + " · " + uvLabel + " " + numberFormat.format(item.unique_visitors || 0);
+                day.appendChild(bar);
+                day.appendChild(tip);
+                plot.appendChild(day);
+            });
+            var xAxis = document.createElement("div");
+            xAxis.className = "gpa-x-axis";
+            var lastIndex = Math.max(trend.length - 1, 1);
+            var step = trend.length <= 7 ? 1 : (trend.length <= 30 ? 7 : 15);
+            trend.forEach(function (item, index) {
+                if (index !== 0 && index !== trend.length - 1 && index % step !== 0) return;
+                var label = document.createElement("span");
+                label.style.left = ((index / lastIndex) * 100) + "%";
+                if (index === 0) label.style.transform = "translateX(0)";
+                if (index === trend.length - 1) label.style.transform = "translateX(-100%)";
+                label.textContent = shortDate(item.day);
+                xAxis.appendChild(label);
+            });
+            var yAxisLabelNode = document.createElement("div");
+            yAxisLabelNode.className = "gpa-y-axis-label";
+            yAxisLabelNode.textContent = yAxisLabel;
+            var xAxisLabelNode = document.createElement("div");
+            xAxisLabelNode.className = "gpa-x-axis-label";
+            xAxisLabelNode.textContent = xAxisLabel;
+            chart.appendChild(yAxisLabelNode);
+            chart.appendChild(yAxis);
+            chart.appendChild(plot);
+            chart.appendChild(xAxis);
+            chart.appendChild(xAxisLabelNode);
+        }
+
+        var pages = document.getElementById("gpaTopPages");
+        var topPanel = document.getElementById("gpaTopPanel");
+        var topToggle = document.getElementById("gpaTopToggle");
+        pages.textContent = "";
+        var rows = Array.isArray(data.top_pages) ? data.top_pages : [];
+        if (!rows.length) {
+            var pageEmpty = document.createElement("div");
+            pageEmpty.className = "gpa-empty";
+            pageEmpty.textContent = emptyLabel;
+            pages.appendChild(pageEmpty);
+            topToggle.hidden = true;
+            topPanel.classList.remove("gpa-expanded");
+        } else {
+            var maxPageViews = Math.max.apply(null, rows.map(function (item) { return item.page_views || 0; })) || 1;
+            var heading = document.createElement("div");
+            heading.className = "gpa-top-heading";
+            var pageHead = document.createElement("span");
+            pageHead.textContent = "";
+            var pvHead = document.createElement("span");
+            pvHead.textContent = "PV";
+            var uvHead = document.createElement("span");
+            uvHead.textContent = "UV";
+            heading.appendChild(pageHead);
+            heading.appendChild(pvHead);
+            heading.appendChild(uvHead);
+            pages.appendChild(heading);
+            var visibleRows = topPagesExpanded ? rows : rows.slice(0, collapsedTopRows);
+            visibleRows.forEach(function (item) {
+                var row = document.createElement("div");
+                row.className = "gpa-top-row";
+                var path = document.createElement("div");
+                path.className = "gpa-top-path";
+                path.textContent = item.title || item.path || "/";
+                path.title = item.path || "/";
+                var count = document.createElement("div");
+                count.className = "gpa-top-count";
+                count.textContent = numberFormat.format(item.page_views || 0);
+                var visitors = document.createElement("div");
+                visitors.className = "gpa-top-count gpa-top-uv";
+                visitors.textContent = numberFormat.format(item.unique_visitors || 0);
+                row.appendChild(path);
+                row.appendChild(count);
+                row.appendChild(visitors);
+                var bar = document.createElement("div");
+                bar.className = "gpa-top-bar";
+                var barValue = document.createElement("span");
+                barValue.style.width = Math.max(2, ((item.page_views || 0) / maxPageViews) * 100) + "%";
+                bar.appendChild(barValue);
+                row.appendChild(bar);
+                pages.appendChild(row);
+            });
+            topToggle.hidden = rows.length <= collapsedTopRows;
+            topToggle.textContent = topPagesExpanded ? showLessLabel : showMoreLabel + " (" + (rows.length - collapsedTopRows) + ")";
+            topPanel.classList.toggle("gpa-expanded", topPagesExpanded);
+        }
+    }
+
+    document.getElementById("gpaTopToggle").addEventListener("click", function () {
+        topPagesExpanded = !topPagesExpanded;
+        render(latestData);
+    });
+
+    root.querySelectorAll("[data-days]").forEach(function (button) {
+        button.addEventListener("click", function () {
+            var days = button.getAttribute("data-days");
+            root.querySelectorAll("[data-days]").forEach(function (item) { item.classList.remove("active"); });
+            button.classList.add("active");
+            fetch(root.getAttribute("data-endpoint") + "?days=" + encodeURIComponent(days), {
+                credentials: "same-origin",
+                headers: { "Accept": "application/json" }
+            }).then(function (response) {
+                if (!response.ok) throw new Error("request failed");
+                return response.json();
+            }).then(function (data) {
+                topPagesExpanded = false;
+                render(data);
+            }).catch(function () {
+                button.classList.remove("active");
+            });
+        });
+    });
+    render(initial);
+}());
+</script>
+{{end}}

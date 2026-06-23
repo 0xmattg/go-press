@@ -98,3 +98,7 @@ The plugin output must match the semantic location. For example, `header.nav.aft
 - Leave stored data in place unless the user explicitly uninstalls the plugin.
 - Clear relevant cache paths after activation state changes.
 
+Core rebuilds the Gin router after plugin activation or deactivation, so active
+`middleware.early` and `routes.register` hooks are applied immediately. Plugins
+with background workers should still keep an atomic runtime guard for requests
+already executing on the previous router.

@@ -37,6 +37,7 @@
 * [内置插件：多语言 (WPML-like)](plugins/multilang.md)
 * [内置插件：SEO Extras (Yoast-like)](plugins/seo-extras.md)
 * [内置插件：Code Snippets (WPCode-like)](plugins/code-snippets.md)
+* [内置插件：GoPress Analytics](plugins/gopress-analytics.md)
 
 ## 参考资料
 
