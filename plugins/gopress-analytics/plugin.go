@@ -28,12 +28,15 @@ const (
 
 	optEnabled       = "plugin_gopress-analytics_enabled"
 	optRetentionDays = "plugin_gopress-analytics_retention_days"
+	optDashboardDays = "plugin_gopress-analytics_dashboard_days"
 )
 
 type Plugin struct {
 	engine    *core.Engine
 	repo      *Repository
 	summary   SummaryStore
+	dataQuery DataQueryStore
+	geoIP     *geoIPDatabase
 	collector *collector
 	widget    *template.Template
 	location  *time.Location
@@ -74,6 +77,8 @@ func (p *Plugin) SettingsData() map[string]interface{} {
 	return map[string]interface{}{
 		"AnalyticsEnabled": p.collectionEnabled(),
 		"RetentionDays":    p.retentionDays(),
+		"DashboardDays":    p.dashboardDays(),
+		"GeoIP":            p.geoIPStatus(),
 	}
 }
 
@@ -99,8 +104,13 @@ func (p *Plugin) Activate(app plugin.App) {
 	p.engine = e
 	p.repo = NewRepository(e.DB)
 	p.summary = p.repo
+	p.dataQuery = p.repo
 	p.location = siteLocation(e)
 	p.hashKey = analyticsHashKey(e)
+	p.geoIP = newGeoIPDatabase(geoIPFileRelPath)
+	if err := p.geoIP.Load(); err != nil {
+		logger.Info("gopress-analytics: GeoIP database not loaded", "path", geoIPFileRelPath, "error", err)
+	}
 	retentionDays, _ := strconv.Atoi(e.Options.GetDefault(optRetentionDays, "90"))
 	if retentionDays != 30 && retentionDays != 60 && retentionDays != 90 && retentionDays != 180 {
 		retentionDays = 90
@@ -116,7 +126,7 @@ func (p *Plugin) Activate(app plugin.App) {
 	}
 	for _, table := range []string{
 		"events", "visitors", "sessions", "visitor_days", "page_visitor_days",
-		"daily", "daily_pages", "daily_dimensions",
+		"daily", "daily_pages", "daily_dimensions", "daily_dimension_visitors",
 	} {
 		core.RegisterPluginTable(storageSlug, table)
 	}
@@ -158,6 +168,16 @@ func (p *Plugin) Activate(app plugin.App) {
 			"/admin/plugins/gopress-analytics/summary",
 			admin.RequirePermission(e.Auth, e.RBAC, "analytics", "read"),
 			p.handleSummary,
+		)
+		router.GET(
+			"/admin/plugins/gopress-analytics/data-query",
+			admin.RequirePermission(e.Auth, e.RBAC, "analytics", "read"),
+			p.handleDataQuery,
+		)
+		router.POST(
+			"/admin/plugins/gopress-analytics/geoip/update",
+			admin.RequirePermission(e.Auth, e.RBAC, "plugin", "update"),
+			p.handleGeoIPUpdate,
 		)
 	}, 20))
 
@@ -255,6 +275,26 @@ func (p *Plugin) retentionDays() int {
 	default:
 		return 90
 	}
+}
+
+func (p *Plugin) dashboardDays() int {
+	if p.engine == nil || p.engine.Options == nil {
+		return 30
+	}
+	days, _ := strconv.Atoi(p.engine.Options.All()[optDashboardDays])
+	switch days {
+	case 7, 30, 90:
+		return days
+	default:
+		return 30
+	}
+}
+
+func (p *Plugin) geoIPStatus() GeoIPStatus {
+	if p.geoIP != nil {
+		return p.geoIP.Status()
+	}
+	return GeoIPStatus{Path: geoIPFileRelPath}
 }
 
 func normalizeBoolOption(value string) string {

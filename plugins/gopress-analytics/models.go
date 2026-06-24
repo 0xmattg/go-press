@@ -56,6 +56,7 @@ type Visitor struct {
 	FirstMedium   string    `gorm:"size:120"`
 	FirstCampaign string    `gorm:"size:255"`
 	FirstLanding  string    `gorm:"size:1024"`
+	FirstCountry  string    `gorm:"size:8"`
 	VisitCount    int64     `gorm:"not null;default:0"`
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
@@ -179,4 +180,20 @@ type DailyDimensionMetric struct {
 
 func (DailyDimensionMetric) TableName() string {
 	return dbprefix.PluginTable(storageSlug, "daily_dimensions")
+}
+
+// DailyDimensionVisitor keeps exact unique-visitor counts for aggregate
+// dimensions without repeatedly scanning the raw events table.
+type DailyDimensionVisitor struct {
+	ID             uint      `gorm:"primaryKey"`
+	Day            time.Time `gorm:"type:date;not null;uniqueIndex:uidx_gpa_daily_dimension_visitor"`
+	DimensionType  string    `gorm:"size:40;not null;uniqueIndex:uidx_gpa_daily_dimension_visitor"`
+	DimensionValue string    `gorm:"size:255;not null;uniqueIndex:uidx_gpa_daily_dimension_visitor"`
+	VisitorHash    string    `gorm:"size:64;not null;uniqueIndex:uidx_gpa_daily_dimension_visitor"`
+	Language       string    `gorm:"size:16;not null;default:und;uniqueIndex:uidx_gpa_daily_dimension_visitor"`
+	CreatedAt      time.Time
+}
+
+func (DailyDimensionVisitor) TableName() string {
+	return dbprefix.PluginTable(storageSlug, "daily_dimension_visitors")
 }

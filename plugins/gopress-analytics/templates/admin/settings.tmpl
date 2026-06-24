@@ -6,7 +6,14 @@
     </div>
 </div>
 
-<div class="card settings-shell">
+<div class="gpa-settings-tabs" role="tablist">
+    <button type="button" class="gpa-settings-tab active" data-tab="basic">{{X $ "plugin.analytics.tab.basic" "基础设置"}}</button>
+    {{if can .CurrentRole "analytics" "read"}}
+    <button type="button" class="gpa-settings-tab" data-tab="query">{{X $ "plugin.analytics.tab.query" "数据查询"}}</button>
+    {{end}}
+</div>
+
+<div class="card settings-shell gpa-settings-panel active" id="gpa-tab-basic">
     <form method="POST" action="/admin/plugins/{{.PluginSlug}}/settings" class="settings-form">
         <section class="settings-section">
             <h3 class="settings-section-title">{{X $ "plugin.analytics.collection" "数据采集"}}</h3>
@@ -29,6 +36,15 @@
                     </select>
                     <small>{{X $ "plugin.analytics.retention_help" "到期后自动删除原始事件、会话、明文 IP 和 User-Agent；每日聚合长期保留。"}}</small>
                 </div>
+                <div class="form-group settings-item">
+                    <label for="dashboardDays">{{X $ "plugin.analytics.dashboard_days" "Dashboard 默认时间区间"}}</label>
+                    <select id="dashboardDays" name="plugin_gopress-analytics_dashboard_days">
+                        <option value="7" {{if eq .DashboardDays 7}}selected{{end}}>7 {{X $ "plugin.analytics.days" "天"}}</option>
+                        <option value="30" {{if eq .DashboardDays 30}}selected{{end}}>30 {{X $ "plugin.analytics.days" "天"}}</option>
+                        <option value="90" {{if eq .DashboardDays 90}}selected{{end}}>90 {{X $ "plugin.analytics.days" "天"}}</option>
+                    </select>
+                    <small>{{X $ "plugin.analytics.dashboard_days_help" "控制后台控制面板中访问统计模块首次打开时默认选中的时间范围。"}}</small>
+                </div>
             </div>
         </section>
 
@@ -39,9 +55,328 @@
             </p>
         </section>
 
+        <section class="settings-section">
+            <h3 class="settings-section-title">{{X $ "plugin.analytics.geoip" "GeoIP 归属库"}}</h3>
+            <div class="gpa-geoip-card">
+                <div class="gpa-geoip-meta">
+                    <div><span>{{X $ "plugin.analytics.geoip.status" "状态"}}</span><strong id="gpaGeoIPStatus">{{if .GeoIP.Available}}{{X $ "plugin.analytics.geoip.available" "可用"}}{{else}}{{X $ "plugin.analytics.geoip.missing" "未加载"}}{{end}}</strong></div>
+                    <div><span>{{X $ "plugin.analytics.geoip.records" "记录数"}}</span><strong id="gpaGeoIPRecords">{{.GeoIP.Records}}</strong></div>
+                    <div><span>{{X $ "plugin.analytics.geoip.updated" "文件时间"}}</span><strong id="gpaGeoIPUpdated">{{if .GeoIP.UpdatedAt}}{{.GeoIP.UpdatedAt}}{{else}}-{{end}}</strong></div>
+                </div>
+                <p class="gpa-geoip-path">{{X $ "plugin.analytics.geoip.path" "文件路径"}}: <code>{{.GeoIP.Path}}</code></p>
+                <p class="gpa-geoip-help">{{X $ "plugin.analytics.geoip.help" "使用本地 DB-IP Lite 国家库解析 IP 归属国；请求链路只读取内存索引，更新文件需要服务器可以访问下载源，并请按 DB-IP Lite 授权要求处理署名与合规。"}}</p>
+                {{if can .CurrentRole "plugin" "update"}}
+                <button type="button" class="btn btn-secondary" id="gpaGeoIPUpdate">{{X $ "plugin.analytics.geoip.update" "检查更新 GeoIP 文件"}}</button>
+                {{end}}
+                <span class="gpa-geoip-message" id="gpaGeoIPMessage">{{.GeoIP.Error}}</span>
+            </div>
+        </section>
+
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">{{X $ "plugin.settings.save" "保存设置"}}</button>
         </div>
     </form>
 </div>
+
+{{if can .CurrentRole "analytics" "read"}}
+<div class="card gpa-settings-panel" id="gpa-tab-query">
+    <div class="gpa-query-toolbar">
+        <div class="form-group">
+            <label for="gpaQueryTable">{{X $ "plugin.analytics.query.table" "查询表"}}</label>
+            <select id="gpaQueryTable">
+                <option value="events">{{X $ "plugin.analytics.query.events" "原始事件 events（IP / User-Agent）"}}</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="gpaQueryLimit">{{X $ "plugin.analytics.query.limit" "每页数量"}}</label>
+            <select id="gpaQueryLimit">
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+        <button type="button" class="btn btn-primary" id="gpaQueryReload">{{X $ "plugin.analytics.query.reload" "加载数据"}}</button>
+    </div>
+
+    <div class="gpa-query-note">
+        {{X $ "plugin.analytics.query.help" "数据查询接口默认分页读取，单页最多 100 条；当前仅开放 events 表中的 IP、User-Agent 和基础请求字段，后续可扩展更多表。" }}
+    </div>
+
+    <div class="gpa-query-table-wrap">
+        <table class="data-table gpa-query-table">
+            <thead>
+                <tr>
+                    <th>{{X $ "plugin.analytics.query.time" "时间"}}</th>
+                    <th>{{X $ "plugin.analytics.query.path" "路径"}}</th>
+                    <th>IP</th>
+                    <th>{{X $ "plugin.analytics.query.country" "国家"}}</th>
+                    <th>User-Agent</th>
+                    <th>{{X $ "plugin.analytics.query.device" "设备"}}</th>
+                    <th>{{X $ "plugin.analytics.query.source" "来源"}}</th>
+                    <th>{{X $ "plugin.analytics.query.status" "状态"}}</th>
+                </tr>
+            </thead>
+            <tbody id="gpaQueryRows">
+                <tr><td colspan="8" class="empty-msg">{{X $ "plugin.analytics.query.initial" "点击加载数据。"}}</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="gpa-query-pager">
+        <button type="button" class="btn btn-secondary" id="gpaQueryPrev">{{X $ "plugin.analytics.query.prev" "上一页"}}</button>
+        <span id="gpaQueryPage">1</span>
+        <button type="button" class="btn btn-secondary" id="gpaQueryNext">{{X $ "plugin.analytics.query.next" "下一页"}}</button>
+    </div>
+</div>
+{{end}}
+
+<style>
+.gpa-settings-tabs {
+    display: flex;
+    gap: .5rem;
+    margin: 0 0 .75rem;
+    border-bottom: 1px solid var(--border);
+}
+.gpa-settings-tab {
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: .95rem;
+    font-weight: 650;
+    padding: .65rem 1rem;
+}
+.gpa-settings-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+.gpa-settings-panel { display: none; }
+.gpa-settings-panel.active { display: block; }
+.gpa-geoip-card {
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #f8fafc;
+}
+.gpa-geoip-meta {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .75rem;
+    margin-bottom: .75rem;
+}
+.gpa-geoip-meta div {
+    padding: .75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+}
+.gpa-geoip-meta span {
+    display: block;
+    color: var(--text-muted);
+    font-size: .75rem;
+}
+.gpa-geoip-meta strong {
+    display: block;
+    margin-top: .25rem;
+    color: #0f172a;
+}
+.gpa-geoip-path,
+.gpa-geoip-help {
+    margin: .5rem 0;
+    color: var(--text-muted);
+    font-size: .85rem;
+    line-height: 1.6;
+}
+.gpa-geoip-message {
+    margin-left: .75rem;
+    color: var(--text-muted);
+    font-size: .85rem;
+}
+.gpa-query-toolbar {
+    display: grid;
+    grid-template-columns: minmax(260px, 1fr) 160px auto;
+    gap: 1rem;
+    align-items: end;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+.gpa-query-toolbar .form-group { margin-bottom: 0; }
+.gpa-query-toolbar select,
+.gpa-query-toolbar .btn {
+    height: 40px;
+}
+.gpa-query-toolbar .btn {
+    align-self: end;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+.gpa-query-note {
+    margin: 1rem 1.25rem 0;
+    color: var(--text-muted);
+    font-size: .85rem;
+    line-height: 1.6;
+}
+.gpa-query-table-wrap {
+    margin: 1rem 1.25rem 0;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+.gpa-query-table { min-width: 1100px; }
+.gpa-query-table th,
+.gpa-query-table td {
+    vertical-align: top;
+}
+.gpa-query-path,
+.gpa-query-ua {
+    max-width: 360px;
+    overflow-wrap: anywhere;
+}
+.gpa-query-muted {
+    color: var(--text-muted);
+    font-size: .75rem;
+}
+.gpa-query-pager {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: 1rem 1.25rem;
+}
+@media (max-width: 900px) {
+    .gpa-query-toolbar { grid-template-columns: 1fr; }
+}
+</style>
+
+<script>
+(function () {
+    var queryToggle = document.querySelector('.gpa-settings-tab[data-tab="query"]');
+    var endpoint = "/admin/plugins/{{.PluginSlug}}/data-query";
+    var geoIPEndpoint = "/admin/plugins/{{.PluginSlug}}/geoip/update";
+    var page = 1;
+    var hasMore = false;
+    var loaded = false;
+    var tabKey = "gpaSettingsTab";
+
+    function text(value) {
+        return value == null || value === "" ? "-" : String(value);
+    }
+    function cell(value, className) {
+        var td = document.createElement("td");
+        if (className) td.className = className;
+        td.textContent = text(value);
+        return td;
+    }
+    function loadRows() {
+        var table = document.getElementById("gpaQueryTable").value;
+        var limit = document.getElementById("gpaQueryLimit").value;
+        var body = document.getElementById("gpaQueryRows");
+        body.innerHTML = '<tr><td colspan="8" class="empty-msg">{{X $ "plugin.analytics.query.loading" "正在加载..."}}</td></tr>';
+        fetch(endpoint + "?table=" + encodeURIComponent(table) + "&page=" + encodeURIComponent(page) + "&limit=" + encodeURIComponent(limit), {
+            credentials: "same-origin",
+            headers: { "Accept": "application/json" }
+        }).then(function (response) {
+            if (!response.ok) throw new Error("request failed");
+            return response.json();
+        }).then(function (data) {
+            loaded = true;
+            hasMore = !!data.has_more;
+            body.textContent = "";
+            var rows = Array.isArray(data.rows) ? data.rows : [];
+            if (!rows.length) {
+                body.innerHTML = '<tr><td colspan="8" class="empty-msg">{{X $ "plugin.analytics.query.empty" "暂无数据。"}}</td></tr>';
+            } else {
+                rows.forEach(function (row) {
+                    var tr = document.createElement("tr");
+                    var when = row.occurred_at ? new Date(row.occurred_at).toLocaleString() : "-";
+                    tr.appendChild(cell(when));
+                    tr.appendChild(cell(row.path, "gpa-query-path"));
+                    tr.appendChild(cell(row.ip_address));
+                    tr.appendChild(cell(row.country));
+                    tr.appendChild(cell(row.user_agent, "gpa-query-ua"));
+                    tr.appendChild(cell([row.device_type, row.platform, row.browser, row.os].filter(Boolean).join(" / ")));
+                    tr.appendChild(cell([row.source, row.medium, row.referrer_host].filter(Boolean).join(" / ")));
+                    tr.appendChild(cell(row.status_code));
+                    body.appendChild(tr);
+                });
+            }
+            document.getElementById("gpaQueryPage").textContent = String(page);
+            document.getElementById("gpaQueryPrev").disabled = page <= 1;
+            document.getElementById("gpaQueryNext").disabled = !hasMore;
+        }).catch(function () {
+            body.innerHTML = '<tr><td colspan="8" class="empty-msg">{{X $ "plugin.analytics.query.error" "数据加载失败。"}}</td></tr>';
+        });
+    }
+    function activateTab(name) {
+        document.querySelectorAll(".gpa-settings-tab").forEach(function (tab) {
+            tab.classList.toggle("active", tab.dataset.tab === name);
+        });
+        document.querySelectorAll(".gpa-settings-panel").forEach(function (panel) {
+            panel.classList.toggle("active", panel.id === "gpa-tab-" + name);
+        });
+        try { sessionStorage.setItem(tabKey, name); } catch (e) {}
+        if (name === "query" && !loaded) loadRows();
+    }
+    document.querySelectorAll(".gpa-settings-tab").forEach(function (tab) {
+        tab.addEventListener("click", function () { activateTab(tab.dataset.tab); });
+    });
+    if (queryToggle) {
+        document.getElementById("gpaQueryReload").addEventListener("click", function () {
+            page = 1;
+            loadRows();
+        });
+        document.getElementById("gpaQueryLimit").addEventListener("change", function () {
+            page = 1;
+            if (loaded) loadRows();
+        });
+        document.getElementById("gpaQueryPrev").addEventListener("click", function () {
+            if (page > 1) {
+                page--;
+                loadRows();
+            }
+        });
+        document.getElementById("gpaQueryNext").addEventListener("click", function () {
+            if (hasMore) {
+                page++;
+                loadRows();
+            }
+        });
+        document.getElementById("gpaQueryPrev").disabled = true;
+        document.getElementById("gpaQueryNext").disabled = true;
+        try {
+            var saved = sessionStorage.getItem(tabKey);
+            if (saved === "query") activateTab("query");
+        } catch (e) {}
+    }
+    var geoIPButton = document.getElementById("gpaGeoIPUpdate");
+    if (geoIPButton) {
+        geoIPButton.addEventListener("click", function () {
+            var message = document.getElementById("gpaGeoIPMessage");
+            geoIPButton.disabled = true;
+            message.textContent = '{{X $ "plugin.analytics.geoip.updating" "正在更新..."}}';
+            fetch(geoIPEndpoint, {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Accept": "application/json" }
+            }).then(function (response) {
+                return response.json().then(function (data) {
+                    if (!response.ok) throw new Error(data.error || "request failed");
+                    return data;
+                });
+            }).then(function (data) {
+                document.getElementById("gpaGeoIPStatus").textContent = data.available ? '{{X $ "plugin.analytics.geoip.available" "可用"}}' : '{{X $ "plugin.analytics.geoip.missing" "未加载"}}';
+                document.getElementById("gpaGeoIPRecords").textContent = String(data.records || 0);
+                document.getElementById("gpaGeoIPUpdated").textContent = data.updated_at || "-";
+                message.textContent = '{{X $ "plugin.analytics.geoip.updated_ok" "GeoIP 文件已更新。" }}';
+            }).catch(function (error) {
+                message.textContent = error.message || '{{X $ "plugin.analytics.geoip.update_failed" "GeoIP 更新失败。" }}';
+            }).finally(function () {
+                geoIPButton.disabled = false;
+            });
+        });
+    }
+}());
+</script>
 {{end}}

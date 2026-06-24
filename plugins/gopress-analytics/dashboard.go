@@ -23,6 +23,7 @@ type widgetView struct {
 	TrendLabel    string
 	TopLabel      string
 	MixLabel      string
+	CountryLabel  string
 	ReturnLabel   string
 	XAxisLabel    string
 	YAxisLabel    string
@@ -31,6 +32,7 @@ type widgetView struct {
 	PageLabel     string
 	EmptyLabel    string
 	DaysLabel     string
+	DefaultDays   int
 	InitialJSON   template.JS
 }
 
@@ -53,6 +55,68 @@ func (p *Plugin) handleSummary(c *gin.Context) {
 	c.JSON(http.StatusOK, summary)
 }
 
+func (p *Plugin) handleDataQuery(c *gin.Context) {
+	if !p.active.Load() || p.dataQuery == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	table := c.DefaultQuery("table", "events")
+	page := intQuery(c, "page", 1, 1, 10000)
+	limit := intQuery(c, "limit", 50, 1, 100)
+
+	switch table {
+	case "events":
+		rows, hasMore, err := p.dataQuery.RecentEventRows(c.Request.Context(), page, limit)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "analytics data query unavailable"})
+			return
+		}
+		c.Header("Cache-Control", "private, no-store")
+		c.JSON(http.StatusOK, gin.H{
+			"table":    table,
+			"page":     page,
+			"limit":    limit,
+			"has_more": hasMore,
+			"rows":     rows,
+		})
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "unsupported analytics table"})
+	}
+}
+
+func (p *Plugin) handleGeoIPUpdate(c *gin.Context) {
+	if !p.active.Load() || p.geoIP == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Minute)
+	defer cancel()
+	status, err := p.geoIP.Update(ctx)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"error":  err.Error(),
+			"status": status,
+		})
+		return
+	}
+	c.Header("Cache-Control", "private, no-store")
+	c.JSON(http.StatusOK, status)
+}
+
+func intQuery(c *gin.Context, key string, fallback, minValue, maxValue int) int {
+	value, err := strconv.Atoi(c.DefaultQuery(key, strconv.Itoa(fallback)))
+	if err != nil {
+		return fallback
+	}
+	if value < minValue {
+		return minValue
+	}
+	if value > maxValue {
+		return maxValue
+	}
+	return value
+}
+
 func (p *Plugin) renderDashboardWidget(value interface{}, args ...interface{}) interface{} {
 	existing := htmlValue(value)
 	if !p.active.Load() || p.summary == nil || p.widget == nil || p.engine == nil || len(args) == 0 {
@@ -73,7 +137,8 @@ func (p *Plugin) renderDashboardWidget(value interface{}, args ...interface{}) i
 	lang, _ := root["AdminLanguage"].(string)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	summary, err := p.summary.Summary(ctx, 30, p.location)
+	defaultDays := p.dashboardDays()
+	summary, err := p.summary.Summary(ctx, defaultDays, p.location)
 	if err != nil {
 		return existing
 	}
@@ -90,6 +155,7 @@ func (p *Plugin) renderDashboardWidget(value interface{}, args ...interface{}) i
 		TrendLabel:    analyticsText(lang, "analytics.trend"),
 		TopLabel:      analyticsText(lang, "analytics.top_pages"),
 		MixLabel:      analyticsText(lang, "analytics.visitor_mix"),
+		CountryLabel:  analyticsText(lang, "analytics.country_distribution"),
 		ReturnLabel:   analyticsText(lang, "analytics.returning_visitors"),
 		XAxisLabel:    analyticsText(lang, "analytics.x_axis"),
 		YAxisLabel:    analyticsText(lang, "analytics.y_axis"),
@@ -98,6 +164,7 @@ func (p *Plugin) renderDashboardWidget(value interface{}, args ...interface{}) i
 		PageLabel:     analyticsText(lang, "analytics.page"),
 		EmptyLabel:    analyticsText(lang, "analytics.empty"),
 		DaysLabel:     analyticsText(lang, "analytics.days"),
+		DefaultDays:   defaultDays,
 		InitialJSON:   template.JS(payload),
 	}
 	var out bytes.Buffer
@@ -120,40 +187,42 @@ func htmlValue(value interface{}) template.HTML {
 
 var analyticsMessages = map[string]map[string]string{
 	"en": {
-		"analytics.title":              "Website Analytics",
-		"analytics.pv":                 "Page views",
-		"analytics.uv":                 "Unique visitors",
-		"analytics.new_visitors":       "New visitors",
-		"analytics.sessions":           "Sessions",
-		"analytics.trend":              "Traffic trend",
-		"analytics.top_pages":          "Top pages",
-		"analytics.visitor_mix":        "Visitor mix",
-		"analytics.returning_visitors": "Returning visitors",
-		"analytics.x_axis":             "Date",
-		"analytics.y_axis":             "Page views",
-		"analytics.show_more":          "Show more",
-		"analytics.show_less":          "Show less",
-		"analytics.page":               "Page",
-		"analytics.empty":              "No analytics data yet.",
-		"analytics.days":               "days",
+		"analytics.title":                "Website Analytics",
+		"analytics.pv":                   "Page views",
+		"analytics.uv":                   "Unique visitors",
+		"analytics.new_visitors":         "New visitors",
+		"analytics.sessions":             "Sessions",
+		"analytics.trend":                "Traffic trend",
+		"analytics.top_pages":            "Top pages",
+		"analytics.visitor_mix":          "Visitor mix",
+		"analytics.country_distribution": "IP country distribution",
+		"analytics.returning_visitors":   "Returning visitors",
+		"analytics.x_axis":               "Date",
+		"analytics.y_axis":               "Page views",
+		"analytics.show_more":            "Show more",
+		"analytics.show_less":            "Show less",
+		"analytics.page":                 "Page",
+		"analytics.empty":                "No analytics data yet.",
+		"analytics.days":                 "days",
 	},
 	"zh-CN": {
-		"analytics.title":              "网站访问统计",
-		"analytics.pv":                 "浏览量 PV",
-		"analytics.uv":                 "访客数 UV",
-		"analytics.new_visitors":       "新访客",
-		"analytics.sessions":           "会话数",
-		"analytics.trend":              "访问趋势",
-		"analytics.top_pages":          "热门页面",
-		"analytics.visitor_mix":        "访客构成",
-		"analytics.returning_visitors": "回访访客",
-		"analytics.x_axis":             "日期",
-		"analytics.y_axis":             "浏览量 PV",
-		"analytics.show_more":          "展开更多",
-		"analytics.show_less":          "收起",
-		"analytics.page":               "页面",
-		"analytics.empty":              "暂无访问统计数据。",
-		"analytics.days":               "天",
+		"analytics.title":                "网站访问统计",
+		"analytics.pv":                   "浏览量 PV",
+		"analytics.uv":                   "访客数 UV",
+		"analytics.new_visitors":         "新访客",
+		"analytics.sessions":             "会话数",
+		"analytics.trend":                "访问趋势",
+		"analytics.top_pages":            "热门页面",
+		"analytics.visitor_mix":          "访客构成",
+		"analytics.country_distribution": "IP 归属分布",
+		"analytics.returning_visitors":   "回访访客",
+		"analytics.x_axis":               "日期",
+		"analytics.y_axis":               "浏览量 PV",
+		"analytics.show_more":            "展开更多",
+		"analytics.show_less":            "收起",
+		"analytics.page":                 "页面",
+		"analytics.empty":                "暂无访问统计数据。",
+		"analytics.days":                 "天",
 	},
 }
 
