@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/netip"
 	"strings"
 	"testing"
 	"time"
@@ -30,6 +31,11 @@ func TestAnalyticsMiddlewareCapturesIPAndDeviceData(t *testing.T) {
 	p.location = time.UTC
 	p.active.Store(true)
 	p.collectionOverride = func() bool { return true }
+	p.geoIP = &geoIPDatabase{ranges: []geoIPRange{{
+		start:   netip.MustParseAddr("203.0.113.0"),
+		end:     netip.MustParseAddr("203.0.113.255"),
+		country: "US",
+	}}}
 	p.collector = newCollector(writer, 100)
 
 	router := gin.New()
@@ -59,6 +65,9 @@ func TestAnalyticsMiddlewareCapturesIPAndDeviceData(t *testing.T) {
 	event := batch[0]
 	if event.IPAddress != "203.0.113.8" {
 		t.Fatalf("ip address = %q", event.IPAddress)
+	}
+	if event.Country != "US" {
+		t.Fatalf("country = %q, want US", event.Country)
 	}
 	if event.IPHash == "" || event.IPHash == event.IPAddress {
 		t.Fatalf("ip hash was not generated safely: %q", event.IPHash)

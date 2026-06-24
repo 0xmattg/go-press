@@ -3,12 +3,12 @@
     <div class="gpa-heading">
         <div>
             <h2>{{.Title}}</h2>
-            <p id="gpaPeriodLabel">30 {{.DaysLabel}}</p>
+            <p id="gpaPeriodLabel">{{.DefaultDays}} {{.DaysLabel}}</p>
         </div>
         <div class="gpa-periods" role="group" aria-label="{{.DaysLabel}}">
-            <button type="button" data-days="7">7</button>
-            <button type="button" class="active" data-days="30">30</button>
-            <button type="button" data-days="90">90</button>
+            <button type="button" {{if eq .DefaultDays 7}}class="active"{{end}} data-days="7">7</button>
+            <button type="button" {{if eq .DefaultDays 30}}class="active"{{end}} data-days="30">30</button>
+            <button type="button" {{if eq .DefaultDays 90}}class="active"{{end}} data-days="90">90</button>
         </div>
     </div>
 
@@ -28,12 +28,21 @@
             <div class="gpa-chart" id="gpaChart" aria-label="{{.TrendLabel}}"></div>
         </div>
         <div class="gpa-panel gpa-panel-compact">
-            <div class="gpa-panel-title">{{.MixLabel}}</div>
-            <div class="gpa-donut-wrap">
-                <div class="gpa-donut" id="gpaDonut"><span id="gpaDonutValue">0%</span></div>
-                <div class="gpa-donut-legend">
-                    <div><i class="gpa-dot gpa-dot-primary"></i><span>{{.NewLabel}}</span><strong id="gpaNewShare">0</strong></div>
-                    <div><i class="gpa-dot gpa-dot-soft"></i><span>{{.ReturnLabel}}</span><strong id="gpaReturnShare">0</strong></div>
+            <div class="gpa-donut-card">
+                <div class="gpa-panel-title">{{.MixLabel}}</div>
+                <div class="gpa-donut-wrap">
+                    <div class="gpa-donut" id="gpaDonut"><span id="gpaDonutValue">0%</span></div>
+                    <div class="gpa-donut-legend">
+                        <div><i class="gpa-dot gpa-dot-primary"></i><span>{{.NewLabel}}</span><strong id="gpaNewShare">0</strong></div>
+                        <div><i class="gpa-dot gpa-dot-soft"></i><span>{{.ReturnLabel}}</span><strong id="gpaReturnShare">0</strong></div>
+                    </div>
+                </div>
+            </div>
+            <div class="gpa-donut-card">
+                <div class="gpa-panel-title">{{.CountryLabel}}</div>
+                <div class="gpa-donut-wrap">
+                    <div class="gpa-donut" id="gpaCountryDonut"><span id="gpaCountryValue">0</span></div>
+                    <div class="gpa-donut-legend" id="gpaCountryLegend"></div>
                 </div>
             </div>
         </div>
@@ -62,7 +71,7 @@
 .gpa-panel { min-width:0; padding:1rem; background:#fff; border:1px solid var(--border); border-radius:6px; }
 .gpa-panels > .gpa-panel { height:376px; display:flex; flex-direction:column; overflow:hidden; }
 .gpa-panels > .gpa-panel.gpa-expanded { height:auto; overflow:visible; }
-.gpa-panel-compact { padding-bottom:.85rem; }
+.gpa-panel-compact { padding:.85rem; gap:.75rem; }
 .gpa-panel-head { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:.7rem; }
 .gpa-panel-title { margin-bottom:.9rem; font-size:.85rem; font-weight:700; }
 .gpa-panel-head .gpa-panel-title { margin-bottom:0; }
@@ -79,10 +88,13 @@
 .gpa-chart-day:hover .gpa-chart-bar { background:#1d4ed8; }
 .gpa-chart-tip { display:none; position:absolute; z-index:2; left:50%; bottom:calc(100% + 6px); transform:translateX(-50%); padding:.3rem .45rem; border-radius:4px; background:#0f172a; color:#fff; font-size:.68rem; white-space:nowrap; pointer-events:none; }
 .gpa-chart-day:hover .gpa-chart-tip { display:block; }
-.gpa-donut-wrap { flex:1; display:grid; grid-template-columns:104px minmax(0,1fr); gap:1rem; align-items:center; min-height:0; }
-.gpa-donut { width:96px; height:96px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(#2563eb 0deg,#e2e8f0 0deg); position:relative; }
-.gpa-donut::after { content:""; position:absolute; inset:22px; border-radius:50%; background:#fff; }
-.gpa-donut span { position:relative; z-index:1; color:#0f172a; font-size:1.25rem; font-weight:750; }
+.gpa-donut-card { flex:1 1 0; min-height:0; display:flex; flex-direction:column; border-bottom:1px solid var(--border); padding-bottom:.75rem; }
+.gpa-donut-card:last-child { border-bottom:0; padding-bottom:0; }
+.gpa-donut-card .gpa-panel-title { margin-bottom:.4rem; }
+.gpa-donut-wrap { flex:1; display:grid; grid-template-columns:86px minmax(0,1fr); gap:.85rem; align-items:center; min-height:0; }
+.gpa-donut { width:78px; height:78px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(#2563eb 0deg,#e2e8f0 0deg); position:relative; }
+.gpa-donut::after { content:""; position:absolute; inset:18px; border-radius:50%; background:#fff; }
+.gpa-donut span { position:relative; z-index:1; color:#0f172a; font-size:1rem; font-weight:750; }
 .gpa-donut-legend { display:grid; gap:.55rem; min-width:0; }
 .gpa-donut-legend div { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:.45rem; align-items:center; color:#475569; font-size:.76rem; }
 .gpa-donut-legend span { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
@@ -90,6 +102,12 @@
 .gpa-dot { width:9px; height:9px; border-radius:50%; display:inline-block; }
 .gpa-dot-primary { background:#2563eb; }
 .gpa-dot-soft { background:#93c5fd; }
+.gpa-dot-c1 { background:#2563eb; }
+.gpa-dot-c2 { background:#38bdf8; }
+.gpa-dot-c3 { background:#22c55e; }
+.gpa-dot-c4 { background:#f59e0b; }
+.gpa-dot-c5 { background:#a855f7; }
+.gpa-dot-c6 { background:#94a3b8; }
 .gpa-top-pages { flex:1; min-height:0; overflow:hidden; }
 .gpa-panel-top.gpa-expanded .gpa-top-pages { overflow:visible; }
 .gpa-top-heading { display:grid; grid-template-columns:minmax(0,1fr) 54px 54px; gap:.75rem; margin-bottom:.15rem; color:#94a3b8; font-size:.68rem; text-align:right; }
@@ -105,6 +123,7 @@
 .gpa-toggle:hover { text-decoration:underline; }
 .gpa-empty { display:grid; place-items:center; min-height:160px; color:var(--text-muted); font-size:.8rem; }
 .gpa-chart > .gpa-empty { grid-column:1 / -1; grid-row:1 / -1; }
+.gpa-donut-legend .gpa-empty { min-height:0; display:block; }
 @media (max-width: 980px) {
     .gpa-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .gpa-panels { grid-template-columns:1fr; }
@@ -134,6 +153,7 @@
     var collapsedTopRows = 6;
     var topPagesExpanded = false;
     var latestData = initial;
+    var countryColors = ["#2563eb", "#38bdf8", "#22c55e", "#f59e0b", "#a855f7", "#94a3b8"];
 
     function shortDate(value) {
         var parts = String(value || "").split("-");
@@ -159,6 +179,45 @@
         document.getElementById("gpaNewShare").textContent = numberFormat.format(newVisitors);
         document.getElementById("gpaReturnShare").textContent = numberFormat.format(returningVisitors);
         donut.title = newLabel + " " + numberFormat.format(newVisitors) + " · " + returnLabel + " " + numberFormat.format(returningVisitors);
+
+        var countries = Array.isArray(data.countries) ? data.countries : [];
+        var countryDonut = document.getElementById("gpaCountryDonut");
+        var countryLegend = document.getElementById("gpaCountryLegend");
+        var countryTotal = countries.reduce(function (sum, item) { return sum + (item.unique_visitors || 0); }, 0);
+        countryLegend.textContent = "";
+        if (!countryTotal) {
+            countryDonut.style.background = "conic-gradient(#e2e8f0 0 100%)";
+            document.getElementById("gpaCountryValue").textContent = "0";
+            var countryEmpty = document.createElement("div");
+            countryEmpty.className = "gpa-empty";
+            countryEmpty.textContent = emptyLabel;
+            countryLegend.appendChild(countryEmpty);
+        } else {
+            var offset = 0;
+            var segments = [];
+            countries.forEach(function (item, index) {
+                var value = item.unique_visitors || 0;
+                if (!value) return;
+                var percent = (value / countryTotal) * 100;
+                var color = countryColors[index % countryColors.length];
+                segments.push(color + " " + offset + "% " + (offset + percent) + "%");
+                offset += percent;
+                var row = document.createElement("div");
+                var dot = document.createElement("i");
+                dot.className = "gpa-dot";
+                dot.style.background = color;
+                var label = document.createElement("span");
+                label.textContent = item.country || "N/A";
+                var count = document.createElement("strong");
+                count.textContent = numberFormat.format(value);
+                row.appendChild(dot);
+                row.appendChild(label);
+                row.appendChild(count);
+                countryLegend.appendChild(row);
+            });
+            countryDonut.style.background = "conic-gradient(" + segments.join(",") + ")";
+            document.getElementById("gpaCountryValue").textContent = numberFormat.format(countryTotal);
+        }
 
         var chart = document.getElementById("gpaChart");
         chart.textContent = "";

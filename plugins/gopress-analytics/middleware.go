@@ -65,6 +65,10 @@ func (p *Plugin) analyticsMiddleware() gin.HandlerFunc {
 			lang = "und"
 		}
 		clientIP := normalizeIP(c.ClientIP())
+		country := ""
+		if p.geoIP != nil {
+			country = p.geoIP.LookupCountry(clientIP)
+		}
 
 		visitorHash := p.hashValue("visitor|" + visitorID)
 		if visitorCookieMissing && visitorID == "" {
@@ -88,6 +92,7 @@ func (p *Plugin) analyticsMiddleware() gin.HandlerFunc {
 			Campaign:       campaign,
 			IPAddress:      clientIP,
 			IPHash:         p.hashValue("ip|" + clientIP),
+			Country:        country,
 			UserAgent:      ua,
 			DeviceType:     device.Type,
 			Platform:       device.Platform,

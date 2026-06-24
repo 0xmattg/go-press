@@ -37,6 +37,7 @@ func TestAggregateEventsCompactsRepeatedPageViews(t *testing.T) {
 		NormalizedPath: "/products/hepa",
 		PathHash:       "path-1",
 		Language:       "en",
+		Country:        "US",
 	}
 	events := []Event{base}
 	for i := 2; i <= 3; i++ {
@@ -64,18 +65,26 @@ func TestAggregateEventsCompactsRepeatedPageViews(t *testing.T) {
 	if aggregated.sessions["session-1"].pageViews != 3 {
 		t.Fatalf("session page views = %d, want 3", aggregated.sessions["session-1"].pageViews)
 	}
+	dimension := dimensionKey{dailyKey: key, dimensionType: "country", dimensionValue: "US"}
+	if aggregated.dimensions[dimension].pageViews != 3 {
+		t.Fatalf("country dimension page views = %d, want 3", aggregated.dimensions[dimension].pageViews)
+	}
+	if len(aggregated.dimensionVisitors) != 1 {
+		t.Fatalf("country dimension visitors = %d, want 1", len(aggregated.dimensionVisitors))
+	}
 }
 
 func TestAnalyticsUniqueIndexSpecsCoverConflictTargets(t *testing.T) {
 	want := map[string]string{
-		Event{}.TableName():                "event_uuid",
-		Visitor{}.TableName():              "visitor_hash",
-		Session{}.TableName():              "session_hash",
-		VisitorDay{}.TableName():           "day,visitor_hash,language",
-		PageVisitorDay{}.TableName():       "day,path_hash,visitor_hash,language",
-		DailyMetric{}.TableName():          "day,language",
-		DailyPageMetric{}.TableName():      "day,path_hash,language",
-		DailyDimensionMetric{}.TableName(): "day,dimension_type,dimension_value,language",
+		Event{}.TableName():                 "event_uuid",
+		Visitor{}.TableName():               "visitor_hash",
+		Session{}.TableName():               "session_hash",
+		VisitorDay{}.TableName():            "day,visitor_hash,language",
+		PageVisitorDay{}.TableName():        "day,path_hash,visitor_hash,language",
+		DailyMetric{}.TableName():           "day,language",
+		DailyPageMetric{}.TableName():       "day,path_hash,language",
+		DailyDimensionMetric{}.TableName():  "day,dimension_type,dimension_value,language",
+		DailyDimensionVisitor{}.TableName(): "day,dimension_type,dimension_value,visitor_hash,language",
 	}
 	specs := analyticsUniqueIndexSpecs()
 	if len(specs) != len(want) {

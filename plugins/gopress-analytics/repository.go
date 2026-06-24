@@ -25,19 +25,46 @@ type TopPage struct {
 	UniqueVisitors int64  `json:"unique_visitors"`
 }
 
+type CountryPoint struct {
+	Country        string `json:"country"`
+	PageViews      int64  `json:"page_views"`
+	UniqueVisitors int64  `json:"unique_visitors"`
+}
+
 type Summary struct {
-	Days           int          `json:"days"`
-	PageViews      int64        `json:"page_views"`
-	UniqueVisitors int64        `json:"unique_visitors"`
-	NewVisitors    int64        `json:"new_visitors"`
-	Sessions       int64        `json:"sessions"`
-	Trend          []TrendPoint `json:"trend"`
-	TopPages       []TopPage    `json:"top_pages"`
-	GeneratedAt    time.Time    `json:"generated_at"`
+	Days           int            `json:"days"`
+	PageViews      int64          `json:"page_views"`
+	UniqueVisitors int64          `json:"unique_visitors"`
+	NewVisitors    int64          `json:"new_visitors"`
+	Sessions       int64          `json:"sessions"`
+	Trend          []TrendPoint   `json:"trend"`
+	TopPages       []TopPage      `json:"top_pages"`
+	Countries      []CountryPoint `json:"countries"`
+	GeneratedAt    time.Time      `json:"generated_at"`
 }
 
 type SummaryStore interface {
 	Summary(ctx context.Context, days int, loc *time.Location) (Summary, error)
+}
+
+type EventQueryRow struct {
+	OccurredAt     time.Time `json:"occurred_at"`
+	NormalizedPath string    `json:"path"`
+	IPAddress      string    `json:"ip_address"`
+	Country        string    `json:"country"`
+	UserAgent      string    `json:"user_agent"`
+	DeviceType     string    `json:"device_type"`
+	Platform       string    `json:"platform"`
+	Browser        string    `json:"browser"`
+	OS             string    `json:"os"`
+	ReferrerHost   string    `json:"referrer_host"`
+	Source         string    `json:"source"`
+	Medium         string    `json:"medium"`
+	StatusCode     int       `json:"status_code"`
+}
+
+type DataQueryStore interface {
+	RecentEventRows(ctx context.Context, page, limit int) ([]EventQueryRow, bool, error)
 }
 
 type Repository struct {
@@ -56,6 +83,7 @@ func (r *Repository) AutoMigrate() error {
 		&DailyMetric{},
 		&DailyPageMetric{},
 		&DailyDimensionMetric{},
+		&DailyDimensionVisitor{},
 	); err != nil {
 		return err
 	}
@@ -150,6 +178,10 @@ func analyticsUniqueIndexSpecs() []uniqueIndexSpec {
 			table: DailyDimensionMetric{}.TableName(), logical: "daily_dimension",
 			columns: []string{"day", "dimension_type", "dimension_value", "language"},
 		},
+		{
+			table: DailyDimensionVisitor{}.TableName(), logical: "daily_dimension_visitor",
+			columns: []string{"day", "dimension_type", "dimension_value", "visitor_hash", "language"},
+		},
 	}
 }
 
@@ -226,13 +258,32 @@ type pageVisitorDayKey struct {
 	visitorHash string
 }
 
+type dimensionKey struct {
+	dailyKey
+	dimensionType  string
+	dimensionValue string
+}
+
+type dimensionVisitorKey struct {
+	dimensionKey
+	visitorHash string
+}
+
+type dimensionAggregate struct {
+	event          Event
+	pageViews      int64
+	uniqueVisitors int64
+}
+
 type eventAggregates struct {
-	visitors        map[string]*visitorAggregate
-	sessions        map[string]*sessionAggregate
-	visitorDays     map[visitorDayKey]Event
-	daily           map[dailyKey]*dailyAggregate
-	pageVisitorDays map[pageVisitorDayKey]Event
-	pages           map[pageKey]*pageAggregate
+	visitors          map[string]*visitorAggregate
+	sessions          map[string]*sessionAggregate
+	visitorDays       map[visitorDayKey]Event
+	daily             map[dailyKey]*dailyAggregate
+	pageVisitorDays   map[pageVisitorDayKey]Event
+	pages             map[pageKey]*pageAggregate
+	dimensions        map[dimensionKey]*dimensionAggregate
+	dimensionVisitors map[dimensionVisitorKey]Event
 }
 
 func filterUnrecordedEvents(tx *gorm.DB, events []Event) ([]Event, error) {
@@ -278,12 +329,14 @@ func filterUnrecordedEvents(tx *gorm.DB, events []Event) ([]Event, error) {
 
 func aggregateEvents(events []Event) *eventAggregates {
 	result := &eventAggregates{
-		visitors:        make(map[string]*visitorAggregate),
-		sessions:        make(map[string]*sessionAggregate),
-		visitorDays:     make(map[visitorDayKey]Event),
-		daily:           make(map[dailyKey]*dailyAggregate),
-		pageVisitorDays: make(map[pageVisitorDayKey]Event),
-		pages:           make(map[pageKey]*pageAggregate),
+		visitors:          make(map[string]*visitorAggregate),
+		sessions:          make(map[string]*sessionAggregate),
+		visitorDays:       make(map[visitorDayKey]Event),
+		daily:             make(map[dailyKey]*dailyAggregate),
+		pageVisitorDays:   make(map[pageVisitorDayKey]Event),
+		pages:             make(map[pageKey]*pageAggregate),
+		dimensions:        make(map[dimensionKey]*dimensionAggregate),
+		dimensionVisitors: make(map[dimensionVisitorKey]Event),
 	}
 	for i := range events {
 		event := events[i]
@@ -339,6 +392,27 @@ func aggregateEvents(events []Event) *eventAggregates {
 		result.pageVisitorDays[pageVisitorDayKey{
 			pageKey: page, visitorHash: event.VisitorHash,
 		}] = event
+
+		if country := normalizeCountryCode(event.Country); country != "" {
+			dimension := dimensionKey{
+				dailyKey:       day,
+				dimensionType:  "country",
+				dimensionValue: country,
+			}
+			metric := result.dimensions[dimension]
+			if metric == nil {
+				result.dimensions[dimension] = &dimensionAggregate{event: event, pageViews: 1}
+			} else {
+				metric.pageViews++
+				if event.OccurredAt.After(metric.event.OccurredAt) {
+					metric.event = event
+				}
+			}
+			result.dimensionVisitors[dimensionVisitorKey{
+				dimensionKey: dimension,
+				visitorHash:  event.VisitorHash,
+			}] = event
+		}
 	}
 	return result
 }
@@ -355,6 +429,7 @@ func recordAggregates(tx *gorm.DB, batch *eventAggregates) error {
 			FirstMedium:   event.Medium,
 			FirstCampaign: event.Campaign,
 			FirstLanding:  event.NormalizedPath,
+			FirstCountry:  event.Country,
 		}
 		visitorInsert := tx.Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "visitor_hash"}},
@@ -527,11 +602,88 @@ func recordAggregates(tx *gorm.DB, batch *eventAggregates) error {
 			return err
 		}
 	}
+
+	dimensionVisitorsByMetric := make(map[dimensionKey][]DailyDimensionVisitor)
+	for key := range batch.dimensionVisitors {
+		dimensionVisitorsByMetric[key.dimensionKey] = append(dimensionVisitorsByMetric[key.dimensionKey], DailyDimensionVisitor{
+			Day:            key.day,
+			DimensionType:  key.dimensionType,
+			DimensionValue: key.dimensionValue,
+			VisitorHash:    key.visitorHash,
+			Language:       key.language,
+		})
+	}
+	for key, dimensionVisitors := range dimensionVisitorsByMetric {
+		insert := tx.Clauses(clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "day"}, {Name: "dimension_type"}, {Name: "dimension_value"}, {Name: "visitor_hash"}, {Name: "language"},
+			},
+			DoNothing: true,
+		}).CreateInBatches(&dimensionVisitors, 500)
+		if insert.Error != nil {
+			return insert.Error
+		}
+		if metric := batch.dimensions[key]; metric != nil {
+			metric.uniqueVisitors = insert.RowsAffected
+		}
+	}
+
+	for key, aggregate := range batch.dimensions {
+		event := aggregate.event
+		dimension := DailyDimensionMetric{
+			Day:             key.day,
+			DimensionType:   key.dimensionType,
+			DimensionValue:  key.dimensionValue,
+			Language:        key.language,
+			PageViews:       aggregate.pageViews,
+			UniqueVisitors:  aggregate.uniqueVisitors,
+			BouncedSessions: 0,
+		}
+		if err := tx.Clauses(clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "day"}, {Name: "dimension_type"}, {Name: "dimension_value"}, {Name: "language"},
+			},
+			DoUpdates: clause.Assignments(map[string]interface{}{
+				"page_views":      addColumn(DailyDimensionMetric{}.TableName(), "page_views", aggregate.pageViews),
+				"unique_visitors": addColumn(DailyDimensionMetric{}.TableName(), "unique_visitors", aggregate.uniqueVisitors),
+				"updated_at":      event.OccurredAt,
+			}),
+		}).Create(&dimension).Error; err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 func addColumn(table, column string, value int64) clause.Expr {
 	return gorm.Expr("? + ?", clause.Column{Table: table, Name: column}, value)
+}
+
+func (r *Repository) RecentEventRows(ctx context.Context, page, limit int) ([]EventQueryRow, bool, error) {
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 50
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	var rows []EventQueryRow
+	err := r.db.WithContext(ctx).Model(&Event{}).
+		Select("occurred_at, normalized_path, ip_address, country, user_agent, device_type, platform, browser, os, referrer_host, source, medium, status_code").
+		Order("occurred_at DESC, id DESC").
+		Offset((page - 1) * limit).
+		Limit(limit + 1).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, false, err
+	}
+	hasMore := len(rows) > limit
+	if hasMore {
+		rows = rows[:limit]
+	}
+	return rows, hasMore, nil
 }
 
 func (r *Repository) Summary(ctx context.Context, days int, loc *time.Location) (Summary, error) {
@@ -635,6 +787,43 @@ func (r *Repository) Summary(ctx context.Context, days int, loc *time.Location) 
 			Title:          row.Title,
 			PageViews:      row.PageViews,
 			UniqueVisitors: visitorCounts[row.PathHash],
+		})
+	}
+
+	var countryPVRows []struct {
+		Country   string
+		PageViews int64
+	}
+	if err := r.db.WithContext(ctx).Model(&DailyDimensionMetric{}).
+		Select("dimension_value AS country, SUM(page_views) AS page_views").
+		Where("day >= ? AND day <= ? AND dimension_type = ?", startDay, now, "country").
+		Group("dimension_value").
+		Scan(&countryPVRows).Error; err != nil {
+		return Summary{}, fmt.Errorf("query country page views: %w", err)
+	}
+	countryPageViews := make(map[string]int64, len(countryPVRows))
+	for _, row := range countryPVRows {
+		countryPageViews[row.Country] = row.PageViews
+	}
+	var countryVisitorRows []struct {
+		Country        string
+		UniqueVisitors int64
+	}
+	if err := r.db.WithContext(ctx).Model(&DailyDimensionVisitor{}).
+		Select("dimension_value AS country, COUNT(DISTINCT visitor_hash) AS unique_visitors").
+		Where("day >= ? AND day <= ? AND dimension_type = ?", startDay, now, "country").
+		Group("dimension_value").
+		Order("unique_visitors DESC").
+		Limit(6).
+		Scan(&countryVisitorRows).Error; err != nil {
+		return Summary{}, fmt.Errorf("query country visitors: %w", err)
+	}
+	result.Countries = make([]CountryPoint, 0, len(countryVisitorRows))
+	for _, row := range countryVisitorRows {
+		result.Countries = append(result.Countries, CountryPoint{
+			Country:        row.Country,
+			PageViews:      countryPageViews[row.Country],
+			UniqueVisitors: row.UniqueVisitors,
 		})
 	}
 	return result, nil
