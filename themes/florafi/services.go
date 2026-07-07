@@ -701,18 +701,20 @@ func stripHTMLTags(s string) string {
 }
 
 // SubmitContact saves a contact message as a Content entry with meta.
-func (s *PageService) SubmitContact(name, email, phone, message string) error {
-	c := &content.Content{
-		Type:    "contact_message",
-		Status:  content.StatusDraft,
-		Title:   name,
-		Content: message,
+func (s *PageService) SubmitContact(c *gin.Context, name, email, phone, message string) error {
+	ctx := context.Background()
+	remoteIP := ""
+	if c != nil {
+		ctx = c.Request.Context()
+		remoteIP = c.ClientIP()
 	}
-	meta := map[string]string{"email": email}
-	if phone != "" {
-		meta["phone"] = phone
-	}
-	return s.contentRepo.CreateWithMeta(context.Background(), c, meta)
+	return s.contentRepo.CreateContactMessage(ctx, content.ContactMessageInput{
+		Name:     name,
+		Email:    email,
+		Phone:    phone,
+		Message:  message,
+		RemoteIP: remoteIP,
+	})
 }
 
 // ======== Internal Helpers ========

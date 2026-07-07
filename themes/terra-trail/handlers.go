@@ -1,6 +1,7 @@
 package terratrail
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"go-press/core/content"
 	coreI18n "go-press/core/i18n"
 	"go-press/core/menu"
 	coreTheme "go-press/core/theme"
@@ -185,10 +187,14 @@ func (h *Handler) ContactSubmit(c *gin.Context) {
 		return
 	}
 
-	if err := h.pageService.SubmitContact(name, email, phone, message); err != nil {
+	if err := h.pageService.SubmitContact(c, name, email, phone, message); err != nil {
 		log.Printf("[terra-trail] Error saving contact message: %v", err)
 		data, _ := h.pageService.GetContactData()
-		data.Error = "Failed to send message. Please try again."
+		if errors.Is(err, content.ErrContactMessageRateLimited) {
+			data.Error = "Too many messages were submitted from your network. Please try again later."
+		} else {
+			data.Error = "Failed to send message. Please try again."
+		}
 		h.render(c, "contact", data)
 		return
 	}
