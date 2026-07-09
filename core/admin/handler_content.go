@@ -115,7 +115,6 @@ func parseAdminPage(c *gin.Context) int {
 
 func (h *Handler) contentListColumns(lang string, typeName string, typeDef *content.ContentTypeDef, taxDefs []*content.TaxonomyDef) []AdminListColumn {
 	columns := []AdminListColumn{
-		{Key: "id", Label: "ID"},
 		{Key: "title", Label: adminT(lang, "content.title")},
 		{Key: "status", Label: adminT(lang, "content.status")},
 	}
@@ -367,6 +366,14 @@ func (h *Handler) ContentList(c *gin.Context) {
 	if hasSupport(typeDef.Supports, "sort_order") {
 		tableColumnCount++
 	}
+	role := c.GetString("admin_role")
+	canBulkDelete := h.svc.rbac.Can(role, h.mapResource(typeName), "delete")
+	canBulkPublish := typeDef.HasArchive && h.svc.rbac.Can(role, h.mapResource(typeName), "update")
+	canBulkUnpublish := canBulkPublish
+	canBulkActions := canBulkDelete || canBulkPublish || canBulkUnpublish
+	if canBulkActions {
+		tableColumnCount++
+	}
 
 	searchQuery := strings.TrimSpace(c.Query("q"))
 	dateField := contentListDateField(typeDef)
@@ -427,6 +434,10 @@ func (h *Handler) ContentList(c *gin.Context) {
 		"VisibleColumns":      visibleColumns,
 		"VisibleColumnCount":  visibleColumnCount,
 		"TableColumnCount":    tableColumnCount,
+		"CanBulkActions":      canBulkActions,
+		"CanBulkDelete":       canBulkDelete,
+		"CanBulkPublish":      canBulkPublish,
+		"CanBulkUnpublish":    canBulkUnpublish,
 		"Pagination":          pagination,
 		"SearchHiddenInputs":  hiddenInputsFromQueryExcept(cleanListQuery(c, true), map[string]bool{"q": true}),
 		"OptionsHiddenInputs": hiddenInputsFromQuery(cleanListQuery(c, true)),
@@ -576,6 +587,93 @@ func ensurePublishedAtForPublished(item *content.Content) {
 	now := time.Now()
 	now = now.UTC()
 	item.PublishedAt = &now
+}
+
+const (
+	contentBulkActionDelete    = "delete"
+	contentBulkActionPublish   = "publish"
+	contentBulkActionUnpublish = "unpublish"
+)
+
+func contentBulkPermission(action string) (string, bool) {
+	switch action {
+	case contentBulkActionDelete:
+		return "delete", true
+	case contentBulkActionPublish:
+		return "update", true
+	case contentBulkActionUnpublish:
+		return "update", true
+	default:
+		return "", false
+	}
+}
+
+// ==================== Content Bulk Actions ====================
+
+func (h *Handler) ContentBulkAction(c *gin.Context) {
+	typeDef, typeName := h.getContentType(c)
+	if typeDef == nil {
+		c.String(http.StatusNotFound, "Unknown content type")
+		return
+	}
+
+	slug := AdminSlug(typeName)
+	lang := h.svc.AdminLanguage()
+	filterQuery := listFilterQuery(c)
+	redirectWith := func(key, msg string) {
+		c.Redirect(http.StatusFound, listRedirectURL(slug, filterQuery, key, msg))
+	}
+
+	action := strings.TrimSpace(c.PostForm("bulk_action"))
+	requiredAction, ok := contentBulkPermission(action)
+	if !ok {
+		redirectWith("error", adminT(lang, "error.bulk_action_required"))
+		return
+	}
+	if (action == contentBulkActionPublish || action == contentBulkActionUnpublish) && !typeDef.HasArchive {
+		redirectWith("error", adminT(lang, "error.bulk_action_unavailable"))
+		return
+	}
+	if !h.checkPermission(c, typeName, requiredAction) {
+		return
+	}
+
+	ids := parseUintSlice(c.PostFormArray("ids"))
+	if len(ids) == 0 {
+		redirectWith("error", adminT(lang, "error.bulk_selection_required"))
+		return
+	}
+
+	var (
+		count int
+		err   error
+	)
+	switch action {
+	case contentBulkActionDelete:
+		count, err = h.svc.BulkHardDeleteContent(typeName, ids)
+	case contentBulkActionPublish:
+		count, err = h.svc.BulkPublishContent(typeName, ids)
+	case contentBulkActionUnpublish:
+		count, err = h.svc.BulkUnpublishContent(typeName, ids)
+	}
+	if err != nil {
+		redirectWith("error", adminT(lang, "error.bulk_action_failed", err.Error()))
+		return
+	}
+
+	if count > 0 {
+		h.invalidatePageCache()
+		h.logAction(c, action, typeName, 0, fmt.Sprintf("bulk %s %d items", action, count))
+	}
+
+	switch action {
+	case contentBulkActionDelete:
+		redirectWith("success", adminT(lang, "notice.bulk_deleted", count))
+	case contentBulkActionPublish:
+		redirectWith("success", adminT(lang, "notice.bulk_published", count))
+	case contentBulkActionUnpublish:
+		redirectWith("success", adminT(lang, "notice.bulk_unpublished", count))
+	}
 }
 
 // ==================== Content Edit ====================

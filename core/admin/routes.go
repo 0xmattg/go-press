@@ -47,6 +47,7 @@ func SetupRoutes(r *gin.Engine, h *Handler, auth *user.Auth, registry *content.R
 
 			// All content types get list + delete
 			group.GET("", h.ContentList)
+			group.POST("/bulk", h.ContentBulkAction)
 			group.POST("/:id/delete", h.ContentDelete)
 
 			if typeDef.HasArchive {

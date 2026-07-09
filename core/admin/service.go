@@ -243,6 +243,105 @@ func (s *Service) DeleteContent(id uint) error {
 	return s.contentRepo.Delete(id)
 }
 
+// BulkHardDeleteContent permanently removes content rows of the given type and
+// clears core-owned relationship rows. IDs from other content types are ignored
+// so forged form submissions cannot affect unrelated resources.
+func (s *Service) BulkHardDeleteContent(contentType string, ids []uint) (int, error) {
+	validIDs := normalizeBulkContentIDs(ids)
+	if contentType == "" || len(validIDs) == 0 {
+		return 0, nil
+	}
+
+	var matched []uint
+	if err := s.db.Model(&content.Content{}).
+		Where("type = ? AND id IN ?", contentType, validIDs).
+		Pluck("id", &matched).Error; err != nil {
+		return 0, err
+	}
+	if len(matched) == 0 {
+		return 0, nil
+	}
+
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("content_id IN ?", matched).Delete(&content.ContentMeta{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("content_id IN ?", matched).Delete(&taxonomy.TermRelationship{}).Error; err != nil {
+			return err
+		}
+		return tx.Unscoped().
+			Where("type = ? AND id IN ?", contentType, matched).
+			Delete(&content.Content{}).Error
+	})
+	if err != nil {
+		return 0, err
+	}
+	return len(matched), nil
+}
+
+// BulkPublishContent publishes selected rows of the given type. Existing
+// publish timestamps are preserved; rows without one receive the current UTC
+// instant so they become visible to public queries immediately.
+func (s *Service) BulkPublishContent(contentType string, ids []uint) (int, error) {
+	validIDs := normalizeBulkContentIDs(ids)
+	if contentType == "" || len(validIDs) == 0 {
+		return 0, nil
+	}
+	result := s.db.Model(&content.Content{}).
+		Where("type = ? AND id IN ?", contentType, validIDs).
+		Updates(bulkPublishUpdates(time.Now().UTC()))
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return int(result.RowsAffected), nil
+}
+
+// BulkUnpublishContent moves selected rows of the given type back to draft
+// without changing their publish timestamp. Bulk status changes are visibility
+// controls; operators can edit publish time explicitly from the content form.
+func (s *Service) BulkUnpublishContent(contentType string, ids []uint) (int, error) {
+	validIDs := normalizeBulkContentIDs(ids)
+	if contentType == "" || len(validIDs) == 0 {
+		return 0, nil
+	}
+	result := s.db.Model(&content.Content{}).
+		Where("type = ? AND id IN ?", contentType, validIDs).
+		Updates(bulkUnpublishUpdates())
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return int(result.RowsAffected), nil
+}
+
+func bulkPublishUpdates(now time.Time) map[string]interface{} {
+	return map[string]interface{}{
+		"status":       content.StatusPublished,
+		"published_at": gorm.Expr("COALESCE(published_at, ?)", now),
+	}
+}
+
+func bulkUnpublishUpdates() map[string]interface{} {
+	return map[string]interface{}{
+		"status": content.StatusDraft,
+	}
+}
+
+func normalizeBulkContentIDs(ids []uint) []uint {
+	if len(ids) == 0 {
+		return nil
+	}
+	seen := make(map[uint]bool, len(ids))
+	out := make([]uint, 0, len(ids))
+	for _, id := range ids {
+		if id == 0 || seen[id] {
+			continue
+		}
+		seen[id] = true
+		out = append(out, id)
+	}
+	return out
+}
+
 // ReorderContent assigns sort_order = 1..N to the given IDs in sequence,
 // inside a single transaction. The type filter protects against stray IDs
 // from other content types accidentally hijacking sort slots.
