@@ -368,6 +368,57 @@ function adminFormat(template) {
         }, 2000);
     }
 
+    // ==================== Content Bulk Actions ====================
+    var bulkForm = document.getElementById('contentBulkForm');
+    if (bulkForm) {
+        var bulkSelect = document.querySelector('select[name="bulk_action"][form="contentBulkForm"]');
+        var bulkAll = document.querySelector('.content-bulk-check-all');
+        var bulkChecks = Array.prototype.slice.call(document.querySelectorAll('.content-bulk-check'));
+
+        var updateBulkAllState = function() {
+            if (!bulkAll) return;
+            var checked = bulkChecks.filter(function(cb) { return cb.checked; }).length;
+            bulkAll.checked = bulkChecks.length > 0 && checked === bulkChecks.length;
+            bulkAll.indeterminate = checked > 0 && checked < bulkChecks.length;
+        };
+
+        if (bulkAll) {
+            bulkAll.addEventListener('change', function() {
+                bulkChecks.forEach(function(cb) {
+                    cb.checked = bulkAll.checked;
+                });
+                updateBulkAllState();
+            });
+        }
+
+        bulkChecks.forEach(function(cb) {
+            cb.addEventListener('change', updateBulkAllState);
+            cb.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        });
+
+        bulkForm.addEventListener('submit', function(e) {
+            var action = bulkSelect ? bulkSelect.value : '';
+            var selected = bulkChecks.filter(function(cb) { return cb.checked; });
+            if (!action) {
+                e.preventDefault();
+                alert(bulkForm.dataset.errorNoAction || 'Select a bulk action.');
+                return;
+            }
+            if (selected.length === 0) {
+                e.preventDefault();
+                alert(bulkForm.dataset.errorNoSelection || 'Select at least one item.');
+                return;
+            }
+            if (action === 'delete' && !confirm(bulkForm.dataset.confirmDelete || 'Delete selected items permanently?')) {
+                e.preventDefault();
+            }
+        });
+
+        updateBulkAllState();
+    }
+
     // ==================== Content List Title Filter ====================
     // Pure client-side filter over already-rendered rows. The magnifier button
     // is a no-op visual "commit" affordance (blurs the input). The native

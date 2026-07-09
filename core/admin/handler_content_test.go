@@ -3,7 +3,9 @@ package admin
 import (
 	"bytes"
 	"html/template"
+	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -123,5 +125,75 @@ func TestContentFormHookReceivesStableCoreArgs(t *testing.T) {
 	}
 	if len(captured) != 3 || captured[0] != ctx || captured[1] != item || captured[2] != typeDef {
 		t.Fatalf("unexpected hook args: %#v", captured)
+	}
+}
+
+func TestContentBulkActionRejectsSubscriberBeforeMutation(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	registry := content.NewRegistry()
+	registry.RegisterType(content.ContentTypeDef{
+		Name:       "post",
+		Label:      "Post",
+		HasArchive: true,
+	})
+	h := &Handler{
+		svc:      &Service{rbac: user.NewRBAC()},
+		registry: registry,
+	}
+
+	form := url.Values{
+		"bulk_action": {"delete"},
+		"ids":         {"1", "2"},
+	}
+	req := httptest.NewRequest(http.MethodPost, "/admin/posts/bulk", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	c.Request = req
+	c.Set("content_type", "post")
+	c.Set("admin_role", user.RoleSubscriber)
+
+	h.ContentBulkAction(c)
+
+	if !c.IsAborted() {
+		t.Fatal("request should be aborted when permission is denied")
+	}
+}
+
+func TestContentBulkPermissionMapsActions(t *testing.T) {
+	if action, ok := contentBulkPermission(contentBulkActionDelete); !ok || action != "delete" {
+		t.Fatalf("delete permission = %q, %v", action, ok)
+	}
+	if action, ok := contentBulkPermission(contentBulkActionPublish); !ok || action != "update" {
+		t.Fatalf("publish permission = %q, %v", action, ok)
+	}
+	if action, ok := contentBulkPermission(contentBulkActionUnpublish); !ok || action != "update" {
+		t.Fatalf("unpublish permission = %q, %v", action, ok)
+	}
+	if _, ok := contentBulkPermission("publish-now"); ok {
+		t.Fatal("unexpected permission for unknown bulk action")
+	}
+}
+
+func TestNormalizeBulkContentIDsDropsZeroAndDuplicates(t *testing.T) {
+	got := normalizeBulkContentIDs([]uint{0, 3, 2, 3, 0, 2, 9})
+	want := []uint{3, 2, 9}
+	if len(got) != len(want) {
+		t.Fatalf("ids = %#v, want %#v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("ids = %#v, want %#v", got, want)
+		}
+	}
+}
+
+func TestBulkUnpublishUpdatesPreservePublishedAt(t *testing.T) {
+	updates := bulkUnpublishUpdates()
+	if got := updates["status"]; got != content.StatusDraft {
+		t.Fatalf("status update = %#v, want draft", got)
+	}
+	if _, ok := updates["published_at"]; ok {
+		t.Fatal("bulk unpublish must not change published_at")
 	}
 }
