@@ -95,6 +95,7 @@
     <button type="button" class="ml-subtab" data-subtab="menu-trans">{{X $ "plugin.multilang.ui.017" "菜单翻译"}}</button>
     <button type="button" class="ml-subtab" data-subtab="string-trans">{{X $ "plugin.multilang.ui.018" "字符串翻译"}}</button>
     <button type="button" class="ml-subtab" data-subtab="option-trans">{{X $ "plugin.multilang.ui.019" "主题设置翻译"}}</button>
+    <button type="button" class="ml-subtab" data-subtab="site-option-trans">{{X $ "plugin.multilang.ui.110" "网站设置翻译"}}</button>
 </div>
 
 <!-- Sub-tab: Content translations -->
@@ -336,6 +337,58 @@
     </div>
     {{end}}
 </div><!-- /subtab-option-trans -->
+
+<!-- Sub-tab: Site setting translations -->
+<div class="ml-subtab-panel" id="subtab-site-option-trans">
+    <h3 class="ts-section-title">{{X $ "plugin.multilang.ui.110" "网站设置翻译"}}</h3>
+    <p class="ts-hint">{{X $ "plugin.multilang.ui.111" "管理系统网站设置中的网站名称和网站简介翻译。前台 SEO 标题、Meta 描述和主题模板会根据当前语言使用这些值。"}}</p>
+
+    {{if .SiteOptions}}
+    {{$ndLangs := .NonDefaultLangs}}
+    {{$defaultLang := .DefaultLang}}
+    <div class="ml-trans-table-wrap">
+        <table class="ml-table ml-site-opt-table">
+            <thead>
+                <tr>
+                    <th style="width:180px;">{{X $ "plugin.multilang.ui.053" "字段"}}</th>
+                    <th style="min-width:220px;">{{X $ "plugin.multilang.ui.054" "默认值 (%s)" $defaultLang}}</th>
+                    {{range $ndLangs}}
+                    <th style="min-width:260px;">{{.Flag}} {{.Name}} ({{.Code}})</th>
+                    {{end}}
+                </tr>
+            </thead>
+            <tbody>
+                {{range .SiteOptions}}
+                <tr>
+                    <td>
+                        <code class="ml-str-key">{{if .LabelKey}}{{X $ .LabelKey .Label}}{{else}}{{.Label}}{{end}}</code>
+                        <div style="font-size:0.7rem; color:#94a3b8; margin-top:2px;">{{.Key}}</div>
+                    </td>
+                    <td>
+                        <div class="ml-str-default">{{if .DefaultValue}}{{.DefaultValue}}{{else}}<span style="color:#94a3b8;">—</span>{{end}}</div>
+                    </td>
+                    {{$view := .}}
+                    {{range $ndLangs}}
+                        {{$ov := index $view.Overrides .Code}}
+                        <td>
+                            <input type="text" name="ot_{{.Code}}:{{$view.Key}}" value="{{$ov.Value}}" placeholder="{{X $ "plugin.multilang.ui.047" "使用默认值"}}" class="ml-str-input">
+                        </td>
+                    {{end}}
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+
+    <div style="margin-top:1.5rem;">
+        <button type="button" class="ml-btn ml-btn-primary" onclick="saveSiteOptionTranslations()">{{X $ "plugin.multilang.ui.112" "保存网站设置翻译"}}</button>
+    </div>
+    {{else}}
+    <div class="ml-empty-state">
+        <p>{{X $ "plugin.multilang.ui.113" "当前没有可翻译的网站设置字段。"}}</p>
+    </div>
+    {{end}}
+</div><!-- /subtab-site-option-trans -->
 
 </div><!-- /tab-translations -->
 
@@ -1081,6 +1134,27 @@ function saveOptionTranslations() {
         form.append(input.name, input.value);
     });
     fetch('/admin/plugins/multi-language/option-translate', {
+        method: 'POST',
+        body: form
+    }).then(function(resp) {
+        if (resp.redirected) {
+            window.location.href = resp.url;
+        } else {
+            window.location.reload();
+        }
+    }).catch(function(err) {
+        alert(mlText.saveFailed + ': ' + err.message);
+    });
+}
+
+// Site option translation save via fetch
+function saveSiteOptionTranslations() {
+    var form = new FormData();
+    var inputs = document.querySelectorAll('.ml-site-opt-table input[name^="ot_"]');
+    inputs.forEach(function(input) {
+        form.append(input.name, input.value);
+    });
+    fetch('/admin/plugins/multi-language/site-option-translate', {
         method: 'POST',
         body: form
     }).then(function(resp) {

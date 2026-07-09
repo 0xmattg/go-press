@@ -230,7 +230,7 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 
 ### 内置插件
 
-- **multilang** — WPML 风格内容翻译 + 菜单翻译 + 语言前缀路由 + 智能跳转
+- **multilang** — WPML 风格内容翻译 + 菜单翻译 + 网站设置翻译 + 语言前缀路由 + 智能跳转
 - **seo-extras** — Yoast 风格 per-content SEO 覆盖（4 字段：title/description/og:image/robots）
 - **code-snippets** — WPCode 风格站点级代码注入（`<head>` 末尾、`<body>` 开头、`</body>` 前）
 - **gopress-analytics** — GoPress 官方自托管访问统计，支持 PV、UV、新访客、访问趋势、访客构成和热门页面分析

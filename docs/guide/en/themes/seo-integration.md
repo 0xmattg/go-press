@@ -7,7 +7,7 @@ GoPress centralizes SEO data in the framework. Themes should consume SEO metadat
 ```text
 System Settings
   -> SEOBuilder
-  -> ApplySiteOptionOverrides
+  -> ApplySiteOptionOverridesForRequest
   -> optional seo.content.meta filters
   -> data["SEO"] or PageData.SEO
   -> {{pageTitleFor . $fallbackTitle}} and {{seoHeadFor .}}
@@ -66,13 +66,30 @@ Core resolves that key through the current request language before building the 
 Custom PageService themes must attach `rewrite.SEOMeta` to their page data and reuse core helpers:
 
 ```go
+func (s *PageService) ForRequest(c *gin.Context) *PageService {
+    clone := *s
+    clone.reqCtx = c
+    return &clone
+}
+
 title := coreTheme.LocalizedArchiveTitle(c, i18nMgr, typeDef)
 seo := seoBuilder.ForArchiveTitle(typeDef, title)
-coreTheme.ApplySiteOptionOverridesFromOptions(options, seoBuilder, &seo)
+coreTheme.ApplySiteOptionOverridesFromOptionsForRequest(c, options, i18nMgr, seoBuilder, &seo)
 coreTheme.ApplyContentMetaSEO(hooks, contentRepo, &seo, item)
 ```
 
-`LocalizedArchiveTitle` keeps archive titles language-aware. `ApplySiteOptionOverridesFromOptions` applies runtime settings such as `site_name`, `site_description`, and `site_icon` without removing the page-specific title prefix. `ApplyContentMetaSEO` is what allows plugins such as `seo-extras` to patch per-content SEO output.
+`LocalizedArchiveTitle` keeps archive titles language-aware. `ApplySiteOptionOverridesFromOptionsForRequest` applies runtime settings such as `site_name`, `site_description`, and `site_icon` using the current request language, without removing the page-specific title prefix. `ApplyContentMetaSEO` is what allows plugins such as `seo-extras` to patch per-content SEO output.
+
+If a custom theme still calls `ApplySiteOptionOverridesFromOptions`, single-language SEO remains valid, but multilang site setting translations will not reach `<title>` or `<meta name="description">`. Any theme that builds `SEOMeta` itself should keep the current `gin.Context` and `i18n.Manager` in its request-scoped PageService clone and call the request-aware helper.
+
+Bundled theme guidance:
+
+| Theme pattern | Required integration |
+|---|---|
+| BaseTheme + `gin.H` themes | No theme work; core injects translated site options automatically. |
+| `modern-company`, `atelier-slate-gp`, `financial-news` | Custom PageService using core SEOBuilder; call `ApplySiteOptionOverridesFromOptionsForRequest`. |
+| `go-press-landing` | Pass `gin.Context` / `i18n.Manager` into PageService before using the request-aware helper. |
+| `bitcuz-mag` | Custom SEO pipeline; translate `site_name` / `site_description` through core i18n or convert generated `SEOMeta` through the request-aware override. |
 
 ## Per-content SEO
 

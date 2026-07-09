@@ -1,6 +1,6 @@
 # Multilingual Plugin
 
-The `multilang` plugin provides WPML-like multilingual behavior for GoPress. It supports enabled languages, default language, language-prefixed URLs, content translation links, menu assignment per language, UI string translations, and theme setting translations.
+The `multilang` plugin provides WPML-like multilingual behavior for GoPress. It supports enabled languages, default language, language-prefixed URLs, content translation links, menu assignment per language, UI string translations, theme setting translations, and core site setting translations.
 
 ## Features
 
@@ -41,6 +41,7 @@ The plugin settings page contains tabs for:
 - Menu translations.
 - String translations.
 - Theme setting translations.
+- Site setting translations for `site_name` and `site_description`.
 - Basic settings and help.
 
 If a theme or plugin provides only one locale, the admin falls back to the available language instead of hiding the settings UI.
@@ -54,5 +55,12 @@ The plugin relies on core extension points:
 - Admin content list tabs for language filters.
 - Template helpers such as `currentLang`, `langPrefixURL`, `archiveURL`, and `contentURL`.
 - Option translation helpers for theme setting translations.
+- Core site option translation helpers for SEO titles, meta descriptions, OpenGraph descriptions, and `.Settings` values.
 
 Core remains usable without the plugin; multilingual behavior is additive.
+
+## Theme Integration for Site Setting Translations
+
+BaseTheme themes support site setting translations automatically. Layouts should continue using `{{pageTitleFor . $fallbackTitle}}` and `{{seoHeadFor .}}`.
+
+Themes with a custom `PageService` or custom `SEOMeta` pipeline must keep the current request context and call `coreTheme.ApplySiteOptionOverridesFromOptionsForRequest(c, options, i18nMgr, seoBuilder, &seo)` after building SEO metadata. See [Theme SEO Integration](../themes/seo-integration.md) for the full contract.
