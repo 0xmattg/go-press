@@ -531,15 +531,6 @@ func (s *Service) DeleteTaxonomyTerm(taxID uint) error {
 // ==================== Settings ====================
 
 var settingLabelMap = map[string]string{
-	"site_name":           "field.site_name",
-	"site_description":    "field.site_description",
-	"site_icon":           "field.site_icon",
-	"site_language":       "field.site_language",
-	"site_timezone":       "field.site_timezone",
-	"powered_by_gopress":  "field.powered_by_gopress",
-	"admin_language":      "field.admin_language",
-	"active_theme":        "field.active_theme",
-	"admin_email":         "field.admin_email",
 	"footer_text":         "Footer Text",
 	"company_name":        "Company Name",
 	"company_description": "Company Description",
@@ -557,16 +548,18 @@ var settingLabelMap = map[string]string{
 }
 
 var settingDescriptionMap = map[string]string{
-	"active_theme":       "help.active_theme",
-	"admin_language":     "help.admin_language",
-	"powered_by_gopress": "help.powered_by_gopress",
-	"site_language":      "help.site_language",
-	"site_timezone":      "help.site_timezone",
-	"site_icon":          "help.site_icon",
-	"demo_imported":      "help.demo_imported",
+	"demo_imported": "help.demo_imported",
 }
 
 func (s *Service) settingDisplayLabel(key, lang string) string {
+	if def, ok := option.SystemDefinition(key); ok {
+		if def.LabelKey != "" {
+			return adminT(lang, def.LabelKey)
+		}
+		if def.Label != "" {
+			return def.Label
+		}
+	}
 	if label, ok := settingLabelMap[key]; ok {
 		return adminT(lang, label)
 	}
@@ -584,6 +577,9 @@ func (s *Service) settingDisplayLabel(key, lang string) string {
 }
 
 func (s *Service) settingDescription(key string) string {
+	if def, ok := option.SystemDefinition(key); ok {
+		return def.DescriptionKey
+	}
 	if desc, ok := settingDescriptionMap[key]; ok {
 		return desc
 	}
@@ -594,8 +590,8 @@ func (s *Service) settingDescription(key string) string {
 }
 
 func (s *Service) isSettingReadOnly(key string) bool {
-	if key == "active_theme" {
-		return true
+	if def, ok := option.SystemDefinition(key); ok {
+		return def.ReadOnly
 	}
 	if strings.HasPrefix(key, "demo_imported_") {
 		return true
@@ -644,26 +640,11 @@ func (s *Service) humanizeSettingKey(key string) string {
 	return strings.Join(parts, " ")
 }
 
-// coreSettingKeys defines the options that appear on the site-wide Settings page.
-// Theme-specific options (company_*, social_*, footer_*, home_*, etc.) belong in
-// the theme settings page and are excluded here.
-var coreSettingKeys = map[string]bool{
-	"active_theme":       true,
-	"site_name":          true,
-	"site_description":   true,
-	"site_icon":          true,
-	"site_language":      true,
-	"site_timezone":      true,
-	"powered_by_gopress": true,
-	"admin_language":     true,
-	"admin_email":        true,
-}
-
 // isCoreOrSystemSetting returns true if the key should be shown on the
 // site-wide Settings page (core keys + system-managed keys such as
 // demo_imported_* and plugin_active_*).
 func isCoreOrSystemSetting(key string) bool {
-	if coreSettingKeys[key] {
+	if option.IsSystemSetting(key) {
 		return true
 	}
 	if strings.HasPrefix(key, "demo_imported_") ||
@@ -686,15 +667,12 @@ func (s *Service) GetAllSettings(lang string) []SettingItemView {
 	s.db.Order("name ASC").Find(&opts)
 
 	// Ensure essential keys always appear even if missing from DB.
-	essentialDefaults := map[string]string{
-		"site_name":          "",
-		"site_description":   "",
-		"site_icon":          "",
-		"site_language":      "",
-		"site_timezone":      s.defaultSiteTimezone(),
-		"powered_by_gopress": "1",
-		"admin_language":     defaultAdminLanguage,
-		"admin_email":        "",
+	essentialDefaults := option.SystemDefaults()
+	if _, ok := essentialDefaults["site_timezone"]; ok {
+		essentialDefaults["site_timezone"] = s.defaultSiteTimezone()
+	}
+	if _, ok := essentialDefaults["admin_language"]; ok {
+		essentialDefaults["admin_language"] = defaultAdminLanguage
 	}
 	existing := make(map[string]bool, len(opts))
 	for _, o := range opts {
@@ -730,22 +708,15 @@ func (s *Service) GetAllSettings(lang string) []SettingItemView {
 }
 
 func settingGroup(key string) string {
-	switch key {
-	case "admin_language", "admin_email":
-		return "admin"
+	if def, ok := option.SystemDefinition(key); ok && def.Section != "" {
+		return def.Section
 	}
 	return "site"
 }
 
 func settingInputType(key string) string {
-	if key == "admin_language" || key == "site_timezone" {
-		return "select"
-	}
-	if key == "site_icon" {
-		return "media"
-	}
-	if key == "powered_by_gopress" {
-		return "checkbox"
+	if def, ok := option.SystemDefinition(key); ok && def.InputType != "" {
+		return def.InputType
 	}
 	return "text"
 }

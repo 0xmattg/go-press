@@ -270,6 +270,7 @@ func (p *Plugin) Activate(app plugin.App) {
 		r.POST("/admin/plugins/multi-language/string-translate", pluginUpdate, p.handleStringTranslationSave)
 		// Option translation admin API
 		r.POST("/admin/plugins/multi-language/option-translate", pluginUpdate, p.handleOptionTranslationSave)
+		r.POST("/admin/plugins/multi-language/site-option-translate", pluginUpdate, p.handleSiteOptionTranslationSave)
 	}, 5))
 
 	// 4c. Re-prime the i18n bundle whenever core admin reports a bulk option
@@ -372,6 +373,7 @@ type OptionTransView struct {
 	Key          string                       // option key e.g. "home_about_title"
 	Section      string                       // UI section e.g. "about"
 	Label        string                       // human-readable label
+	LabelKey     string                       // optional i18n message key for the label
 	DefaultValue string                       // current value from Options table (default language)
 	Overrides    map[string]StringOverrideVal // langCode → DB override (non-default languages)
 }
@@ -591,6 +593,7 @@ func (p *Plugin) SettingsData() map[string]interface{} {
 
 		// --- Translatable Options Data ---
 		trKeys := option.AllTranslatableOptions()
+		siteOptionDefs := option.SystemTranslatableDefinitions()
 		defaultLangCode := p.getDefaultLang()
 		nonDefaultLangs := make([]Language, 0, len(langs))
 		for _, l := range langs {
@@ -612,11 +615,31 @@ func (p *Plugin) SettingsData() map[string]interface{} {
 			}
 		}
 
+		allSettings := p.engine.Options.All()
+		siteOptionViews := make([]OptionTransView, 0, len(siteOptionDefs))
+		for _, def := range siteOptionDefs {
+			view := OptionTransView{
+				Key:          def.Key,
+				Section:      def.Section,
+				Label:        def.Label,
+				LabelKey:     def.LabelKey,
+				DefaultValue: allSettings[def.Key],
+				Overrides:    make(map[string]StringOverrideVal),
+			}
+			if ov, ok := optOverrides[def.Key]; ok {
+				view.Overrides = ov
+			}
+			siteOptionViews = append(siteOptionViews, view)
+		}
+		data["SiteOptions"] = siteOptionViews
+
 		// Organize by section
 		sectionOrder := []string{}
 		sectionMap := make(map[string][]OptionTransView)
-		allSettings := p.engine.Options.All()
 		for _, tk := range trKeys {
+			if option.IsSystemTranslatable(tk.Key) {
+				continue
+			}
 			view := OptionTransView{
 				Key:          tk.Key,
 				Section:      tk.Section,
@@ -896,7 +919,7 @@ func (p *Plugin) loadDBOverrides() {
 	// before translations in other languages can be found by the Localizer.
 	bundleDefaultLang := p.engine.I18n.DefaultLang()
 	allOpts := p.engine.Options.All()
-	transKeys := option.AllTranslatableOptions()
+	transKeys := option.AllMessageTranslatableOptions()
 	if len(transKeys) > 0 {
 		defMsgs := make([]*goi18n.Message, 0, len(transKeys))
 		for _, tk := range transKeys {
@@ -2095,4 +2118,55 @@ func (p *Plugin) handleOptionTranslationSave(c *gin.Context) {
 
 	logger.Info("Option translations saved", "count", count)
 	c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?success=主题设置翻译已保存")
+}
+
+// handleSiteOptionTranslationSave saves core site option translations from the
+// admin UI. Only keys declared by core as system-translatable are accepted.
+func (p *Plugin) handleSiteOptionTranslationSave(c *gin.Context) {
+	if !p.isAdmin(c) {
+		c.Redirect(http.StatusFound, "/admin/login")
+		return
+	}
+
+	if err := c.Request.ParseMultipartForm(32 << 20); err != nil {
+		c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?error=表单解析失败")
+		return
+	}
+
+	count := 0
+	for key, values := range c.Request.PostForm {
+		if !strings.HasPrefix(key, "ot_") {
+			continue
+		}
+		parts := strings.SplitN(strings.TrimPrefix(key, "ot_"), ":", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		langCode := parts[0]
+		optKey := parts[1]
+		if !option.IsSystemTranslatable(optKey) {
+			logger.Warn("multi-language: rejected non-system site option translation", "key", optKey)
+			continue
+		}
+		value := strings.TrimSpace(values[0])
+
+		if value == "" {
+			p.repo.DeleteStringTranslationByKey("option", optKey, langCode)
+		} else {
+			p.repo.UpsertStringTranslation(&StringTranslation{
+				Domain:       "option",
+				Name:         optKey,
+				LanguageCode: langCode,
+				Value:        value,
+				Status:       "translated",
+			})
+			count++
+		}
+	}
+
+	p.loadDBOverrides()
+	cache.InvalidatePageCache(p.engine.Cache)
+
+	logger.Info("Site option translations saved", "count", count)
+	c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?success=网站设置翻译已保存")
 }

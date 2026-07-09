@@ -101,6 +101,37 @@ func TestApplySiteOptionOverridesUpdatesHomeTitle(t *testing.T) {
 	}
 }
 
+func TestApplySiteOptionOverridesForRequestTranslatesSiteOptions(t *testing.T) {
+	builder := rewrite.NewSEOBuilder("https://example.test", "Config Site", rewrite.NewEngine(content.NewRegistry()))
+	seo := builder.ForHome("English description")
+	mgr := coreI18n.NewManager("en")
+	mgr.AddMessages("en", []*goi18n.Message{
+		{ID: coreI18n.OptMsgPrefix + "site_name", Other: "Runtime Site"},
+		{ID: coreI18n.OptMsgPrefix + "site_description", Other: "English description"},
+	})
+	mgr.AddMessages("zh", []*goi18n.Message{
+		{ID: coreI18n.OptMsgPrefix + "site_name", Other: "中文站点"},
+		{ID: coreI18n.OptMsgPrefix + "site_description", Other: "中文网站简介"},
+	})
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c.Set(coreI18n.CtxKeyLocalizer, mgr.NewLocalizer("zh"))
+
+	ApplySiteOptionOverridesFromOptionsForRequest(c, fakeOptionGetter{
+		"site_name":        "Runtime Site",
+		"site_description": "English description",
+	}, mgr, builder, &seo)
+
+	if seo.Title != "中文站点" {
+		t.Fatalf("seo.Title = %q, want 中文站点", seo.Title)
+	}
+	if seo.Description != "中文网站简介" {
+		t.Fatalf("seo.Description = %q, want 中文网站简介", seo.Description)
+	}
+	if seo.OGDescription != "中文网站简介" {
+		t.Fatalf("seo.OGDescription = %q, want 中文网站简介", seo.OGDescription)
+	}
+}
+
 func TestApplySiteOptionOverridesDoesNotRewriteCustomTitle(t *testing.T) {
 	builder := rewrite.NewSEOBuilder("https://example.test", "Config Site", rewrite.NewEngine(content.NewRegistry()))
 	seo := rewrite.SEOMeta{

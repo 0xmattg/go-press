@@ -420,7 +420,7 @@ func (b *BaseTheme) renderHome(c *gin.Context) {
 			desc = b.App.OptionsStore().Get("site_description")
 		}
 		seo := b.App.SEOBuilder().ForHome(desc)
-		ApplySiteOptionOverrides(b.App, &seo)
+		ApplySiteOptionOverridesForRequest(c, b.App, &seo)
 		data["SEO"] = seo
 	}
 
@@ -490,7 +490,7 @@ func (b *BaseTheme) renderArchive(c *gin.Context, route *rewrite.ResolvedRoute) 
 	// Inject SEO
 	if b.App.SEOBuilder() != nil && typeDef != nil {
 		seo := b.App.SEOBuilder().ForArchiveTitle(typeDef, LocalizedArchiveTitle(c, b.App.I18nManager(), typeDef))
-		ApplySiteOptionOverrides(b.App, &seo)
+		ApplySiteOptionOverridesForRequest(c, b.App, &seo)
 		data["SEO"] = seo
 	}
 
@@ -581,7 +581,7 @@ func (b *BaseTheme) renderSingle(c *gin.Context, route *rewrite.ResolvedRoute) {
 	// Inject SEO
 	if b.App.SEOBuilder() != nil && typeDef != nil {
 		seo := b.App.SEOBuilder().ForContent(item, typeDef)
-		ApplySiteOptionOverrides(b.App, &seo)
+		ApplySiteOptionOverridesForRequest(c, b.App, &seo)
 		ApplyContentMetaSEO(b.App.HookBus(), b.App.ContentRepo(), &seo, item)
 		data["SEO"] = seo
 	}
@@ -1049,6 +1049,17 @@ func ApplySiteOptionOverrides(app App, seo *rewrite.SEOMeta) {
 	ApplySiteOptionOverridesFromOptions(app.OptionsStore(), app.SEOBuilder(), seo)
 }
 
+// ApplySiteOptionOverridesForRequest is the request-aware variant of
+// ApplySiteOptionOverrides. It translates system site options such as
+// site_name and site_description using the current request language before
+// applying them to SEO metadata.
+func ApplySiteOptionOverridesForRequest(c *gin.Context, app App, seo *rewrite.SEOMeta) {
+	if app == nil {
+		return
+	}
+	ApplySiteOptionOverridesFromOptionsForRequest(c, app.OptionsStore(), app.I18nManager(), app.SEOBuilder(), seo)
+}
+
 // ApplySiteOptionOverridesFromOptions applies runtime site options to SEO
 // metadata. It is exported for themes with custom PageService render paths so
 // they do not need to duplicate core SEO override logic.
@@ -1070,6 +1081,46 @@ func ApplySiteOptionOverridesFromOptions(opts interface{ Get(string) string }, b
 	}
 	// site_icon: system setting always wins when non-empty; otherwise leaves
 	// whatever the theme may have set, falling back to no favicon.
+	if icon := strings.TrimSpace(opts.Get("site_icon")); icon != "" {
+		seo.SiteIcon = icon
+	}
+}
+
+// ApplySiteOptionOverridesFromOptionsForRequest applies runtime site options to
+// SEO metadata after translating system site options for the current request.
+func ApplySiteOptionOverridesFromOptionsForRequest(c *gin.Context, opts interface{ Get(string) string }, mgr *coreI18n.Manager, builder *rewrite.SEOBuilder, seo *rewrite.SEOMeta) {
+	if opts == nil || seo == nil {
+		return
+	}
+
+	rawName := strings.TrimSpace(opts.Get("site_name"))
+	name := rawName
+	if mgr != nil && c != nil {
+		name = strings.TrimSpace(mgr.TranslateOption(c, "site_name", rawName))
+	}
+	if name != "" && builder != nil {
+		seo.Title = replaceSEOTitleSiteName(seo.Title, builder.SiteName(), name)
+		seo.OGTitle = replaceSEOTitleSiteName(seo.OGTitle, builder.SiteName(), name)
+		if rawName != "" && rawName != builder.SiteName() {
+			seo.Title = replaceSEOTitleSiteName(seo.Title, rawName, name)
+			seo.OGTitle = replaceSEOTitleSiteName(seo.OGTitle, rawName, name)
+		}
+	}
+
+	rawDesc := opts.Get("site_description")
+	desc := rawDesc
+	if mgr != nil && c != nil {
+		desc = mgr.TranslateOption(c, "site_description", rawDesc)
+	}
+	if desc != "" {
+		if seo.Description == "" || seo.Description == rawDesc {
+			seo.Description = desc
+		}
+		if seo.OGDescription == "" || seo.OGDescription == rawDesc {
+			seo.OGDescription = desc
+		}
+	}
+
 	if icon := strings.TrimSpace(opts.Get("site_icon")); icon != "" {
 		seo.SiteIcon = icon
 	}

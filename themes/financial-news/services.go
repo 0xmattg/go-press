@@ -207,7 +207,7 @@ func (s *PageService) buildContentSEO(item *content.Content, typeName string) re
 }
 
 func (s *PageService) applySEOOverrides(seo *rewrite.SEOMeta) {
-	coreTheme.ApplySiteOptionOverridesFromOptions(s.options, s.seoBuilder, seo)
+	coreTheme.ApplySiteOptionOverridesFromOptionsForRequest(s.reqCtx, s.options, s.i18nMgr, s.seoBuilder, seo)
 }
 
 // ForRequest returns a clone of PageService with request-scoped content filters applied.

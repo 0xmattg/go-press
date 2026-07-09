@@ -234,7 +234,7 @@ See [docs/guide/en/themes/overview.md](docs/guide/en/themes/overview.md).
 
 ### Bundled Plugins
 
-- **multilang** — WPML-style content translation, menu translation, language-prefixed routing, and language-aware redirects.
+- **multilang** — WPML-style content translation, menu translation, site setting translation, language-prefixed routing, and language-aware redirects.
 - **seo-extras** — Yoast-style per-content SEO overrides for title, description, Open Graph image, and robots.
 - **code-snippets** — WPCode-style site-level injection for end of `<head>`, start of `<body>`, and before `</body>`.
 - **gopress-analytics** — First-party self-hosted PV, UV, new-visitor, traffic-trend, and top-page analytics.

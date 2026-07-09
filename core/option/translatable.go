@@ -43,8 +43,46 @@ func AllTranslatableOptions() []TranslatableKey {
 	return out
 }
 
+// AllSystemTranslatableOptions returns core site options that are always
+// user-facing text and can be translated independently of the active theme.
+func AllSystemTranslatableOptions() []TranslatableKey {
+	defs := SystemTranslatableDefinitions()
+	out := make([]TranslatableKey, 0, len(defs))
+	for _, def := range defs {
+		out = append(out, TranslatableKey{Key: def.Key, Section: def.Section, Label: def.Label})
+	}
+	return out
+}
+
+// AllMessageTranslatableOptions returns both system and theme option keys that
+// should be present in the i18n bundle.
+func AllMessageTranslatableOptions() []TranslatableKey {
+	system := AllSystemTranslatableOptions()
+	theme := AllTranslatableOptions()
+	out := make([]TranslatableKey, 0, len(system)+len(theme))
+	seen := make(map[string]bool, len(system)+len(theme))
+	for _, tk := range system {
+		if tk.Key == "" || seen[tk.Key] {
+			continue
+		}
+		seen[tk.Key] = true
+		out = append(out, tk)
+	}
+	for _, tk := range theme {
+		if tk.Key == "" || seen[tk.Key] {
+			continue
+		}
+		seen[tk.Key] = true
+		out = append(out, tk)
+	}
+	return out
+}
+
 // IsTranslatable checks if an option key is registered as translatable.
 func IsTranslatable(key string) bool {
+	if IsSystemTranslatable(key) {
+		return true
+	}
 	trMu.RLock()
 	defer trMu.RUnlock()
 	return trSet[key]
@@ -66,9 +104,22 @@ func ClearTranslatableOptions() {
 func AllTranslatableKeys() []string {
 	trMu.RLock()
 	defer trMu.RUnlock()
-	keys := make([]string, len(trRegistry))
-	for i, tk := range trRegistry {
-		keys[i] = tk.Key
+	system := AllSystemTranslatableOptions()
+	keys := make([]string, 0, len(system)+len(trRegistry))
+	seen := make(map[string]bool, len(system)+len(trRegistry))
+	for _, tk := range system {
+		if tk.Key == "" || seen[tk.Key] {
+			continue
+		}
+		seen[tk.Key] = true
+		keys = append(keys, tk.Key)
+	}
+	for _, tk := range trRegistry {
+		if tk.Key == "" || seen[tk.Key] {
+			continue
+		}
+		seen[tk.Key] = true
+		keys = append(keys, tk.Key)
 	}
 	return keys
 }
