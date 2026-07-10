@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	coreI18n "go-press/core/i18n"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -55,8 +57,8 @@ func PageCacheMiddleware(mgr *Manager, ttl time.Duration) gin.HandlerFunc {
 			return
 		}
 
-		// Generate cache key from URL
-		key := pageCacheKey(c.Request)
+		// Generate cache key from URL and current request language.
+		key := pageCacheKey(c)
 
 		// Try to serve from cache
 		if data, ok := mgr.Get(key); ok {
@@ -107,12 +109,25 @@ func InvalidatePageCacheByPath(mgr *Manager, path string) {
 	}
 }
 
-func pageCacheKey(r *http.Request) string {
+func pageCacheKey(c *gin.Context) string {
+	r := c.Request
 	raw := r.URL.Path
 	if r.URL.RawQuery != "" {
 		raw += "?" + r.URL.RawQuery
 	}
-	// Include language cookie in cache key so each language gets its own cache entry
+
+	// Prefer the per-request language set by core i18n or language plugins.
+	// URL-prefix middleware may rewrite /es/ to / before the cache runs, and a
+	// first direct request has no language cookie yet.
+	if v, ok := c.Get(coreI18n.CtxKeyLang); ok {
+		if lang, ok := v.(string); ok && lang != "" {
+			raw += "#lang=" + lang
+			return pageCachePrefix + hashKey(raw)
+		}
+	}
+
+	// Fallback for tests or custom routers that install page cache without the
+	// core i18n middleware.
 	for _, ck := range r.Cookies() {
 		if ck.Name == "gopress_lang" && ck.Value != "" {
 			raw += "#lang=" + ck.Value

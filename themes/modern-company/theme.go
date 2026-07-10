@@ -136,42 +136,14 @@ func isProductArchiveURL(c *gin.Context, engine *core.Engine, raw string) bool {
 }
 
 func isContentArchiveURL(c *gin.Context, engine *core.Engine, contentType string, raw string) bool {
-	contentType = normalizeMegaContentType(contentType)
-	archiveURL := fallbackArchiveURL(contentType)
-	if engine != nil && engine.Rewrite != nil {
-		archiveURL = engine.Rewrite.BuildArchiveURL(contentType)
+	if engine == nil || engine.Rewrite == nil {
+		return false
 	}
-	return normalizeNavPath(c, raw) == normalizeNavPath(c, archiveURL)
-}
-
-func megaMenuContentTypes() []string {
-	return []string{"product", "service", "showcase", "post"}
-}
-
-func normalizeMegaContentType(contentType string) string {
-	switch strings.TrimSpace(contentType) {
-	case "project", "projects":
-		return "showcase"
-	case "blog", "news":
-		return "post"
-	default:
-		return strings.TrimSpace(contentType)
+	route := engine.Rewrite.Resolve(normalizeNavPath(c, raw))
+	if route == nil || !route.IsArchive {
+		return false
 	}
-}
-
-func fallbackArchiveURL(contentType string) string {
-	switch contentType {
-	case "product":
-		return "/products"
-	case "service":
-		return "/services"
-	case "showcase":
-		return "/showcase"
-	case "post":
-		return "/blog"
-	default:
-		return "/" + strings.Trim(contentType, "/")
-	}
+	return route.ContentType == strings.TrimSpace(contentType)
 }
 
 func normalizeNavPath(c *gin.Context, raw string) string {

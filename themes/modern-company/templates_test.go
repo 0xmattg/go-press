@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"go-press/core"
+	"go-press/core/content"
 	"go-press/core/rewrite"
 	coreTheme "go-press/core/theme"
 )
@@ -63,6 +64,7 @@ func TestBaseTemplateFallsBackWhenSEOTitleEmpty(t *testing.T) {
 }
 
 func TestIsProductArchiveURLNormalizesMenuPaths(t *testing.T) {
+	engine := newArchiveURLTestEngine()
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
 	c.Request = httptest.NewRequest("GET", "https://example.test/zh/products", nil)
 
@@ -82,14 +84,15 @@ func TestIsProductArchiveURLNormalizesMenuPaths(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := isProductArchiveURL(c, nil, tt.raw); got != tt.want {
+			if got := isProductArchiveURL(c, engine, tt.raw); got != tt.want {
 				t.Fatalf("isProductArchiveURL(%q) = %v, want %v", tt.raw, got, tt.want)
 			}
 		})
 	}
 }
 
-func TestIsContentArchiveURLSupportsMegaMenuTypes(t *testing.T) {
+func TestIsContentArchiveURLUsesRewriteSlugFromRegistry(t *testing.T) {
+	engine := newArchiveURLTestEngine()
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
 	c.Request = httptest.NewRequest("GET", "https://example.test/", nil)
 
@@ -100,19 +103,79 @@ func TestIsContentArchiveURLSupportsMegaMenuTypes(t *testing.T) {
 	}{
 		{contentType: "product", rawURL: "/products", want: true},
 		{contentType: "service", rawURL: "/services/", want: true},
-		{contentType: "showcase", rawURL: "/zh/showcase", want: true},
+		{contentType: "showcase", rawURL: "/zh/projects", want: true},
 		{contentType: "post", rawURL: "/blog", want: true},
-		{contentType: "project", rawURL: "/showcase", want: true},
-		{contentType: "blog", rawURL: "/blog", want: true},
+		{contentType: "showcase", rawURL: "/showcase", want: false},
 		{contentType: "service", rawURL: "/products", want: false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.contentType+" "+tt.rawURL, func(t *testing.T) {
-			if got := isContentArchiveURL(c, nil, tt.contentType, tt.rawURL); got != tt.want {
+			if got := isContentArchiveURL(c, engine, tt.contentType, tt.rawURL); got != tt.want {
 				t.Fatalf("isContentArchiveURL(%q, %q) = %v, want %v", tt.contentType, tt.rawURL, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestContentMegaMenuForURLUsesRewriteSlugFromRegistry(t *testing.T) {
+	engine := newArchiveURLTestEngine()
+	svc := &PageService{
+		rewriteEngine: engine.Rewrite,
+		registry:      engine.Registry,
+	}
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c.Request = httptest.NewRequest("GET", "https://example.test/", nil)
+
+	tests := []struct {
+		name        string
+		rawURL      string
+		contentType string
+	}{
+		{name: "theme rewrite slug", rawURL: "/projects", contentType: "showcase"},
+		{name: "localized theme rewrite slug", rawURL: "/es/projects", contentType: "showcase"},
+		{name: "core rewrite slug", rawURL: "/blog", contentType: "post"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			menu := svc.ContentMegaMenuForURL(c, tt.rawURL)
+			if menu.ContentType != tt.contentType {
+				t.Fatalf("ContentMegaMenuForURL(%q).ContentType = %q, want %q", tt.rawURL, menu.ContentType, tt.contentType)
+			}
+		})
+	}
+
+	if menu := svc.ContentMegaMenuForURL(c, "/showcase"); menu.ContentType != "" {
+		t.Fatalf("ContentMegaMenuForURL(%q).ContentType = %q, want empty", "/showcase", menu.ContentType)
+	}
+}
+
+func newArchiveURLTestEngine() *core.Engine {
+	registry := content.NewRegistry()
+	registry.RegisterType(content.ContentTypeDef{
+		Name:       "product",
+		HasArchive: true,
+		Rewrite:    content.RewriteRule{Slug: "products"},
+	})
+	registry.RegisterType(content.ContentTypeDef{
+		Name:       "service",
+		HasArchive: true,
+		Rewrite:    content.RewriteRule{Slug: "services"},
+	})
+	registry.RegisterType(content.ContentTypeDef{
+		Name:       "showcase",
+		HasArchive: true,
+		Rewrite:    content.RewriteRule{Slug: "projects"},
+	})
+	registry.RegisterType(content.ContentTypeDef{
+		Name:       "post",
+		HasArchive: true,
+		Rewrite:    content.RewriteRule{Slug: "blog"},
+	})
+	return &core.Engine{
+		Registry: registry,
+		Rewrite:  rewrite.NewEngine(registry),
 	}
 }
 

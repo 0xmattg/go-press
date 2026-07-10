@@ -28,40 +28,78 @@
     const items = document.querySelectorAll('.nav-item-has-mega');
     if (!items.length) return;
 
+    const nav = document.getElementById('primary-nav');
     const closeDelay = 260;
+    let activeItem = null;
+    let closeTimer;
+    let switchTimer;
+
+    function setSwitching() {
+        if (!nav) return;
+        nav.classList.add('mega-switching');
+        clearTimeout(switchTimer);
+        switchTimer = setTimeout(function () {
+            nav.classList.remove('mega-switching');
+        }, 90);
+    }
+
+    function closeActive() {
+        clearTimeout(closeTimer);
+        if (activeItem) {
+            activeItem.classList.remove('mega-open');
+            activeItem = null;
+        }
+    }
+
+    function openMega(item) {
+        clearTimeout(closeTimer);
+
+        if (activeItem && activeItem !== item) {
+            setSwitching();
+            activeItem.classList.remove('mega-open');
+        }
+
+        item.classList.add('mega-open');
+        activeItem = item;
+    }
+
+    function queueClose(item) {
+        clearTimeout(closeTimer);
+        closeTimer = setTimeout(function () {
+            if (activeItem !== item) return;
+            closeActive();
+        }, closeDelay);
+    }
 
     items.forEach(function (item) {
-        let closeTimer;
         const menu = item.querySelector('.product-mega-menu');
 
-        function openMega() {
-            clearTimeout(closeTimer);
-            item.classList.add('mega-open');
-        }
-
-        function queueClose() {
-            clearTimeout(closeTimer);
-            closeTimer = setTimeout(function () {
-                item.classList.remove('mega-open');
-            }, closeDelay);
-        }
-
-        item.addEventListener('mouseenter', openMega);
-        item.addEventListener('mouseleave', queueClose);
-        item.addEventListener('focusin', openMega);
-        item.addEventListener('focusout', queueClose);
+        item.addEventListener('mouseenter', function () {
+            openMega(item);
+        });
+        item.addEventListener('mouseleave', function () {
+            queueClose(item);
+        });
+        item.addEventListener('focusin', function () {
+            openMega(item);
+        });
+        item.addEventListener('focusout', function () {
+            queueClose(item);
+        });
 
         if (menu) {
-            menu.addEventListener('mouseenter', openMega);
-            menu.addEventListener('mouseleave', queueClose);
+            menu.addEventListener('mouseenter', function () {
+                openMega(item);
+            });
+            menu.addEventListener('mouseleave', function () {
+                queueClose(item);
+            });
         }
     });
 
     document.addEventListener('keydown', function (event) {
         if (event.key !== 'Escape') return;
-        items.forEach(function (item) {
-            item.classList.remove('mega-open');
-        });
+        closeActive();
     });
 })();
 

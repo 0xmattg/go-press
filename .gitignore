@@ -50,6 +50,7 @@ pnpm-debug.log*
 *.gz
 *.tgz
 *.bz2
+!plugins/gopress-analytics/data/dbip-country-lite.csv.gz
 
 # Coverage/Reports
 coverage/
