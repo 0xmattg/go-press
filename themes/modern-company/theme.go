@@ -2,6 +2,7 @@ package moderncompany
 
 import (
 	"html/template"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"time"
@@ -65,6 +66,12 @@ func New(engine *core.Engine, themeDir string) *ModernCompanyTheme {
 			}
 			return "https://wa.me/" + digits
 		},
+		"contentMegaMenu": func(c *gin.Context, contentType string) ContentMegaMenu {
+			return svc.ContentMegaMenu(c, contentType)
+		},
+		"contentMegaMenuForURL": func(c *gin.Context, menuURL string) ContentMegaMenu {
+			return svc.ContentMegaMenuForURL(c, menuURL)
+		},
 	})
 
 	// Register custom static-page routes (these take priority over rewrite engine)
@@ -110,12 +117,103 @@ func NewWithDB(db *gorm.DB, themeDir string) *ModernCompanyTheme {
 			}
 			return "https://wa.me/" + digits
 		},
+		"contentMegaMenu": func(c *gin.Context, contentType string) ContentMegaMenu {
+			return svc.ContentMegaMenu(c, contentType)
+		},
+		"contentMegaMenuForURL": func(c *gin.Context, menuURL string) ContentMegaMenu {
+			return svc.ContentMegaMenuForURL(c, menuURL)
+		},
 	})
 	t.AddRoute("GET", "/", t.handler.Home)
 	t.AddRoute("GET", "/about", t.handler.About)
 	t.AddRoute("GET", "/contact", t.handler.Contact)
 	t.AddRoute("POST", "/contact", t.handler.ContactSubmit)
 	return t
+}
+
+func isProductArchiveURL(c *gin.Context, engine *core.Engine, raw string) bool {
+	return isContentArchiveURL(c, engine, "product", raw)
+}
+
+func isContentArchiveURL(c *gin.Context, engine *core.Engine, contentType string, raw string) bool {
+	contentType = normalizeMegaContentType(contentType)
+	archiveURL := fallbackArchiveURL(contentType)
+	if engine != nil && engine.Rewrite != nil {
+		archiveURL = engine.Rewrite.BuildArchiveURL(contentType)
+	}
+	return normalizeNavPath(c, raw) == normalizeNavPath(c, archiveURL)
+}
+
+func megaMenuContentTypes() []string {
+	return []string{"product", "service", "showcase", "post"}
+}
+
+func normalizeMegaContentType(contentType string) string {
+	switch strings.TrimSpace(contentType) {
+	case "project", "projects":
+		return "showcase"
+	case "blog", "news":
+		return "post"
+	default:
+		return strings.TrimSpace(contentType)
+	}
+}
+
+func fallbackArchiveURL(contentType string) string {
+	switch contentType {
+	case "product":
+		return "/products"
+	case "service":
+		return "/services"
+	case "showcase":
+		return "/showcase"
+	case "post":
+		return "/blog"
+	default:
+		return "/" + strings.Trim(contentType, "/")
+	}
+}
+
+func normalizeNavPath(c *gin.Context, raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return ""
+	}
+	u, err := url.Parse(raw)
+	if err != nil {
+		return ""
+	}
+	if u.IsAbs() {
+		if c == nil || c.Request == nil || !strings.EqualFold(u.Host, c.Request.Host) {
+			return ""
+		}
+	}
+	path := u.Path
+	if path == "" {
+		path = raw
+	}
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+	path = strings.TrimRight(path, "/")
+	if path == "" {
+		path = "/"
+	}
+	parts := strings.Split(strings.Trim(path, "/"), "/")
+	if len(parts) > 1 && looksLikeLanguageSegment(parts[0]) {
+		path = "/" + strings.Join(parts[1:], "/")
+	}
+	return path
+}
+
+func looksLikeLanguageSegment(segment string) bool {
+	if len(segment) == 2 {
+		return true
+	}
+	if len(segment) == 5 && segment[2] == '-' {
+		return true
+	}
+	return false
 }
 
 // --- Metadata ---

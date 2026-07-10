@@ -2,6 +2,7 @@ package moderncompany
 
 import (
 	"context"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -101,6 +102,32 @@ type PostView struct {
 	Tags        []TagView
 	PublishedAt *time.Time
 	CreatedAt   time.Time
+}
+
+type ContentMegaMenu struct {
+	ContentType string
+	Label       string
+	ArchiveURL  string
+	Categories  []ContentMegaCategory
+	Items       []ContentMegaItem
+	HasContent  bool
+}
+
+type ContentMegaCategory struct {
+	ID    uint
+	Name  string
+	Slug  string
+	URL   string
+	Count int
+}
+
+type ContentMegaItem struct {
+	ID       uint
+	Title    string
+	Slug     string
+	Excerpt  string
+	ImageURL string
+	URL      string
 }
 
 // ======== Page Data Structs ========
@@ -228,10 +255,11 @@ type PageService struct {
 	// full Engine. They may be nil under NewPageServiceDB (CLI / tests), in
 	// which case the SEO helpers gracefully return zero-value SEOMeta and the
 	// per-content meta filter is skipped.
-	seoBuilder *rewrite.SEOBuilder
-	registry   *content.Registry
-	hookBus    *hook.Bus
-	i18nMgr    *coreI18n.Manager
+	seoBuilder    *rewrite.SEOBuilder
+	rewriteEngine *rewrite.Engine
+	registry      *content.Registry
+	hookBus       *hook.Bus
+	i18nMgr       *coreI18n.Manager
 	// reqCtx is set by ForRequest(c). It is needed by detail-page lookups
 	// (FindBySlugScoped) so per-language slug disambiguation works. Nil for
 	// non-request usages (CLI / tests) — scoped APIs treat nil as "no scope".
@@ -241,14 +269,15 @@ type PageService struct {
 // NewPageService creates a PageService backed by the full Engine.
 func NewPageService(engine *core.Engine) *PageService {
 	return &PageService{
-		db:          engine.DB,
-		contentRepo: engine.Content,
-		taxRepo:     engine.Taxonomy,
-		options:     engine.Options,
-		seoBuilder:  engine.SEO,
-		registry:    engine.Registry,
-		hookBus:     engine.Hooks,
-		i18nMgr:     engine.I18n,
+		db:            engine.DB,
+		contentRepo:   engine.Content,
+		taxRepo:       engine.Taxonomy,
+		options:       engine.Options,
+		seoBuilder:    engine.SEO,
+		rewriteEngine: engine.Rewrite,
+		registry:      engine.Registry,
+		hookBus:       engine.Hooks,
+		i18nMgr:       engine.I18n,
 	}
 }
 
@@ -349,6 +378,231 @@ func (s *PageService) getRecentPosts(n int) []PostView {
 		views[i] = toPostView(c)
 	}
 	return views
+}
+
+func (s *PageService) ContentMegaMenu(c *gin.Context, contentType string) ContentMegaMenu {
+	contentType = normalizeMegaContentType(contentType)
+	archiveURL := s.contentArchiveURL(contentType)
+	menu := ContentMegaMenu{
+		ContentType: contentType,
+		Label:       s.contentTypeMegaLabel(c, contentType),
+		ArchiveURL:  archiveURL,
+	}
+	if s == nil || s.db == nil || contentType == "" || !s.megaMenuEnabled(contentType) {
+		return menu
+	}
+
+	menu.Categories = s.contentMegaCategories(c, contentType, 6)
+	slugs := make([]string, 0, len(menu.Categories))
+	for _, cat := range menu.Categories {
+		slugs = append(slugs, cat.Slug)
+	}
+	menu.Items = s.contentMegaItems(c, contentType, slugs, 4)
+	menu.HasContent = len(menu.Categories) > 0 || len(menu.Items) > 0
+	return menu
+}
+
+func (s *PageService) ContentMegaMenuForURL(c *gin.Context, rawURL string) ContentMegaMenu {
+	for _, contentType := range megaMenuContentTypes() {
+		if normalizeNavPath(c, rawURL) == normalizeNavPath(c, s.contentArchiveURL(contentType)) {
+			return s.ContentMegaMenu(c, contentType)
+		}
+	}
+	return ContentMegaMenu{}
+}
+
+type contentMegaCategoryRow struct {
+	ID    uint
+	Name  string
+	Slug  string
+	Count int
+}
+
+func (s *PageService) contentMegaCategories(c *gin.Context, contentType string, limit int) []ContentMegaCategory {
+	if s == nil || s.db == nil || contentType == "" || limit <= 0 {
+		return nil
+	}
+
+	ct := content.Content{}.TableName()
+	tr := dbprefix.Table("term_relationships")
+	tx := dbprefix.Table("taxonomies")
+	tm := dbprefix.Table("terms")
+
+	var rows []contentMegaCategoryRow
+	err := content.ScopedDB(c, s.db).
+		Model(&taxonomy.Taxonomy{}).
+		Select(tx+".id AS id, "+tm+".name AS name, "+tm+".slug AS slug, COUNT(DISTINCT "+ct+".id) AS count").
+		Joins("JOIN "+tr+" ON "+tr+".taxonomy_id = "+tx+".id").
+		Joins("JOIN "+ct+" ON "+ct+".id = "+tr+".content_id").
+		Joins("JOIN "+tm+" ON "+tm+".id = "+tx+".term_id").
+		Where(tx+".taxonomy = ?", "category").
+		Where(ct+".type = ? AND "+ct+".status = ? AND "+ct+".deleted_at IS NULL", contentType, content.StatusPublished).
+		Where("("+ct+".published_at IS NULL OR "+ct+".published_at <= ?)", time.Now()).
+		Group(tx + ".id, " + tm + ".name, " + tm + ".slug").
+		Order("count DESC, " + tm + ".name ASC").
+		Limit(limit).
+		Scan(&rows).Error
+	if err != nil {
+		return nil
+	}
+
+	archiveURL := s.contentArchiveURL(contentType)
+	out := make([]ContentMegaCategory, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, ContentMegaCategory{
+			ID:    row.ID,
+			Name:  row.Name,
+			Slug:  row.Slug,
+			URL:   archiveURL + "?category=" + url.QueryEscape(row.Slug),
+			Count: row.Count,
+		})
+	}
+	return out
+}
+
+func (s *PageService) contentMegaItems(c *gin.Context, contentType string, categorySlugs []string, limit int) []ContentMegaItem {
+	if s == nil || s.db == nil || contentType == "" || limit <= 0 {
+		return nil
+	}
+
+	ct := content.Content{}.TableName()
+	db := content.ScopedDB(c, s.db).
+		Model(&content.Content{}).
+		Where(ct+".type = ? AND "+ct+".status = ? AND "+ct+".deleted_at IS NULL", contentType, content.StatusPublished).
+		Where("("+ct+".published_at IS NULL OR "+ct+".published_at <= ?)", time.Now())
+
+	if len(categorySlugs) > 0 {
+		tr := dbprefix.Table("term_relationships")
+		tx := dbprefix.Table("taxonomies")
+		tm := dbprefix.Table("terms")
+		db = db.
+			Distinct(ct+".*").
+			Joins("JOIN "+tr+" ON "+tr+".content_id = "+ct+".id").
+			Joins("JOIN "+tx+" ON "+tx+".id = "+tr+".taxonomy_id").
+			Joins("JOIN "+tm+" ON "+tm+".id = "+tx+".term_id").
+			Where(tx+".taxonomy = ? AND "+tm+".slug IN ?", "category", categorySlugs)
+	}
+
+	var items []content.Content
+	err := db.Order(s.contentMegaOrderBy(contentType)).
+		Limit(limit).
+		Find(&items).Error
+	if err != nil {
+		return nil
+	}
+
+	out := make([]ContentMegaItem, 0, len(items))
+	for _, item := range items {
+		out = append(out, ContentMegaItem{
+			ID:       item.ID,
+			Title:    item.Title,
+			Slug:     item.Slug,
+			Excerpt:  compactExcerpt(item.Excerpt, item.Content, 96),
+			ImageURL: item.ImageURL,
+			URL:      s.contentPublicURL(contentType, item.Slug),
+		})
+	}
+	return out
+}
+
+func (s *PageService) contentMegaOrderBy(contentType string) string {
+	ct := content.Content{}.TableName()
+	if s != nil && s.registry != nil {
+		if typeDef := s.registry.GetType(contentType); modernContentTypeSupports(typeDef, "sort_order") {
+			return ct + ".sort_order ASC, " + ct + ".created_at DESC"
+		}
+	}
+	if contentType == "product" || contentType == "service" || contentType == "showcase" {
+		return ct + ".sort_order ASC, " + ct + ".created_at DESC"
+	}
+	return ct + ".published_at DESC, " + ct + ".created_at DESC"
+}
+
+func modernContentTypeSupports(typeDef *content.ContentTypeDef, feature string) bool {
+	if typeDef == nil {
+		return false
+	}
+	for _, support := range typeDef.Supports {
+		if support == feature {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *PageService) megaMenuEnabled(contentType string) bool {
+	if s == nil || s.options == nil {
+		return true
+	}
+	return s.options.Get("nav_mega_"+contentType) != "0"
+}
+
+func (s *PageService) contentTypeMegaLabel(c *gin.Context, contentType string) string {
+	if s != nil && s.registry != nil {
+		if typeDef := s.registry.GetType(contentType); typeDef != nil {
+			return coreTheme.LocalizedContentTypeLabel(c, s.i18nMgr, typeDef)
+		}
+	}
+	switch contentType {
+	case "product":
+		return "Products"
+	case "service":
+		return "Services"
+	case "showcase":
+		return "Projects"
+	case "post":
+		return "Blog"
+	default:
+		return contentType
+	}
+}
+
+func (s *PageService) contentArchiveURL(contentType string) string {
+	if s != nil && s.rewriteEngine != nil {
+		return s.rewriteEngine.BuildArchiveURL(contentType)
+	}
+	switch contentType {
+	case "product":
+		return "/products"
+	case "service":
+		return "/services"
+	case "showcase":
+		return "/showcase"
+	case "post":
+		return "/blog"
+	default:
+		return "/" + strings.Trim(contentType, "/")
+	}
+}
+
+func (s *PageService) contentPublicURL(contentType, slug string) string {
+	if s != nil && s.rewriteEngine != nil {
+		return s.rewriteEngine.BuildURL(contentType, slug)
+	}
+	switch contentType {
+	case "product":
+		return "/products/" + strings.Trim(slug, "/")
+	case "service":
+		return "/services/" + strings.Trim(slug, "/")
+	case "showcase":
+		return "/showcase/" + strings.Trim(slug, "/")
+	case "post":
+		return "/blog/" + strings.Trim(slug, "/")
+	default:
+		return "/" + strings.Trim(contentType, "/") + "/" + strings.Trim(slug, "/")
+	}
+}
+
+func compactExcerpt(excerpt, body string, max int) string {
+	text := strings.TrimSpace(excerpt)
+	if text == "" {
+		text = stripHTMLTags(body)
+	}
+	text = strings.Join(strings.Fields(text), " ")
+	if max <= 0 || len(text) <= max {
+		return text
+	}
+	return strings.TrimSpace(text[:max]) + "..."
 }
 
 func (s *PageService) buildPageData(title, activePage string) PageData {

@@ -522,9 +522,16 @@ h1,h2,h3,h4,h5 { line-height:1.25; color: var(--primary); font-weight:700; }
     display: flex;
     gap: 2px;
     align-items: center;
+    height: 100%;
 }
-.nav-menu li a {
-    display: block;
+.nav-menu > li {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+.nav-menu > li > a {
+    display: flex;
+    align-items: center;
     padding: 7px 15px;
     color: var(--primary);
     font-size: 0.88rem;
@@ -534,7 +541,7 @@ h1,h2,h3,h4,h5 { line-height:1.25; color: var(--primary); font-weight:700; }
     transition: all var(--transition);
     position: relative;
 }
-.nav-menu li a::after {
+.nav-menu > li > a::after {
     content: '';
     position: absolute;
     bottom: 2px;
@@ -545,12 +552,178 @@ h1,h2,h3,h4,h5 { line-height:1.25; color: var(--primary); font-weight:700; }
     transform: scaleX(0);
     transition: transform var(--transition);
 }
-.nav-menu li a:hover::after,
-.nav-menu li a.active::after {
+.nav-menu > li > a:hover::after,
+.nav-menu > li > a.active::after {
     transform: scaleX(1);
 }
-.nav-menu li a:hover { color: var(--accent); }
-.nav-menu li a.active { color: var(--accent); }
+.nav-menu > li > a:hover { color: var(--accent); }
+.nav-menu > li > a.active { color: var(--accent); }
+
+.nav-item-has-mega {
+    position: static;
+}
+.nav-item-has-mega::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% - 4px);
+    height: 34px;
+    pointer-events: none;
+    z-index: 1000;
+}
+.nav-item-has-mega:hover::after,
+.nav-item-has-mega:focus-within::after,
+.nav-item-has-mega.mega-open::after {
+    pointer-events: auto;
+}
+.nav-caret {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 0.72rem;
+    line-height: 1;
+    color: currentColor;
+    transition: transform var(--transition);
+}
+.nav-item-has-mega:hover .nav-caret,
+.nav-item-has-mega:focus-within .nav-caret,
+.nav-item-has-mega.mega-open .nav-caret {
+    transform: rotate(180deg);
+}
+.product-mega-menu {
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    width: min(1180px, calc(100vw - 48px));
+    transform: translateX(-50%) translateY(12px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    background: transparent;
+    border: 0;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    box-shadow: 0 18px 46px rgba(15,27,45,0.16);
+    overflow: hidden;
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
+    z-index: 1001;
+}
+.nav-item-has-mega:hover .product-mega-menu,
+.nav-item-has-mega:focus-within .product-mega-menu,
+.nav-item-has-mega.mega-open .product-mega-menu {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+.product-mega-inner {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    min-height: 300px;
+}
+.product-mega-cats {
+    padding: 28px 26px;
+    background: linear-gradient(180deg, var(--primary-light) 0%, var(--primary) 100%);
+    border-radius: 0 0 0 var(--radius-lg);
+}
+.nav-menu .product-mega-cats a,
+.nav-menu .product-mega-card a {
+    padding: 0;
+    border-radius: 0;
+    letter-spacing: 0;
+}
+.nav-menu .product-mega-cats a::after,
+.nav-menu .product-mega-card a::after {
+    display: none;
+}
+.product-mega-cats a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 42px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    transition: color var(--transition), transform var(--transition);
+}
+.nav-menu .product-mega-cats a {
+    color: rgba(255,255,255,0.9);
+}
+.product-mega-cats a:hover,
+.product-mega-cats a:focus-visible {
+    color: var(--white);
+    transform: translateX(2px);
+}
+.product-mega-cats small {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 999px;
+    color: var(--primary);
+    background: var(--accent);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+.product-mega-all {
+    color: var(--white) !important;
+    text-transform: uppercase;
+    font-size: 0.78rem !important;
+    letter-spacing: 0.08em !important;
+}
+.product-mega-products {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+    padding: 30px;
+    background: var(--white);
+    border-radius: 0 0 var(--radius-lg) 0;
+}
+.product-mega-card {
+    min-width: 0;
+}
+.product-mega-thumb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 4 / 3;
+    margin-bottom: 14px;
+    overflow: hidden;
+    background: var(--light);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.product-mega-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+}
+.product-mega-card:hover .product-mega-thumb img {
+    transform: scale(1.04);
+}
+.product-mega-card h3 {
+    margin: 0 0 8px;
+    font-size: 0.96rem;
+    line-height: 1.35;
+    font-weight: 700;
+}
+.product-mega-card h3 a {
+    color: var(--primary);
+}
+.product-mega-card h3 a:hover,
+.product-mega-card h3 a:focus-visible {
+    color: var(--accent);
+}
+.product-mega-card p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    line-height: 1.55;
+}
 
 /* CTA button in nav */
 .nav-cta {
@@ -3084,14 +3257,25 @@ h1,h2,h3,h4,h5 { line-height:1.25; color: var(--primary); font-weight:700; }
         padding: 16px 20px;
         box-shadow: var(--shadow-lg);
         gap: 0;
+        height: auto;
     }
     .nav-menu.open { display: flex; }
-    .nav-menu li a {
+    .nav-menu > li {
+        display: block;
+        height: auto;
+        width: 100%;
+    }
+    .nav-menu > li > a {
         padding: 14px 0;
         border-bottom: 1px solid var(--border);
     }
-    .nav-menu li a::after { display:none; }
-    .nav-menu li:last-child a { border-bottom:none; }
+    .nav-menu > li > a::after { display:none; }
+    .nav-menu > li:last-child > a { border-bottom:none; }
+    .nav-item-has-mega::after,
+    .nav-caret,
+    .product-mega-menu {
+        display: none;
+    }
     .nav-cta { margin-left:0; }
     .nav-cta a {
         display: block !important;

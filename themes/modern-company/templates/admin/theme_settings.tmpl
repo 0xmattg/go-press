@@ -147,6 +147,39 @@
 <!-- ============ TAB: Brand navigation ============ -->
 <div class="ts-panel" id="tab-brand">
     <h3 class="ts-section-title">{{X $ "theme.settings.text.038" "品牌与导航"}}</h3>
+    <h4 style="margin:0 0 0.75rem; font-size:0.95rem; color:#475569;">{{X $ "theme.settings.text.156" "导航 Mega Menu"}}</h4>
+    <p class="ts-hint">{{X $ "theme.settings.text.157" "开启后，顶部导航对应栏目会在桌面端显示分类与内容预览；移动端仍保持普通菜单。"}}</p>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                <input type="checkbox" name="nav_mega_product" value="1" {{if ne (index $s "nav_mega_product") "0"}}checked{{end}}>
+                <span>{{X $ "theme.settings.text.158" "Products 开启 Mega Menu"}}</span>
+            </label>
+            <input type="hidden" name="nav_mega_product" value="0">
+        </div>
+        <div class="ts-field">
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                <input type="checkbox" name="nav_mega_service" value="1" {{if ne (index $s "nav_mega_service") "0"}}checked{{end}}>
+                <span>{{X $ "theme.settings.text.159" "Services 开启 Mega Menu"}}</span>
+            </label>
+            <input type="hidden" name="nav_mega_service" value="0">
+        </div>
+        <div class="ts-field">
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                <input type="checkbox" name="nav_mega_showcase" value="1" {{if ne (index $s "nav_mega_showcase") "0"}}checked{{end}}>
+                <span>{{X $ "theme.settings.text.160" "Projects 开启 Mega Menu"}}</span>
+            </label>
+            <input type="hidden" name="nav_mega_showcase" value="0">
+        </div>
+        <div class="ts-field">
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                <input type="checkbox" name="nav_mega_post" value="1" {{if ne (index $s "nav_mega_post") "0"}}checked{{end}}>
+                <span>{{X $ "theme.settings.text.161" "Blog 开启 Mega Menu"}}</span>
+            </label>
+            <input type="hidden" name="nav_mega_post" value="0">
+        </div>
+    </div>
+    <hr style="border:0; border-top:1px solid #e2e8f0; margin:1.25rem 0;">
     <div class="ts-grid-2">
         <div class="ts-field">
             <label>{{X $ "theme.settings.text.039" "Logo 首字母"}}</label>

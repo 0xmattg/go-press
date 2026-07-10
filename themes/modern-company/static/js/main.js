@@ -22,6 +22,50 @@
 })();
 
 // ===========================
+// Desktop Mega Menu Hover Guard
+// ===========================
+(function () {
+    const items = document.querySelectorAll('.nav-item-has-mega');
+    if (!items.length) return;
+
+    const closeDelay = 260;
+
+    items.forEach(function (item) {
+        let closeTimer;
+        const menu = item.querySelector('.product-mega-menu');
+
+        function openMega() {
+            clearTimeout(closeTimer);
+            item.classList.add('mega-open');
+        }
+
+        function queueClose() {
+            clearTimeout(closeTimer);
+            closeTimer = setTimeout(function () {
+                item.classList.remove('mega-open');
+            }, closeDelay);
+        }
+
+        item.addEventListener('mouseenter', openMega);
+        item.addEventListener('mouseleave', queueClose);
+        item.addEventListener('focusin', openMega);
+        item.addEventListener('focusout', queueClose);
+
+        if (menu) {
+            menu.addEventListener('mouseenter', openMega);
+            menu.addEventListener('mouseleave', queueClose);
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key !== 'Escape') return;
+        items.forEach(function (item) {
+            item.classList.remove('mega-open');
+        });
+    });
+})();
+
+// ===========================
 // Hero Slider
 // ===========================
 (function () {
