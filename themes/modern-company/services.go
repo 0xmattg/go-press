@@ -381,7 +381,7 @@ func (s *PageService) getRecentPosts(n int) []PostView {
 }
 
 func (s *PageService) ContentMegaMenu(c *gin.Context, contentType string) ContentMegaMenu {
-	contentType = normalizeMegaContentType(contentType)
+	contentType = strings.TrimSpace(contentType)
 	archiveURL := s.contentArchiveURL(contentType)
 	menu := ContentMegaMenu{
 		ContentType: contentType,
@@ -403,9 +403,25 @@ func (s *PageService) ContentMegaMenu(c *gin.Context, contentType string) Conten
 }
 
 func (s *PageService) ContentMegaMenuForURL(c *gin.Context, rawURL string) ContentMegaMenu {
-	for _, contentType := range megaMenuContentTypes() {
-		if normalizeNavPath(c, rawURL) == normalizeNavPath(c, s.contentArchiveURL(contentType)) {
-			return s.ContentMegaMenu(c, contentType)
+	path := normalizeNavPath(c, rawURL)
+	if path == "" {
+		return ContentMegaMenu{}
+	}
+
+	if s != nil && s.rewriteEngine != nil {
+		if route := s.rewriteEngine.Resolve(path); route != nil && route.IsArchive && route.ContentType != "" {
+			return s.ContentMegaMenu(c, route.ContentType)
+		}
+	}
+
+	if s != nil && s.registry != nil {
+		for _, typeDef := range s.registry.AllTypes() {
+			if typeDef == nil || !typeDef.HasArchive {
+				continue
+			}
+			if path == normalizeNavPath(c, s.contentArchiveURL(typeDef.Name)) {
+				return s.ContentMegaMenu(c, typeDef.Name)
+			}
 		}
 	}
 	return ContentMegaMenu{}
@@ -543,54 +559,40 @@ func (s *PageService) contentTypeMegaLabel(c *gin.Context, contentType string) s
 			return coreTheme.LocalizedContentTypeLabel(c, s.i18nMgr, typeDef)
 		}
 	}
-	switch contentType {
-	case "product":
-		return "Products"
-	case "service":
-		return "Services"
-	case "showcase":
-		return "Projects"
-	case "post":
-		return "Blog"
-	default:
-		return contentType
-	}
+	return contentType
 }
 
 func (s *PageService) contentArchiveURL(contentType string) string {
+	contentType = strings.Trim(contentType, "/")
+	if contentType == "" {
+		return "/"
+	}
 	if s != nil && s.rewriteEngine != nil {
 		return s.rewriteEngine.BuildArchiveURL(contentType)
 	}
-	switch contentType {
-	case "product":
-		return "/products"
-	case "service":
-		return "/services"
-	case "showcase":
-		return "/showcase"
-	case "post":
-		return "/blog"
-	default:
-		return "/" + strings.Trim(contentType, "/")
+	if s != nil && s.registry != nil {
+		if typeDef := s.registry.GetType(contentType); typeDef != nil {
+			prefix := strings.Trim(typeDef.Rewrite.Slug, "/")
+			if prefix == "" {
+				prefix = typeDef.Name
+			}
+			return "/" + prefix
+		}
 	}
+	return "/" + contentType
 }
 
 func (s *PageService) contentPublicURL(contentType, slug string) string {
+	contentType = strings.Trim(contentType, "/")
+	slug = strings.Trim(slug, "/")
 	if s != nil && s.rewriteEngine != nil {
 		return s.rewriteEngine.BuildURL(contentType, slug)
 	}
-	switch contentType {
-	case "product":
-		return "/products/" + strings.Trim(slug, "/")
-	case "service":
-		return "/services/" + strings.Trim(slug, "/")
-	case "showcase":
-		return "/showcase/" + strings.Trim(slug, "/")
-	case "post":
-		return "/blog/" + strings.Trim(slug, "/")
-	default:
-		return "/" + strings.Trim(contentType, "/") + "/" + strings.Trim(slug, "/")
+	base := s.contentArchiveURL(contentType)
+	if slug == "" {
+		return base
 	}
+	return strings.TrimRight(base, "/") + "/" + slug
 }
 
 func compactExcerpt(excerpt, body string, max int) string {
