@@ -3,6 +3,7 @@ package moderncompany
 import (
 	"bytes"
 	"html/template"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -58,6 +59,60 @@ func TestBaseTemplateFallsBackWhenSEOTitleEmpty(t *testing.T) {
 	}
 	if !strings.Contains(out.String(), "<title>Visible Title - Hurricane Techs</title>") {
 		t.Fatalf("expected fallback title, got: %s", out.String())
+	}
+}
+
+func TestIsProductArchiveURLNormalizesMenuPaths(t *testing.T) {
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c.Request = httptest.NewRequest("GET", "https://example.test/zh/products", nil)
+
+	tests := []struct {
+		name string
+		raw  string
+		want bool
+	}{
+		{name: "plain archive", raw: "/products", want: true},
+		{name: "trailing slash", raw: "/products/", want: true},
+		{name: "localized", raw: "/zh/products", want: true},
+		{name: "relative", raw: "products", want: true},
+		{name: "same host absolute", raw: "https://example.test/products", want: true},
+		{name: "other host absolute", raw: "https://example.org/products", want: false},
+		{name: "other archive", raw: "/services", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isProductArchiveURL(c, nil, tt.raw); got != tt.want {
+				t.Fatalf("isProductArchiveURL(%q) = %v, want %v", tt.raw, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestIsContentArchiveURLSupportsMegaMenuTypes(t *testing.T) {
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c.Request = httptest.NewRequest("GET", "https://example.test/", nil)
+
+	tests := []struct {
+		contentType string
+		rawURL      string
+		want        bool
+	}{
+		{contentType: "product", rawURL: "/products", want: true},
+		{contentType: "service", rawURL: "/services/", want: true},
+		{contentType: "showcase", rawURL: "/zh/showcase", want: true},
+		{contentType: "post", rawURL: "/blog", want: true},
+		{contentType: "project", rawURL: "/showcase", want: true},
+		{contentType: "blog", rawURL: "/blog", want: true},
+		{contentType: "service", rawURL: "/products", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.contentType+" "+tt.rawURL, func(t *testing.T) {
+			if got := isContentArchiveURL(c, nil, tt.contentType, tt.rawURL); got != tt.want {
+				t.Fatalf("isContentArchiveURL(%q, %q) = %v, want %v", tt.contentType, tt.rawURL, got, tt.want)
+			}
+		})
 	}
 }
 

@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     {{if eq .ActivePage "home"}}{{responsiveImagePreload (settingOr .Settings "home_hero_1_image" "https://images.unsplash.com/photo-1584677123573-7446380b6d69?w=1600&h=900&fit=crop&q=80") "100vw"}}{{end}}
-    <link rel="stylesheet" href="/static/css/style.css?v=70">
+    <link rel="stylesheet" href="/static/css/style.css?v=75">
     {{renderHook "theme.head.end" .}}
 </head>
 <body>
@@ -28,7 +28,7 @@
     {{template "footer" .}}
 
     <button id="scroll-top" class="scroll-top" aria-label="Scroll to top">&#8679;</button>
-    <script src="/static/js/main.js?v=4"></script>
+    <script src="/static/js/main.js?v=5"></script>
     {{renderHook "theme.footer.end" .}}
 </body>
 </html>{{end}}

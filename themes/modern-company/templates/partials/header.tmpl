@@ -65,18 +65,148 @@
                     <span></span><span></span><span></span>
                 </button>
                 <ul class="nav-menu" id="primary-nav">
+                    {{$productMega := contentMegaMenu $.Ctx "product"}}
+                    {{$showcaseMega := contentMegaMenu $.Ctx "showcase"}}
+                    {{$serviceMega := contentMegaMenu $.Ctx "service"}}
+                    {{$postMega := contentMegaMenu $.Ctx "post"}}
                     {{$headerMenu := menuByLocation "header"}}
                     {{if $headerMenu}}
                         {{range $headerMenu.Items}}
-                        <li><a href="{{.URL}}" class="{{if isMenuURLActive $.Ctx .URL}}active{{end}}" {{if eq .Target "_blank"}}target="_blank" rel="noopener"{{end}}>{{.Title}}</a></li>
+                        {{$mega := contentMegaMenuForURL $.Ctx .URL}}
+                        <li class="{{if $mega.HasContent}}nav-item-has-mega{{end}}">
+                            <a href="{{.URL}}" class="{{if isMenuURLActive $.Ctx .URL}}active{{end}}" {{if eq .Target "_blank"}}target="_blank" rel="noopener"{{end}}>{{.Title}}{{if $mega.HasContent}} <span class="nav-caret" aria-hidden="true">⌄</span>{{end}}</a>
+                            {{if $mega.HasContent}}
+                            <div class="product-mega-menu" role="menu" aria-label="{{.Title}}">
+                                <div class="product-mega-inner">
+                                    <div class="product-mega-cats">
+                                        <a class="product-mega-all" href="{{langPrefixURL $.Ctx $mega.ArchiveURL}}">{{T $.Ctx "filter_all"}} {{.Title}}</a>
+                                        {{range $mega.Categories}}
+                                        <a href="{{langPrefixURL $.Ctx .URL}}"><span>{{.Name}}</span><small>{{.Count}}</small></a>
+                                        {{end}}
+                                    </div>
+                                    <div class="product-mega-products">
+                                        {{range $mega.Items}}
+                                        <article class="product-mega-card">
+                                            <a class="product-mega-thumb" href="{{langPrefixURL $.Ctx .URL}}">
+                                                {{if .ImageURL}}<img src="{{.ImageURL}}" alt="{{.Title}}" loading="lazy">{{else}}<span>{{.Title}}</span>{{end}}
+                                            </a>
+                                            <h3><a href="{{langPrefixURL $.Ctx .URL}}">{{.Title}}</a></h3>
+                                            {{if .Excerpt}}<p>{{.Excerpt}}</p>{{end}}
+                                        </article>
+                                        {{end}}
+                                    </div>
+                                </div>
+                            </div>
+                            {{end}}
+                        </li>
                         {{end}}
                     {{else}}
                     <li><a href="{{langPrefixURL $.Ctx "/"}}" class="{{if isMenuURLActive $.Ctx "/"}}active{{end}}">{{T $.Ctx "nav_home"}}</a></li>
                     <li><a href="{{langPrefixURL $.Ctx "/about"}}" class="{{if isMenuURLActive $.Ctx "/about"}}active{{end}}">{{T $.Ctx "nav_about"}}</a></li>
-                    <li><a href="{{langPrefixURL $.Ctx (archiveURL "product")}}" class="{{if isMenuURLActive $.Ctx (archiveURL "product")}}active{{end}}">{{T $.Ctx "nav_products"}}</a></li>
-                    <li><a href="{{langPrefixURL $.Ctx (archiveURL "showcase")}}" class="{{if isMenuURLActive $.Ctx (archiveURL "showcase")}}active{{end}}">{{T $.Ctx "nav_projects"}}</a></li>
-                    <li><a href="{{langPrefixURL $.Ctx (archiveURL "service")}}" class="{{if isMenuURLActive $.Ctx (archiveURL "service")}}active{{end}}">{{T $.Ctx "nav_services"}}</a></li>
-                    <li><a href="{{langPrefixURL $.Ctx (archiveURL "post")}}" class="{{if isMenuURLActive $.Ctx (archiveURL "post")}}active{{end}}">{{T $.Ctx "nav_news"}}</a></li>
+                    <li class="{{if $productMega.HasContent}}nav-item-has-mega{{end}}">
+                        <a href="{{langPrefixURL $.Ctx (archiveURL "product")}}" class="{{if isMenuURLActive $.Ctx (archiveURL "product")}}active{{end}}">{{T $.Ctx "nav_products"}}{{if $productMega.HasContent}} <span class="nav-caret" aria-hidden="true">⌄</span>{{end}}</a>
+                        {{if $productMega.HasContent}}
+                        <div class="product-mega-menu" role="menu" aria-label="{{T $.Ctx "nav_products"}}">
+                            <div class="product-mega-inner">
+                                <div class="product-mega-cats">
+                                    <a class="product-mega-all" href="{{langPrefixURL $.Ctx $productMega.ArchiveURL}}">{{T $.Ctx "filter_all"}} {{T $.Ctx "nav_products"}}</a>
+                                    {{range $productMega.Categories}}
+                                    <a href="{{langPrefixURL $.Ctx .URL}}"><span>{{.Name}}</span><small>{{.Count}}</small></a>
+                                    {{end}}
+                                </div>
+                                <div class="product-mega-products">
+                                    {{range $productMega.Items}}
+                                    <article class="product-mega-card">
+                                        <a class="product-mega-thumb" href="{{langPrefixURL $.Ctx .URL}}">
+                                            {{if .ImageURL}}<img src="{{.ImageURL}}" alt="{{.Title}}" loading="lazy">{{else}}<span>{{.Title}}</span>{{end}}
+                                        </a>
+                                        <h3><a href="{{langPrefixURL $.Ctx .URL}}">{{.Title}}</a></h3>
+                                        {{if .Excerpt}}<p>{{.Excerpt}}</p>{{end}}
+                                    </article>
+                                    {{end}}
+                                </div>
+                            </div>
+                        </div>
+                        {{end}}
+                    </li>
+                    <li class="{{if $showcaseMega.HasContent}}nav-item-has-mega{{end}}">
+                        <a href="{{langPrefixURL $.Ctx (archiveURL "showcase")}}" class="{{if isMenuURLActive $.Ctx (archiveURL "showcase")}}active{{end}}">{{T $.Ctx "nav_projects"}}{{if $showcaseMega.HasContent}} <span class="nav-caret" aria-hidden="true">⌄</span>{{end}}</a>
+                        {{if $showcaseMega.HasContent}}
+                        <div class="product-mega-menu" role="menu" aria-label="{{T $.Ctx "nav_projects"}}">
+                            <div class="product-mega-inner">
+                                <div class="product-mega-cats">
+                                    <a class="product-mega-all" href="{{langPrefixURL $.Ctx $showcaseMega.ArchiveURL}}">{{T $.Ctx "filter_all"}} {{T $.Ctx "nav_projects"}}</a>
+                                    {{range $showcaseMega.Categories}}
+                                    <a href="{{langPrefixURL $.Ctx .URL}}"><span>{{.Name}}</span><small>{{.Count}}</small></a>
+                                    {{end}}
+                                </div>
+                                <div class="product-mega-products">
+                                    {{range $showcaseMega.Items}}
+                                    <article class="product-mega-card">
+                                        <a class="product-mega-thumb" href="{{langPrefixURL $.Ctx .URL}}">
+                                            {{if .ImageURL}}<img src="{{.ImageURL}}" alt="{{.Title}}" loading="lazy">{{else}}<span>{{.Title}}</span>{{end}}
+                                        </a>
+                                        <h3><a href="{{langPrefixURL $.Ctx .URL}}">{{.Title}}</a></h3>
+                                        {{if .Excerpt}}<p>{{.Excerpt}}</p>{{end}}
+                                    </article>
+                                    {{end}}
+                                </div>
+                            </div>
+                        </div>
+                        {{end}}
+                    </li>
+                    <li class="{{if $serviceMega.HasContent}}nav-item-has-mega{{end}}">
+                        <a href="{{langPrefixURL $.Ctx (archiveURL "service")}}" class="{{if isMenuURLActive $.Ctx (archiveURL "service")}}active{{end}}">{{T $.Ctx "nav_services"}}{{if $serviceMega.HasContent}} <span class="nav-caret" aria-hidden="true">⌄</span>{{end}}</a>
+                        {{if $serviceMega.HasContent}}
+                        <div class="product-mega-menu" role="menu" aria-label="{{T $.Ctx "nav_services"}}">
+                            <div class="product-mega-inner">
+                                <div class="product-mega-cats">
+                                    <a class="product-mega-all" href="{{langPrefixURL $.Ctx $serviceMega.ArchiveURL}}">{{T $.Ctx "filter_all"}} {{T $.Ctx "nav_services"}}</a>
+                                    {{range $serviceMega.Categories}}
+                                    <a href="{{langPrefixURL $.Ctx .URL}}"><span>{{.Name}}</span><small>{{.Count}}</small></a>
+                                    {{end}}
+                                </div>
+                                <div class="product-mega-products">
+                                    {{range $serviceMega.Items}}
+                                    <article class="product-mega-card">
+                                        <a class="product-mega-thumb" href="{{langPrefixURL $.Ctx .URL}}">
+                                            {{if .ImageURL}}<img src="{{.ImageURL}}" alt="{{.Title}}" loading="lazy">{{else}}<span>{{.Title}}</span>{{end}}
+                                        </a>
+                                        <h3><a href="{{langPrefixURL $.Ctx .URL}}">{{.Title}}</a></h3>
+                                        {{if .Excerpt}}<p>{{.Excerpt}}</p>{{end}}
+                                    </article>
+                                    {{end}}
+                                </div>
+                            </div>
+                        </div>
+                        {{end}}
+                    </li>
+                    <li class="{{if $postMega.HasContent}}nav-item-has-mega{{end}}">
+                        <a href="{{langPrefixURL $.Ctx (archiveURL "post")}}" class="{{if isMenuURLActive $.Ctx (archiveURL "post")}}active{{end}}">{{T $.Ctx "nav_news"}}{{if $postMega.HasContent}} <span class="nav-caret" aria-hidden="true">⌄</span>{{end}}</a>
+                        {{if $postMega.HasContent}}
+                        <div class="product-mega-menu" role="menu" aria-label="{{T $.Ctx "nav_news"}}">
+                            <div class="product-mega-inner">
+                                <div class="product-mega-cats">
+                                    <a class="product-mega-all" href="{{langPrefixURL $.Ctx $postMega.ArchiveURL}}">{{T $.Ctx "filter_all"}} {{T $.Ctx "nav_news"}}</a>
+                                    {{range $postMega.Categories}}
+                                    <a href="{{langPrefixURL $.Ctx .URL}}"><span>{{.Name}}</span><small>{{.Count}}</small></a>
+                                    {{end}}
+                                </div>
+                                <div class="product-mega-products">
+                                    {{range $postMega.Items}}
+                                    <article class="product-mega-card">
+                                        <a class="product-mega-thumb" href="{{langPrefixURL $.Ctx .URL}}">
+                                            {{if .ImageURL}}<img src="{{.ImageURL}}" alt="{{.Title}}" loading="lazy">{{else}}<span>{{.Title}}</span>{{end}}
+                                        </a>
+                                        <h3><a href="{{langPrefixURL $.Ctx .URL}}">{{.Title}}</a></h3>
+                                        {{if .Excerpt}}<p>{{.Excerpt}}</p>{{end}}
+                                    </article>
+                                    {{end}}
+                                </div>
+                            </div>
+                        </div>
+                        {{end}}
+                    </li>
                     {{end}}
                     <li class="nav-cta"><a href="{{settingOr .Settings "home_cta_link" "/contact"}}" class="{{if isMenuURLActive $.Ctx (settingOr .Settings "home_cta_link" "/contact")}}active{{end}}">{{settingOr .Settings "home_cta_text" "GET A QUOTE"}}</a></li>
                     {{renderHook "header.nav.after" .}}
