@@ -15,6 +15,7 @@ import (
 	"go-press/core/option"
 	"go-press/core/rewrite"
 	"go-press/core/taxonomy"
+	"go-press/core/user"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -67,6 +68,12 @@ type App interface {
 	// SiteLocation returns the configured site timezone location used for
 	// public date formatting.
 	SiteLocation() *time.Location
+}
+
+// PublicAuthApp is optional so lightweight theme test apps do not need to
+// implement authentication. BaseTheme consumes it only for provider discovery.
+type PublicAuthApp interface {
+	PublicAuthProviders() []user.ProviderDescriptor
 }
 
 // Theme is the runtime contract every GoPress theme must implement.

@@ -15,6 +15,7 @@
 * [缓存与 i18n](architecture/caching-and-i18n.md)
 * [Content Scope API](architecture/content-scope.md)
 * [Hook 系统](architecture/hooks.md)
+* [前台用户注册与身份登录](architecture/public-authentication.md)
 
 ## 后台管理
 
@@ -38,6 +39,7 @@
 * [内置插件：SEO Extras (Yoast-like)](plugins/seo-extras.md)
 * [内置插件：Code Snippets (WPCode-like)](plugins/code-snippets.md)
 * [内置插件：GoPress Analytics](plugins/gopress-analytics.md)
+* [内置插件：Google Identity](architecture/public-authentication.md#google-identity-插件)
 
 ## 参考资料
 

@@ -73,5 +73,6 @@ main.go
 - **插件热拔插** — 插件 `Activate` 时记录所有 `hook.Handle`，`Deactivate` 时按 handle 摘除，运行时即可完整下线
 - **前台插槽契约** — 主题在基础布局声明 `theme.head.end` / `theme.body.open` / `theme.footer.end` / `header.nav.after`，插件只对这些稳定语义位置输出 HTML
 - **零主题/插件交叉耦合** — 主题只依赖 core funcmap 字符串 key，插件只向 core 注册 hook/ctx key，**主题和插件之间不存在任何直接调用或类型依赖**，core 是唯一交汇点
+- **Provider-neutral 前台认证** — core 负责用户、Identity、注册策略和可撤销 Session；Google OIDC、钱包签名等协议由独立插件验证，主题只读取统一登录上下文
 
-详细分主题见左侧导航的其他架构章节。
+前台账号、身份插件和主题接入详见 [前台用户注册与身份登录](public-authentication.md)。其他主题见左侧导航中的架构章节。

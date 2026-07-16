@@ -163,7 +163,7 @@ gopress serve     # 装完之后任意目录都能跑
 |---|---|
 | [介绍](docs/guide/zh-CN/README.md) | 项目定位、设计原则 |
 | [快速开始](docs/guide/zh-CN/getting-started/installation.md) | 安装、配置、Web 安装器 |
-| [架构](docs/guide/zh-CN/architecture/overview.md) | 引擎启动流程、内容模型、URL/SEO、缓存、i18n、Content Scope、Hook 系统 |
+| [架构](docs/guide/zh-CN/architecture/overview.md) | 引擎启动流程、内容模型、前台身份登录、URL/SEO、缓存、i18n、Content Scope、Hook 系统 |
 | [后台管理](docs/guide/zh-CN/admin/overview.md) | 后台 CMS、扩展点、菜单管理 |
 | [主题开发](docs/guide/zh-CN/themes/overview.md) | 创建主题、SEO 接入规范、图片管线、媒体变体 |
 | [插件开发](docs/guide/zh-CN/plugins/overview.md) | 创建插件、Hook 列表、内置 multilang / seo-extras / code-snippets / gopress-analytics |
@@ -182,6 +182,30 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 ---
 
 ## 主要特性速览
+
+### 前台用户与身份登录
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/resources/brand/google-g-logo.png" alt="Google G" width="46"><br>
+      <strong>Google / Gmail 登录 · 已支持</strong><br>
+      <sub>内置 Google OIDC 插件，支持 Gmail 与 Google Workspace 账号、Authorization Code Flow、PKCE、已验证身份绑定和可撤销 GoPress Session。</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/resources/brand/metamask-fox.svg" alt="MetaMask" width="50"><br>
+      <strong>MetaMask 钱包登录 · 规划中</strong><br>
+      <sub>Provider-neutral 身份模型已为后续 SIWE / EIP-4361 插件留好边界，钱包协议不会耦合进 core 或主题。</sub>
+    </td>
+  </tr>
+</table>
+
+- **Provider-neutral 账号核心** — Email/Password 可空、以 `(provider, issuer, subject)` 为稳定键的外部身份、策略控制的注册/关联，以及数据库支持的可撤销 Session。
+- **后台注册策略** — 分别控制开放用户注册、外部身份登录、外部身份自动注册、账号关联和受权限上限保护的新用户默认角色。
+- **插件协议边界** — 身份插件负责验证 OIDC、钱包签名或未来协议，core 只接收验证完成的 `VerifiedIdentity`。
+- **主题统一 helper** — `currentUser` / `isLoggedIn` / `loginURL` / `logoutURL` / `loginProviders` 让主题在不知道具体身份插件的情况下渲染账号 UI。
+
+完整核心模型、Google 配置、插件契约、主题接入与 MetaMask 规划见 [前台用户注册与身份登录](docs/guide/zh-CN/architecture/public-authentication.md)。
 
 ### 引擎核心
 
@@ -234,6 +258,7 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 - **seo-extras** — Yoast 风格 per-content SEO 覆盖（4 字段：title/description/og:image/robots）
 - **code-snippets** — WPCode 风格站点级代码注入（`<head>` 末尾、`<body>` 开头、`</body>` 前）
 - **gopress-analytics** — GoPress 官方自托管访问统计，支持 PV、UV、新访客、访问趋势、访客构成和热门页面分析
+- **google-identity** — 基于 Provider-neutral 前台认证核心，为 Gmail 和 Google Workspace 账号提供 Google OIDC 登录与注册
 
 详见 [docs/guide/zh-CN/plugins/overview.md](docs/guide/zh-CN/plugins/overview.md)。
 

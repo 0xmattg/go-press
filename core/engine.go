@@ -91,13 +91,22 @@ type Engine struct {
 
 	// Repositories are thin data access layers. Higher-level workflows should
 	// still go through services where those exist, especially in admin code.
-	Content  *content.Repository
-	Taxonomy *taxonomy.Repository
-	Users    *user.Repository
-	Media    *media.Repository
+	Content      *content.Repository
+	Taxonomy     *taxonomy.Repository
+	Users        *user.Repository
+	Identities   *user.IdentityRepository
+	UserSessions *user.SessionRepository
+	Media        *media.Repository
 
 	// Auth handles admin/session JWT concerns.
 	Auth *user.Auth
+
+	// Public authentication is provider-neutral. Plugins register verified
+	// identity methods through this core-owned runtime.
+	RegistrationPolicy *user.RegistrationPolicy
+	IdentityBroker     *user.IdentityBroker
+	AuthProviders      *user.ProviderRegistry
+	FrontendAuth       *user.PublicAuth
 
 	// I18n is always available. The multilang plugin can layer request language
 	// detection and database overrides on top of this base manager.
@@ -185,10 +194,12 @@ func New(cfg *config.Config, db *gorm.DB) *Engine {
 
 		Mail: coreMail.NewService(cfg.Mail, hookBus),
 
-		Content:  content.NewRepositoryWithHooks(db, hookBus),
-		Taxonomy: taxonomy.NewRepository(db),
-		Users:    user.NewRepository(db),
-		Media:    media.NewRepository(db),
+		Content:      content.NewRepositoryWithHooks(db, hookBus),
+		Taxonomy:     taxonomy.NewRepository(db),
+		Users:        user.NewRepository(db),
+		Identities:   user.NewIdentityRepository(db),
+		UserSessions: user.NewSessionRepository(db),
+		Media:        media.NewRepository(db),
 
 		themes:        make(map[string]coreTheme.Theme),
 		PluginManager: plugin.NewManager(),
@@ -202,6 +213,26 @@ func New(cfg *config.Config, db *gorm.DB) *Engine {
 
 	// Initialize auth
 	e.Auth = user.NewAuth(cfg.CMS.JWTSecret, cfg.CMS.JWTExpireHours, e.Users)
+	e.RegistrationPolicy = user.NewRegistrationPolicy(e.Options, e.RBAC)
+	e.AuthProviders = user.NewProviderRegistry()
+	e.IdentityBroker = user.NewIdentityBroker(e.DB, e.Users, e.Identities, e.RegistrationPolicy)
+	sessionLifetime := time.Duration(cfg.CMS.JWTExpireHours) * time.Hour
+	publicSessions := user.NewSessionManager(e.UserSessions, e.Users, sessionLifetime)
+	e.FrontendAuth = user.NewPublicAuth(
+		e.IdentityBroker,
+		publicSessions,
+		e.AuthProviders,
+		e.RegistrationPolicy,
+		strings.HasPrefix(strings.ToLower(strings.TrimSpace(cfg.Site.URL)), "https://"),
+		func() string {
+			if e.Options != nil {
+				if name := strings.TrimSpace(e.Options.Get("site_name")); name != "" {
+					return name
+				}
+			}
+			return cfg.Site.Name
+		},
+	)
 
 	// Initialize core i18n
 	e.I18n = coreI18n.NewManager(cfg.Site.Language)
@@ -472,6 +503,9 @@ func (e *Engine) Bootstrap() error {
 		logger.Info("Scheduled cache maintenance completed")
 		return nil
 	})
+	e.Sched.AddJob("expired-public-sessions", time.Hour, func(ctx context.Context) error {
+		return e.UserSessions.DeleteExpired(ctx, time.Now().UTC())
+	})
 	e.Sched.Start()
 
 	// 5. Fire init hook
@@ -510,6 +544,9 @@ func (e *Engine) SetupRouter() *gin.Engine {
 	// Page cache middleware (only effective when cache is available)
 	// Fire early middleware hook (runs BEFORE page cache — for plugins like multilang)
 	e.Hooks.DoAction(context.Background(), "middleware.early", r)
+	if e.FrontendAuth != nil {
+		r.Use(e.FrontendAuth.Middleware())
+	}
 
 	r.Use(e.poweredByMiddleware())
 
@@ -551,6 +588,12 @@ func (e *Engine) SetupRouter() *gin.Engine {
 	// All static files through a unified handler
 	r.GET("/static/*filepath", e.serveStatic)
 	r.HEAD("/static/*filepath", e.serveStatic)
+
+	// Core public authentication routes. Provider-specific /auth/* routes are
+	// registered later by active plugins through routes.register.
+	if e.FrontendAuth != nil {
+		e.FrontendAuth.RegisterRoutes(r)
+	}
 
 	// REST API (/api/v1/...)
 	apiGroup := r.Group("/api/v1")
@@ -1044,18 +1087,31 @@ func (e *Engine) Shutdown(ctx context.Context) error {
 // --- App interface implementation ---
 // These methods expose engine capabilities to themes via the theme.App interface.
 
-func (e *Engine) Database() *gorm.DB                 { return e.DB }
-func (e *Engine) ContentRepo() *content.Repository   { return e.Content }
-func (e *Engine) TaxonomyRepo() *taxonomy.Repository { return e.Taxonomy }
-func (e *Engine) ContentRegistry() *content.Registry { return e.Registry }
-func (e *Engine) OptionsStore() *option.Store        { return e.Options }
-func (e *Engine) RewriteEngine() *rewrite.Engine     { return e.Rewrite }
-func (e *Engine) SEOBuilder() *rewrite.SEOBuilder    { return e.SEO }
-func (e *Engine) MenuStore() *menu.Store             { return e.Menus }
-func (e *Engine) MediaRepo() *media.Repository       { return e.Media }
-func (e *Engine) I18nManager() *coreI18n.Manager     { return e.I18n }
-func (e *Engine) HookBus() *hook.Bus                 { return e.Hooks }
-func (e *Engine) MailSender() coreMail.Sender        { return e.Mail }
+func (e *Engine) Database() *gorm.DB                    { return e.DB }
+func (e *Engine) ContentRepo() *content.Repository      { return e.Content }
+func (e *Engine) TaxonomyRepo() *taxonomy.Repository    { return e.Taxonomy }
+func (e *Engine) ContentRegistry() *content.Registry    { return e.Registry }
+func (e *Engine) OptionsStore() *option.Store           { return e.Options }
+func (e *Engine) RewriteEngine() *rewrite.Engine        { return e.Rewrite }
+func (e *Engine) SEOBuilder() *rewrite.SEOBuilder       { return e.SEO }
+func (e *Engine) MenuStore() *menu.Store                { return e.Menus }
+func (e *Engine) MediaRepo() *media.Repository          { return e.Media }
+func (e *Engine) I18nManager() *coreI18n.Manager        { return e.I18n }
+func (e *Engine) HookBus() *hook.Bus                    { return e.Hooks }
+func (e *Engine) MailSender() coreMail.Sender           { return e.Mail }
+func (e *Engine) PublicAuthenticator() *user.PublicAuth { return e.FrontendAuth }
+func (e *Engine) PublicSiteURL() string {
+	if e == nil || e.Config == nil {
+		return ""
+	}
+	return strings.TrimRight(strings.TrimSpace(e.Config.Site.URL), "/")
+}
+func (e *Engine) PublicAuthProviders() []user.ProviderDescriptor {
+	if e == nil || e.AuthProviders == nil || e.RegistrationPolicy == nil || !e.RegistrationPolicy.ExternalLoginEnabled() {
+		return nil
+	}
+	return e.AuthProviders.All()
+}
 
 func (e *Engine) SiteTimezone() string {
 	if e != nil && e.Options != nil {
@@ -1079,3 +1135,4 @@ func (e *Engine) SiteLocation() *time.Location {
 // Compile-time check: Engine implements theme.App.
 var _ coreTheme.App = (*Engine)(nil)
 var _ plugin.MailProvider = (*Engine)(nil)
+var _ plugin.PublicAuthHost = (*Engine)(nil)

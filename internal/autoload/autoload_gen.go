@@ -19,6 +19,7 @@ import (
 
 	// Plugins
 	_ "go-press/plugins/code-snippets"
+	_ "go-press/plugins/google-identity"
 	_ "go-press/plugins/gopress-analytics"
 	_ "go-press/plugins/multilang"
 	_ "go-press/plugins/seo-extras"

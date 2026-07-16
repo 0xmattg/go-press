@@ -26,7 +26,10 @@ Hot disable is an important contract. A disabled plugin should stop affecting ad
 | `seo-extras` | Yoast-like per-content SEO title, description, Open Graph image, and robots overrides. |
 | `code-snippets` | WPCode-like site-level HTML/JS injection into head, body, and footer slots. |
 | `gopress-analytics` | First-party self-hosted page-view, visitor, trend, and top-page analytics. |
+| `google-identity` | Google OpenID Connect login and registration through the core public-auth contract. |
 
 ## Boundary Rule
 
 Plugins should only depend on core packages and public interfaces. They should not import a theme, assume a theme's HTML structure, or scan final HTML responses to patch output.
+
+See [Public Authentication](../architecture/public-authentication.md) for identity-provider and theme integration rules.

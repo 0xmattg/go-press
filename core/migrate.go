@@ -21,7 +21,11 @@ func (e *Engine) Migrate() error {
 // MigrateDB runs database auto-migration for all GoPress core tables.
 func MigrateDB(db *gorm.DB) error {
 	logger.Info("Running GoPress core table migration...")
-	return db.AutoMigrate(
+	return db.AutoMigrate(coreModels()...)
+}
+
+func coreModels() []interface{} {
+	return []interface{}{
 		// Content
 		&content.Content{},
 		&content.ContentMeta{},
@@ -32,6 +36,8 @@ func MigrateDB(db *gorm.DB) error {
 		// Users
 		&user.User{},
 		&user.UserMeta{},
+		&user.UserIdentity{},
+		&user.UserSession{},
 		// Options
 		&option.Option{},
 		// Menus
@@ -42,5 +48,5 @@ func MigrateDB(db *gorm.DB) error {
 		&coreMedia.MediaVariant{},
 		// Admin (audit logs)
 		&admin.AuditLog{},
-	)
+	}
 }

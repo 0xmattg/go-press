@@ -18,6 +18,7 @@ import (
 	"go-press/core/menu"
 	"go-press/core/rewrite"
 	"go-press/core/taxonomy"
+	"go-press/core/user"
 	"go-press/pkg/logger"
 
 	"github.com/gin-gonic/gin"
@@ -227,6 +228,17 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 					return template.HTML(fmt.Sprint(v))
 				}
 			}
+		}
+		engineFuncs["currentUser"] = user.CurrentUserView
+		engineFuncs["isLoggedIn"] = user.IsLoggedIn
+		engineFuncs["loginURL"] = user.LoginURL
+		engineFuncs["logoutURL"] = user.LogoutURL
+		engineFuncs["loginProviders"] = func() []user.ProviderDescriptor {
+			authApp, ok := b.App.(PublicAuthApp)
+			if !ok {
+				return nil
+			}
+			return authApp.PublicAuthProviders()
 		}
 		if mediaRepo := b.App.MediaRepo(); mediaRepo != nil {
 			engineFuncs["responsiveImage"] = func(src, alt, className, sizes, loading string) template.HTML {

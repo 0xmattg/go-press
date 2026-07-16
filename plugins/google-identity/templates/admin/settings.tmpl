@@ -1,0 +1,71 @@
+{{define "content"}}
+<div class="content-header">
+    <div style="display:flex; align-items:center; gap:1rem;">
+        <a href="/admin/plugins" class="btn btn-secondary" style="text-decoration:none;">← {{X $ "plugin.settings.back" "返回插件管理"}}</a>
+        <h2>{{X $ "plugin.settings.title" "%s - 插件设置" .PluginName}}</h2>
+    </div>
+</div>
+
+<div class="card settings-shell">
+    <form method="POST" action="/admin/plugins/{{.PluginSlug}}/settings" class="settings-form">
+        <section class="settings-section">
+            <h3 class="settings-section-title">{{X $ "plugin.google.connection" "Google OIDC 配置"}}</h3>
+            <div class="settings-grid">
+                <div class="form-group settings-item">
+                    <label for="googleEnabled">{{X $ "plugin.google.enabled" "Google 登录"}}</label>
+                    <select id="googleEnabled" name="plugin_google-identity_enabled">
+                        <option value="1" {{if .GoogleEnabled}}selected{{end}}>{{X $ "plugin.google.on" "启用"}}</option>
+                        <option value="0" {{if not .GoogleEnabled}}selected{{end}}>{{X $ "plugin.google.off" "停用"}}</option>
+                    </select>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="googleClientID">{{X $ "plugin.google.client_id" "Client ID"}}</label>
+                    <input type="text" id="googleClientID" name="plugin_google-identity_client_id" value="{{.GoogleClientID}}" autocomplete="off" spellcheck="false">
+                </div>
+                <div class="form-group settings-item">
+                    <label for="googleClientSecret">{{X $ "plugin.google.client_secret" "Client Secret"}}</label>
+                    <input type="password" id="googleClientSecret" name="plugin_google-identity_client_secret" value="" autocomplete="new-password" placeholder="{{if .GoogleSecretConfigured}}{{X $ "plugin.google.secret_set" "已配置；留空保持不变"}}{{else}}{{X $ "plugin.google.secret_empty" "尚未配置"}}{{end}}">
+                </div>
+                <div class="form-group settings-item">
+                    <label for="googleHostedDomain">{{X $ "plugin.google.hosted_domain" "Google Workspace 域（可选）"}}</label>
+                    <input type="text" id="googleHostedDomain" name="plugin_google-identity_hosted_domain" value="{{.GoogleHostedDomain}}" placeholder="example.com" autocomplete="off" spellcheck="false">
+                    <small>{{X $ "plugin.google.hosted_domain_help" "填写后只接受 ID Token 的 hd claim 与该域完全匹配的账户。"}}</small>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="googleAutoRegister">{{X $ "plugin.google.auto_register" "允许此 Provider 自动注册"}}</label>
+                    <select id="googleAutoRegister" name="plugin_google-identity_auto_register">
+                        <option value="1" {{if .GoogleAutoRegister}}selected{{end}}>{{X $ "plugin.google.on" "启用"}}</option>
+                        <option value="0" {{if not .GoogleAutoRegister}}selected{{end}}>{{X $ "plugin.google.off" "停用"}}</option>
+                    </select>
+                    <small>{{X $ "plugin.google.auto_register_help" "仅在站点设置同时开放用户注册和外部身份自动注册时生效。"}}</small>
+                </div>
+            </div>
+        </section>
+
+        <section class="settings-section settings-section-admin">
+            <h3 class="settings-section-title">{{X $ "plugin.google.callback" "授权回调"}}</h3>
+            <div class="form-group settings-item google-callback-field">
+                <label for="googleCallbackURL">{{X $ "plugin.google.callback_url" "Authorized redirect URI"}}</label>
+                <input type="text" id="googleCallbackURL" value="{{.GoogleCallbackURL}}" readonly>
+                <small>{{X $ "plugin.google.callback_help" "请将此地址原样添加到 Google Cloud Console 的 Authorized redirect URIs。"}}</small>
+            </div>
+            <p class="google-status {{if .GoogleReady}}ready{{end}}">
+                {{if .GoogleReady}}{{X $ "plugin.google.ready" "配置完整，登录入口会显示在 /login。"}}{{else}}{{X $ "plugin.google.not_ready" "启用插件并填写 Client ID、Client Secret 后，登录入口才会显示。"}}{{end}}
+            </p>
+        </section>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{{X $ "plugin.settings.save" "保存设置"}}</button>
+        </div>
+    </form>
+</div>
+
+<style>
+.google-callback-field { max-width: 760px; }
+.google-callback-field input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.google-status { margin: 1rem 0 0; padding: .75rem 1rem; border-left: 3px solid #94a3b8; background: #f8fafc; color: #475569; }
+.google-status.ready { border-left-color: #16844b; color: #166534; }
+</style>
+{{end}}
+
+{{define "scripts"}}{{end}}
