@@ -128,7 +128,7 @@ func (s *Service) CreateUser(username, email, password, displayName, role string
 	}
 	u := &user.User{
 		Username:     username,
-		Email:        email,
+		Email:        user.EmailPointer(email),
 		PasswordHash: hash,
 		DisplayName:  displayName,
 		Role:         role,
@@ -701,9 +701,24 @@ func (s *Service) GetAllSettings(lang string) []SettingItemView {
 			Value:       o.Value,
 			Group:       settingGroup(o.Name),
 			InputType:   settingInputType(o.Name),
-			Options:     settingOptions(o.Name),
+			Options:     s.settingOptions(o.Name, lang),
 		})
 	}
+	definitionOrder := make(map[string]int)
+	for index, definition := range option.AllSystemDefinitions() {
+		definitionOrder[definition.Key] = index
+	}
+	sort.SliceStable(views, func(i, j int) bool {
+		left, leftKnown := definitionOrder[views[i].Key]
+		right, rightKnown := definitionOrder[views[j].Key]
+		if leftKnown && rightKnown {
+			return left < right
+		}
+		if leftKnown != rightKnown {
+			return leftKnown
+		}
+		return views[i].Key < views[j].Key
+	})
 	return views
 }
 
@@ -721,14 +736,31 @@ func settingInputType(key string) string {
 	return "text"
 }
 
-func settingOptions(key string) []SettingOptionView {
+func (s *Service) settingOptions(key, lang string) []SettingOptionView {
 	if key == "admin_language" {
 		return adminSupportedLanguages()
 	}
 	if key == "site_timezone" {
 		return supportedTimezones()
 	}
+	if key == option.KeyNewUserDefaultRole {
+		var result []SettingOptionView
+		for _, role := range s.rbac.AllRoles() {
+			if user.IsAllowedPublicRegistrationRole(s.rbac, role.Name) {
+				result = append(result, SettingOptionView{Value: role.Name, Label: adminT(lang, "role."+role.Name)})
+			}
+		}
+		sort.Slice(result, func(i, j int) bool { return result[i].Value < result[j].Value })
+		return result
+	}
 	return nil
+}
+
+func (s *Service) IsValidSystemSettingValue(key, value string) bool {
+	if key == option.KeyNewUserDefaultRole {
+		return user.IsAllowedPublicRegistrationRole(s.rbac, strings.TrimSpace(value))
+	}
+	return true
 }
 
 func (s *Service) MailSettings(lang string) MailSettingsView {

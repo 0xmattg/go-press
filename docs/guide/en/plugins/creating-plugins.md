@@ -91,6 +91,14 @@ Use standard theme hook slots:
 
 The plugin output must match the semantic location. For example, `header.nav.after` should normally output navigation list items, not a floating widget.
 
+## Identity Provider Plugins
+
+An external identity plugin must integrate through core's `plugin.PublicAuthHost` contract. The plugin owns the provider protocol, callback verification, credentials, and provider-specific settings; core alone owns GoPress users, linked identities, sessions, registration policy, and account-linking policy.
+
+After verifying the provider response, pass a normalized `user.VerifiedIdentity` to core. Do not create users or sessions directly from the plugin, and do not expose provider SDK types to themes. Login entry points are published to themes through the provider registry and the generic `loginProviders` template helper.
+
+The complete contract, Google OIDC example, route/RBAC rules, and future wallet/SIWE design are documented in [Public Accounts and External Identity](../architecture/public-authentication.md).
+
 ## Deactivation Checklist
 
 - Remove every action/filter handle.

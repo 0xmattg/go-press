@@ -1,6 +1,7 @@
 package user
 
 import (
+	"strings"
 	"time"
 
 	"go-press/pkg/dbprefix"
@@ -21,8 +22,8 @@ const (
 type User struct {
 	ID           uint           `gorm:"primaryKey" json:"id"`
 	Username     string         `gorm:"size:50;uniqueIndex;not null" json:"username"`
-	Email        string         `gorm:"size:200;uniqueIndex;not null" json:"email"`
-	PasswordHash string         `gorm:"size:255;not null" json:"-"`
+	Email        *string        `gorm:"size:200;uniqueIndex" json:"email,omitempty"`
+	PasswordHash string         `gorm:"size:255" json:"-"`
 	DisplayName  string         `gorm:"size:100" json:"display_name"`
 	AvatarURL    string         `gorm:"size:500" json:"avatar_url"`
 	Role         string         `gorm:"size:30;not null;default:subscriber" json:"role"`
@@ -44,6 +45,24 @@ func (u *User) GetMeta(key string) string {
 		}
 	}
 	return ""
+}
+
+// EmailValue returns the user's email or an empty string when the account has
+// no email identity, such as a wallet-only account.
+func (u *User) EmailValue() string {
+	if u == nil || u.Email == nil {
+		return ""
+	}
+	return *u.Email
+}
+
+// EmailPointer normalizes an optional email for persistence.
+func EmailPointer(email string) *string {
+	email = strings.TrimSpace(email)
+	if email == "" {
+		return nil
+	}
+	return &email
 }
 
 // UserMeta is a key-value extension for User.

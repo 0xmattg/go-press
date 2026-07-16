@@ -122,6 +122,14 @@ e.Hooks.AddAction("middleware.early", func(_ context.Context, args ...interface{
 
 详见 [Content Scope API](../architecture/content-scope.md)。
 
+## 身份 Provider 插件
+
+外部身份插件必须通过 core 提供的 `plugin.PublicAuthHost` 契约接入。插件负责 Provider 协议、回调验证、密钥及 Provider 专属设置；GoPress 用户、身份绑定、登录会话、开放注册策略和账号绑定策略只能由 core 管理。
+
+插件验证完外部响应后，把归一化的 `user.VerifiedIdentity` 交给 core。插件不能直接创建用户或会话，也不能让主题依赖 Google、MetaMask 等 Provider SDK 类型。登录入口由 Provider 注册表统一发布，主题只通过通用的 `loginProviders` 模板 helper 渲染。
+
+完整接口、Google OIDC 示例、路由与 RBAC 约束，以及后续钱包 SIWE 的设计见[前台账号与外部身份登录](../architecture/public-authentication.md)。
+
 ## 热拔插要点
 
 GoPress 支持插件运行时完全热拔插。要做到这一点，插件实现必须遵守：

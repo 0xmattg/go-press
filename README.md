@@ -163,7 +163,7 @@ The documentation lives under [`docs/guide/`](docs/guide/) and is organized as a
 |---|---|
 | [Introduction](docs/guide/en/README.md) | Positioning and design principles |
 | [Getting Started](docs/guide/en/getting-started/installation.md) | Installation, configuration, and the web installer |
-| [Architecture](docs/guide/en/architecture/overview.md) | Engine boot flow, content model, URL/SEO, cache, i18n, content scope, and hooks |
+| [Architecture](docs/guide/en/architecture/overview.md) | Engine boot flow, content model, public authentication, URL/SEO, cache, i18n, content scope, and hooks |
 | [Admin](docs/guide/en/admin/overview.md) | Admin CMS, extension points, and menu management |
 | [Themes](docs/guide/en/themes/overview.md) | Creating themes, SEO integration, image pipeline, and media variants |
 | [Plugins](docs/guide/en/plugins/overview.md) | Creating plugins, hook contracts, and bundled plugins |
@@ -186,6 +186,30 @@ go run ./cmd/gendoc/
 ---
 
 ## Feature Overview
+
+### Public Accounts and Identity
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/resources/brand/google-g-logo.png" alt="Google G" width="46"><br>
+      <strong>Google / Gmail Sign-In · Available</strong><br>
+      <sub>Bundled Google OIDC plugin for Gmail and Google Workspace accounts, with Authorization Code Flow, PKCE, verified identity binding, and revocable GoPress sessions.</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/resources/brand/metamask-fox.svg" alt="MetaMask" width="50"><br>
+      <strong>MetaMask Wallet Sign-In · Planned</strong><br>
+      <sub>The provider-neutral identity model is ready for a future SIWE / EIP-4361 plugin without coupling wallet protocol code to core or themes.</sub>
+    </td>
+  </tr>
+</table>
+
+- **Provider-neutral account core** — nullable email/password credentials, external identity bindings keyed by `(provider, issuer, subject)`, policy-controlled registration and linking, and database-backed revocable sessions.
+- **Admin-controlled registration policy** — independent switches for public registration, external login, external auto-registration, account linking, and a privilege-limited default role.
+- **Plugin protocol boundary** — identity plugins verify OIDC, wallet signatures, or future protocols, then pass only `VerifiedIdentity` assertions to core.
+- **Theme-ready helpers** — `currentUser`, `isLoggedIn`, `loginURL`, `logoutURL`, and `loginProviders` let themes render account UI without knowing which provider plugin is active.
+
+See [Public Authentication](docs/guide/en/architecture/public-authentication.md) for the core model, Google setup, plugin contract, theme integration, and planned MetaMask path.
 
 ### Engine Core
 
@@ -238,6 +262,7 @@ See [docs/guide/en/themes/overview.md](docs/guide/en/themes/overview.md).
 - **seo-extras** — Yoast-style per-content SEO overrides for title, description, Open Graph image, and robots.
 - **code-snippets** — WPCode-style site-level injection for end of `<head>`, start of `<body>`, and before `</body>`.
 - **gopress-analytics** — First-party self-hosted PV, UV, new-visitor, traffic-trend, and top-page analytics.
+- **google-identity** — Google OIDC login and registration for Gmail and Google Workspace accounts, built on the provider-neutral public-auth core.
 
 See [docs/guide/en/plugins/overview.md](docs/guide/en/plugins/overview.md).
 

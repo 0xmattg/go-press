@@ -552,7 +552,7 @@ func (i *Installer) initializeSite(cfg *config.Config, values siteValues, adminP
 
 	adminUser := &user.User{
 		Username:     values.AdminUsername,
-		Email:        values.AdminEmail,
+		Email:        user.EmailPointer(values.AdminEmail),
 		PasswordHash: hash,
 		DisplayName:  values.AdminUsername,
 		Role:         user.RoleSuperAdmin,

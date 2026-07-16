@@ -32,6 +32,7 @@ If the site is not installed yet, the handler switcher routes requests to the in
 - Load theme-declared content types from `theme.toml`, including rewrite slugs and archive/detail template mapping.
 - Initialize active plugins and remove plugin hooks when they are disabled.
 - Rebuild frontend routes after theme switching or relevant setting changes.
+- Own provider-neutral public users, external identity bindings, registration policy, and revocable sessions while leaving protocol verification to plugins.
 
 ## Extension Model
 
@@ -44,3 +45,5 @@ The extension model is deliberately simple:
 - Shared behavior is exposed by core-level helpers and hook names.
 
 This keeps the architecture open to third-party packages without creating hidden dependencies between themes and plugins.
+
+See [Public Authentication](public-authentication.md) for the identity data model, provider-plugin contract, theme helpers, Google OIDC setup, and wallet-provider guidance.

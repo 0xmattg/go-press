@@ -17,8 +17,9 @@ type Definition struct {
 }
 
 const (
-	SystemOptionSectionSite  = "site"
-	SystemOptionSectionAdmin = "admin"
+	SystemOptionSectionSite     = "site"
+	SystemOptionSectionAdmin    = "admin"
+	SystemOptionSectionAccounts = "accounts"
 
 	SystemOptionInputText     = "text"
 	SystemOptionInputSelect   = "select"
@@ -82,6 +83,51 @@ var systemOptionDefinitions = []Definition{
 		LabelKey:       "field.powered_by_gopress",
 		Label:          "GoPress Attribution",
 		DescriptionKey: "help.powered_by_gopress",
+		InputType:      SystemOptionInputCheckbox,
+		DefaultValue:   "1",
+	},
+	{
+		Key:            KeyUserRegistrationEnabled,
+		Section:        SystemOptionSectionAccounts,
+		LabelKey:       "field.user_registration_enabled",
+		Label:          "Public User Registration",
+		DescriptionKey: "help.user_registration_enabled",
+		InputType:      SystemOptionInputCheckbox,
+		DefaultValue:   "0",
+	},
+	{
+		Key:            KeyNewUserDefaultRole,
+		Section:        SystemOptionSectionAccounts,
+		LabelKey:       "field.new_user_default_role",
+		Label:          "New User Default Role",
+		DescriptionKey: "help.new_user_default_role",
+		InputType:      SystemOptionInputSelect,
+		DefaultValue:   "subscriber",
+	},
+	{
+		Key:            KeyExternalIdentityLoginEnabled,
+		Section:        SystemOptionSectionAccounts,
+		LabelKey:       "field.external_identity_login_enabled",
+		Label:          "External Identity Login",
+		DescriptionKey: "help.external_identity_login_enabled",
+		InputType:      SystemOptionInputCheckbox,
+		DefaultValue:   "1",
+	},
+	{
+		Key:            KeyExternalIdentityAutoRegister,
+		Section:        SystemOptionSectionAccounts,
+		LabelKey:       "field.external_identity_auto_register_enabled",
+		Label:          "External Identity Auto-registration",
+		DescriptionKey: "help.external_identity_auto_register_enabled",
+		InputType:      SystemOptionInputCheckbox,
+		DefaultValue:   "0",
+	},
+	{
+		Key:            KeyUserAccountLinkingEnabled,
+		Section:        SystemOptionSectionAccounts,
+		LabelKey:       "field.user_account_linking_enabled",
+		Label:          "Account Linking",
+		DescriptionKey: "help.user_account_linking_enabled",
 		InputType:      SystemOptionInputCheckbox,
 		DefaultValue:   "1",
 	},

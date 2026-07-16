@@ -10,6 +10,7 @@ import (
 	"go-press/core/content"
 	"go-press/core/menu"
 	"go-press/core/rewrite"
+	"go-press/core/user"
 
 	"github.com/gin-gonic/gin"
 )
@@ -73,6 +74,13 @@ func CommonFuncMap() template.FuncMap {
 		},
 		"currentLang": func(c *gin.Context) string {
 			return "en"
+		},
+		"currentUser": user.CurrentUserView,
+		"isLoggedIn":  user.IsLoggedIn,
+		"loginURL":    user.LoginURL,
+		"logoutURL":   user.LogoutURL,
+		"loginProviders": func() []user.ProviderDescriptor {
+			return nil
 		},
 		"langPrefixURL": func(c *gin.Context, path string) string {
 			return path

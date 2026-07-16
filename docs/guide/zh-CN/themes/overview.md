@@ -137,6 +137,12 @@ e.Hooks.RemoveFilter(handle)
 
 后续新主题推荐走 [BaseTheme + gin.H 路径](seo-integration.md#推荐写法basetheme--ginh)，避免重复 `PageService` 这套代码。
 
+## 前台账号 UI
+
+主题可以通过 core 提供的 `currentUser`、`isLoggedIn`、`loginURL`、`logoutURL` 和 `loginProviders` helper 渲染与 Provider 无关的账号界面。主题负责决定账号入口的布局和视觉，但不能 import 或特判 Google Identity、未来的钱包 Provider 等插件。
+
+主题应通过 `loginProviders` 发现当前启用的登录方式，并使用 core 发布的 Provider 登录入口。模板示例、页面缓存和安全注意事项见[前台账号与外部身份登录](../architecture/public-authentication.md#主题接入)。
+
 ## 下一步
 
 - [创建主题](creating-themes.md) — 完整 step-by-step 教程

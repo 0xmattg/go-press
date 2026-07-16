@@ -45,6 +45,35 @@
         </div>
         </section>
 
+		<section class="settings-section settings-section-accounts">
+		<h3 class="settings-section-title">{{T . "settings.account_settings"}}</h3>
+		<div class="settings-grid">
+		{{range .Items}}
+		{{if eq .Group "accounts"}}
+		<div class="form-group settings-item">
+			<label>{{.Label}}</label>
+			{{if eq .InputType "select"}}
+			{{$setting := .}}
+			<select name="{{.Key}}" class="form-control">
+				{{range .Options}}
+				<option value="{{.Value}}" {{if eq $setting.Value .Value}}selected{{end}}>{{.Label}}</option>
+				{{end}}
+			</select>
+			{{else if eq .InputType "checkbox"}}
+			<label class="checkbox-label settings-checkbox-label">
+				<input type="checkbox" name="{{.Key}}" value="1" {{if eq .Value "1"}}checked{{end}}>
+				<span>{{T $ "settings.enabled"}}</span>
+			</label>
+			{{else}}
+			<input type="text" name="{{.Key}}" value="{{.Value}}">
+			{{end}}
+			{{if .Description}}<small>{{.Description}}</small>{{end}}
+		</div>
+		{{end}}
+		{{end}}
+		</div>
+		</section>
+
         <section class="settings-section settings-section-admin">
         <h3 class="settings-section-title">{{T . "settings.admin_settings"}}</h3>
         <div class="settings-grid">

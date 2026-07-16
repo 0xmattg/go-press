@@ -9,6 +9,7 @@ import (
 	"time"
 
 	coreI18n "go-press/core/i18n"
+	"go-press/core/user"
 
 	"github.com/gin-gonic/gin"
 )
@@ -45,7 +46,9 @@ func PageCacheMiddleware(mgr *Manager, ttl time.Duration) gin.HandlerFunc {
 		// Skip admin, API, and health paths
 		if strings.HasPrefix(path, "/admin") ||
 			strings.HasPrefix(path, "/api/") ||
+			strings.HasPrefix(path, "/auth/") ||
 			strings.HasPrefix(path, "/static/") ||
+			path == "/login" || path == "/logout" ||
 			path == "/health" {
 			c.Next()
 			return
@@ -53,6 +56,14 @@ func PageCacheMiddleware(mgr *Manager, ttl time.Duration) gin.HandlerFunc {
 
 		// Skip if user is authenticated (has JWT cookie/header)
 		if _, err := c.Cookie("jwt_token"); err == nil {
+			c.Next()
+			return
+		}
+		if _, err := c.Cookie(user.PublicSessionCookie); err == nil {
+			c.Next()
+			return
+		}
+		if user.CurrentUser(c) != nil {
 			c.Next()
 			return
 		}

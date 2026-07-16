@@ -1,11 +1,20 @@
 package plugin
 
+import "go-press/core/user"
+
 // App is the runtime object passed to Plugin lifecycle methods.
 //
 // The concrete value is currently *core.Engine. It remains intentionally loose
 // here to avoid an import cycle; plugins that need engine services should type
 // assert the capabilities they use and fail gracefully if unavailable.
 type App interface{}
+
+// PublicAuthHost is the generic capability external identity plugins use to
+// register login methods and complete verified sign-ins.
+type PublicAuthHost interface {
+	PublicAuthenticator() *user.PublicAuth
+	PublicSiteURL() string
+}
 
 // Plugin is the lifecycle contract every GoPress plugin must implement.
 //

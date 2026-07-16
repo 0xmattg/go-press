@@ -67,6 +67,10 @@ func (h *Handler) SettingUpdate(c *gin.Context) {
 			c.Redirect(http.StatusFound, "/admin/settings?error="+url.QueryEscape(adminT(adminLang, "error.invalid_timezone")))
 			return
 		}
+		if !h.svc.IsValidSystemSettingValue(s.Key, newValue) {
+			c.Redirect(http.StatusFound, "/admin/settings?error="+url.QueryEscape(adminT(adminLang, "error.invalid_registration_role")))
+			return
+		}
 		if newValue != s.Value {
 			h.svc.UpdateSetting(s.Key, newValue)
 		}
@@ -423,7 +427,7 @@ func (h *Handler) UserUpdate(c *gin.Context) {
 		return
 	}
 	lang := h.svc.AdminLanguage()
-	item.Email = c.PostForm("email")
+	item.Email = user.EmailPointer(c.PostForm("email"))
 	item.DisplayName = c.PostForm("display_name")
 	item.Role = c.PostForm("role")
 
