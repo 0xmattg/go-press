@@ -16,6 +16,11 @@ import (
 	"go-press/pkg/logger"
 )
 
+func (p *Plugin) handleLogo(c *gin.Context) {
+	c.Header("Cache-Control", "public, max-age=86400")
+	c.Data(http.StatusOK, "image/png", googleLogo)
+}
+
 func (p *Plugin) handleStart(c *gin.Context) {
 	c.Header("Cache-Control", "no-store")
 	config := p.loadConfig()

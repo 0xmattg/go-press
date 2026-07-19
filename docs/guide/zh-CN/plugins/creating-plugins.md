@@ -128,7 +128,7 @@ e.Hooks.AddAction("middleware.early", func(_ context.Context, args ...interface{
 
 插件验证完外部响应后，把归一化的 `user.VerifiedIdentity` 交给 core。插件不能直接创建用户或会话，也不能让主题依赖 Google、MetaMask 等 Provider SDK 类型。登录入口由 Provider 注册表统一发布，主题只通过通用的 `loginProviders` 模板 helper 渲染。
 
-完整接口、Google OIDC 示例、路由与 RBAC 约束，以及后续钱包 SIWE 的设计见[前台账号与外部身份登录](../architecture/public-authentication.md)。
+完整接口、Google OIDC 与 MetaMask SIWE 示例、Provider 图标、路由及 RBAC 约束见[前台账号与外部身份登录](../architecture/public-authentication.md)。
 
 ## 热拔插要点
 

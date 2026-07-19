@@ -1,0 +1,67 @@
+{{define "content"}}
+<div class="content-header">
+    <div style="display:flex; align-items:center; gap:1rem;">
+        <a href="/admin/plugins" class="btn btn-secondary" style="text-decoration:none;">← {{X $ "plugin.settings.back" "返回插件管理"}}</a>
+        <h2>{{X $ "plugin.settings.title" "%s - 插件设置" .PluginName}}</h2>
+    </div>
+</div>
+
+<div class="card settings-shell">
+    <form method="POST" action="/admin/plugins/{{.PluginSlug}}/settings" class="settings-form">
+        <section class="settings-section">
+            <h3 class="settings-section-title">{{X $ "plugin.metamask.connection" "MetaMask / SIWE 配置"}}</h3>
+            <div class="settings-grid">
+                <div class="form-group settings-item">
+                    <label for="metaMaskEnabled">{{X $ "plugin.metamask.enabled" "MetaMask 登录"}}</label>
+                    <select id="metaMaskEnabled" name="plugin_metamask-identity_enabled">
+                        <option value="1" {{if .MetaMaskEnabled}}selected{{end}}>{{X $ "plugin.metamask.on" "启用"}}</option>
+                        <option value="0" {{if not .MetaMaskEnabled}}selected{{end}}>{{X $ "plugin.metamask.off" "停用"}}</option>
+                    </select>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="metaMaskChainID">{{X $ "plugin.metamask.chain_id" "Authentication Chain ID"}}</label>
+                    <input type="number" id="metaMaskChainID" name="plugin_metamask-identity_chain_id" value="{{.MetaMaskChainID}}" min="1" max="2147483647" step="1" inputmode="numeric">
+                    <small>{{X $ "plugin.metamask.chain_id_help" "首版每个站点使用一个 EIP-155 Chain ID；Ethereum Mainnet 为 1，本地开发链常用 31337。"}}</small>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="metaMaskAutoRegister">{{X $ "plugin.metamask.auto_register" "允许此 Provider 自动注册"}}</label>
+                    <select id="metaMaskAutoRegister" name="plugin_metamask-identity_auto_register">
+                        <option value="1" {{if .MetaMaskAutoRegister}}selected{{end}}>{{X $ "plugin.metamask.on" "启用"}}</option>
+                        <option value="0" {{if not .MetaMaskAutoRegister}}selected{{end}}>{{X $ "plugin.metamask.off" "停用"}}</option>
+                    </select>
+                    <small>{{X $ "plugin.metamask.auto_register_help" "仅在站点设置同时开放用户注册和外部身份自动注册时生效。"}}</small>
+                </div>
+            </div>
+        </section>
+
+        <section class="settings-section settings-section-admin">
+            <h3 class="settings-section-title">{{X $ "plugin.metamask.binding" "SIWE 站点绑定"}}</h3>
+            <div class="settings-grid">
+                <div class="form-group settings-item">
+                    <label for="metaMaskOrigin">{{X $ "plugin.metamask.origin" "Origin / URI"}}</label>
+                    <input type="text" id="metaMaskOrigin" value="{{.MetaMaskOrigin}}" readonly>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="metaMaskDomain">{{X $ "plugin.metamask.domain" "SIWE Domain"}}</label>
+                    <input type="text" id="metaMaskDomain" value="{{.MetaMaskDomain}}" readonly>
+                </div>
+            </div>
+            <p class="metamask-status {{if .MetaMaskReady}}ready{{end}}">
+                {{if .MetaMaskReady}}{{X $ "plugin.metamask.ready" "配置完整，MetaMask 登录入口会显示在 /login。"}}{{else}}{{X $ "plugin.metamask.not_ready" "启用插件、设置有效 Chain ID，并确保站点 URL 有效后，登录入口才会显示。"}}{{end}}
+            </p>
+        </section>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{{X $ "plugin.settings.save" "保存设置"}}</button>
+        </div>
+    </form>
+</div>
+
+<style>
+#metaMaskOrigin, #metaMaskDomain { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.metamask-status { margin: 1rem 0 0; padding: .75rem 1rem; border-left: 3px solid #94a3b8; background: #f8fafc; color: #475569; }
+.metamask-status.ready { border-left-color: #16844b; color: #166534; }
+</style>
+{{end}}
+
+{{define "scripts"}}{{end}}

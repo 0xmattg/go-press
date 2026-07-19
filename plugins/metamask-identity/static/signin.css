@@ -1,0 +1,48 @@
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: #f3f6f9;
+    color: #17233c;
+    font: 15px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+main {
+    width: min(100%, 440px);
+    padding: 32px;
+    border: 1px solid #dce3ea;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 16px 40px rgba(24, 40, 64, .1);
+}
+.wallet-logo { display: block; width: 48px; height: 46px; margin-bottom: 18px; }
+h1 { margin: 0 0 8px; font-size: 24px; letter-spacing: 0; }
+.intro { margin: 0 0 22px; color: #5a6778; }
+dl { margin: 0 0 20px; border-top: 1px solid #e5eaf0; }
+dl div { display: flex; justify-content: space-between; gap: 20px; padding: 10px 0; border-bottom: 1px solid #e5eaf0; }
+dt { color: #5a6778; }
+dd { margin: 0; font-weight: 650; text-align: right; }
+.status { min-height: 46px; margin-bottom: 14px; padding: 11px 13px; border-left: 3px solid #94a3b8; background: #f6f8fa; color: #475569; }
+.status.error { border-left-color: #c33b32; background: #fff5f4; color: #8f2923; }
+.status.success { border-left-color: #16844b; background: #f1faf5; color: #166534; }
+button {
+    width: 100%;
+    min-height: 46px;
+    border: 0;
+    border-radius: 6px;
+    background: #263447;
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+button:hover { background: #17233c; }
+button:disabled { cursor: wait; opacity: .62; }
+.back-link { display: block; margin-top: 18px; color: #356f95; text-align: center; text-decoration: none; }
+.back-link:hover { text-decoration: underline; }
+@media (max-width: 520px) {
+    body { padding: 16px; }
+    main { padding: 24px; }
+}

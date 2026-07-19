@@ -12,7 +12,8 @@
         main { width: min(100%, 420px); padding: 32px; background: #fff; border: 1px solid #dce3ea; border-radius: 8px; box-shadow: 0 16px 40px rgba(24, 40, 64, .1); }
         h1 { margin: 0 0 8px; font-size: 24px; letter-spacing: 0; }
         p { margin: 0 0 24px; color: #5a6778; }
-        a, button { width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: center; border: 1px solid #c9d4df; border-radius: 6px; background: #fff; color: #17233c; font: inherit; font-weight: 650; text-decoration: none; cursor: pointer; }
+        a, button { width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid #c9d4df; border-radius: 6px; background: #fff; color: #17233c; font: inherit; font-weight: 650; text-decoration: none; cursor: pointer; }
+        .provider-icon { width: 24px; height: 24px; flex: 0 0 24px; object-fit: contain; }
         a:hover, button:hover { border-color: #268dcc; color: #167bb8; }
         .providers { display: grid; gap: 10px; }
         .empty { padding: 14px; border-radius: 6px; background: #f6f8fa; color: #5a6778; text-align: center; }
@@ -33,7 +34,7 @@
     <p>Choose a sign-in method.</p>
     {{if .Providers}}
     <div class="providers">
-        {{range .Providers}}<a href="{{.URL}}">Continue with {{.Label}}</a>{{end}}
+        {{range .Providers}}<a href="{{.URL}}">{{if .IconURL}}<img class="provider-icon" src="{{.IconURL}}" alt="">{{end}}<span>Continue with {{.Label}}</span></a>{{end}}
     </div>
     {{else}}
     <div class="empty">No sign-in methods are currently available.</div>

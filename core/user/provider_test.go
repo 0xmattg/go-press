@@ -7,6 +7,9 @@ func TestProviderRegistryRejectsExternalBeginURLAndSorts(t *testing.T) {
 	if err := registry.Register(ProviderDescriptor{ID: "bad", Label: "Bad", BeginURL: "https://evil.example/login"}); err == nil {
 		t.Fatal("external provider begin URL accepted")
 	}
+	if err := registry.Register(ProviderDescriptor{ID: "bad-icon", Label: "Bad Icon", BeginURL: "/auth/bad/start", IconURL: "https://evil.example/track.svg"}); err == nil {
+		t.Fatal("external provider icon URL accepted")
+	}
 	if err := registry.Register(ProviderDescriptor{ID: "second", Label: "Second", BeginURL: "/auth/second/start", Priority: 20}); err != nil {
 		t.Fatalf("Register(second) error = %v", err)
 	}

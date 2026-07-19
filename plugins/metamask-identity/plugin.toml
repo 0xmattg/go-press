@@ -1,0 +1,5 @@
+[plugin]
+name = "MetaMask Identity"
+version = "1.0.1"
+description = "MetaMask and EIP-4361 Sign-In with Ethereum login and registration for GoPress."
+author = "GoPress Team"

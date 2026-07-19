@@ -97,7 +97,7 @@ An external identity plugin must integrate through core's `plugin.PublicAuthHost
 
 After verifying the provider response, pass a normalized `user.VerifiedIdentity` to core. Do not create users or sessions directly from the plugin, and do not expose provider SDK types to themes. Login entry points are published to themes through the provider registry and the generic `loginProviders` template helper.
 
-The complete contract, Google OIDC example, route/RBAC rules, and future wallet/SIWE design are documented in [Public Accounts and External Identity](../architecture/public-authentication.md).
+The complete contract, Google OIDC and MetaMask SIWE examples, provider icons, and route/RBAC rules are documented in [Public Accounts and External Identity](../architecture/public-authentication.md).
 
 ## Deactivation Checklist
 

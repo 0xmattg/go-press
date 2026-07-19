@@ -5,6 +5,7 @@ package googleidentity
 
 import (
 	"context"
+	_ "embed"
 	"path/filepath"
 	"strings"
 	"sync/atomic"
@@ -19,11 +20,13 @@ import (
 )
 
 const (
-	PluginName = "google-identity"
-	providerID = "google"
+	PluginName    = "google-identity"
+	pluginVersion = "1.0.1"
+	providerID    = "google"
 
 	startPath    = "/auth/google/start"
 	callbackPath = "/auth/google/callback"
+	logoPath     = "/auth/google/assets/google-g-logo.png"
 
 	optEnabled      = "plugin_google-identity_enabled"
 	optClientID     = "plugin_google-identity_client_id"
@@ -31,6 +34,9 @@ const (
 	optHostedDomain = "plugin_google-identity_hosted_domain"
 	optAutoRegister = "plugin_google-identity_auto_register"
 )
+
+//go:embed static/google-g-logo.png
+var googleLogo []byte
 
 type appHost interface {
 	plugin.PublicAuthHost
@@ -64,7 +70,7 @@ type Plugin struct {
 func New() *Plugin { return &Plugin{flow: newStandardOIDCFlow()} }
 
 func (p *Plugin) Name() string    { return PluginName }
-func (p *Plugin) Version() string { return "1.0.0" }
+func (p *Plugin) Version() string { return pluginVersion }
 func (p *Plugin) Description() string {
 	return "Google OpenID Connect 登录与注册，支持 PKCE、nonce 和 Workspace 域限制。"
 }
@@ -126,6 +132,7 @@ func (p *Plugin) Activate(app plugin.App) {
 		}
 		router.GET(startPath, p.handleStart)
 		router.GET(callbackPath, p.handleCallback)
+		router.GET(logoPath, p.handleLogo)
 	}, 20))
 	logger.Info("google-identity plugin activated", "configured", p.loadConfig().ready())
 }
@@ -153,7 +160,8 @@ func (p *Plugin) syncProvider() {
 		return
 	}
 	if err := p.auth.Providers().Register(user.ProviderDescriptor{
-		ID: providerID, Label: "Google", BeginURL: startPath, Priority: 10,
+		ID: providerID, Label: "Google", BeginURL: startPath,
+		IconURL: logoPath + "?v=" + pluginVersion, Priority: 10,
 	}); err != nil {
 		logger.Error("google-identity: provider registration failed", "error", err)
 	}
