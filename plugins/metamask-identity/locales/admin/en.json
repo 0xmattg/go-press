@@ -1,0 +1,20 @@
+{
+  "plugin.name": "MetaMask Identity",
+  "plugin.description": "MetaMask and EIP-4361 Sign-In with Ethereum login and registration.",
+  "plugin.settings.back": "Back to Plugins",
+  "plugin.settings.title": "%s - Plugin Settings",
+  "plugin.settings.save": "Save Settings",
+  "plugin.metamask.connection": "MetaMask / SIWE Configuration",
+  "plugin.metamask.enabled": "MetaMask sign-in",
+  "plugin.metamask.on": "Enabled",
+  "plugin.metamask.off": "Disabled",
+  "plugin.metamask.chain_id": "Authentication Chain ID",
+  "plugin.metamask.chain_id_help": "The first release uses one EIP-155 Chain ID per site. Ethereum Mainnet is 1; local development chains commonly use 31337.",
+  "plugin.metamask.auto_register": "Allow auto-registration for this provider",
+  "plugin.metamask.auto_register_help": "This also requires public registration and external identity auto-registration in Site Settings.",
+  "plugin.metamask.binding": "SIWE Site Binding",
+  "plugin.metamask.origin": "Origin / URI",
+  "plugin.metamask.domain": "SIWE Domain",
+  "plugin.metamask.ready": "Configuration is complete. MetaMask is available at /login.",
+  "plugin.metamask.not_ready": "Enable the provider, set a valid Chain ID, and configure a valid site URL to show it on the login page."
+}

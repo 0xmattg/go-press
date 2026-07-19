@@ -55,7 +55,7 @@ New themes should prefer the `BaseTheme + gin.H` path unless they have a strong 
 
 ## Public Account UI
 
-Themes can render provider-neutral account UI with the core helpers `currentUser`, `isLoggedIn`, `loginURL`, `logoutURL`, and `loginProviders`. A theme may choose where and how account controls appear, but it must not import or special-case an identity plugin such as Google Identity or a future wallet provider.
+Themes can render provider-neutral account UI with the core helpers `currentUser`, `isLoggedIn`, `loginURL`, `logoutURL`, and `loginProviders`. A theme may choose where and how account controls appear, but it must not import or special-case identity plugins such as Google Identity or MetaMask Identity.
 
 Use `loginProviders` to discover enabled sign-in choices and link through each provider's core-published begin URL. See [Public Accounts and External Identity](../architecture/public-authentication.md#theme-integration) for template examples and cache/security notes.
 

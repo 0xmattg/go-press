@@ -1,0 +1,20 @@
+{
+  "plugin.name": "MetaMask 身份登录",
+  "plugin.description": "基于 EIP-4361 Sign-In with Ethereum 的 MetaMask 登录与注册。",
+  "plugin.settings.back": "返回插件管理",
+  "plugin.settings.title": "%s - 插件设置",
+  "plugin.settings.save": "保存设置",
+  "plugin.metamask.connection": "MetaMask / SIWE 配置",
+  "plugin.metamask.enabled": "MetaMask 登录",
+  "plugin.metamask.on": "启用",
+  "plugin.metamask.off": "停用",
+  "plugin.metamask.chain_id": "Authentication Chain ID",
+  "plugin.metamask.chain_id_help": "首版每个站点使用一个 EIP-155 Chain ID；Ethereum Mainnet 为 1，本地开发链常用 31337。",
+  "plugin.metamask.auto_register": "允许此 Provider 自动注册",
+  "plugin.metamask.auto_register_help": "仅在站点设置同时开放用户注册和外部身份自动注册时生效。",
+  "plugin.metamask.binding": "SIWE 站点绑定",
+  "plugin.metamask.origin": "Origin / URI",
+  "plugin.metamask.domain": "SIWE Domain",
+  "plugin.metamask.ready": "配置完整，MetaMask 登录入口会显示在 /login。",
+  "plugin.metamask.not_ready": "启用插件、设置有效 Chain ID，并确保站点 URL 有效后，登录入口才会显示。"
+}

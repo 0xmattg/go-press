@@ -27,6 +27,7 @@ Hot disable is an important contract. A disabled plugin should stop affecting ad
 | `code-snippets` | WPCode-like site-level HTML/JS injection into head, body, and footer slots. |
 | `gopress-analytics` | First-party self-hosted page-view, visitor, trend, and top-page analytics. |
 | `google-identity` | Google OpenID Connect login and registration through the core public-auth contract. |
+| `metamask-identity` | MetaMask and EIP-4361 Sign-In with Ethereum login and registration through one-time server challenges. |
 
 ## Boundary Rule
 

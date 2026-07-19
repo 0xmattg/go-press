@@ -1,0 +1,32 @@
+{{define "metamask-signin"}}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Sign in with MetaMask</title>
+    <link rel="stylesheet" href="{{.AssetBaseURL}}signin.css?v={{.AssetVersion}}">
+</head>
+<body>
+<main id="wallet-signin"
+      data-challenge-url="{{.ChallengeURL}}"
+      data-verify-url="{{.VerifyURL}}"
+      data-return-to="{{.ReturnTo}}"
+      data-chain-id="{{.ChainID}}"
+      data-chain-id-hex="{{.ChainIDHex}}">
+    <img class="wallet-logo" src="{{.AssetBaseURL}}metamask-fox.svg?v={{.AssetVersion}}" alt="MetaMask">
+    <h1>Sign in with MetaMask</h1>
+    <p class="intro">Connect your wallet and sign a one-time message for {{.Domain}}. This does not submit a transaction or cost gas.</p>
+    <dl>
+        <div><dt>Network</dt><dd>Chain ID {{.ChainID}}</dd></div>
+        <div><dt>Session</dt><dd>GoPress secure cookie</dd></div>
+    </dl>
+    <div id="wallet-status" class="status" role="status" aria-live="polite">MetaMask is required to continue.</div>
+    <button id="wallet-connect" type="button">Connect and sign</button>
+    <a class="back-link" href="{{.LoginURL}}">Back to sign-in methods</a>
+</main>
+<script src="{{.AssetBaseURL}}signin.js?v={{.AssetVersion}}" defer></script>
+</body>
+</html>
+{{end}}

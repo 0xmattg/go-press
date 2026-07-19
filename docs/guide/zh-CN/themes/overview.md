@@ -139,7 +139,7 @@ e.Hooks.RemoveFilter(handle)
 
 ## 前台账号 UI
 
-主题可以通过 core 提供的 `currentUser`、`isLoggedIn`、`loginURL`、`logoutURL` 和 `loginProviders` helper 渲染与 Provider 无关的账号界面。主题负责决定账号入口的布局和视觉，但不能 import 或特判 Google Identity、未来的钱包 Provider 等插件。
+主题可以通过 core 提供的 `currentUser`、`isLoggedIn`、`loginURL`、`logoutURL` 和 `loginProviders` helper 渲染与 Provider 无关的账号界面。主题负责决定账号入口的布局和视觉，但不能 import 或特判 Google Identity、MetaMask Identity 等插件。
 
 主题应通过 `loginProviders` 发现当前启用的登录方式，并使用 core 发布的 Provider 登录入口。模板示例、页面缓存和安全注意事项见[前台账号与外部身份登录](../architecture/public-authentication.md#主题接入)。
 

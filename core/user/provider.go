@@ -34,7 +34,9 @@ func (r *ProviderRegistry) Register(provider ProviderDescriptor) error {
 	provider.ID = strings.TrimSpace(provider.ID)
 	provider.Label = strings.TrimSpace(provider.Label)
 	provider.BeginURL = strings.TrimSpace(provider.BeginURL)
-	if provider.ID == "" || provider.Label == "" || !isLocalProviderPath(provider.BeginURL) {
+	provider.IconURL = strings.TrimSpace(provider.IconURL)
+	if provider.ID == "" || provider.Label == "" || !isLocalProviderPath(provider.BeginURL) ||
+		(provider.IconURL != "" && !isLocalProviderPath(provider.IconURL)) {
 		return ErrInvalidProvider
 	}
 	r.mu.Lock()

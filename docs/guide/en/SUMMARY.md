@@ -30,6 +30,7 @@
   - [Code Snippets](plugins/code-snippets.md)
   - [GoPress Analytics](plugins/gopress-analytics.md)
   - [Google Identity](architecture/public-authentication.md#google-identity-plugin)
+  - [MetaMask Identity](architecture/public-authentication.md#metamask-identity-plugin)
 - [Reference](reference/project-structure.md)
   - [Project Structure](reference/project-structure.md)
   - [Database Prefixes](reference/database-prefix.md)

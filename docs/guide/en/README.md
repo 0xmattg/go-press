@@ -11,7 +11,7 @@ It is not a line-by-line rewrite of WordPress, and it is not a claim that PHP-ba
 - A theme runtime with config-driven content routing, dynamic template resolution, WordPress-like fallback hierarchy, SEO injection, responsive image helpers, menu locations, language-aware URLs, and frontend hook slots.
 - A plugin system based on Go interfaces, actions, filters, and optional settings providers.
 - Core services for caching, workers, URL rewriting, sitemap generation, redirects, REST APIs, i18n, and table-prefix isolation.
-- Provider-neutral public accounts, external identity bindings, revocable sessions, registration policy, Google OIDC login, and extension contracts for future wallet providers.
+- Provider-neutral public accounts, external identity bindings, revocable sessions, registration policy, Google OIDC login, and MetaMask EIP-4361 wallet login.
 
 ## Core Design Principles
 

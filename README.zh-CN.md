@@ -194,8 +194,8 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
     </td>
     <td align="center" width="50%">
       <img src="docs/resources/brand/metamask-fox.svg" alt="MetaMask" width="50"><br>
-      <strong>MetaMask 钱包登录 · 规划中</strong><br>
-      <sub>Provider-neutral 身份模型已为后续 SIWE / EIP-4361 插件留好边界，钱包协议不会耦合进 core 或主题。</sub>
+      <strong>MetaMask 钱包登录 · 已支持</strong><br>
+      <sub>内置 EIP-4361 SIWE 插件，支持服务端一次性 Challenge、Origin/Chain 绑定、EOA 签名验证和受策略控制的钱包账号注册。</sub>
     </td>
   </tr>
 </table>
@@ -205,7 +205,7 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 - **插件协议边界** — 身份插件负责验证 OIDC、钱包签名或未来协议，core 只接收验证完成的 `VerifiedIdentity`。
 - **主题统一 helper** — `currentUser` / `isLoggedIn` / `loginURL` / `logoutURL` / `loginProviders` 让主题在不知道具体身份插件的情况下渲染账号 UI。
 
-完整核心模型、Google 配置、插件契约、主题接入与 MetaMask 规划见 [前台用户注册与身份登录](docs/guide/zh-CN/architecture/public-authentication.md)。
+完整核心模型、Google/MetaMask 配置、插件契约与主题接入见 [前台用户注册与身份登录](docs/guide/zh-CN/architecture/public-authentication.md)。
 
 ### 引擎核心
 
@@ -259,6 +259,7 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 - **code-snippets** — WPCode 风格站点级代码注入（`<head>` 末尾、`<body>` 开头、`</body>` 前）
 - **gopress-analytics** — GoPress 官方自托管访问统计，支持 PV、UV、新访客、访问趋势、访客构成和热门页面分析
 - **google-identity** — 基于 Provider-neutral 前台认证核心，为 Gmail 和 Google Workspace 账号提供 Google OIDC 登录与注册
+- **metamask-identity** — 基于 EIP-4361 Sign-In with Ethereum 和服务端一次性 Challenge，为 MetaMask 浏览器扩展提供钱包登录与注册
 
 详见 [docs/guide/zh-CN/plugins/overview.md](docs/guide/zh-CN/plugins/overview.md)。
 

@@ -24,7 +24,7 @@ func TestSafeReturnToRejectsExternalAndAuthPaths(t *testing.T) {
 func TestPublicLoginPageListsRegisteredProviders(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	registry := NewProviderRegistry()
-	if err := registry.Register(ProviderDescriptor{ID: "test", Label: "Test Identity", BeginURL: "/auth/test/start"}); err != nil {
+	if err := registry.Register(ProviderDescriptor{ID: "test", Label: "Test Identity", BeginURL: "/auth/test/start", IconURL: "/auth/test/icon.svg"}); err != nil {
 		t.Fatal(err)
 	}
 	auth := NewPublicAuth(nil, nil, registry, NewRegistrationPolicy(optionMap{}, NewRBAC()), false, func() string { return "Example Site" })
@@ -37,7 +37,7 @@ func TestPublicLoginPageListsRegisteredProviders(t *testing.T) {
 		t.Fatalf("status = %d", recorder.Code)
 	}
 	body := recorder.Body.String()
-	if !strings.Contains(body, "Continue with Test Identity") || !strings.Contains(body, "/auth/test/start?return_to=%2Faccount") {
+	if !strings.Contains(body, "Continue with Test Identity") || !strings.Contains(body, "/auth/test/start?return_to=%2Faccount") || !strings.Contains(body, `src="/auth/test/icon.svg"`) {
 		t.Fatalf("provider login page missing expected link: %s", body)
 	}
 }

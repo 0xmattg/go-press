@@ -1,5 +1,5 @@
 [plugin]
 name = "Google Identity"
-version = "1.0.0"
+version = "1.0.1"
 description = "Google OpenID Connect login and registration for GoPress."
 author = "GoPress Team"

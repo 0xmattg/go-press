@@ -20,7 +20,7 @@ The ownership rules are:
 - **Provider plugins** own protocol redirects, challenges, signatures or token verification, provider settings, and profile-to-`VerifiedIdentity` mapping.
 - **Themes** own presentation only. They use core template helpers and never import or detect a provider plugin.
 
-This separation lets an OIDC plugin and a future wallet plugin coexist without adding provider names or protocol branches to core.
+This separation lets Google OIDC and MetaMask wallet sign-in coexist without adding provider names or protocol branches to core.
 
 ## Core Data Model
 
@@ -85,6 +85,7 @@ func (p *Plugin) Activate(app plugin.App) {
         ID:       "example-oidc",
         Label:    "Example Identity",
         BeginURL: "/auth/example/start",
+        IconURL:  "/auth/example/assets/icon.svg",
         Priority: 20,
     })
 
@@ -172,25 +173,36 @@ Configure it under **Admin > Plugins > Google Identity > Settings**:
 
 The redirect URI must match exactly, including scheme, host, port, path, and trailing slash. The plugin reads its callback origin from the configured site URL.
 
-## Future Wallet Provider
+## MetaMask Identity Plugin
 
-MetaMask support should be implemented as another provider plugin, preferably using a mature Sign-In with Ethereum (SIWE / EIP-4361) implementation. The expected flow is:
+The bundled `metamask-identity` plugin implements EIP-4361 Sign-In with Ethereum for the MetaMask browser extension. It supports EOA accounts in its first release and uses the maintained `signinwithethereum/siwe-go` parser and verifier instead of implementing message parsing or secp256k1 recovery locally.
 
-1. Plugin creates a short-lived, single-use nonce tied to the site domain.
-2. Browser wallet signs a structured SIWE message.
-3. Plugin verifies domain, URI, nonce, issued/expiry times, chain ID, and recovered address.
-4. Plugin maps the verified principal to `VerifiedIdentity` and calls core public auth.
-5. Core applies the same registration, linking, role, and session policies used by OIDC.
+Configure it under **Admin > Plugins > MetaMask Identity > Settings**:
 
-Wallet addresses must not be trusted directly from request JSON. A wallet plugin may own challenge storage and chain-specific metadata, but it must not create users or sessions by bypassing `IdentityBroker` and `PublicAuth`.
+1. Enable MetaMask sign-in.
+2. Set the site's authentication EIP-155 Chain ID. Ethereum Mainnet is `1`; a local development chain commonly uses `31337`.
+3. Enable provider auto-registration only when new wallet accounts should be provisioned.
+4. Confirm the displayed SIWE Origin and Domain match the public site URL.
+
+The browser flow is:
+
+1. The plugin selects the MetaMask provider through EIP-6963 with `rdns = io.metamask`, then requests the current EOA and verifies the configured Chain ID.
+2. The server creates the complete SIWE message and stores only hashes of its opaque challenge token, nonce, and message.
+3. MetaMask signs the exact message with `personal_sign`; no transaction is submitted and no gas is spent.
+4. The server validates the exact message, origin, URI, nonce, issue/expiry time, chain, and recovered EOA address.
+5. The challenge is atomically consumed once before the verified Ethereum identity is passed to core public auth.
+
+Wallet identities use `Provider = ethereum`, `Issuer = eip155:<chain-id>`, and the normalized address as `Subject`. Wallet addresses from request JSON are never trusted without signature verification. EIP-1271/EIP-6492 smart-contract wallets, mobile connectors, ENS profiles, and multi-chain linking remain later extensions and will stay inside the provider plugin.
+
+When several EVM wallet extensions are installed, code must not rely directly on `window.ethereum`, which may be claimed by any extension. The MetaMask entry first uses EIP-6963 announcements and excludes Phantom from the legacy injected-provider fallback. Future Phantom support should register a separate provider and button so each entry invokes only its named wallet.
 
 ## Security Checklist
 
 - Keep provider secrets server-side and never render them into frontend templates.
 - Use mature protocol libraries for OIDC, SIWE, and signature verification.
 - Accept only same-site provider start URLs and safe local `return_to` paths.
+- An optional provider `IconURL` must point to a same-site asset served by the plugin; the shared login page does not hard-code provider-specific icons.
 - Never auto-link by email or wallet address without an authenticated linking flow.
 - Derive linking ownership from the current session, not a form or URL user ID.
 - Keep admin provider settings behind `plugin.read` and `plugin.update` RBAC checks.
 - Revoke sessions when an account is disabled or credentials are suspected to be compromised.
-

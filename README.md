@@ -198,8 +198,8 @@ go run ./cmd/gendoc/
     </td>
     <td align="center" width="50%">
       <img src="docs/resources/brand/metamask-fox.svg" alt="MetaMask" width="50"><br>
-      <strong>MetaMask Wallet Sign-In · Planned</strong><br>
-      <sub>The provider-neutral identity model is ready for a future SIWE / EIP-4361 plugin without coupling wallet protocol code to core or themes.</sub>
+      <strong>MetaMask Wallet Sign-In · Available</strong><br>
+      <sub>Bundled EIP-4361 SIWE plugin with server-generated one-time challenges, origin and chain binding, EOA signature verification, and policy-controlled account registration.</sub>
     </td>
   </tr>
 </table>
@@ -209,7 +209,7 @@ go run ./cmd/gendoc/
 - **Plugin protocol boundary** — identity plugins verify OIDC, wallet signatures, or future protocols, then pass only `VerifiedIdentity` assertions to core.
 - **Theme-ready helpers** — `currentUser`, `isLoggedIn`, `loginURL`, `logoutURL`, and `loginProviders` let themes render account UI without knowing which provider plugin is active.
 
-See [Public Authentication](docs/guide/en/architecture/public-authentication.md) for the core model, Google setup, plugin contract, theme integration, and planned MetaMask path.
+See [Public Authentication](docs/guide/en/architecture/public-authentication.md) for the core model, Google and MetaMask setup, plugin contracts, and theme integration.
 
 ### Engine Core
 
@@ -263,6 +263,7 @@ See [docs/guide/en/themes/overview.md](docs/guide/en/themes/overview.md).
 - **code-snippets** — WPCode-style site-level injection for end of `<head>`, start of `<body>`, and before `</body>`.
 - **gopress-analytics** — First-party self-hosted PV, UV, new-visitor, traffic-trend, and top-page analytics.
 - **google-identity** — Google OIDC login and registration for Gmail and Google Workspace accounts, built on the provider-neutral public-auth core.
+- **metamask-identity** — MetaMask browser-extension login and registration through EIP-4361 Sign-In with Ethereum and one-time server challenges.
 
 See [docs/guide/en/plugins/overview.md](docs/guide/en/plugins/overview.md).
 

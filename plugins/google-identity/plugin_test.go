@@ -88,6 +88,28 @@ func TestInvalidHostedDomainDoesNotSilentlyDisableRestriction(t *testing.T) {
 	}
 }
 
+func TestProviderRegistrationIncludesLocalGoogleLogo(t *testing.T) {
+	auth := &fakeAuthService{enabled: true}
+	p := configuredTestPlugin(&fakeOIDCFlow{}, auth)
+	p.syncProvider()
+	provider, ok := auth.Providers().Get(providerID)
+	if !ok || provider.BeginURL != startPath || provider.IconURL != logoPath+"?v="+pluginVersion {
+		t.Fatalf("registered provider = %#v, %v", provider, ok)
+	}
+}
+
+func TestGoogleLogoIsServedFromPluginAssets(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	p := configuredTestPlugin(&fakeOIDCFlow{}, &fakeAuthService{enabled: true})
+	router := gin.New()
+	router.GET(logoPath, p.handleLogo)
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, logoPath, nil))
+	if recorder.Code != http.StatusOK || recorder.Header().Get("Content-Type") != "image/png" || len(recorder.Body.Bytes()) == 0 {
+		t.Fatalf("logo response = %d %q %d bytes", recorder.Code, recorder.Header().Get("Content-Type"), recorder.Body.Len())
+	}
+}
+
 func TestStartCreatesSignedChallengeWithPKCEInputs(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	flow := &fakeOIDCFlow{authURL: "https://accounts.example/authorize"}

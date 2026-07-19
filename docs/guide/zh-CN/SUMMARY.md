@@ -40,6 +40,7 @@
 * [内置插件：Code Snippets (WPCode-like)](plugins/code-snippets.md)
 * [内置插件：GoPress Analytics](plugins/gopress-analytics.md)
 * [内置插件：Google Identity](architecture/public-authentication.md#google-identity-插件)
+* [内置插件：MetaMask Identity](architecture/public-authentication.md#metamask-identity-插件)
 
 ## 参考资料
 

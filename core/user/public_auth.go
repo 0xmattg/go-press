@@ -145,8 +145,9 @@ func (a *PublicAuth) loginPage(c *gin.Context) {
 	if a.policy != nil && a.policy.ExternalLoginEnabled() && a.providers != nil {
 		for _, provider := range a.providers.All() {
 			providers = append(providers, providerView{
-				Label: provider.Label,
-				URL:   appendReturnTo(provider.BeginURL, returnTo),
+				Label:   provider.Label,
+				URL:     appendReturnTo(provider.BeginURL, returnTo),
+				IconURL: provider.IconURL,
 			})
 		}
 	}
@@ -281,8 +282,9 @@ func SafeReturnTo(raw, fallback string) string {
 }
 
 type providerView struct {
-	Label string
-	URL   string
+	Label   string
+	URL     string
+	IconURL string
 }
 
 func appendReturnTo(beginURL, returnTo string) string {
