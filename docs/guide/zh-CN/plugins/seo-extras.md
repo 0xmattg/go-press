@@ -89,28 +89,18 @@ data.SEO / data["SEO"]          （注入模板）
 
 ## 自定义 struct 主题需要做的事
 
-如果你的主题用自定义 PageService（参考 modern-company / financial-news），要让 seo-extras 这类插件生效，`buildContentSEO` 末尾必须调一次 `ApplyContentMetaSEO`：
+如果你的主题嵌入了 `coreTheme.SEOPageService`（参考 modern-company / financial-news），**什么都不用做**——它的 `BuildContentSEO` 内部已经调了 `ApplyContentMetaSEO`，seo-extras 这类插件的 per-content 覆盖自动生效：
 
 ```go
-import (
-    "go-press/core/hook"
-    coreTheme "go-press/core/theme"
-)
-
-type PageService struct {
-    seoBuilder  *rewrite.SEOBuilder
-    registry    *content.Registry
-    hookBus     *hook.Bus            // 新增：从 engine.Hooks 获取
-    contentRepo *content.Repository
-}
-
-func (s *PageService) buildContentSEO(item *content.Content, typeName string) rewrite.SEOMeta {
-    seo := s.seoBuilder.ForContent(item, s.registry.GetType(typeName))
-    s.applySEOOverrides(&seo)
-    coreTheme.ApplyContentMetaSEO(s.hookBus, s.contentRepo, &seo, item)  // ← 让插件能 patch
-    return seo
+func (s *PageService) GetProductDetail(slug string) (*ProductDetailData, error) {
+    item, _ := s.Content.FindBySlugScoped(s.ReqCtx, "product", slug)
+    data := &ProductDetailData{ /* ... */ }
+    data.SEO = s.BuildContentSEO(item, "product") // 已含 ApplyContentMetaSEO，插件可 patch
+    return data, nil
 }
 ```
+
+只有当主题**完全自己生成 `SEOMeta`**、不走 `SEOPageService` 时，才需要在构建 SEO 末尾手动调一次 `coreTheme.ApplyContentMetaSEO(hookBus, contentRepo, &seo, item)`，否则 seo-extras 的 patch 不会生效。
 
 `BaseTheme + gin.H` 主题完全不用关心，core 的 `renderSingle` 已经替你调好了。
 

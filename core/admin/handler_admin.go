@@ -157,11 +157,11 @@ func (h *Handler) SitemapGenerate(c *gin.Context) {
 	if !h.checkPermission(c, "setting", "update") {
 		return
 	}
-	if h.sitemapCallbacks == nil || h.sitemapCallbacks.GenerateFn == nil {
+	if h.sitemapCallbacks == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": adminT(h.svc.AdminLanguage(), "error.sitemap_unconfigured")})
 		return
 	}
-	count, err := h.sitemapCallbacks.GenerateFn()
+	count, err := h.sitemapCallbacks.Generate()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -467,7 +467,7 @@ func (h *Handler) ThemeList(c *gin.Context) {
 	}
 	var themes []ThemeDisplayInfo
 	if h.themeManager != nil {
-		themes = h.themeManager.AvailableFn()
+		themes = h.themeManager.Available()
 	}
 	lang := h.svc.AdminLanguage()
 	h.localizeThemes(themes, lang)
@@ -509,7 +509,7 @@ func (h *Handler) ThemeSwitch(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/admin/themes?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.theme_manager_unavailable")))
 		return
 	}
-	if err := h.themeManager.SwitchFn(slug); err != nil {
+	if err := h.themeManager.Switch(slug); err != nil {
 		c.Redirect(http.StatusFound, "/admin/themes?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.switch_failed", err.Error())))
 		return
 	}
@@ -527,11 +527,11 @@ func (h *Handler) ThemeDemoImport(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/admin/themes?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.theme_missing")))
 		return
 	}
-	if h.themeManager == nil || h.themeManager.ImportDemoFn == nil {
+	if h.themeManager == nil {
 		c.Redirect(http.StatusFound, "/admin/themes?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.theme_demo_unavailable")))
 		return
 	}
-	if err := h.themeManager.ImportDemoFn(slug); err != nil {
+	if err := h.themeManager.ImportDemo(slug); err != nil {
 		c.Redirect(http.StatusFound, "/admin/themes?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.import_failed", err.Error())))
 		return
 	}
@@ -549,7 +549,7 @@ func (h *Handler) ThemeSettings(c *gin.Context) {
 	// Find theme display info
 	var themeName string
 	if h.themeManager != nil {
-		for _, t := range h.themeManager.AvailableFn() {
+		for _, t := range h.themeManager.Available() {
 			if t.Slug == slug {
 				themeName = t.Name
 				break
@@ -562,10 +562,7 @@ func (h *Handler) ThemeSettings(c *gin.Context) {
 	}
 
 	// Get theme settings template path
-	tmplPath := ""
-	if h.themeManager.SettingsTemplateFn != nil {
-		tmplPath = h.themeManager.SettingsTemplateFn(slug)
-	}
+	tmplPath := h.themeManager.SettingsTemplate(slug)
 	if tmplPath == "" {
 		c.Redirect(http.StatusFound, "/admin/themes?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.theme_settings_unavailable")))
 		return
@@ -705,8 +702,8 @@ func (h *Handler) CacheStatus(c *gin.Context) {
 		"Title":  adminT(h.svc.AdminLanguage(), "nav.cache"),
 		"Active": "cache_mgmt",
 	}
-	if h.cacheCallbacks != nil && h.cacheCallbacks.StatusFn != nil {
-		data["CacheInfo"] = h.cacheCallbacks.StatusFn()
+	if h.cacheCallbacks != nil {
+		data["CacheInfo"] = h.cacheCallbacks.Status()
 	}
 	if msg := c.Query("success"); msg != "" {
 		data["Success"] = msg
@@ -726,21 +723,15 @@ func (h *Handler) CacheFlush(c *gin.Context) {
 	target := c.PostForm("target")
 	switch target {
 	case "all":
-		if h.cacheCallbacks.FlushAllFn != nil {
-			h.cacheCallbacks.FlushAllFn()
-		}
+		h.cacheCallbacks.FlushAll()
 		h.logAction(c, "delete", "cache", 0, "clear all cache")
 		c.Redirect(http.StatusFound, "/admin/cache?success="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "notice.cache_all_flushed")))
 	case "page":
-		if h.cacheCallbacks.FlushPageFn != nil {
-			h.cacheCallbacks.FlushPageFn()
-		}
+		h.cacheCallbacks.FlushPage()
 		h.logAction(c, "delete", "cache", 0, "clear page cache")
 		c.Redirect(http.StatusFound, "/admin/cache?success="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "notice.cache_page_flushed")))
 	case "fragment":
-		if h.cacheCallbacks.FlushFragFn != nil {
-			h.cacheCallbacks.FlushFragFn()
-		}
+		h.cacheCallbacks.FlushFrag()
 		h.logAction(c, "delete", "cache", 0, "clear fragment cache")
 		c.Redirect(http.StatusFound, "/admin/cache?success="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "notice.cache_fragment_flushed")))
 	default:
@@ -759,8 +750,8 @@ func (h *Handler) RedirectList(c *gin.Context) {
 		"Title":  adminT(h.svc.AdminLanguage(), "nav.redirects"),
 		"Active": "redirects",
 	}
-	if h.redirectCallbacks != nil && h.redirectCallbacks.AllFn != nil {
-		data["Redirects"] = h.redirectCallbacks.AllFn()
+	if h.redirectCallbacks != nil {
+		data["Redirects"] = h.redirectCallbacks.All()
 	}
 	if msg := c.Query("success"); msg != "" {
 		data["Success"] = msg
@@ -776,7 +767,7 @@ func (h *Handler) RedirectAdd(c *gin.Context) {
 	if !h.checkPermission(c, "redirect", "create") {
 		return
 	}
-	if h.redirectCallbacks == nil || h.redirectCallbacks.AddFn == nil {
+	if h.redirectCallbacks == nil {
 		c.Redirect(http.StatusFound, "/admin/redirects?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.redirect_unavailable")))
 		return
 	}
@@ -791,7 +782,7 @@ func (h *Handler) RedirectAdd(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/admin/redirects?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.redirect_required")))
 		return
 	}
-	if err := h.redirectCallbacks.AddFn(source, target, code); err != nil {
+	if err := h.redirectCallbacks.Add(source, target, code); err != nil {
 		c.Redirect(http.StatusFound, "/admin/redirects?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.add_failed", err.Error())))
 		return
 	}
@@ -804,7 +795,7 @@ func (h *Handler) RedirectRemove(c *gin.Context) {
 	if !h.checkPermission(c, "redirect", "delete") {
 		return
 	}
-	if h.redirectCallbacks == nil || h.redirectCallbacks.RemoveFn == nil {
+	if h.redirectCallbacks == nil {
 		c.Redirect(http.StatusFound, "/admin/redirects?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.redirect_unavailable")))
 		return
 	}
@@ -813,7 +804,7 @@ func (h *Handler) RedirectRemove(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/admin/redirects?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.redirect_source_required")))
 		return
 	}
-	if err := h.redirectCallbacks.RemoveFn(source); err != nil {
+	if err := h.redirectCallbacks.Remove(source); err != nil {
 		c.Redirect(http.StatusFound, "/admin/redirects?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.delete_failed", err.Error())))
 		return
 	}
@@ -832,8 +823,8 @@ func (h *Handler) PluginList(c *gin.Context) {
 		"Title":  adminT(h.svc.AdminLanguage(), "nav.plugins"),
 		"Active": "plugins",
 	}
-	if h.pluginCallbacks != nil && h.pluginCallbacks.AllFn != nil {
-		plugins := h.pluginCallbacks.AllFn()
+	if h.pluginCallbacks != nil {
+		plugins := h.pluginCallbacks.All()
 		h.localizePlugins(plugins, h.svc.AdminLanguage())
 		sort.Slice(plugins, func(i, j int) bool {
 			if plugins[i].Active != plugins[j].Active {
@@ -866,7 +857,7 @@ func (h *Handler) PluginActivate(c *gin.Context) {
 	if !h.checkPermission(c, "plugin", "update") {
 		return
 	}
-	if h.pluginCallbacks == nil || h.pluginCallbacks.ActivateFn == nil {
+	if h.pluginCallbacks == nil {
 		c.Redirect(http.StatusFound, "/admin/plugins?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.plugin_unavailable")))
 		return
 	}
@@ -875,7 +866,7 @@ func (h *Handler) PluginActivate(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/admin/plugins?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.plugin_name_required")))
 		return
 	}
-	if err := h.pluginCallbacks.ActivateFn(name); err != nil {
+	if err := h.pluginCallbacks.Activate(name); err != nil {
 		c.Redirect(http.StatusFound, "/admin/plugins?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.activate_failed", err.Error())))
 		return
 	}
@@ -888,7 +879,7 @@ func (h *Handler) PluginDeactivate(c *gin.Context) {
 	if !h.checkPermission(c, "plugin", "update") {
 		return
 	}
-	if h.pluginCallbacks == nil || h.pluginCallbacks.DeactivateFn == nil {
+	if h.pluginCallbacks == nil {
 		c.Redirect(http.StatusFound, "/admin/plugins?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.plugin_unavailable")))
 		return
 	}
@@ -897,7 +888,7 @@ func (h *Handler) PluginDeactivate(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/admin/plugins?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.plugin_name_required")))
 		return
 	}
-	if err := h.pluginCallbacks.DeactivateFn(name); err != nil {
+	if err := h.pluginCallbacks.Deactivate(name); err != nil {
 		c.Redirect(http.StatusFound, "/admin/plugins?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.deactivate_failed", err.Error())))
 		return
 	}
@@ -914,8 +905,8 @@ func (h *Handler) PluginSettings(c *gin.Context) {
 
 	// Find plugin display info
 	var pluginName string
-	if h.pluginCallbacks != nil && h.pluginCallbacks.AllFn != nil {
-		for _, p := range h.pluginCallbacks.AllFn() {
+	if h.pluginCallbacks != nil {
+		for _, p := range h.pluginCallbacks.All() {
 			if p.Slug == slug && p.Active && p.HasSettings {
 				pluginName = p.Name
 				break
@@ -928,10 +919,7 @@ func (h *Handler) PluginSettings(c *gin.Context) {
 	}
 
 	// Get plugin settings template path
-	tmplPath := ""
-	if h.pluginCallbacks.SettingsTemplateFn != nil {
-		tmplPath = h.pluginCallbacks.SettingsTemplateFn(slug)
-	}
+	tmplPath := h.pluginCallbacks.SettingsTemplate(slug)
 	if tmplPath == "" {
 		c.Redirect(http.StatusFound, "/admin/plugins?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.plugin_settings_unavailable")))
 		return
@@ -956,11 +944,9 @@ func (h *Handler) PluginSettings(c *gin.Context) {
 	}
 
 	// Merge plugin-specific extra data
-	if h.pluginCallbacks.SettingsDataFn != nil {
-		if extra := h.pluginCallbacks.SettingsDataFn(slug); extra != nil {
-			for k, v := range extra {
-				data[k] = v
-			}
+	if extra := h.pluginCallbacks.SettingsData(slug); extra != nil {
+		for k, v := range extra {
+			data[k] = v
 		}
 	}
 
@@ -1009,14 +995,14 @@ func (h *Handler) PluginSettingsSave(c *gin.Context) {
 	h.logAction(c, "update", "plugin_settings", 0, "update plugin settings: "+slug)
 
 	// Notify the plugin that settings were saved
-	if h.pluginCallbacks != nil && h.pluginCallbacks.SettingsSaveFn != nil {
+	if h.pluginCallbacks != nil {
 		saved := make(map[string]string)
 		for key, values := range c.Request.PostForm {
 			if strings.HasPrefix(key, prefix) && len(values) > 0 {
 				saved[key] = values[0]
 			}
 		}
-		h.pluginCallbacks.SettingsSaveFn(slug, saved)
+		h.pluginCallbacks.SettingsSave(slug, saved)
 	}
 
 	c.Redirect(http.StatusFound, "/admin/plugins/"+slug+"/settings?success="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "notice.plugin_settings_saved")))

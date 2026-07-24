@@ -63,4 +63,4 @@ Core remains usable without the plugin; multilingual behavior is additive.
 
 BaseTheme themes support site setting translations automatically. Layouts should continue using `{{pageTitleFor . $fallbackTitle}}` and `{{seoHeadFor .}}`.
 
-Themes with a custom `PageService` or custom `SEOMeta` pipeline must keep the current request context and call `coreTheme.ApplySiteOptionOverridesFromOptionsForRequest(c, options, i18nMgr, seoBuilder, &seo)` after building SEO metadata. See [Theme SEO Integration](../themes/seo-integration.md) for the full contract.
+Themes that embed `coreTheme.SEOPageService` need no extra work: `BuildArchiveSEO` / `BuildContentSEO` already call `ApplySiteOptionOverridesFromOptionsForRequest` in the current request language. Only themes that build `SEOMeta` entirely by hand (not via `SEOPageService`) must keep the current request context and call `coreTheme.ApplySiteOptionOverridesFromOptionsForRequest(c, options, i18nMgr, seoBuilder, &seo)` after building SEO metadata. See [Theme SEO Integration](../themes/seo-integration.md) for the full contract.

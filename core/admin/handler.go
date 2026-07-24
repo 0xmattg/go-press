@@ -149,12 +149,12 @@ type Handler struct {
 	funcMap           template.FuncMap
 	tmplDir           string
 	hooks             *hook.Bus
-	themeManager      *ThemeManager
-	cacheCallbacks    *CacheCallbacks
-	redirectCallbacks *RedirectCallbacks
-	pluginCallbacks   *PluginCallbacks
-	sitemapCallbacks  *SitemapCallbacks
-	menuCallbacks     *MenuCallbacks
+	themeManager      ThemeController
+	cacheCallbacks    CacheController
+	redirectCallbacks RedirectController
+	pluginCallbacks   PluginController
+	sitemapCallbacks  SitemapController
+	menuCallbacks     MenuController
 	loginThrottle     *loginThrottle
 }
 
@@ -196,8 +196,8 @@ func (h *Handler) SetMenuCallbacks(mc *MenuCallbacks) {
 // invalidatePageCache flushes page cache after data mutations.
 // Safe to call even if cache is not configured (noop).
 func (h *Handler) invalidatePageCache() {
-	if h.cacheCallbacks != nil && h.cacheCallbacks.FlushPageFn != nil {
-		h.cacheCallbacks.FlushPageFn()
+	if h.cacheCallbacks != nil {
+		h.cacheCallbacks.FlushPage()
 	}
 }
 
@@ -509,28 +509,28 @@ func adminTaxonomyLabel(lang, name, fallback string) string {
 }
 
 func (h *Handler) activeThemeCatalog() *coreI18n.Catalog {
-	if h.themeManager == nil || h.themeManager.LocaleCatalogFn == nil || h.themeManager.ActiveFn == nil {
+	if h.themeManager == nil {
 		return nil
 	}
-	slug := h.themeManager.ActiveFn()
+	slug := h.themeManager.Active()
 	if slug == "" {
 		return nil
 	}
-	return h.themeManager.LocaleCatalogFn(slug)
+	return h.themeManager.LocaleCatalog(slug)
 }
 
 func (h *Handler) themeCatalog(slug string) *coreI18n.Catalog {
-	if h.themeManager == nil || h.themeManager.LocaleCatalogFn == nil || slug == "" {
+	if h.themeManager == nil || slug == "" {
 		return nil
 	}
-	return h.themeManager.LocaleCatalogFn(slug)
+	return h.themeManager.LocaleCatalog(slug)
 }
 
 func (h *Handler) pluginCatalog(slug string) *coreI18n.Catalog {
-	if h.pluginCallbacks == nil || h.pluginCallbacks.LocaleCatalogFn == nil || slug == "" {
+	if h.pluginCallbacks == nil || slug == "" {
 		return nil
 	}
-	return h.pluginCallbacks.LocaleCatalogFn(slug)
+	return h.pluginCallbacks.LocaleCatalog(slug)
 }
 
 func catalogMessage(catalog *coreI18n.Catalog, lang, key string) string {

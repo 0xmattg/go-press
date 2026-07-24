@@ -316,7 +316,9 @@ func (t *MyTheme) ServeHTTP(c *gin.Context) {
 }
 ```
 
-完全不用写 `PageService` / 自定义 `PageData struct`，BaseTheme 把 home / archive / single 三类页面渲染都做了。详见 [SEO 接入规范](seo-integration.md) 的"推荐写法"段。
+这样最省事：完全不用写 `PageService` / 自定义 `PageData struct`，BaseTheme 把 home / archive / single 三类页面渲染都做了。
+
+如果你更想要类型安全的数据装配，也可以写一个 `PageService`——现在只需嵌入 core 的共享脚手架 `coreTheme.BasePageService`（需要 SEO 的用 `coreTheme.SEOPageService`），DB / 仓储 / Options / 请求作用域 / SEO 构建都是继承来的，不用自己抄。详见 [SEO 接入规范](seo-integration.md) 的"类型化写法"段。
 
 ## 类型安全担忧？
 

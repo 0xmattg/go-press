@@ -12,7 +12,6 @@ import (
 
 	"go-press/core"
 	"go-press/core/content"
-	"go-press/core/hook"
 	coreI18n "go-press/core/i18n"
 	"go-press/core/option"
 	"go-press/core/rewrite"
@@ -247,101 +246,23 @@ type TaxonomyArchiveData struct {
 
 // PageService assembles page data using the GoPress core engine.
 type PageService struct {
-	db          *gorm.DB
-	contentRepo *content.Repository
-	taxRepo     *taxonomy.Repository
-	options     *option.Store
-	// seoBuilder, registry and hookBus are populated when constructed from a
-	// full Engine. They may be nil under NewPageServiceDB (CLI / tests), in
-	// which case the SEO helpers gracefully return zero-value SEOMeta and the
-	// per-content meta filter is skipped.
-	seoBuilder    *rewrite.SEOBuilder
+	coreTheme.SEOPageService
 	rewriteEngine *rewrite.Engine
-	registry      *content.Registry
-	hookBus       *hook.Bus
-	i18nMgr       *coreI18n.Manager
-	// reqCtx is set by ForRequest(c). It is needed by detail-page lookups
-	// (FindBySlugScoped) so per-language slug disambiguation works. Nil for
-	// non-request usages (CLI / tests) — scoped APIs treat nil as "no scope".
-	reqCtx *gin.Context
 }
 
 // NewPageService creates a PageService backed by the full Engine.
 func NewPageService(engine *core.Engine) *PageService {
 	return &PageService{
-		db:            engine.DB,
-		contentRepo:   engine.Content,
-		taxRepo:       engine.Taxonomy,
-		options:       engine.Options,
-		seoBuilder:    engine.SEO,
+		SEOPageService: coreTheme.NewSEOPageService(
+			coreTheme.NewBasePageService(engine.DB, engine.Content, engine.Taxonomy, engine.Options),
+			engine.SEO, engine.Registry, engine.Hooks, engine.I18n),
 		rewriteEngine: engine.Rewrite,
-		registry:      engine.Registry,
-		hookBus:       engine.Hooks,
-		i18nMgr:       engine.I18n,
 	}
 }
 
 // NewPageServiceDB creates a PageService backed only by a DB connection.
 func NewPageServiceDB(db *gorm.DB) *PageService {
-	return &PageService{
-		db:          db,
-		contentRepo: content.NewRepository(db),
-		taxRepo:     taxonomy.NewRepository(db),
-		options:     option.NewStore(db),
-	}
-}
-
-// ======== SEO Helpers ========
-//
-// These mirror BaseTheme's SEO injection: build per-page SEOMeta via the core
-// SEOBuilder, then apply runtime option overrides so admin's site_name /
-// site_description always win over the static cfg.Site.Name baked into the
-// builder. Returns zero-value SEOMeta when the engine isn't wired in (DB-only
-// service used by tests / CLI), which the template's seoHeadFor helper treats
-// as "no SEO" and falls back to a plain meta description.
-
-func (s *PageService) buildHomeSEO() rewrite.SEOMeta {
-	if s.seoBuilder == nil {
-		return rewrite.SEOMeta{}
-	}
-	seo := s.seoBuilder.ForHome(s.options.Get("site_description"))
-	s.applySEOOverrides(&seo)
-	return seo
-}
-
-func (s *PageService) buildArchiveSEO(typeName string) rewrite.SEOMeta {
-	if s.seoBuilder == nil || s.registry == nil {
-		return rewrite.SEOMeta{}
-	}
-	typeDef := s.registry.GetType(typeName)
-	if typeDef == nil {
-		return rewrite.SEOMeta{}
-	}
-	seo := s.seoBuilder.ForArchiveTitle(typeDef, coreTheme.LocalizedArchiveTitle(s.reqCtx, s.i18nMgr, typeDef))
-	s.applySEOOverrides(&seo)
-	return seo
-}
-
-func (s *PageService) buildContentSEO(item *content.Content, typeName string) rewrite.SEOMeta {
-	if s.seoBuilder == nil || s.registry == nil || item == nil {
-		return rewrite.SEOMeta{}
-	}
-	typeDef := s.registry.GetType(typeName)
-	if typeDef == nil {
-		return rewrite.SEOMeta{}
-	}
-	seo := s.seoBuilder.ForContent(item, typeDef)
-	s.applySEOOverrides(&seo)
-	coreTheme.ApplyContentMetaSEO(s.hookBus, s.contentRepo, &seo, item)
-	return seo
-}
-
-// applySEOOverrides reconciles SEOBuilder output (which uses the static
-// cfg.Site.Name baked in at boot) with runtime admin options (site_name,
-// site_description). Mirrors core/theme.ApplySiteOptionOverrides so the two
-// render paths produce identical SEO output.
-func (s *PageService) applySEOOverrides(seo *rewrite.SEOMeta) {
-	coreTheme.ApplySiteOptionOverridesFromOptionsForRequest(s.reqCtx, s.options, s.i18nMgr, s.seoBuilder, seo)
+	return &PageService{SEOPageService: coreTheme.NewSEOPageService(coreTheme.NewBasePageServiceDB(db), nil, nil, nil, nil)}
 }
 
 // ForRequest returns a clone of PageService with request-scoped content filters applied.
@@ -350,26 +271,15 @@ func (s *PageService) applySEOOverrides(seo *rewrite.SEOMeta) {
 // honor the same scopes — critical for WPML-style same-slug-across-languages routing.
 // This is a core pattern — no plugin-specific logic here.
 func (s *PageService) ForRequest(c *gin.Context) *PageService {
-	if c == nil {
-		return s
-	}
-	scopedDB := content.ScopedDB(c, s.db)
 	clone := *s
-	clone.reqCtx = c
-	if scopedDB != s.db {
-		clone.db = scopedDB
-	}
+	clone.BasePageService = s.BasePageService.ForRequest(c)
 	return &clone
 }
 
 // ======== Helpers ========
 
-func (s *PageService) getSettings() map[string]string {
-	return s.options.All()
-}
-
 func (s *PageService) getRecentPosts(n int) []PostView {
-	posts, _ := content.NewQuery(s.db).
+	posts, _ := content.NewQuery(s.DB).
 		Type("post").Published().
 		OrderBy("published_at", "DESC").
 		Limit(n).Get()
@@ -388,7 +298,7 @@ func (s *PageService) ContentMegaMenu(c *gin.Context, contentType string) Conten
 		Label:       s.contentTypeMegaLabel(c, contentType),
 		ArchiveURL:  archiveURL,
 	}
-	if s == nil || s.db == nil || contentType == "" || !s.megaMenuEnabled(contentType) {
+	if s == nil || s.DB == nil || contentType == "" || !s.megaMenuEnabled(contentType) {
 		return menu
 	}
 
@@ -414,8 +324,8 @@ func (s *PageService) ContentMegaMenuForURL(c *gin.Context, rawURL string) Conte
 		}
 	}
 
-	if s != nil && s.registry != nil {
-		for _, typeDef := range s.registry.AllTypes() {
+	if s != nil && s.Registry != nil {
+		for _, typeDef := range s.Registry.AllTypes() {
 			if typeDef == nil || !typeDef.HasArchive {
 				continue
 			}
@@ -435,7 +345,7 @@ type contentMegaCategoryRow struct {
 }
 
 func (s *PageService) contentMegaCategories(c *gin.Context, contentType string, limit int) []ContentMegaCategory {
-	if s == nil || s.db == nil || contentType == "" || limit <= 0 {
+	if s == nil || s.DB == nil || contentType == "" || limit <= 0 {
 		return nil
 	}
 
@@ -445,7 +355,7 @@ func (s *PageService) contentMegaCategories(c *gin.Context, contentType string, 
 	tm := dbprefix.Table("terms")
 
 	var rows []contentMegaCategoryRow
-	err := content.ScopedDB(c, s.db).
+	err := content.ScopedDB(c, s.DB).
 		Model(&taxonomy.Taxonomy{}).
 		Select(tx+".id AS id, "+tm+".name AS name, "+tm+".slug AS slug, COUNT(DISTINCT "+ct+".id) AS count").
 		Joins("JOIN "+tr+" ON "+tr+".taxonomy_id = "+tx+".id").
@@ -477,12 +387,12 @@ func (s *PageService) contentMegaCategories(c *gin.Context, contentType string, 
 }
 
 func (s *PageService) contentMegaItems(c *gin.Context, contentType string, categorySlugs []string, limit int) []ContentMegaItem {
-	if s == nil || s.db == nil || contentType == "" || limit <= 0 {
+	if s == nil || s.DB == nil || contentType == "" || limit <= 0 {
 		return nil
 	}
 
 	ct := content.Content{}.TableName()
-	db := content.ScopedDB(c, s.db).
+	db := content.ScopedDB(c, s.DB).
 		Model(&content.Content{}).
 		Where(ct+".type = ? AND "+ct+".status = ? AND "+ct+".deleted_at IS NULL", contentType, content.StatusPublished).
 		Where("("+ct+".published_at IS NULL OR "+ct+".published_at <= ?)", time.Now())
@@ -523,8 +433,8 @@ func (s *PageService) contentMegaItems(c *gin.Context, contentType string, categ
 
 func (s *PageService) contentMegaOrderBy(contentType string) string {
 	ct := content.Content{}.TableName()
-	if s != nil && s.registry != nil {
-		if typeDef := s.registry.GetType(contentType); modernContentTypeSupports(typeDef, "sort_order") {
+	if s != nil && s.Registry != nil {
+		if typeDef := s.Registry.GetType(contentType); modernContentTypeSupports(typeDef, "sort_order") {
 			return ct + ".sort_order ASC, " + ct + ".created_at DESC"
 		}
 	}
@@ -547,16 +457,16 @@ func modernContentTypeSupports(typeDef *content.ContentTypeDef, feature string) 
 }
 
 func (s *PageService) megaMenuEnabled(contentType string) bool {
-	if s == nil || s.options == nil {
+	if s == nil || s.Options == nil {
 		return true
 	}
-	return s.options.Get("nav_mega_"+contentType) != "0"
+	return s.Options.Get("nav_mega_"+contentType) != "0"
 }
 
 func (s *PageService) contentTypeMegaLabel(c *gin.Context, contentType string) string {
-	if s != nil && s.registry != nil {
-		if typeDef := s.registry.GetType(contentType); typeDef != nil {
-			return coreTheme.LocalizedContentTypeLabel(c, s.i18nMgr, typeDef)
+	if s != nil && s.Registry != nil {
+		if typeDef := s.Registry.GetType(contentType); typeDef != nil {
+			return coreTheme.LocalizedContentTypeLabel(c, s.I18n, typeDef)
 		}
 	}
 	return contentType
@@ -570,8 +480,8 @@ func (s *PageService) contentArchiveURL(contentType string) string {
 	if s != nil && s.rewriteEngine != nil {
 		return s.rewriteEngine.BuildArchiveURL(contentType)
 	}
-	if s != nil && s.registry != nil {
-		if typeDef := s.registry.GetType(contentType); typeDef != nil {
+	if s != nil && s.Registry != nil {
+		if typeDef := s.Registry.GetType(contentType); typeDef != nil {
 			prefix := strings.Trim(typeDef.Rewrite.Slug, "/")
 			if prefix == "" {
 				prefix = typeDef.Name
@@ -611,7 +521,7 @@ func (s *PageService) buildPageData(title, activePage string) PageData {
 	return PageData{
 		Title:       title,
 		ActivePage:  activePage,
-		Settings:    s.getSettings(),
+		Settings:    s.Settings(),
 		RecentPosts: s.getRecentPosts(3),
 	}
 }
@@ -631,12 +541,12 @@ func (s *PageService) GetHomeData() (*HomeData, error) {
 	// Limit products/services based on homepage settings
 	pViews := toProductViews(products)
 	sViews := toServiceViews(services)
-	if maxStr := s.options.Get("home_products_max"); maxStr != "" {
+	if maxStr := s.Options.Get("home_products_max"); maxStr != "" {
 		if max, err := strconv.Atoi(maxStr); err == nil && max > 0 && max < len(pViews) {
 			pViews = pViews[:max]
 		}
 	}
-	if maxStr := s.options.Get("home_services_max"); maxStr != "" {
+	if maxStr := s.Options.Get("home_services_max"); maxStr != "" {
 		if max, err := strconv.Atoi(maxStr); err == nil && max > 0 && max < len(sViews) {
 			sViews = sViews[:max]
 		}
@@ -646,17 +556,17 @@ func (s *PageService) GetHomeData() (*HomeData, error) {
 	const partnerSlots = 24
 	partners := make([]PartnerView, 0, partnerSlots)
 	for i := 1; i <= partnerSlots; i++ {
-		img := strings.TrimSpace(s.options.Get("home_partners_" + strconv.Itoa(i) + "_image"))
+		img := strings.TrimSpace(s.Options.Get("home_partners_" + strconv.Itoa(i) + "_image"))
 		if img == "" {
 			continue
 		}
 		partners = append(partners, PartnerView{
 			ImageURL: img,
-			Name:     strings.TrimSpace(s.options.Get("home_partners_" + strconv.Itoa(i) + "_name")),
-			Link:     strings.TrimSpace(s.options.Get("home_partners_" + strconv.Itoa(i) + "_link")),
+			Name:     strings.TrimSpace(s.Options.Get("home_partners_" + strconv.Itoa(i) + "_name")),
+			Link:     strings.TrimSpace(s.Options.Get("home_partners_" + strconv.Itoa(i) + "_link")),
 		})
 	}
-	if maxStr := s.options.Get("home_partners_max"); maxStr != "" {
+	if maxStr := s.Options.Get("home_partners_max"); maxStr != "" {
 		if max, err := strconv.Atoi(maxStr); err == nil && max > 0 && max < len(partners) {
 			partners = partners[:max]
 		}
@@ -679,7 +589,7 @@ func (s *PageService) GetHomeData() (*HomeData, error) {
 		PartnersTop:    partnersTop,
 		PartnersBottom: partnersBottom,
 	}
-	data.SEO = s.buildHomeSEO()
+	data.SEO = s.BuildHomeSEO()
 	return data, nil
 }
 
@@ -698,7 +608,7 @@ func (s *PageService) GetProductsData() (*ProductsData, error) {
 		PageData: s.buildPageData("Products", "products"),
 		Products: toProductViews(products),
 	}
-	data.SEO = s.buildArchiveSEO("product")
+	data.SEO = s.BuildArchiveSEO("product")
 	return data, nil
 }
 
@@ -707,13 +617,13 @@ func (s *PageService) GetServicesData() (*ServicesData, error) {
 	if err != nil {
 		return nil, err
 	}
-	allTags, _ := s.taxRepo.ListByTaxonomy("tag")
+	allTags, _ := s.Tax.ListByTaxonomy("tag")
 	data := &ServicesData{
 		PageData: s.buildPageData("Services", "services"),
 		Services: toServiceViews(services),
 		Tags:     toTagViews(allTags),
 	}
-	data.SEO = s.buildArchiveSEO("service")
+	data.SEO = s.BuildArchiveSEO("service")
 	return data, nil
 }
 
@@ -725,7 +635,7 @@ func (s *PageService) GetShowcaseData() (*ShowcaseData, error) {
 	// Load meta (client, location) for each showcase
 	views := make([]ShowcaseView, len(items))
 	for i, c := range items {
-		meta, _ := s.contentRepo.GetMeta(c.ID)
+		meta, _ := s.Content.GetMeta(c.ID)
 		views[i] = ShowcaseView{
 			ID:          c.ID,
 			Title:       c.Title,
@@ -741,12 +651,12 @@ func (s *PageService) GetShowcaseData() (*ShowcaseData, error) {
 		PageData:  s.buildPageData("Showcase", "showcase"),
 		Showcases: views,
 	}
-	data.SEO = s.buildArchiveSEO("showcase")
+	data.SEO = s.BuildArchiveSEO("showcase")
 	return data, nil
 }
 
 func (s *PageService) GetBlogData(categorySlug, tagSlug string) (*BlogData, error) {
-	q := content.NewQuery(s.db).
+	q := content.NewQuery(s.DB).
 		Type("post").Published().
 		OrderBy("published_at", "DESC")
 
@@ -765,17 +675,17 @@ func (s *PageService) GetBlogData(categorySlug, tagSlug string) (*BlogData, erro
 	postViews := make([]PostView, len(posts))
 	for i, p := range posts {
 		pv := toPostView(p)
-		cats, _ := s.taxRepo.GetContentTaxonomies(p.ID, "category")
+		cats, _ := s.Tax.GetContentTaxonomies(p.ID, "category")
 		if len(cats) > 0 {
 			pv.Category = toCategoryView(cats[0])
 		}
-		tags, _ := s.taxRepo.GetContentTaxonomies(p.ID, "tag")
+		tags, _ := s.Tax.GetContentTaxonomies(p.ID, "tag")
 		pv.Tags = toTagViews(tags)
 		postViews[i] = pv
 	}
 
-	allCats, _ := s.taxRepo.ListByTaxonomy("category")
-	allTags, _ := s.taxRepo.ListByTaxonomy("tag")
+	allCats, _ := s.Tax.ListByTaxonomy("category")
+	allTags, _ := s.Tax.ListByTaxonomy("tag")
 
 	data := &BlogData{
 		PageData:   s.buildPageData("Blog", "blog"),
@@ -785,7 +695,7 @@ func (s *PageService) GetBlogData(categorySlug, tagSlug string) (*BlogData, erro
 		ActiveCat:  categorySlug,
 		ActiveTag:  tagSlug,
 	}
-	data.SEO = s.buildArchiveSEO("post")
+	data.SEO = s.BuildArchiveSEO("post")
 	return data, nil
 }
 
@@ -798,13 +708,13 @@ func (s *PageService) GetContactData() (*ContactData, error) {
 // ======== Detail Page Data Methods ========
 
 func (s *PageService) GetProductDetail(slug string) (*ProductDetailData, error) {
-	item, err := s.contentRepo.FindBySlugScoped(s.reqCtx, "product", slug)
+	item, err := s.Content.FindBySlugScoped(s.ReqCtx, "product", slug)
 	if err != nil || item == nil {
 		return nil, err
 	}
 
 	// Load gallery images from meta
-	meta, _ := s.contentRepo.GetMeta(item.ID)
+	meta, _ := s.Content.GetMeta(item.ID)
 	var gallery []string
 	if raw := meta["gallery_images"]; raw != "" {
 		for _, u := range strings.Split(raw, ",") {
@@ -831,7 +741,7 @@ func (s *PageService) GetProductDetail(slug string) (*ProductDetailData, error) 
 		related = related[:3]
 	}
 	// Load tags for this product
-	tagItems, _ := s.taxRepo.GetContentTaxonomies(item.ID, "tag")
+	tagItems, _ := s.Tax.GetContentTaxonomies(item.ID, "tag")
 
 	data := &ProductDetailData{
 		PageData: s.buildPageData(item.Title, "products"),
@@ -844,12 +754,12 @@ func (s *PageService) GetProductDetail(slug string) (*ProductDetailData, error) 
 		Related: related,
 		Tags:    toTagViews(tagItems),
 	}
-	data.SEO = s.buildContentSEO(item, "product")
+	data.SEO = s.BuildContentSEO(item, "product")
 	return data, nil
 }
 
 func (s *PageService) GetServiceDetail(slug string) (*ServiceDetailData, error) {
-	item, err := s.contentRepo.FindBySlugScoped(s.reqCtx, "service", slug)
+	item, err := s.Content.FindBySlugScoped(s.ReqCtx, "service", slug)
 	if err != nil || item == nil {
 		return nil, err
 	}
@@ -867,7 +777,7 @@ func (s *PageService) GetServiceDetail(slug string) (*ServiceDetailData, error) 
 	if len(related) > 3 {
 		related = related[:3]
 	}
-	tagItems, _ := s.taxRepo.GetContentTaxonomies(item.ID, "tag")
+	tagItems, _ := s.Tax.GetContentTaxonomies(item.ID, "tag")
 	data := &ServiceDetailData{
 		PageData: s.buildPageData(item.Title, "services"),
 		Service: ServiceView{
@@ -878,22 +788,22 @@ func (s *PageService) GetServiceDetail(slug string) (*ServiceDetailData, error) 
 		Related: related,
 		Tags:    toTagViews(tagItems),
 	}
-	data.SEO = s.buildContentSEO(item, "service")
+	data.SEO = s.BuildContentSEO(item, "service")
 	return data, nil
 }
 
 func (s *PageService) GetShowcaseDetail(slug string) (*ShowcaseDetailData, error) {
-	item, err := s.contentRepo.FindBySlugScoped(s.reqCtx, "showcase", slug)
+	item, err := s.Content.FindBySlugScoped(s.ReqCtx, "showcase", slug)
 	if err != nil || item == nil {
 		return nil, err
 	}
-	meta, _ := s.contentRepo.GetMeta(item.ID)
+	meta, _ := s.Content.GetMeta(item.ID)
 	// Get related showcases
 	all, _ := s.getContentList("showcase", "sort_order", "ASC")
 	var related []ShowcaseView
 	for _, c := range all {
 		if c.Slug != slug {
-			m, _ := s.contentRepo.GetMeta(c.ID)
+			m, _ := s.Content.GetMeta(c.ID)
 			related = append(related, ShowcaseView{
 				ID: c.ID, Title: c.Title, Slug: c.Slug,
 				Description: c.Content, ImageURL: c.ImageURL,
@@ -905,7 +815,7 @@ func (s *PageService) GetShowcaseDetail(slug string) (*ShowcaseDetailData, error
 	if len(related) > 3 {
 		related = related[:3]
 	}
-	tagItems, _ := s.taxRepo.GetContentTaxonomies(item.ID, "tag")
+	tagItems, _ := s.Tax.GetContentTaxonomies(item.ID, "tag")
 	data := &ShowcaseDetailData{
 		PageData: s.buildPageData(item.Title, "showcase"),
 		Showcase: ShowcaseView{
@@ -916,25 +826,25 @@ func (s *PageService) GetShowcaseDetail(slug string) (*ShowcaseDetailData, error
 		Related: related,
 		Tags:    toTagViews(tagItems),
 	}
-	data.SEO = s.buildContentSEO(item, "showcase")
+	data.SEO = s.BuildContentSEO(item, "showcase")
 	return data, nil
 }
 
 func (s *PageService) GetPostDetail(slug string) (*PostDetailData, error) {
-	item, err := s.contentRepo.FindBySlugScoped(s.reqCtx, "post", slug)
+	item, err := s.Content.FindBySlugScoped(s.ReqCtx, "post", slug)
 	if err != nil || item == nil {
 		return nil, err
 	}
 	pv := toPostView(*item)
-	cats, _ := s.taxRepo.GetContentTaxonomies(item.ID, "category")
+	cats, _ := s.Tax.GetContentTaxonomies(item.ID, "category")
 	if len(cats) > 0 {
 		pv.Category = toCategoryView(cats[0])
 	}
-	tagItems, _ := s.taxRepo.GetContentTaxonomies(item.ID, "tag")
+	tagItems, _ := s.Tax.GetContentTaxonomies(item.ID, "tag")
 	pv.Tags = toTagViews(tagItems)
 
 	// Related posts (same category if available)
-	q := content.NewQuery(s.db).Type("post").Published().OrderBy("published_at", "DESC").Limit(4)
+	q := content.NewQuery(s.DB).Type("post").Published().OrderBy("published_at", "DESC").Limit(4)
 	if len(cats) > 0 {
 		q = q.Taxonomy("category", cats[0].Term.Slug)
 	}
@@ -943,7 +853,7 @@ func (s *PageService) GetPostDetail(slug string) (*PostDetailData, error) {
 	for _, p := range relatedPosts {
 		if p.Slug != slug {
 			rv := toPostView(p)
-			pc, _ := s.taxRepo.GetContentTaxonomies(p.ID, "category")
+			pc, _ := s.Tax.GetContentTaxonomies(p.ID, "category")
 			if len(pc) > 0 {
 				rv.Category = toCategoryView(pc[0])
 			}
@@ -954,8 +864,8 @@ func (s *PageService) GetPostDetail(slug string) (*PostDetailData, error) {
 		related = related[:3]
 	}
 
-	allCats, _ := s.taxRepo.ListByTaxonomy("category")
-	allTags, _ := s.taxRepo.ListByTaxonomy("tag")
+	allCats, _ := s.Tax.ListByTaxonomy("category")
+	allTags, _ := s.Tax.ListByTaxonomy("tag")
 
 	data := &PostDetailData{
 		PageData:   s.buildPageData(item.Title, "blog"),
@@ -964,7 +874,7 @@ func (s *PageService) GetPostDetail(slug string) (*PostDetailData, error) {
 		Categories: toCategoryViews(allCats),
 		Tags:       toTagViews(allTags),
 	}
-	data.SEO = s.buildContentSEO(item, "post")
+	data.SEO = s.BuildContentSEO(item, "post")
 	return data, nil
 }
 
@@ -972,13 +882,13 @@ func (s *PageService) GetPostDetail(slug string) (*PostDetailData, error) {
 // taxonomyType is "category" or "tag", termSlug is the term's URL slug.
 func (s *PageService) GetTaxonomyArchive(taxonomyType, termSlug string) (*TaxonomyArchiveData, error) {
 	// Look up the term to get its display name
-	term, err := s.taxRepo.GetTermBySlug(termSlug)
+	term, err := s.Tax.GetTermBySlug(termSlug)
 	if err != nil {
 		return nil, err
 	}
 
 	// Query all published content that has this taxonomy term, across all types
-	q := content.NewQuery(s.db).
+	q := content.NewQuery(s.DB).
 		Status(content.StatusPublished).
 		Taxonomy(taxonomyType, termSlug).
 		OrderBy(dbprefix.Table("contents")+".created_at", "DESC")
@@ -1052,7 +962,7 @@ func (s *PageService) SubmitContact(c *gin.Context, name, email, phone, message 
 		ctx = c.Request.Context()
 		remoteIP = c.ClientIP()
 	}
-	return s.contentRepo.CreateContactMessage(ctx, content.ContactMessageInput{
+	return s.Content.CreateContactMessage(ctx, content.ContactMessageInput{
 		Name:     name,
 		Email:    email,
 		Phone:    phone,
@@ -1064,7 +974,7 @@ func (s *PageService) SubmitContact(c *gin.Context, name, email, phone, message 
 // ======== Internal Helpers ========
 
 func (s *PageService) getContentList(contentType, orderField, orderDir string) ([]content.Content, error) {
-	return content.NewQuery(s.db).
+	return content.NewQuery(s.DB).
 		Type(contentType).
 		Status(content.StatusPublished).
 		OrderBy(orderField, orderDir).
@@ -1072,14 +982,14 @@ func (s *PageService) getContentList(contentType, orderField, orderDir string) (
 }
 
 func (s *PageService) localizedContentTypeLabel(contentType string) string {
-	if s.registry == nil {
+	if s.Registry == nil {
 		return contentType
 	}
-	typeDef := s.registry.GetType(contentType)
+	typeDef := s.Registry.GetType(contentType)
 	if typeDef == nil {
 		return contentType
 	}
-	return coreTheme.LocalizedContentTypeLabel(s.reqCtx, s.i18nMgr, typeDef)
+	return coreTheme.LocalizedContentTypeLabel(s.ReqCtx, s.I18n, typeDef)
 }
 
 // ======== Model Converters ========

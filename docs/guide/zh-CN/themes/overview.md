@@ -135,7 +135,7 @@ e.Hooks.RemoveFilter(handle)
 | **axis-form** | Axis Form | 建筑设计 / 室内作品集 | BaseTheme + gin.H | 完整 |
 | **go-press-landing** | GoPress Landing | SaaS Landing | 自定义 PageData struct | 完整 |
 
-后续新主题推荐走 [BaseTheme + gin.H 路径](seo-integration.md#推荐写法basetheme--ginh)，避免重复 `PageService` 这套代码。
+上表「渲染方式」列里的「自定义 PageData struct」主题，其 `PageService` 现在都嵌入 core 的共享脚手架（`coreTheme.BasePageService`，需要 SEO 的用 `coreTheme.SEOPageService`），不再各自复制数据访问与 SEO 管道。新主题若想要类型安全的数据装配，直接嵌入这两个之一即可，成本很低；只想快速起步则走 [BaseTheme + gin.H 路径](seo-integration.md)。
 
 ## 前台账号 UI
 

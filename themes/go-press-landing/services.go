@@ -6,9 +6,7 @@ import (
 
 	"go-press/core"
 	"go-press/core/content"
-	"go-press/core/option"
 	"go-press/core/rewrite"
-	"go-press/core/taxonomy"
 	coreTheme "go-press/core/theme"
 
 	"github.com/gin-gonic/gin"
@@ -77,10 +75,7 @@ type HomeData struct {
 
 // PageService assembles page data from the GoPress engine.
 type PageService struct {
-	db          *gorm.DB
-	contentRepo *content.Repository
-	taxRepo     *taxonomy.Repository
-	options     *option.Store
+	coreTheme.BasePageService
 	// seoBuilder is populated when constructed from a full Engine. May be nil
 	// under NewPageServiceDB (CLI / tests), in which case the SEO helper
 	// gracefully returns zero-value SEOMeta.
@@ -90,22 +85,14 @@ type PageService struct {
 // NewPageService creates a PageService backed by the full Engine.
 func NewPageService(engine *core.Engine) *PageService {
 	return &PageService{
-		db:          engine.DB,
-		contentRepo: engine.Content,
-		taxRepo:     engine.Taxonomy,
-		options:     engine.Options,
-		seoBuilder:  engine.SEO,
+		BasePageService: coreTheme.NewBasePageService(engine.DB, engine.Content, engine.Taxonomy, engine.Options),
+		seoBuilder:      engine.SEO,
 	}
 }
 
 // NewPageServiceDB creates a PageService backed only by a DB connection.
 func NewPageServiceDB(db *gorm.DB) *PageService {
-	return &PageService{
-		db:          db,
-		contentRepo: content.NewRepository(db),
-		taxRepo:     taxonomy.NewRepository(db),
-		options:     option.NewStore(db),
-	}
+	return &PageService{BasePageService: coreTheme.NewBasePageServiceDB(db)}
 }
 
 // buildHomeSEO mirrors BaseTheme's SEO injection for the landing page.
@@ -116,20 +103,16 @@ func (s *PageService) buildHomeSEO() rewrite.SEOMeta {
 	if s.seoBuilder == nil {
 		return rewrite.SEOMeta{}
 	}
-	seo := s.seoBuilder.ForHome(s.options.Get("site_description"))
-	coreTheme.ApplySiteOptionOverridesFromOptions(s.options, s.seoBuilder, &seo)
+	seo := s.seoBuilder.ForHome(s.Options.Get("site_description"))
+	coreTheme.ApplySiteOptionOverridesFromOptions(s.Options, s.seoBuilder, &seo)
 	return seo
-}
-
-func (s *PageService) getSettings() map[string]string {
-	return s.options.All()
 }
 
 func (s *PageService) buildPageData(title, activePage string) PageData {
 	return PageData{
 		Title:      title,
 		ActivePage: activePage,
-		Settings:   s.getSettings(),
+		Settings:   s.Settings(),
 	}
 }
 
@@ -139,7 +122,7 @@ func (d *HomeData) SetCtx(c *gin.Context) {
 
 // GetHomeData assembles all data for the landing page.
 func (s *PageService) GetHomeData() (*HomeData, error) {
-	settings := s.getSettings()
+	settings := s.Settings()
 
 	// Determine max features
 	maxFeatures := 6
@@ -150,14 +133,14 @@ func (s *PageService) GetHomeData() (*HomeData, error) {
 	}
 
 	// Load features
-	features, _ := content.NewQuery(s.db).
+	features, _ := content.NewQuery(s.DB).
 		Type("feature").Published().
 		OrderBy("sort_order", "ASC").
 		Limit(maxFeatures).Get()
 
 	featureViews := make([]FeatureView, len(features))
 	for i, f := range features {
-		meta, _ := s.contentRepo.GetMeta(f.ID)
+		meta, _ := s.Content.GetMeta(f.ID)
 		featureViews[i] = FeatureView{
 			ID: f.ID, Title: f.Title, Slug: f.Slug,
 			Description: f.Content, Excerpt: f.Excerpt,
@@ -166,14 +149,14 @@ func (s *PageService) GetHomeData() (*HomeData, error) {
 	}
 
 	// Load testimonials
-	testimonials, _ := content.NewQuery(s.db).
+	testimonials, _ := content.NewQuery(s.DB).
 		Type("testimonial").Published().
 		OrderBy("sort_order", "ASC").
 		Limit(3).Get()
 
 	testimonialViews := make([]TestimonialView, len(testimonials))
 	for i, t := range testimonials {
-		meta, _ := s.contentRepo.GetMeta(t.ID)
+		meta, _ := s.Content.GetMeta(t.ID)
 		testimonialViews[i] = TestimonialView{
 			ID: t.ID, Title: t.Title, Slug: t.Slug,
 			Content: t.Content, Excerpt: t.Excerpt,
