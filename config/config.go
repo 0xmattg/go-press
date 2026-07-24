@@ -3,10 +3,17 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/spf13/viper"
 )
+
+// LegacyPlaceholderJWTSecret is the sample secret historically shipped in the
+// example config. Because the source is public, any deployment still using it
+// (or an empty secret) would let anyone forge admin sessions, so the server
+// refuses to boot in that state.
+const LegacyPlaceholderJWTSecret = "go-press-change-this-secret-in-production"
 
 type Config struct {
 	Site    SiteConfig    `mapstructure:"site" toml:"site"`
@@ -59,6 +66,14 @@ type CMSConfig struct {
 	UploadDir       string   `mapstructure:"upload_dir" toml:"upload_dir"`
 	UploadMaxSizeMB int      `mapstructure:"upload_max_size_mb" toml:"upload_max_size_mb"`
 	APIKeys         []string `mapstructure:"api_keys" toml:"api_keys"`
+}
+
+// JWTSecretInsecure reports whether the configured admin token secret is unset
+// or still the shipped placeholder — either of which makes forged admin tokens
+// trivial. Callers should refuse to start the application in that state.
+func (c CMSConfig) JWTSecretInsecure() bool {
+	secret := strings.TrimSpace(c.JWTSecret)
+	return secret == "" || secret == LegacyPlaceholderJWTSecret
 }
 
 type MailConfig struct {

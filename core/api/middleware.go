@@ -146,7 +146,9 @@ func JWTAuth(auth *user.Auth) gin.HandlerFunc {
 		}
 
 		token := strings.TrimPrefix(header, "Bearer ")
-		claims, err := auth.ParseToken(token)
+		// ActiveClaims re-checks the account so a deactivated user's outstanding
+		// token is rejected immediately rather than at expiry.
+		claims, err := auth.ActiveClaims(token)
 		if err != nil {
 			respondError(c, http.StatusUnauthorized, "invalid_token", "Invalid or expired token")
 			c.Abort()

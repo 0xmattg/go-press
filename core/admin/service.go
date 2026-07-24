@@ -121,6 +121,12 @@ func (s *Service) Login(username, password string) (*user.User, string, error) {
 	return u, token, nil
 }
 
+// secureCookies reports whether admin session cookies must be marked Secure,
+// derived from the site scheme via the shared Auth handler.
+func (s *Service) secureCookies() bool {
+	return s != nil && s.auth != nil && s.auth.SecureCookies()
+}
+
 func (s *Service) CreateUser(username, email, password, displayName, role string) error {
 	hash, err := user.HashPassword(password)
 	if err != nil {

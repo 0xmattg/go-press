@@ -6,6 +6,25 @@ import (
 	"testing"
 )
 
+func TestJWTSecretInsecure(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		secret string
+		want   bool
+	}{
+		{"", true},
+		{"   ", true},
+		{LegacyPlaceholderJWTSecret, true},
+		{"a-real-unique-random-secret-value", false},
+	}
+	for _, tc := range cases {
+		got := CMSConfig{JWTSecret: tc.secret}.JWTSecretInsecure()
+		if got != tc.want {
+			t.Errorf("JWTSecretInsecure(%q) = %v, want %v", tc.secret, got, tc.want)
+		}
+	}
+}
+
 func TestSaveWritesConfigWithSecurePermissions(t *testing.T) {
 	t.Parallel()
 

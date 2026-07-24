@@ -16,6 +16,7 @@ import (
 	"go-press/core/content"
 	"go-press/core/hook"
 	coreI18n "go-press/core/i18n"
+	"go-press/pkg/middleware"
 	"go-press/version"
 
 	"github.com/gin-gonic/gin"
@@ -154,6 +155,7 @@ type Handler struct {
 	pluginCallbacks   *PluginCallbacks
 	sitemapCallbacks  *SitemapCallbacks
 	menuCallbacks     *MenuCallbacks
+	loginThrottle     *loginThrottle
 }
 
 // SetHookBus injects the engine's hook bus so handlers can invoke plugin filters.
@@ -202,9 +204,10 @@ func (h *Handler) invalidatePageCache() {
 // NewHandler creates the admin Handler and compiles templates.
 func NewHandler(svc *Service, registry *content.Registry, templateDir string) *Handler {
 	h := &Handler{
-		svc:      svc,
-		registry: registry,
-		tmplDir:  templateDir,
+		svc:           svc,
+		registry:      registry,
+		tmplDir:       templateDir,
+		loginThrottle: newLoginThrottle(10, 5*time.Minute),
 	}
 	h.buildFuncMap()
 	h.loadTemplates(templateDir)
@@ -817,9 +820,24 @@ func (h *Handler) LoginPage(c *gin.Context) {
 }
 
 func (h *Handler) LoginSubmit(c *gin.Context) {
+	lang := h.svc.AdminLanguage()
+
+	// CSRF: reject cross-origin credential submissions.
+	if middleware.IsStateChangingMethod(c.Request.Method) && !middleware.IsSameOrigin(c.Request) {
+		c.AbortWithStatus(http.StatusForbidden)
+		return
+	}
+
+	// Brute-force throttle keyed by client IP.
+	clientIP := c.ClientIP()
+	if h.loginThrottle.blocked(clientIP) {
+		c.Status(http.StatusTooManyRequests)
+		h.render(c, "login", gin.H{"Title": adminT(lang, "page.login"), "Error": adminT(lang, "error.login_throttled")})
+		return
+	}
+
 	username := strings.TrimSpace(c.PostForm("username"))
 	password := c.PostForm("password")
-	lang := h.svc.AdminLanguage()
 	if username == "" || password == "" {
 		h.render(c, "login", gin.H{"Title": adminT(lang, "page.login"), "Error": adminT(lang, "error.login_required")})
 		return
@@ -827,12 +845,15 @@ func (h *Handler) LoginSubmit(c *gin.Context) {
 
 	u, token, err := h.svc.Login(username, password)
 	if err != nil {
+		h.loginThrottle.fail(clientIP)
+		h.svc.LogAction(0, username, "login_failed", "auth", 0, "failed admin login", clientIP)
 		h.render(c, "login", gin.H{"Title": adminT(lang, "page.login"), "Error": adminT(lang, "error.invalid_login")})
 		return
 	}
 
-	c.SetCookie("admin_token", token, 86400, "/admin", "", false, true)
-	h.svc.LogAction(u.ID, u.Username, "login", "auth", 0, "user login", c.ClientIP())
+	h.loginThrottle.reset(clientIP)
+	writeAdminCookie(c, token, h.svc.secureCookies())
+	h.svc.LogAction(u.ID, u.Username, "login", "auth", 0, "user login", clientIP)
 	c.Redirect(http.StatusFound, "/admin/")
 }
 
@@ -843,7 +864,7 @@ func (h *Handler) Logout(c *gin.Context) {
 	}
 	username := c.GetString("admin_username")
 	h.svc.LogAction(userID, username, "logout", "auth", 0, "user logout", c.ClientIP())
-	c.SetCookie("admin_token", "", -1, "/admin", "", false, true)
+	clearAdminCookie(c, h.svc.secureCookies())
 	c.Redirect(http.StatusFound, "/admin/login")
 }
 
