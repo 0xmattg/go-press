@@ -51,7 +51,7 @@ Templates should generate content links with `archiveURL` and `contentURL` inste
 
 Navigation active state should also come from core helpers. Use `isMenuURLActive .Ctx menuURL` against menu item URLs instead of comparing `.ActivePage` to theme-specific content type names or labels. The helper follows the current request URL, rewrite slugs, language prefixes, and detail-page paths.
 
-New themes should prefer the `BaseTheme + gin.H` path unless they have a strong reason to maintain a custom PageService.
+A custom `PageService` is now cheap: it embeds core scaffolding (`coreTheme.BasePageService`, or `coreTheme.SEOPageService` when the theme renders SEO), so it no longer duplicates data-access or SEO plumbing. New themes can pick either the `BaseTheme + gin.H` path for the quickest start, or a typed `PageService` for type safety — see the [SEO integration guide](seo-integration.md).
 
 ## Public Account UI
 

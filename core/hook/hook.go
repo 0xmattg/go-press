@@ -55,9 +55,13 @@ type filterEntry struct {
 
 // Bus is the process-local action/filter event bus.
 //
-// Callbacks are ordered by ascending priority. The bus snapshots each callback
-// slice before execution so callbacks can add or remove other callbacks without
-// holding the lock during user/plugin code. Bus does not recover panics; plugin
+// Callbacks are ordered by ascending priority. Registration uses copy-on-write:
+// AddAction/RemoveAction (and their filter equivalents) build a brand-new slice
+// under the write lock and never mutate a slice already published to the map.
+// DoAction/ApplyFilter can therefore read the current slice under a short read
+// lock and iterate it lock-free — the slice they hold is immutable, so a
+// concurrent register/unregister (e.g. a plugin toggling while a request fires a
+// hook) cannot race the running callbacks. Bus does not recover panics; plugin
 // callbacks should fail explicitly and defensively.
 type Bus struct {
 	mu      sync.RWMutex
@@ -81,10 +85,16 @@ func (b *Bus) AddAction(name string, fn ActionFunc, priority int) Handle {
 	id := atomic.AddUint64(&b.nextID, 1)
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	b.actions[name] = append(b.actions[name], actionEntry{fn: fn, priority: priority, id: id})
-	sort.Slice(b.actions[name], func(i, j int) bool {
-		return b.actions[name][i].priority < b.actions[name][j].priority
+	// Copy-on-write: build a fresh slice so any snapshot a concurrent DoAction is
+	// iterating (which shares the old backing array) is never mutated in place.
+	old := b.actions[name]
+	updated := make([]actionEntry, len(old), len(old)+1)
+	copy(updated, old)
+	updated = append(updated, actionEntry{fn: fn, priority: priority, id: id})
+	sort.Slice(updated, func(i, j int) bool {
+		return updated[i].priority < updated[j].priority
 	})
+	b.actions[name] = updated
 	return Handle{name: name, id: id}
 }
 
@@ -100,7 +110,9 @@ func (b *Bus) RemoveAction(h Handle) {
 	if !ok {
 		return
 	}
-	filtered := entries[:0]
+	// Copy-on-write: never compact in place (entries[:0] would overwrite the
+	// backing array a concurrent DoAction snapshot may still be iterating).
+	filtered := make([]actionEntry, 0, len(entries))
 	for _, e := range entries {
 		if e.id != h.id {
 			filtered = append(filtered, e)
@@ -133,10 +145,15 @@ func (b *Bus) AddFilter(name string, fn FilterFunc, priority int) Handle {
 	id := atomic.AddUint64(&b.nextID, 1)
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	b.filters[name] = append(b.filters[name], filterEntry{fn: fn, priority: priority, id: id})
-	sort.Slice(b.filters[name], func(i, j int) bool {
-		return b.filters[name][i].priority < b.filters[name][j].priority
+	// Copy-on-write (see AddAction).
+	old := b.filters[name]
+	updated := make([]filterEntry, len(old), len(old)+1)
+	copy(updated, old)
+	updated = append(updated, filterEntry{fn: fn, priority: priority, id: id})
+	sort.Slice(updated, func(i, j int) bool {
+		return updated[i].priority < updated[j].priority
 	})
+	b.filters[name] = updated
 	return Handle{name: name, id: id}
 }
 
@@ -152,7 +169,8 @@ func (b *Bus) RemoveFilter(h Handle) {
 	if !ok {
 		return
 	}
-	filtered := entries[:0]
+	// Copy-on-write (see RemoveAction).
+	filtered := make([]filterEntry, 0, len(entries))
 	for _, e := range entries {
 		if e.id != h.id {
 			filtered = append(filtered, e)

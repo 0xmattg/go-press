@@ -42,12 +42,26 @@ func NewStore(db *gorm.DB) *Store {
 	}
 }
 
+// NewMemoryStore returns a Store backed only by the given in-memory values with
+// no database. Seeded keys are served from memory; missing-key reads return ""
+// and writes update memory only. Intended for tests and in-memory/CLI usage.
+func NewMemoryStore(values map[string]string) *Store {
+	data := make(map[string]string, len(values))
+	for k, v := range values {
+		data[k] = v
+	}
+	return &Store{data: data}
+}
+
 // LoadAll loads all autoload options from the database into memory.
 //
 // Existing cached keys are retained unless overwritten by database rows. This
 // lets seed/import flows load new values without discarding programmatically
 // inserted defaults.
 func (s *Store) LoadAll() {
+	if s.db == nil {
+		return
+	}
 	var opts []Option
 	s.db.Where("autoload = ?", true).Find(&opts)
 	s.mu.Lock()
@@ -67,6 +81,9 @@ func (s *Store) Get(name string) string {
 	s.mu.RUnlock()
 
 	// Fallback to DB for non-autoload options
+	if s.db == nil {
+		return ""
+	}
 	var opt Option
 	if err := s.db.Where("name = ?", name).First(&opt).Error; err != nil {
 		return ""
@@ -89,6 +106,12 @@ func (s *Store) GetDefault(name, defaultValue string) string {
 
 // Set updates or creates an option both in memory and in DB.
 func (s *Store) Set(name, value string) error {
+	if s.db == nil {
+		s.mu.Lock()
+		s.data[name] = value
+		s.mu.Unlock()
+		return nil
+	}
 	var opt Option
 	result := s.db.Where("name = ?", name).First(&opt)
 	if result.Error != nil {
@@ -113,6 +136,9 @@ func (s *Store) Delete(name string) error {
 	s.mu.Lock()
 	delete(s.data, name)
 	s.mu.Unlock()
+	if s.db == nil {
+		return nil
+	}
 	return s.db.Where("name = ?", name).Delete(&Option{}).Error
 }
 

@@ -61,35 +61,77 @@ rewrite_slug = "services"
 
 Core resolves that key through the current request language before building the archive SEO title. If the key is absent, core tries generic keys such as `page_title_<rewrite_slug>` and then falls back to `label_plural`.
 
-## Custom PageData Path
+## Typed PageData + PageService Path
 
-Custom PageService themes must attach `rewrite.SEOMeta` to their page data and reuse core helpers:
+If you prefer a typed `PageService` + custom data structs, the cost is now low: **embed the core scaffolding**. Data-access plumbing (DB, repositories, options, request scoping) and SEO assembly come for free.
+
+- SEO themes embed **`coreTheme.SEOPageService`** (inherits `BuildHomeSEO` / `BuildArchiveSEO` / `BuildContentSEO`).
+- Non-SEO themes embed **`coreTheme.BasePageService`** (data-access plumbing only).
 
 ```go
+// PageData needs an SEO field for the seoHeadFor helper.
+type PageData struct {
+    Title    string
+    Settings map[string]string
+    SEO      rewrite.SEOMeta // <- required
+}
+
+// Embed SEOPageService: inherits DB / Content / Tax / Options / SEOBuilder /
+// Registry / Hooks / I18n + ReqCtx + the three Build*SEO methods.
+type PageService struct {
+    coreTheme.SEOPageService
+}
+
+func NewPageService(engine *core.Engine) *PageService {
+    return &PageService{coreTheme.NewSEOPageService(
+        coreTheme.NewBasePageService(engine.DB, engine.Content, engine.Taxonomy, engine.Options),
+        engine.SEO, engine.Registry, engine.Hooks, engine.I18n)}
+}
+
+// DB-only constructor (CLI / tests); nil SEO fields make Build*SEO return zero SEOMeta.
+func NewPageServiceDB(db *gorm.DB) *PageService {
+    return &PageService{coreTheme.NewSEOPageService(coreTheme.NewBasePageServiceDB(db), nil, nil, nil, nil)}
+}
+
+// Request scoping: replace the embedded base, preserve custom fields.
 func (s *PageService) ForRequest(c *gin.Context) *PageService {
     clone := *s
-    clone.reqCtx = c
+    clone.BasePageService = s.BasePageService.ForRequest(c)
     return &clone
 }
 
-title := coreTheme.LocalizedArchiveTitle(c, i18nMgr, typeDef)
-seo := seoBuilder.ForArchiveTitle(typeDef, title)
-coreTheme.ApplySiteOptionOverridesFromOptionsForRequest(c, options, i18nMgr, seoBuilder, &seo)
-coreTheme.ApplyContentMetaSEO(hooks, contentRepo, &seo, item)
+// Get*Data just calls the inherited Build*SEO methods.
+func (s *PageService) GetProductDetail(slug string) (*ProductDetailData, error) {
+    item, _ := s.Content.FindBySlugScoped(s.ReqCtx, "product", slug)
+    data := &ProductDetailData{ /* ... */ }
+    data.SEO = s.BuildContentSEO(item, "product") // includes site-option overrides + per-content meta filter
+    return data, nil
+}
 ```
 
-`LocalizedArchiveTitle` keeps archive titles language-aware. `ApplySiteOptionOverridesFromOptionsForRequest` applies runtime settings such as `site_name`, `site_description`, and `site_icon` using the current request language, without removing the page-specific title prefix. `ApplyContentMetaSEO` is what allows plugins such as `seo-extras` to patch per-content SEO output.
+`SEOPageService` already calls these core helpers internally (don't call or re-implement them in the theme): `LocalizedArchiveTitle` keeps archive titles language-aware; `ApplySiteOptionOverridesFromOptionsForRequest` applies runtime `site_name` / `site_description` / `site_icon` in the current request language; `ApplyContentMetaSEO` lets plugins such as `seo-extras` patch per-content SEO.
 
-If a custom theme still calls `ApplySiteOptionOverridesFromOptions`, single-language SEO remains valid, but multilang site setting translations will not reach `<title>` or `<meta name="description">`. Any theme that builds `SEOMeta` itself should keep the current `gin.Context` and `i18n.Manager` in its request-scoped PageService clone and call the request-aware helper.
+A non-SEO theme embeds only `BasePageService`:
 
-Bundled theme guidance:
+```go
+type PageService struct {
+    coreTheme.BasePageService
+}
 
-| Theme pattern | Required integration |
-|---|---|
-| BaseTheme + `gin.H` themes | No theme work; core injects translated site options automatically. |
-| `modern-company`, `atelier-slate-gp`, `financial-news` | Custom PageService using core SEOBuilder; call `ApplySiteOptionOverridesFromOptionsForRequest`. |
-| `go-press-landing` | Pass `gin.Context` / `i18n.Manager` into PageService before using the request-aware helper. |
-| `bitcuz-mag` | Custom SEO pipeline; translate `site_name` / `site_description` through core i18n or convert generated `SEOMeta` through the request-aware override. |
+func NewPageService(engine *core.Engine) *PageService {
+    return &PageService{coreTheme.NewBasePageService(engine.DB, engine.Content, engine.Taxonomy, engine.Options)}
+}
+```
+
+> Note: `SEOPageService` uses the request-aware override, so multilang site-setting translations reach `<title>` / `<meta name="description">`. A single-page theme with no per-request i18n (e.g. `go-press-landing`) may instead embed `BasePageService` and write its own `buildHomeSEO` using the non-request `ApplySiteOptionOverridesFromOptions`.
+
+All bundled themes now embed the shared scaffolding:
+
+| Theme | PageService scaffold | SEO source |
+|---|---|---|
+| `atelier-slate`, `civic-estate`, `florafi`, `terra-trail`, `axis-form` | `coreTheme.BasePageService` | Archive / single injected by BaseTheme; custom pages use `gin.H` |
+| `modern-company`, `financial-news` | `coreTheme.SEOPageService` | Inherited `BuildHomeSEO` / `BuildArchiveSEO` / `BuildContentSEO` |
+| `go-press-landing` | `coreTheme.BasePageService` + own `buildHomeSEO` | Single page, non-request `ApplySiteOptionOverridesFromOptions` |
 
 ## Per-content SEO
 

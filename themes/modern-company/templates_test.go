@@ -121,8 +121,8 @@ func TestIsContentArchiveURLUsesRewriteSlugFromRegistry(t *testing.T) {
 func TestContentMegaMenuForURLUsesRewriteSlugFromRegistry(t *testing.T) {
 	engine := newArchiveURLTestEngine()
 	svc := &PageService{
-		rewriteEngine: engine.Rewrite,
-		registry:      engine.Registry,
+		SEOPageService: coreTheme.SEOPageService{Registry: engine.Registry},
+		rewriteEngine:  engine.Rewrite,
 	}
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
 	c.Request = httptest.NewRequest("GET", "https://example.test/", nil)

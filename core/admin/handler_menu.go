@@ -16,19 +16,19 @@ func (h *Handler) MenuList(c *gin.Context) {
 	if !h.checkPermission(c, "menu", "read") {
 		return
 	}
-	if h.menuCallbacks == nil || h.menuCallbacks.AllFn == nil {
+	if h.menuCallbacks == nil {
 		c.Redirect(http.StatusFound, "/admin/?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "menu.unavailable")))
 		return
 	}
 
-	menus, err := h.menuCallbacks.AllFn()
+	menus, err := h.menuCallbacks.All()
 	if err != nil {
 		c.Redirect(http.StatusFound, "/admin/?error="+err.Error())
 		return
 	}
 
 	lang := h.svc.AdminLanguage()
-	locations := h.localizeMenuLocations(h.menuCallbacks.LocationsFn(), lang)
+	locations := h.localizeMenuLocations(h.menuCallbacks.Locations(), lang)
 
 	h.render(c, "menus", gin.H{
 		"Active":    "menus",
@@ -44,7 +44,7 @@ func (h *Handler) MenuCreate(c *gin.Context) {
 	if !h.checkPermission(c, "menu", "update") {
 		return
 	}
-	if h.menuCallbacks == nil || h.menuCallbacks.CreateFn == nil {
+	if h.menuCallbacks == nil {
 		c.Redirect(http.StatusFound, "/admin/menus?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "menu.unavailable")))
 		return
 	}
@@ -57,7 +57,7 @@ func (h *Handler) MenuCreate(c *gin.Context) {
 		return
 	}
 
-	if err := h.menuCallbacks.CreateFn(name, location); err != nil {
+	if err := h.menuCallbacks.Create(name, location); err != nil {
 		c.Redirect(http.StatusFound, "/admin/menus?error="+err.Error())
 		return
 	}
@@ -71,7 +71,7 @@ func (h *Handler) MenuEdit(c *gin.Context) {
 	if !h.checkPermission(c, "menu", "read") {
 		return
 	}
-	if h.menuCallbacks == nil || h.menuCallbacks.GetByIDFn == nil {
+	if h.menuCallbacks == nil {
 		c.Redirect(http.StatusFound, "/admin/menus?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "menu.unavailable")))
 		return
 	}
@@ -82,7 +82,7 @@ func (h *Handler) MenuEdit(c *gin.Context) {
 		return
 	}
 
-	m, err := h.menuCallbacks.GetByIDFn(uint(id))
+	m, err := h.menuCallbacks.GetByID(uint(id))
 	if err != nil {
 		c.Redirect(http.StatusFound, "/admin/menus?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "menu.not_found")))
 		return
@@ -94,7 +94,7 @@ func (h *Handler) MenuEdit(c *gin.Context) {
 	// Serialize menu items to JSON to avoid html/template JS context escaping
 	itemsJSON, _ := json.Marshal(flattenMenuItems(m.Items))
 	lang := h.svc.AdminLanguage()
-	locations := h.localizeMenuLocations(h.menuCallbacks.LocationsFn(), lang)
+	locations := h.localizeMenuLocations(h.menuCallbacks.Locations(), lang)
 
 	h.render(c, "menu_edit", gin.H{
 		"Active":        "menus",
@@ -112,7 +112,7 @@ func (h *Handler) MenuUpdate(c *gin.Context) {
 	if !h.checkPermission(c, "menu", "update") {
 		return
 	}
-	if h.menuCallbacks == nil || h.menuCallbacks.UpdateFn == nil {
+	if h.menuCallbacks == nil {
 		c.Redirect(http.StatusFound, "/admin/menus?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "menu.unavailable")))
 		return
 	}
@@ -131,7 +131,7 @@ func (h *Handler) MenuUpdate(c *gin.Context) {
 		return
 	}
 
-	if err := h.menuCallbacks.UpdateFn(uint(id), name, location); err != nil {
+	if err := h.menuCallbacks.Update(uint(id), name, location); err != nil {
 		c.Redirect(http.StatusFound, "/admin/menus/"+c.Param("id")+"/edit?error="+err.Error())
 		return
 	}
@@ -164,7 +164,7 @@ func (h *Handler) MenuDelete(c *gin.Context) {
 	if !h.checkPermission(c, "menu", "update") {
 		return
 	}
-	if h.menuCallbacks == nil || h.menuCallbacks.DeleteFn == nil {
+	if h.menuCallbacks == nil {
 		c.Redirect(http.StatusFound, "/admin/menus?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "menu.unavailable")))
 		return
 	}
@@ -175,7 +175,7 @@ func (h *Handler) MenuDelete(c *gin.Context) {
 		return
 	}
 
-	if err := h.menuCallbacks.DeleteFn(uint(id)); err != nil {
+	if err := h.menuCallbacks.Delete(uint(id)); err != nil {
 		c.Redirect(http.StatusFound, "/admin/menus?error="+err.Error())
 		return
 	}
@@ -189,7 +189,7 @@ func (h *Handler) MenuSaveItems(c *gin.Context) {
 	if !h.checkPermission(c, "menu", "update") {
 		return
 	}
-	if h.menuCallbacks == nil || h.menuCallbacks.SaveItemsFn == nil {
+	if h.menuCallbacks == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": adminT(h.svc.AdminLanguage(), "menu.unavailable")})
 		return
 	}
@@ -206,7 +206,7 @@ func (h *Handler) MenuSaveItems(c *gin.Context) {
 		return
 	}
 
-	if err := h.menuCallbacks.SaveItemsFn(uint(id), items); err != nil {
+	if err := h.menuCallbacks.SaveItems(uint(id), items); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

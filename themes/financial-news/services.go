@@ -9,7 +9,6 @@ import (
 
 	"go-press/core"
 	"go-press/core/content"
-	"go-press/core/hook"
 	coreI18n "go-press/core/i18n"
 	"go-press/core/option"
 	"go-press/core/rewrite"
@@ -124,115 +123,31 @@ type AboutData struct {
 // ======== PageService ========
 
 type PageService struct {
-	db          *gorm.DB
-	contentRepo *content.Repository
-	taxRepo     *taxonomy.Repository
-	options     *option.Store
-	// seoBuilder, registry and hookBus are populated when constructed from a
-	// full Engine. They may be nil under NewPageServiceDB (CLI / tests), in
-	// which case the SEO helpers gracefully return zero-value SEOMeta and the
-	// per-content meta filter is skipped.
-	seoBuilder *rewrite.SEOBuilder
-	registry   *content.Registry
-	hookBus    *hook.Bus
-	i18nMgr    *coreI18n.Manager
-	reqCtx     *gin.Context // set by ForRequest, enables FindBySlugScoped
+	coreTheme.SEOPageService
 }
 
 func NewPageService(engine *core.Engine) *PageService {
-	return &PageService{
-		db:          engine.DB,
-		contentRepo: engine.Content,
-		taxRepo:     engine.Taxonomy,
-		options:     engine.Options,
-		seoBuilder:  engine.SEO,
-		registry:    engine.Registry,
-		hookBus:     engine.Hooks,
-		i18nMgr:     engine.I18n,
-	}
+	return &PageService{coreTheme.NewSEOPageService(
+		coreTheme.NewBasePageService(engine.DB, engine.Content, engine.Taxonomy, engine.Options),
+		engine.SEO, engine.Registry, engine.Hooks, engine.I18n)}
 }
 
 func NewPageServiceDB(db *gorm.DB) *PageService {
-	return &PageService{
-		db:          db,
-		contentRepo: content.NewRepository(db),
-		taxRepo:     taxonomy.NewRepository(db),
-		options:     option.NewStore(db),
-	}
-}
-
-// ======== SEO Helpers ========
-//
-// Mirrors BaseTheme's SEO injection: build per-page SEOMeta via the core
-// SEOBuilder, then apply runtime option overrides so admin's site_name /
-// site_description / site_icon always win over the static config values baked
-// into the builder. Returns zero-value SEOMeta when the engine isn't wired in
-// (DB-only service used by tests / CLI), which the template's seoHeadFor helper
-// treats as "no SEO" and falls back to a plain meta description.
-
-func (s *PageService) buildHomeSEO() rewrite.SEOMeta {
-	if s.seoBuilder == nil {
-		return rewrite.SEOMeta{}
-	}
-	seo := s.seoBuilder.ForHome(s.options.Get("site_description"))
-	s.applySEOOverrides(&seo)
-	return seo
-}
-
-func (s *PageService) buildArchiveSEO(typeName string) rewrite.SEOMeta {
-	if s.seoBuilder == nil || s.registry == nil {
-		return rewrite.SEOMeta{}
-	}
-	typeDef := s.registry.GetType(typeName)
-	if typeDef == nil {
-		return rewrite.SEOMeta{}
-	}
-	seo := s.seoBuilder.ForArchiveTitle(typeDef, coreTheme.LocalizedArchiveTitle(s.reqCtx, s.i18nMgr, typeDef))
-	s.applySEOOverrides(&seo)
-	return seo
-}
-
-func (s *PageService) buildContentSEO(item *content.Content, typeName string) rewrite.SEOMeta {
-	if s.seoBuilder == nil || s.registry == nil || item == nil {
-		return rewrite.SEOMeta{}
-	}
-	typeDef := s.registry.GetType(typeName)
-	if typeDef == nil {
-		return rewrite.SEOMeta{}
-	}
-	seo := s.seoBuilder.ForContent(item, typeDef)
-	s.applySEOOverrides(&seo)
-	coreTheme.ApplyContentMetaSEO(s.hookBus, s.contentRepo, &seo, item)
-	return seo
-}
-
-func (s *PageService) applySEOOverrides(seo *rewrite.SEOMeta) {
-	coreTheme.ApplySiteOptionOverridesFromOptionsForRequest(s.reqCtx, s.options, s.i18nMgr, s.seoBuilder, seo)
+	return &PageService{coreTheme.NewSEOPageService(coreTheme.NewBasePageServiceDB(db), nil, nil, nil, nil)}
 }
 
 // ForRequest returns a clone of PageService with request-scoped content filters applied.
 // Core plugins can register content scopes (e.g. language filtering) via content.AddContentScope.
 func (s *PageService) ForRequest(c *gin.Context) *PageService {
-	if c == nil {
-		return s
-	}
-	scopedDB := content.ScopedDB(c, s.db)
 	clone := *s
-	clone.reqCtx = c
-	if scopedDB != s.db {
-		clone.db = scopedDB
-	}
+	clone.BasePageService = s.BasePageService.ForRequest(c)
 	return &clone
 }
 
 // ======== Helpers ========
 
-func (s *PageService) getSettings() map[string]string {
-	return s.options.All()
-}
-
 func (s *PageService) getLatestNews(n int) []ArticleView {
-	articles, _ := content.NewQuery(s.db).
+	articles, _ := content.NewQuery(s.DB).
 		Type("post").Published().
 		OrderBy("published_at", "DESC").
 		Limit(n).Get()
@@ -247,7 +162,7 @@ func (s *PageService) buildPageData(title, activePage string) PageData {
 	return PageData{
 		Title:      title,
 		ActivePage: activePage,
-		Settings:   s.getSettings(),
+		Settings:   s.Settings(),
 		LatestNews: s.getLatestNews(5),
 	}
 }
@@ -255,17 +170,17 @@ func (s *PageService) buildPageData(title, activePage string) PageData {
 // ======== Page Data Methods ========
 
 func (s *PageService) GetHomeData() (*HomeData, error) {
-	featured, _ := content.NewQuery(s.db).
+	featured, _ := content.NewQuery(s.DB).
 		Type("post").Published().
 		OrderBy("published_at", "DESC").
 		Limit(6).Get()
 
-	marketItems, _ := content.NewQuery(s.db).
+	marketItems, _ := content.NewQuery(s.DB).
 		Type("market_update").Published().
 		OrderBy("published_at", "DESC").
 		Limit(10).Get()
 
-	analysisItems, _ := content.NewQuery(s.db).
+	analysisItems, _ := content.NewQuery(s.DB).
 		Type("analysis").Published().
 		OrderBy("published_at", "DESC").
 		Limit(4).Get()
@@ -276,12 +191,12 @@ func (s *PageService) GetHomeData() (*HomeData, error) {
 		MarketUpdates:    s.toMarketUpdateViews(marketItems),
 		LatestAnalysis:   s.toAnalysisViews(analysisItems),
 	}
-	data.SEO = s.buildHomeSEO()
+	data.SEO = s.BuildHomeSEO()
 	return data, nil
 }
 
 func (s *PageService) GetArticlesData(categorySlug string) (*ArticlesData, error) {
-	q := content.NewQuery(s.db).
+	q := content.NewQuery(s.DB).
 		Type("post").Published().
 		OrderBy("published_at", "DESC")
 
@@ -297,17 +212,17 @@ func (s *PageService) GetArticlesData(categorySlug string) (*ArticlesData, error
 	articleViews := make([]ArticleView, len(articles))
 	for i, a := range articles {
 		av := toArticleView(a)
-		cats, _ := s.taxRepo.GetContentTaxonomies(a.ID, "category")
+		cats, _ := s.Tax.GetContentTaxonomies(a.ID, "category")
 		if len(cats) > 0 {
 			av.Category = toCategoryView(cats[0])
 		}
-		tags, _ := s.taxRepo.GetContentTaxonomies(a.ID, "tag")
+		tags, _ := s.Tax.GetContentTaxonomies(a.ID, "tag")
 		av.Tags = toTagViews(tags)
 		articleViews[i] = av
 	}
 
-	allCats, _ := s.taxRepo.ListByTaxonomy("category")
-	allTags, _ := s.taxRepo.ListByTaxonomy("tag")
+	allCats, _ := s.Tax.ListByTaxonomy("category")
+	allTags, _ := s.Tax.ListByTaxonomy("tag")
 
 	data := &ArticlesData{
 		PageData:   s.buildPageData("新闻文章", "articles"),
@@ -316,12 +231,12 @@ func (s *PageService) GetArticlesData(categorySlug string) (*ArticlesData, error
 		Tags:       toTagViews(allTags),
 		ActiveCat:  categorySlug,
 	}
-	data.SEO = s.buildArchiveSEO("post")
+	data.SEO = s.BuildArchiveSEO("post")
 	return data, nil
 }
 
 func (s *PageService) GetMarketData() (*MarketData, error) {
-	items, _ := content.NewQuery(s.db).
+	items, _ := content.NewQuery(s.DB).
 		Type("market_update").Published().
 		OrderBy("published_at", "DESC").
 		Get()
@@ -330,24 +245,24 @@ func (s *PageService) GetMarketData() (*MarketData, error) {
 		PageData: s.buildPageData("行情快讯", "market"),
 		Updates:  s.toMarketUpdateViews(items),
 	}
-	data.SEO = s.buildArchiveSEO("market_update")
+	data.SEO = s.BuildArchiveSEO("market_update")
 	return data, nil
 }
 
 func (s *PageService) GetAnalysisData() (*AnalysisListData, error) {
-	items, _ := content.NewQuery(s.db).
+	items, _ := content.NewQuery(s.DB).
 		Type("analysis").Published().
 		OrderBy("published_at", "DESC").
 		Get()
 
-	allCats, _ := s.taxRepo.ListByTaxonomy("category")
+	allCats, _ := s.Tax.ListByTaxonomy("category")
 
 	data := &AnalysisListData{
 		PageData:   s.buildPageData("深度分析", "analysis"),
 		Analyses:   s.toAnalysisViews(items),
 		Categories: toCategoryViews(allCats),
 	}
-	data.SEO = s.buildArchiveSEO("analysis")
+	data.SEO = s.BuildArchiveSEO("analysis")
 	return data, nil
 }
 
@@ -367,7 +282,7 @@ type PostDetailData struct {
 }
 
 func (s *PageService) GetPostDetailData(slug string) (*PostDetailData, error) {
-	item, err := s.contentRepo.FindBySlugScoped(s.reqCtx, "post", slug)
+	item, err := s.Content.FindBySlugScoped(s.ReqCtx, "post", slug)
 	if err != nil || item == nil {
 		return nil, fmt.Errorf("post %q not found", slug)
 	}
@@ -377,10 +292,10 @@ func (s *PageService) GetPostDetailData(slug string) (*PostDetailData, error) {
 
 	var categories []CategoryView
 	var tags []TagView
-	if s.taxRepo != nil {
-		cats, _ := s.taxRepo.GetContentTaxonomies(item.ID, "category")
+	if s.Tax != nil {
+		cats, _ := s.Tax.GetContentTaxonomies(item.ID, "category")
 		categories = toCategoryViews(cats)
-		tagItems, _ := s.taxRepo.GetContentTaxonomies(item.ID, "tag")
+		tagItems, _ := s.Tax.GetContentTaxonomies(item.ID, "tag")
 		tags = toTagViews(tagItems)
 	}
 
@@ -393,7 +308,7 @@ func (s *PageService) GetPostDetailData(slug string) (*PostDetailData, error) {
 		Tags:        tags,
 		LatestPosts: latestPosts,
 	}
-	data.SEO = s.buildContentSEO(item, "post")
+	data.SEO = s.BuildContentSEO(item, "post")
 	return data, nil
 }
 
@@ -423,7 +338,7 @@ func toArticleViews(items []content.Content) []ArticleView {
 func (s *PageService) toMarketUpdateViews(items []content.Content) []MarketUpdateView {
 	views := make([]MarketUpdateView, len(items))
 	for i, c := range items {
-		meta, _ := s.contentRepo.GetMeta(c.ID)
+		meta, _ := s.Content.GetMeta(c.ID)
 		views[i] = MarketUpdateView{
 			ID:          c.ID,
 			Title:       c.Title,
@@ -440,7 +355,7 @@ func (s *PageService) toMarketUpdateViews(items []content.Content) []MarketUpdat
 func (s *PageService) toAnalysisViews(items []content.Content) []AnalysisView {
 	views := make([]AnalysisView, len(items))
 	for i, c := range items {
-		meta, _ := s.contentRepo.GetMeta(c.ID)
+		meta, _ := s.Content.GetMeta(c.ID)
 		av := AnalysisView{
 			ID:          c.ID,
 			Title:       c.Title,
@@ -452,7 +367,7 @@ func (s *PageService) toAnalysisViews(items []content.Content) []AnalysisView {
 			Rating:      meta["rating"],
 			PublishedAt: c.PublishedAt,
 		}
-		cats, _ := s.taxRepo.GetContentTaxonomies(c.ID, "category")
+		cats, _ := s.Tax.GetContentTaxonomies(c.ID, "category")
 		if len(cats) > 0 {
 			av.Category = toCategoryView(cats[0])
 		}

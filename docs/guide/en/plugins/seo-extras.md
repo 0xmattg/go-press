@@ -38,7 +38,7 @@ admin.content.saved        -> persist submitted values
 seo.content.meta           -> patch SEOMeta
 ```
 
-BaseTheme-based themes receive the SEO patch automatically. Custom `PageData` themes must call `coreTheme.ApplyContentMetaSEO` when building page SEO.
+BaseTheme-based themes receive the SEO patch automatically, and so do typed themes that embed `coreTheme.SEOPageService` — its `BuildContentSEO` already calls `coreTheme.ApplyContentMetaSEO`. Only themes that build `SEOMeta` entirely by hand (not via `SEOPageService`) must call `coreTheme.ApplyContentMetaSEO` themselves when building page SEO.
 
 ## Custom SEO Plugins
 
