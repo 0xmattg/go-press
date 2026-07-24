@@ -25,9 +25,10 @@ type Claims struct {
 
 // Auth handles authentication operations.
 type Auth struct {
-	secret     []byte
-	expireTime time.Duration
-	repo       *Repository
+	secret        []byte
+	expireTime    time.Duration
+	repo          *Repository
+	secureCookies bool
 }
 
 // NewAuth creates a new Auth handler.
@@ -37,6 +38,21 @@ func NewAuth(jwtSecret string, expireHours int, repo *Repository) *Auth {
 		expireTime: time.Duration(expireHours) * time.Hour,
 		repo:       repo,
 	}
+}
+
+// SetSecureCookies records whether admin session cookies must carry the Secure
+// attribute. It is derived from the site scheme by the engine so that HTTPS
+// deployments never transmit the admin token over plaintext, while local HTTP
+// development keeps working.
+func (a *Auth) SetSecureCookies(secure bool) {
+	if a != nil {
+		a.secureCookies = secure
+	}
+}
+
+// SecureCookies reports whether admin cookies should be marked Secure.
+func (a *Auth) SecureCookies() bool {
+	return a != nil && a.secureCookies
 }
 
 // HashPassword hashes a plaintext password using bcrypt.
@@ -109,4 +125,44 @@ func (a *Auth) ParseToken(tokenStr string) (*Claims, error) {
 		return nil, ErrInvalidToken
 	}
 	return claims, nil
+}
+
+// ActiveClaims validates the token signature/expiry and then re-checks the
+// account against the current data store: a disabled or deleted account is
+// rejected, and role/username/display name are refreshed from the database so
+// privilege changes and deactivations take effect immediately instead of
+// lingering until the token expires. When no repository is configured (unit
+// tests, stateless contexts) it degrades to plain ParseToken.
+func (a *Auth) ActiveClaims(tokenStr string) (*Claims, error) {
+	claims, err := a.ParseToken(tokenStr)
+	if err != nil {
+		return nil, err
+	}
+	if a == nil || a.repo == nil {
+		return claims, nil
+	}
+	account, err := a.repo.FindByID(claims.UserID)
+	if err != nil {
+		return nil, ErrInvalidToken
+	}
+	if err := refreshClaimsFromAccount(claims, account); err != nil {
+		return nil, err
+	}
+	return claims, nil
+}
+
+// refreshClaimsFromAccount rejects inactive accounts and syncs mutable identity
+// fields from the persisted user onto the token claims. Kept as a pure function
+// so the active-session policy is unit-testable without a database.
+func refreshClaimsFromAccount(claims *Claims, account *User) error {
+	if claims == nil || account == nil {
+		return ErrInvalidToken
+	}
+	if !account.IsActive {
+		return ErrAccountDisabled
+	}
+	claims.Role = account.Role
+	claims.Username = account.Username
+	claims.DisplayName = account.DisplayName
+	return nil
 }

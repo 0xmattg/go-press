@@ -211,8 +211,13 @@ func New(cfg *config.Config, db *gorm.DB) *Engine {
 	e.Sitemap = rewrite.NewSitemapGenerator(cfg.Site.URL, e.Registry, e.Content, e.Rewrite)
 	e.Sitemap.SetTaxonomyRepo(e.Taxonomy)
 
+	// secureCookies is true for HTTPS sites so both admin and public session
+	// cookies get the Secure attribute; local HTTP development stays functional.
+	secureCookies := strings.HasPrefix(strings.ToLower(strings.TrimSpace(cfg.Site.URL)), "https://")
+
 	// Initialize auth
 	e.Auth = user.NewAuth(cfg.CMS.JWTSecret, cfg.CMS.JWTExpireHours, e.Users)
+	e.Auth.SetSecureCookies(secureCookies)
 	e.RegistrationPolicy = user.NewRegistrationPolicy(e.Options, e.RBAC)
 	e.AuthProviders = user.NewProviderRegistry()
 	e.IdentityBroker = user.NewIdentityBroker(e.DB, e.Users, e.Identities, e.RegistrationPolicy)
@@ -223,7 +228,7 @@ func New(cfg *config.Config, db *gorm.DB) *Engine {
 		publicSessions,
 		e.AuthProviders,
 		e.RegistrationPolicy,
-		strings.HasPrefix(strings.ToLower(strings.TrimSpace(cfg.Site.URL)), "https://"),
+		secureCookies,
 		func() string {
 			if e.Options != nil {
 				if name := strings.TrimSpace(e.Options.Get("site_name")); name != "" {
@@ -660,6 +665,7 @@ func (e *Engine) serveStatic(c *gin.Context) {
 	// User uploads — serve from config upload directory
 	if strings.HasPrefix(fp, "/uploads/") {
 		relPath := strings.TrimPrefix(fp, "/uploads/")
+		applyUploadResponseGuards(c, relPath)
 		e.serveStaticFile(c, filepath.Join(e.Config.CMS.UploadDir, relPath), true)
 		return
 	}
@@ -672,6 +678,29 @@ func (e *Engine) serveStatic(c *gin.Context) {
 	}
 
 	serveStaticNotFound(c)
+}
+
+// activeUploadExtensions lists user-uploadable extensions a browser may render
+// as an executable document (scripts, event handlers). Uploaded files with
+// these extensions are a stored-XSS vector when served inline from the site
+// origin, so responses for them are forced to download and sandboxed.
+var activeUploadExtensions = map[string]bool{
+	".svg": true, ".svgz": true, ".html": true, ".htm": true,
+	".xhtml": true, ".xht": true, ".xml": true, ".mhtml": true,
+}
+
+// applyUploadResponseGuards hardens responses for user-uploaded files. Only
+// script-capable markup is affected: it is served with Content-Disposition:
+// attachment plus a locked-down CSP so navigating directly to it cannot run
+// JavaScript in the site origin. Ordinary image embeds via <img> ignore
+// Content-Disposition, so existing media (including inline SVG logos) keeps
+// rendering while the XSS vector is closed.
+func applyUploadResponseGuards(c *gin.Context, relPath string) {
+	if activeUploadExtensions[strings.ToLower(filepath.Ext(relPath))] {
+		c.Header("Content-Disposition", "attachment")
+		c.Header("Content-Security-Policy", "sandbox; default-src 'none'")
+		c.Header("X-Content-Type-Options", "nosniff")
+	}
 }
 
 func (e *Engine) serveStaticFile(c *gin.Context, filePath string, immutable bool) {

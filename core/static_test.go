@@ -44,6 +44,69 @@ func TestServeStaticHeadUploadReturnsHeaders(t *testing.T) {
 	}
 }
 
+func TestServeStaticSvgUploadIsSandboxedAndDownloaded(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	uploadDir := t.TempDir()
+	filePath := filepath.Join(uploadDir, "2026", "05", "logo.svg")
+	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
+		t.Fatal(err)
+	}
+	svg := `<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>`
+	if err := os.WriteFile(filePath, []byte(svg), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	engine := &Engine{Config: &config.Config{CMS: config.CMSConfig{UploadDir: uploadDir}}}
+	router := gin.New()
+	router.GET("/static/*filepath", engine.serveStatic)
+
+	req := httptest.NewRequest(http.MethodGet, "/static/uploads/2026/05/logo.svg", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+	if cd := rec.Header().Get("Content-Disposition"); cd != "attachment" {
+		t.Fatalf("content-disposition = %q, want attachment", cd)
+	}
+	if csp := rec.Header().Get("Content-Security-Policy"); !strings.Contains(csp, "sandbox") {
+		t.Fatalf("csp = %q, want sandbox directive", csp)
+	}
+	if xcto := rec.Header().Get("X-Content-Type-Options"); xcto != "nosniff" {
+		t.Fatalf("x-content-type-options = %q, want nosniff", xcto)
+	}
+}
+
+func TestServeStaticImageUploadStaysInline(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	uploadDir := t.TempDir()
+	filePath := filepath.Join(uploadDir, "2026", "05", "photo.png")
+	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filePath, []byte("png"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	engine := &Engine{Config: &config.Config{CMS: config.CMSConfig{UploadDir: uploadDir}}}
+	router := gin.New()
+	router.GET("/static/*filepath", engine.serveStatic)
+
+	req := httptest.NewRequest(http.MethodGet, "/static/uploads/2026/05/photo.png", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+	if cd := rec.Header().Get("Content-Disposition"); cd != "" {
+		t.Fatalf("content-disposition = %q, want empty for images", cd)
+	}
+}
+
 func TestServeStaticMissingDoesNotUseImmutableCache(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

@@ -8,7 +8,8 @@ theme = "modern-company"
 [server]
 host = "0.0.0.0"
 port = 8080
-mode = "debug"
+# Use "release" in production; "debug" enables verbose Gin logging locally.
+mode = "release"
 
 [pg]
 user = "pguser"
@@ -30,7 +31,10 @@ password = ""
 db = 0
 
 [cms]
-jwt_secret = "go-press-change-this-secret-in-production"
+# REQUIRED: set a unique, random secret (e.g. `openssl rand -base64 32`).
+# The installer generates one automatically per site; the app refuses to start
+# if this is left empty or set to a shared placeholder value.
+jwt_secret = ""
 jwt_expire_hours = 24
 upload_dir = "web/static/uploads"
 upload_max_size_mb = 10

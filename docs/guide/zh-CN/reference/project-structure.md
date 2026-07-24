@@ -92,7 +92,7 @@ go-press/
 ├── config/                     # 默认配置 + 配置解析
 │   ├── config.go               #   配置结构体定义
 │   ├── resolve.go              #   多站点配置发现
-│   └── config.toml             #   默认配置模板
+│   └── config.toml             #   配置模板（密钥留空，非运行时配置；实际站点用 sites/<host>/config.toml）
 │
 ├── docs/                       # 文档
 │   ├── guide/                  #   GitBook 文字文档（你正在看的部分）

@@ -15,6 +15,13 @@ import (
 //
 // This is the standard way to construct a production-ready Engine from a config.
 func BuildAndBootstrap(cfg *config.Config, configPath string, seed bool) (*Engine, error) {
+	// Refuse to start with an empty or placeholder admin token secret: with a
+	// known secret anyone can forge admin sessions. The installer generates a
+	// unique random secret, so a completed install should never hit this.
+	if cfg.CMS.JWTSecretInsecure() {
+		return nil, fmt.Errorf("insecure cms.jwt_secret in %s: it is empty or the shipped placeholder; set a unique random value before starting", configPath)
+	}
+
 	// Set table prefix before any DB operations
 	if cfg.PG.TablePrefix != "" {
 		dbprefix.Set(cfg.PG.TablePrefix)

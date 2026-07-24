@@ -150,6 +150,7 @@
 	"field.user_registration_enabled": "Public User Registration",
   "error.invalid_login": "Invalid username or password",
   "error.login_required": "Enter username and password",
+  "error.login_throttled": "Too many login attempts. Please try again later.",
   "error.activate_failed": "Activation failed: %s",
   "error.add_failed": "Add failed: %s",
   "error.bulk_action_failed": "Bulk action failed: %s",

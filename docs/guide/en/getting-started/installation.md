@@ -96,6 +96,8 @@ The web installer has three stages:
 2. Site name, default theme, admin account, and interface language.
 3. Configuration write, migrations, seed data, and live-site switch.
 
+The generated `sites/<host>/config.toml` is written with `0600` permissions and includes a unique, randomly generated `jwt_secret`; you never set it by hand.
+
 If the target database does not exist, GoPress attempts to connect to `postgres` or `template1` with the same account and create it automatically.
 
 ## Make Targets

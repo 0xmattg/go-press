@@ -15,7 +15,7 @@ theme = "modern-company"
 [server]
 host = "0.0.0.0"
 port = 8080
-mode = "debug"               # debug / release
+mode = "release"             # 生产用 release；本地调试可用 debug
 
 [pg]
 user = "postgres"
@@ -36,7 +36,7 @@ password = ""
 db = 0
 
 [cms]
-jwt_secret = "your-secret-key"
+jwt_secret = ""              # 必填：安装器自动生成；留空或用示例占位值时应用拒绝启动
 jwt_expire_hours = 24
 upload_dir = "uploads"
 upload_max_size_mb = 10      # 单文件上传上限；JPEG/PNG 上传后会自动生成响应式变体
@@ -78,8 +78,19 @@ completed = true
 
 ### `[cms]`
 
-- `jwt_secret` — **生产环境必须替换**，泄露后等于把后台和 API 钥匙交给攻击者
+- `jwt_secret` — 后台会话与 API Bearer Token 的签名密钥，**每个站点必须是唯一的随机值**，泄露后等于把后台和 API 钥匙交给攻击者。安装器会自动生成；**为空或仍是示例占位值（`go-press-change-this-secret-in-production`）时应用会拒绝启动**，可用 `openssl rand -base64 32` 手动生成
+- `jwt_expire_hours` — 后台/ API Token 有效期（小时）。注意：被禁用或降级的账号无需等待过期，下一次请求即失效（服务端会按数据库实时状态复核）
 - `upload_dir` — 上传根目录，子目录按年月组织（`uploads/2026/04/...`）
+
+## 安全默认行为
+
+以下防护由 core 默认启用，无需额外配置：
+
+- **后台会话 Cookie** — `HttpOnly` + `SameSite=Lax`，且当 `[site].url` 为 `https://` 时自动加 `Secure`（HTTPS 部署不会再明文传输后台 Token）。因此请把生产站点的 `url` 配成 `https://…`
+- **CSRF 同源校验** — 后台所有改状态请求（含登录、插件后台路由）校验 `Origin`/`Referer` 与站点同源，跨站请求被拒（`403`）
+- **登录限流** — 后台登录按来源 IP 限制失败次数（默认 5 分钟内 10 次失败即临时拦截，返回 `429`），失败尝试写入审计日志
+- **账号状态实时生效** — 禁用账号或调整角色后，其已签发的后台/API Token 立即失效或按新角色鉴权，无需等到 Token 过期
+- **上传文件防 XSS** — 上传目录中 `svg`/`html`/`xml` 等可执行文档在返回时强制 `Content-Disposition: attachment` + CSP `sandbox`，避免被当作页面在站点域下执行脚本；通过 `<img>` 内联引用的图片不受影响，照常显示
 
 ### `[mail]`
 
