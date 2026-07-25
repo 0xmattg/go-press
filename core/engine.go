@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -51,6 +52,9 @@ type ThemeInfo struct {
 	Description string
 	Author      string
 	Active      bool
+	// LogoSVG is the theme's sanitized inline SVG logo, or "" when the theme
+	// provides no static/logo.svg. Safe to inline into admin pages.
+	LogoSVG string
 }
 
 // Engine is the main GoPress application container.
@@ -400,9 +404,22 @@ func (e *Engine) AvailableThemes() []ThemeInfo {
 			Description: t.Description(),
 			Author:      t.Author(),
 			Active:      slug == active,
+			LogoSVG:     extensionLogoSVG(t),
 		})
 	}
 	return infos
+}
+
+// extensionLogoSVG extracts and sanitizes the inline SVG logo from a theme or
+// plugin that implements LogoSVG() string (theme.LogoProvider / plugin.LogoProvider).
+// Returns "" when the extension provides no logo. The result is sanitized so it
+// is safe to inline into admin pages, even for third-party extensions.
+func extensionLogoSVG(x interface{}) string {
+	lp, ok := x.(interface{ LogoSVG() string })
+	if !ok {
+		return ""
+	}
+	return content.SanitizeSVG(lp.LogoSVG())
 }
 
 // ThemeDemoSeedPath returns the seed.toml path for the given theme slug,
@@ -787,6 +804,7 @@ func (e *Engine) SetupAdmin() {
 					HasDemoData:  e.ThemeDemoSeedPath(t.Slug) != "",
 					DemoImported: e.IsThemeDemoImported(t.Slug),
 					HasSettings:  e.ThemeSettingsTemplatePath(t.Slug) != "",
+					LogoSVG:      template.HTML(t.LogoSVG),
 				}
 			}
 			return result
@@ -860,6 +878,7 @@ func (e *Engine) SetupAdmin() {
 					Description: p.Description(),
 					Active:      e.PluginManager.IsActive(p.Name()),
 					HasSettings: hasSettings,
+					LogoSVG:     template.HTML(extensionLogoSVG(p)),
 				}
 			}
 			return result

@@ -262,6 +262,274 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
     padding: 1rem 1.25rem;
 }
 
+/* ==================== Theme / Plugin Cards ==================== */
+.extension-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 370px), 1fr));
+    align-items: start;
+    gap: .85rem;
+}
+.extension-card {
+    display: flex;
+    min-width: 0;
+    min-height: 148px;
+    margin-bottom: 0;
+    flex-direction: column;
+    border: 1px solid #dbe3ed;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 5px 14px rgba(15, 23, 42, .035);
+    transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+.extension-card:hover {
+    border-color: #b8c5d6;
+    box-shadow: 0 2px 4px rgba(15, 23, 42, .07), 0 8px 20px rgba(15, 23, 42, .05);
+    transform: translateY(-1px);
+}
+.extension-card-active {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, .18), 0 5px 16px rgba(37, 99, 235, .08);
+}
+.extension-card-main {
+    display: flex;
+    align-items: flex-start;
+    gap: .8rem;
+    min-width: 0;
+    padding: .9rem .95rem .72rem;
+    flex: 1 1 auto;
+}
+.extension-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 48px;
+    width: 48px;
+    height: 48px;
+    overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .12);
+}
+.extension-logo svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+.extension-card-content {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+.extension-card-heading {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    min-width: 0;
+}
+.extension-card-heading h3 {
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    color: #172033;
+    font-size: .98rem;
+    line-height: 1.3;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.extension-card-badges {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-width: 0;
+    margin-left: auto;
+    flex: 0 0 auto;
+}
+.extension-version {
+    padding: .1rem .38rem;
+    border-radius: 4px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: .72rem;
+    line-height: 1.35;
+    font-variant-numeric: tabular-nums;
+}
+.extension-card .badge {
+    padding: .12rem .45rem;
+    border-radius: 999px;
+    font-size: .72rem;
+    line-height: 1.35;
+}
+.extension-card .badge-active {
+    border: 1px solid #bbf7d0;
+    background: #dcfce7;
+    color: #15803d;
+}
+.extension-card .badge-inactive {
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #94a3b8;
+}
+.extension-desc-wrap {
+    position: relative;
+    min-width: 0;
+}
+.extension-desc {
+    display: -webkit-box;
+    margin: .34rem 0 0;
+    overflow: hidden;
+    color: #5b6b82;
+    font-size: .86rem;
+    line-height: 1.45;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+.extension-desc-wrap.has-toggle .extension-desc {
+    padding-right: 1.55rem;
+}
+.extension-desc-wrap.is-expanded .extension-desc {
+    display: block;
+    overflow: visible;
+    -webkit-line-clamp: initial;
+}
+.extension-desc-toggle {
+    position: absolute;
+    right: 0;
+    bottom: -1px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 1px solid #dbe3ed;
+    border-radius: 4px;
+    background: #f8fafc;
+    color: #64748b;
+    cursor: pointer;
+    transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+}
+.extension-desc-toggle[hidden] {
+    display: none;
+}
+.extension-desc-toggle:hover,
+.extension-desc-toggle:focus-visible {
+    border-color: #93c5fd;
+    background: #eff6ff;
+    color: #2563eb;
+    outline: none;
+}
+.extension-desc-toggle svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
+    transition: transform .18s ease;
+}
+.extension-desc-toggle[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+}
+.extension-card-footer {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    min-width: 0;
+    min-height: 43px;
+    padding: .48rem .95rem;
+    border-top: 1px solid #edf1f5;
+    background: #fbfcfe;
+}
+.extension-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: .42rem;
+    flex: 0 0 auto;
+}
+.extension-actions .inline-form {
+    display: inline-flex;
+}
+.extension-actions .btn {
+    min-height: 28px;
+    padding: .25rem .62rem;
+    font-size: .78rem;
+    white-space: nowrap;
+}
+.extension-meta {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    min-width: 0;
+    margin-left: auto;
+    overflow: hidden;
+    color: #8a9ab1;
+    font-size: .72rem;
+}
+.extension-author {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.extension-author + .extension-slug::before {
+    margin: 0 .45rem;
+    color: #cbd5e1;
+    content: "|";
+}
+.extension-slug {
+    min-width: 0;
+    margin-left: auto;
+    overflow: hidden;
+    color: #91a2ba;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: .72rem;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.extension-card .btn-settings {
+    border-color: #bfdbfe;
+    background: #fff;
+    color: #2563eb;
+}
+.extension-card .btn-settings:hover {
+    border-color: #2563eb;
+    background: #eff6ff;
+}
+.extension-card .btn-accent {
+    border-color: #86efac;
+    background: #f0fdf4;
+    color: #15803d;
+}
+.extension-card .btn-accent:hover {
+    border-color: #22c55e;
+    background: #dcfce7;
+}
+.extension-card .btn-secondary[disabled] {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+    color: #16a34a;
+    opacity: 1;
+}
+.demo-check {
+    color: #16a34a;
+    font-weight: 700;
+}
+
+@media (max-width: 720px) {
+    .extension-card-main {
+        padding: .8rem .85rem .65rem;
+    }
+    .extension-card-footer {
+        align-items: flex-start;
+        padding: .52rem .85rem;
+        flex-direction: column;
+    }
+    .extension-meta,
+    .extension-card-footer > .extension-slug {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
 /* ==================== Stats ==================== */
 .stats-grid {
     display: grid;

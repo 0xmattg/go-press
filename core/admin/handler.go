@@ -30,9 +30,10 @@ type ThemeDisplayInfo struct {
 	Description  string
 	Author       string
 	Active       bool
-	HasDemoData  bool // theme provides bundled demo seed data
-	DemoImported bool // demo data has already been imported
-	HasSettings  bool // theme provides a settings page
+	HasDemoData  bool          // theme provides bundled demo seed data
+	DemoImported bool          // demo data has already been imported
+	HasSettings  bool          // theme provides a settings page
+	LogoSVG      template.HTML // sanitized inline SVG logo, or "" for none
 }
 
 // ThemeManager provides theme switching callbacks to the admin handler.
@@ -85,6 +86,7 @@ type PluginInfo struct {
 	Description string
 	Active      bool
 	HasSettings bool
+	LogoSVG     template.HTML // sanitized inline SVG logo, or "" for none
 }
 
 // PluginCallbacks provides plugin management callbacks to the admin handler.

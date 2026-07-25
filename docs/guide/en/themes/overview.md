@@ -14,6 +14,7 @@ GoPress themes are Go packages that register themselves with the engine. A theme
 - Site-timezone-aware `formatDate` and `formatDateTime` helpers from `BaseFuncMap`.
 - Responsive image helpers backed by media variants.
 - Demo data import through `DemoDataProvider`.
+- Admin theme-card logo through `LogoProvider` — drop a `static/logo.svg`; `BaseTheme` reads it automatically (no Go code) and core sanitizes it before inlining.
 
 ## Built-in Themes
 

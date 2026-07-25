@@ -19,6 +19,7 @@ GoPress 的主题系统借鉴 WordPress 设计：主题是一个 Go 包，通过
 - **SEO 自动注入** — 每个页面模板自动获得 `SEO` 数据（title、OG、JSON-LD），详见 [SEO 接入规范](seo-integration.md)
 - **热切换** — 后台一键切换主题，自动重建路由 + 刷新缓存
 - **DemoDataProvider** — 主题可实现 `DemoSeedPath()` 接口，后台一键导入演示内容和图片
+- **LogoProvider（后台卡片 Logo）** — 主题在 `static/logo.svg` 放一个 SVG，后台「主题管理」卡片即显示图标；`BaseTheme` 自动读取该文件（无需写 Go 代码），core 消毒后内联，第三方主题也安全
 - **init() 自注册** — 主题通过 `init()` 函数自动注册到引擎
 - **零主题/插件交叉耦合** — 主题只依赖 core funcmap 的字符串 key（`{{T .Ctx "x"}}`、`{{langPrefixURL .Ctx "/blog"}}`、`{{renderHook "theme.head.end" .}}`），插件只向 core 注册 hook/ctx key。**主题和插件之间不存在任何直接调用或类型依赖**
 

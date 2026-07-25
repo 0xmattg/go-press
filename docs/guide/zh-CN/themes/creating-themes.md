@@ -252,6 +252,7 @@ themes/my-theme/
 │   └── zh.json
 ├── demo/data/seed.toml       # 内置演示数据（可选）
 ├── static/
+│   ├── logo.svg              # 后台主题卡片图标（可选，见下文）
 │   ├── css/style.css
 │   └── js/main.js
 └── templates/
@@ -268,6 +269,15 @@ func (t *MyTheme) DemoSeedPath() string {
     return filepath.Join(t.ThemeDir, "demo", "data", "seed.toml")
 }
 ```
+
+## 后台卡片 Logo
+
+后台「主题管理」的卡片会在标题旁显示主题图标。约定极简：**在 `static/logo.svg` 放一个 SVG 即可**——`BaseTheme` 已实现可选接口 `LogoProvider.LogoSVG()`，会自动读取该文件，**无需写任何 Go 代码**。
+
+- 建议用 `viewBox="0 0 48 48"` 的方形图标（卡片按约 34px 显示）。
+- core 会先用 `content.SanitizeSVG` 清洗（剥离 `<script>` / `on*` 事件 / `javascript:` 等）再内联进后台页面，所以即使第三方主题的 logo 也不会把脚本带进后台 origin。
+- 没有该文件时卡片不显示图标，行为不变。
+- 如需动态生成 logo，可在主题上自行覆盖 `LogoSVG() string` 方法。
 
 ## 主题设置页
 

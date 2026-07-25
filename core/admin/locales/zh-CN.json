@@ -16,6 +16,8 @@
   "action.delete": "删除",
   "action.edit": "编辑",
   "action.enable_theme": "启用此主题",
+  "action.expand_description": "展开描述",
+  "action.collapse_description": "折叠描述",
   "action.force_regenerate_variants": "强制重建图片变体",
   "action.filter": "筛选",
   "action.generate_sitemap": "生成 Sitemap",

@@ -55,6 +55,13 @@ type SettingsSaveProvider interface {
 	OnSettingsSave(settings map[string]string)
 }
 
+// LogoProvider is an optional interface that plugins can implement to supply an
+// inline SVG logo shown on the admin plugin card. Return "" for no logo. Core
+// sanitizes the markup before rendering it into admin pages.
+type LogoProvider interface {
+	LogoSVG() string
+}
+
 // Slug returns the stable admin/settings identifier for a plugin.
 //
 // Plugin names are already expected to be URL-safe slugs such as
