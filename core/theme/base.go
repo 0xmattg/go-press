@@ -5,6 +5,8 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
@@ -67,6 +69,22 @@ func (b *BaseTheme) InitBase(app App, themeDir string, extraFuncs template.FuncM
 	b.PageTemplates = make(map[string]*template.Template)
 	b.CustomRoutes = make(map[string]map[string]gin.HandlerFunc)
 	b.customFuncMap = extraFuncs
+}
+
+// LogoSVG implements the optional LogoProvider interface: it returns the raw SVG
+// markup from static/logo.svg in the theme directory, or "" when absent. Every
+// theme embedding BaseTheme gets this for free — dropping a static/logo.svg file
+// is enough to show a logo on the admin theme card. Core sanitizes the markup
+// before rendering it.
+func (b *BaseTheme) LogoSVG() string {
+	if b == nil || b.ThemeDir == "" {
+		return ""
+	}
+	data, err := os.ReadFile(filepath.Join(b.ThemeDir, "static", "logo.svg"))
+	if err != nil {
+		return ""
+	}
+	return string(data)
 }
 
 // AddRoute registers a custom theme route such as /about or /contact.

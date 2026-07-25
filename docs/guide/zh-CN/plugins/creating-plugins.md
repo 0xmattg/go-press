@@ -99,7 +99,16 @@ func (p *MyPlugin) SettingsData() map[string]interface{} {
 func (p *MyPlugin) OnSettingsSave(settings map[string]string) {
     // 同步设置到插件自有表...
 }
+
+// LogoProvider — 在后台「插件管理」卡片上显示插件图标
+//
+//go:embed static/logo.svg
+var logoSVG string
+
+func (p *MyPlugin) LogoSVG() string { return logoSVG }
 ```
+
+`LogoProvider` 与主题一致：把一个 `viewBox="0 0 48 48"` 的方形 SVG 嵌入插件（`//go:embed`），`LogoSVG()` 返回其内容即可。core 会先用 `content.SanitizeSVG` 清洗再内联进后台，所以第三方插件的 logo 也安全；返回 `""` 则卡片不显示图标。
 
 ## 注册请求级内容过滤（Content Scope API）
 

@@ -218,3 +218,12 @@ func (t *MyTheme) DemoSeedPath() string {
     return filepath.Join(t.ThemeDir, "demo", "data", "seed.toml")
 }
 ```
+
+## Admin Card Logo
+
+The admin **Themes** page shows an icon next to each theme name. The convention is minimal: **just drop a `static/logo.svg`** — `BaseTheme` implements the optional `LogoProvider.LogoSVG()` and reads that file automatically, so no Go code is required.
+
+- Use a square icon with `viewBox="0 0 48 48"` (the card renders it at ~34px).
+- Core runs `content.SanitizeSVG` (stripping `<script>`, `on*` handlers, `javascript:` URIs, …) before inlining, so even a third-party theme's logo cannot smuggle script into the admin origin.
+- With no such file, the card simply shows no icon.
+- To generate the logo dynamically, override `LogoSVG() string` on the theme.

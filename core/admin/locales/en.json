@@ -16,6 +16,8 @@
   "action.delete": "Delete",
   "action.edit": "Edit",
   "action.enable_theme": "Enable This Theme",
+  "action.expand_description": "Expand description",
+  "action.collapse_description": "Collapse description",
   "action.force_regenerate_variants": "Force Rebuild Variants",
   "action.filter": "Filter",
   "action.generate_sitemap": "Generate Sitemap",

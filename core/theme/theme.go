@@ -115,6 +115,16 @@ type SettingsProvider interface {
 	SettingsTemplatePath() string
 }
 
+// LogoProvider is an optional interface that themes can implement to supply an
+// inline SVG logo shown on the admin theme card. BaseTheme provides a default
+// implementation that reads static/logo.svg from the theme directory, so most
+// themes only need to drop that file in — no Go code required.
+type LogoProvider interface {
+	// LogoSVG returns the raw SVG markup for the theme logo, or "" if none.
+	// Core sanitizes the markup before rendering it into admin pages.
+	LogoSVG() string
+}
+
 // Config holds the [theme] metadata parsed from theme.toml.
 type Config struct {
 	Name        string `toml:"name"`

@@ -76,6 +76,46 @@ function adminFormat(template) {
         });
     });
 
+    // Extension cards keep descriptions compact, but expose a disclosure
+    // control whenever the two-line clamp hides content.
+    var extensionDescriptions = document.querySelectorAll('[data-extension-description]');
+    function syncExtensionDescriptionToggles() {
+        extensionDescriptions.forEach(function(wrap) {
+            var desc = wrap.querySelector('.extension-desc');
+            var btn = wrap.querySelector('.extension-desc-toggle');
+            if (!desc || !btn) return;
+            var expanded = btn.getAttribute('aria-expanded') === 'true';
+            if (!expanded) {
+                wrap.classList.remove('has-toggle');
+            }
+            var overflows = desc.scrollHeight > desc.clientHeight + 1;
+            var showToggle = expanded || overflows;
+            btn.hidden = !showToggle;
+            wrap.classList.toggle('has-toggle', showToggle);
+        });
+    }
+    extensionDescriptions.forEach(function(wrap) {
+        var btn = wrap.querySelector('.extension-desc-toggle');
+        if (!btn) return;
+        btn.addEventListener('click', function() {
+            var expanded = btn.getAttribute('aria-expanded') === 'true';
+            var nextExpanded = !expanded;
+            var label = nextExpanded
+                ? btn.getAttribute('data-collapse-label')
+                : btn.getAttribute('data-expand-label');
+            btn.setAttribute('aria-expanded', nextExpanded ? 'true' : 'false');
+            btn.setAttribute('aria-label', label);
+            btn.setAttribute('title', label);
+            wrap.classList.toggle('is-expanded', nextExpanded);
+        });
+    });
+    syncExtensionDescriptionToggles();
+    var extensionDescriptionResizeTimer;
+    window.addEventListener('resize', function() {
+        window.clearTimeout(extensionDescriptionResizeTimer);
+        extensionDescriptionResizeTimer = window.setTimeout(syncExtensionDescriptionToggles, 120);
+    });
+
     // Auto-generate slug from title
     var titleInput = document.getElementById('title');
     var slugInput = document.getElementById('slug');

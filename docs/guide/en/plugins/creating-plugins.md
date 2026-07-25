@@ -80,6 +80,19 @@ Plugins that need admin configuration should implement the settings provider int
 
 Keep settings templates translated through locale files instead of hard-coded strings.
 
+## Admin Card Logo
+
+Implement the optional `LogoProvider` to show an icon on the admin **Plugins** card. Embed a square `static/logo.svg` (`viewBox="0 0 48 48"`) and return it:
+
+```go
+//go:embed static/logo.svg
+var logoSVG string
+
+func (p *Plugin) LogoSVG() string { return logoSVG }
+```
+
+Core runs `content.SanitizeSVG` (stripping `<script>`, `on*` handlers, `javascript:` URIs) before inlining, so third-party plugin logos are safe; return `""` for no icon.
+
 ## Frontend Output
 
 Use standard theme hook slots:
