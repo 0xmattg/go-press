@@ -1,4 +1,5 @@
 [plugin]
+slug = "google-identity"
 name = "Google Identity"
 version = "1.0.1"
 description = "Google OpenID Connect login and registration for GoPress."

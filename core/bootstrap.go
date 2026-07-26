@@ -6,6 +6,7 @@ import (
 
 	"go-press/config"
 	"go-press/pkg/dbprefix"
+	"go-press/pkg/logger"
 	pg "go-press/pkg/postgresql"
 )
 
@@ -56,6 +57,17 @@ func BuildAndBootstrap(cfg *config.Config, configPath string, seed bool) (*Engin
 	}
 
 	engine.LoadAllPlugins()
+
+	// Gate: every theme/plugin version must be valid semver so dependency
+	// constraints stay comparable. Non-fatal — warn and keep serving.
+	for _, problem := range engine.ValidateExtensionVersions() {
+		logger.Warn("Extension version is not valid semver", "detail", problem)
+	}
+
+	// Auto-activate the active theme's required plugins (and log unmet deps)
+	// before the router is built, so their hooks/routes are wired for requests.
+	engine.ReconcileActiveThemeDependencies()
+
 	engine.SetupAdmin()
 	engine.SetupRouter()
 	return engine, nil

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -34,6 +35,7 @@ import (
 	"go-press/core/worker"
 	"go-press/pkg/logger"
 	"go-press/pkg/middleware"
+	"go-press/pkg/semver"
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -284,12 +286,21 @@ func (e *Engine) activateTheme(name string) error {
 		return fmt.Errorf("theme %q not found in registered themes", name)
 	}
 
-	// Clear and re-register: core types first, then theme types
+	// Clear and re-register: core types first, then theme types. Prefer the
+	// theme's embedded theme.toml (baked into the binary) so runtime behavior
+	// matches the compiled version; fall back to disk only if the theme predates
+	// FileConfigProvider.
 	e.Registry.Clear()
 	e.registerCoreTypes()
-	themeConfig, err := coreTheme.LoadFileConfig("themes/" + name)
-	if err != nil {
-		return fmt.Errorf("failed to load theme config for %q: %w", name, err)
+	var themeConfig *coreTheme.FileConfig
+	if fp, ok := theme.(coreTheme.FileConfigProvider); ok && fp.FileConfig() != nil {
+		themeConfig = fp.FileConfig()
+	} else {
+		var err error
+		themeConfig, err = coreTheme.LoadFileConfig("themes/" + name)
+		if err != nil {
+			return fmt.Errorf("failed to load theme config for %q: %w", name, err)
+		}
 	}
 	coreTheme.RegisterContentTypesFromConfig(e.Registry, themeConfig)
 	theme.Setup(e)
@@ -361,7 +372,23 @@ func (e *Engine) registerCoreTypes() {
 // match the new registry, and future front-end requests are dispatched to the
 // new active theme.
 func (e *Engine) SwitchTheme(name string) error {
+	// Pre-flight the target theme's declared dependencies. Missing/incompatible
+	// (non-optional) plugins or an unmet core constraint block the switch.
+	report := e.ThemeDependencies(name)
+	if err := report.BlockingError(); err != nil {
+		return fmt.Errorf("cannot switch to theme %q: %w", name, err)
+	}
+	// Auto-activate present-but-inactive required plugins first so the new theme
+	// works immediately. Roll them back if theme activation then fails.
+	activated := e.ActivateThemeDependencies(report)
+
 	if err := e.activateTheme(name); err != nil {
+		for _, pn := range activated {
+			e.PluginManager.Deactivate(pn, e)
+			if e.Options != nil {
+				_ = e.Options.Set("plugin_active_"+pn, "false")
+			}
+		}
 		return err
 	}
 	// Flush page + fragment caches so the new theme renders fresh
@@ -408,6 +435,26 @@ func (e *Engine) AvailableThemes() []ThemeInfo {
 		})
 	}
 	return infos
+}
+
+// ValidateExtensionVersions returns human-readable problems for every loaded
+// theme or plugin whose declared version is not valid semver. Dependency
+// constraints can only be evaluated against valid semver, so this is the gate
+// that keeps versions machine-comparable. It is non-fatal by design: callers
+// (boot) log the warnings and keep running; the CLI can treat them as errors.
+func (e *Engine) ValidateExtensionVersions() []string {
+	var problems []string
+	for slug, t := range e.themes {
+		if !semver.Valid(t.Version()) {
+			problems = append(problems, fmt.Sprintf("theme %q has invalid semver version %q", slug, t.Version()))
+		}
+	}
+	for _, p := range e.PluginManager.RegisteredPlugins() {
+		if !semver.Valid(p.Version()) {
+			problems = append(problems, fmt.Sprintf("plugin %q has invalid semver version %q", p.Name(), p.Version()))
+		}
+	}
+	return problems
 }
 
 // extensionLogoSVG extracts and sanitizes the inline SVG logo from a theme or
@@ -493,9 +540,17 @@ func (e *Engine) LoadPlugin(p plugin.Plugin) {
 
 // LoadAllPlugins loads all auto-registered plugins (those registered via init() + RegisterPlugin).
 func (e *Engine) LoadAllPlugins() {
-	for name, factory := range AllPluginFactories() {
+	factories := AllPluginFactories()
+	// Deterministic load order (the factory registry is a map). Activation order
+	// being stable matters once dependencies are involved and makes boot reproducible.
+	names := make([]string, 0, len(factories))
+	for name := range factories {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
 		logger.Info("Loading plugin", "name", name)
-		factory(e)
+		factories[name](e)
 	}
 }
 
@@ -794,7 +849,7 @@ func (e *Engine) SetupAdmin() {
 			themes := e.AvailableThemes()
 			result := make([]admin.ThemeDisplayInfo, len(themes))
 			for i, t := range themes {
-				result[i] = admin.ThemeDisplayInfo{
+				di := admin.ThemeDisplayInfo{
 					Name:         t.Name,
 					Slug:         t.Slug,
 					Version:      t.Version,
@@ -806,6 +861,16 @@ func (e *Engine) SetupAdmin() {
 					HasSettings:  e.ThemeSettingsTemplatePath(t.Slug) != "",
 					LogoSVG:      template.HTML(t.LogoSVG),
 				}
+				// Dependency status for the card: blocked (can't switch) vs the
+				// list of plugins that would be auto-activated on switch.
+				rep := e.ThemeDependencies(t.Slug)
+				if err := rep.BlockingError(); err != nil {
+					di.DepBlocked = true
+					di.DepReason = err.Error()
+				}
+				di.DepInactivePlugins = rep.InactiveDeps()
+				di.DepInactiveSummary = strings.Join(di.DepInactivePlugins, ", ")
+				result[i] = di
 			}
 			return result
 		},
@@ -813,6 +878,12 @@ func (e *Engine) SetupAdmin() {
 		SettingsTemplateFn: e.ThemeSettingsTemplatePath,
 		LocaleCatalogFn: func(slug string) *coreI18n.Catalog {
 			return extensionAdminCatalog(filepath.Join("themes", slug))
+		},
+		ActiveDepWarningFn: func() string {
+			if err := e.ActiveThemeDependencies().BlockingError(); err != nil {
+				return err.Error()
+			}
+			return ""
 		},
 	})
 
@@ -871,14 +942,15 @@ func (e *Engine) SetupAdmin() {
 					hasSettings = true
 				}
 				result[i] = admin.PluginInfo{
-					Name:        p.Name(),
-					DisplayName: p.Name(),
-					Slug:        slug,
-					Version:     p.Version(),
-					Description: p.Description(),
-					Active:      e.PluginManager.IsActive(p.Name()),
-					HasSettings: hasSettings,
-					LogoSVG:     template.HTML(extensionLogoSVG(p)),
+					Name:                  p.Name(),
+					DisplayName:           p.Name(),
+					Slug:                  slug,
+					Version:               p.Version(),
+					Description:           p.Description(),
+					Active:                e.PluginManager.IsActive(p.Name()),
+					HasSettings:           hasSettings,
+					LogoSVG:               template.HTML(extensionLogoSVG(p)),
+					RequiredByActiveTheme: e.ActiveThemeRequiresPlugin(slug),
 				}
 			}
 			return result
@@ -900,6 +972,10 @@ func (e *Engine) SetupAdmin() {
 		DeactivateFn: func(name string) error {
 			if !e.PluginManager.IsActive(name) {
 				return fmt.Errorf("插件「%s」未激活", name)
+			}
+			// Guard: the active theme may declare a hard dependency on this plugin.
+			if e.ActiveThemeRequiresPlugin(name) {
+				return fmt.Errorf("当前主题「%s」依赖插件「%s」，请先切换主题再停用", e.ActiveThemeName(), name)
 			}
 			if !e.PluginManager.Deactivate(name, e) {
 				return fmt.Errorf("停用插件「%s」失败", name)

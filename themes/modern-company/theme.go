@@ -45,7 +45,7 @@ func New(engine *core.Engine, themeDir string) *ModernCompanyTheme {
 	// Initialize BaseTheme with engine capabilities and theme-specific funcs.
 	// Theme-specific helpers go here so they're merged into BaseFuncMap and
 	// thus available to every template loader (page bundle, hierarchy loader).
-	t.InitBase(engine, themeDir, template.FuncMap{
+	t.InitBase(engine, themeDir, themeTOML, template.FuncMap{
 		"formatDateTime": func(tm *time.Time) string {
 			if tm == nil {
 				return ""
@@ -101,7 +101,7 @@ func NewWithDB(db *gorm.DB, themeDir string) *ModernCompanyTheme {
 	t := &ModernCompanyTheme{
 		handler: handler,
 	}
-	t.InitBase(nil, themeDir, template.FuncMap{
+	t.InitBase(nil, themeDir, themeTOML, template.FuncMap{
 		"formatDateTime": func(tm *time.Time) string {
 			if tm == nil {
 				return ""
@@ -189,13 +189,6 @@ func looksLikeLanguageSegment(segment string) bool {
 }
 
 // --- Metadata ---
-
-func (t *ModernCompanyTheme) Name() string    { return "Modern Company" }
-func (t *ModernCompanyTheme) Version() string { return "1.0.0" }
-func (t *ModernCompanyTheme) Description() string {
-	return "A modern, professional company website theme for GoPress."
-}
-func (t *ModernCompanyTheme) Author() string { return "Hurricane Techs" }
 
 // --- Lifecycle ---
 

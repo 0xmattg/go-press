@@ -24,10 +24,9 @@ import (
 )
 
 const (
-	PluginName    = "metamask-identity"
-	pluginVersion = "1.0.1"
-	storageSlug   = "metamask_identity"
-	providerID    = "ethereum"
+	PluginName  = "metamask-identity"
+	storageSlug = "metamask_identity"
+	providerID  = "ethereum"
 
 	startPath     = "/auth/metamask/start"
 	challengePath = "/auth/metamask/challenge"

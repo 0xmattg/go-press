@@ -40,9 +40,9 @@ const (
 	// field names rendered by templates/admin/settings.tmpl, so the framework
 	// auto-save handler (matches plugin_<slug>_* prefix) writes the values
 	// without any custom save plumbing.
-	optHeadSnippet   = "plugin_code-snippets_head"
+	optHeadSnippet     = "plugin_code-snippets_head"
 	optBodyOpenSnippet = "plugin_code-snippets_body_open"
-	optFooterSnippet = "plugin_code-snippets_footer"
+	optFooterSnippet   = "plugin_code-snippets_footer"
 )
 
 // Plugin implements plugin.Plugin and plugin.SettingsProvider.
@@ -60,7 +60,7 @@ func New() *Plugin { return &Plugin{} }
 // --- Plugin interface ---
 
 func (p *Plugin) Name() string    { return PluginName }
-func (p *Plugin) Version() string { return "1.0.0" }
+func (p *Plugin) Version() string { return pluginMeta.Version }
 func (p *Plugin) Description() string {
 	return "WPCode 风格的代码片段注入：在 <head>、<body> 开头、</body> 前三个位置插入任意 HTML/JS（适合 Google Analytics、GTM、第三方追踪脚本等）"
 }

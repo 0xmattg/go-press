@@ -50,7 +50,7 @@ func TestPageTitleForFallsBackWhenNoTitle(t *testing.T) {
 
 func TestBaseFuncMapDoesNotAllowUnsafeSafeHTMLOverride(t *testing.T) {
 	var base BaseTheme
-	base.InitBase(nil, "", template.FuncMap{
+	base.InitBase(nil, "", "", template.FuncMap{
 		"safeHTML": func(s string) template.HTML {
 			return template.HTML(s)
 		},

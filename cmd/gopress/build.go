@@ -23,6 +23,7 @@ func runBuild(root string, args []string) int {
 		fmt.Fprintf(os.Stderr, "gopress: %v\n", err)
 		return 1
 	}
+	warnExtensionDeps(root, themes, plugins)
 	if _, err := writeAutoload(root, themes, plugins); err != nil {
 		fmt.Fprintf(os.Stderr, "gopress: %v\n", err)
 		return 1

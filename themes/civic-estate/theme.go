@@ -44,7 +44,7 @@ func New(engine *core.Engine, themeDir string) *CivicEstateTheme {
 	// Initialize BaseTheme with engine capabilities and theme-specific funcs.
 	// Theme-specific helpers go here so they're merged into BaseFuncMap and
 	// thus available to every template loader (page bundle, hierarchy loader).
-	t.InitBase(engine, themeDir, template.FuncMap{
+	t.InitBase(engine, themeDir, themeTOML, template.FuncMap{
 		"formatDateTime": func(tm *time.Time) string {
 			if tm == nil {
 				return ""
@@ -94,7 +94,7 @@ func NewWithDB(db *gorm.DB, themeDir string) *CivicEstateTheme {
 	t := &CivicEstateTheme{
 		handler: handler,
 	}
-	t.InitBase(nil, themeDir, template.FuncMap{
+	t.InitBase(nil, themeDir, themeTOML, template.FuncMap{
 		"formatDateTime": func(tm *time.Time) string {
 			if tm == nil {
 				return ""
@@ -119,13 +119,6 @@ func NewWithDB(db *gorm.DB, themeDir string) *CivicEstateTheme {
 }
 
 // --- Metadata ---
-
-func (t *CivicEstateTheme) Name() string    { return "Civic Estate" }
-func (t *CivicEstateTheme) Version() string { return "1.0.0" }
-func (t *CivicEstateTheme) Description() string {
-	return "A commercial real-estate theme with property search, advisory services, listings, articles, and CMS demo data."
-}
-func (t *CivicEstateTheme) Author() string { return "GoPress Team" }
 
 // --- Lifecycle ---
 

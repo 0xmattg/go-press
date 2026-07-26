@@ -899,3 +899,27 @@ function generateSitemap() {
             btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg> ' + adminText('generateSitemap', 'Generate Sitemap');
         });
 }
+
+// Dependency warning banner: stays put (not a toast) until the admin explicitly
+// dismisses it with the X, so an unmet theme dependency isn't missed. The
+// dismissal is remembered per message, so it won't nag across pages — but if the
+// warning text changes (a different/new problem), it shows again for re-acknowledgement.
+(function () {
+    var el = document.getElementById('dep-warning');
+    if (!el) return;
+    var STORE = 'gopress.depWarningDismissed';
+    var current = el.getAttribute('data-dep-key') || '';
+    try {
+        if (window.localStorage && localStorage.getItem(STORE) === current) {
+            el.style.display = 'none';
+            return;
+        }
+    } catch (e) {}
+    var btn = el.querySelector('.dep-warning-close');
+    if (btn) {
+        btn.addEventListener('click', function () {
+            el.style.display = 'none';
+            try { if (window.localStorage) localStorage.setItem(STORE, current); } catch (e) {}
+        });
+    }
+})();

@@ -64,7 +64,7 @@ func New() *Plugin {
 }
 
 func (p *Plugin) Name() string    { return PluginName }
-func (p *Plugin) Version() string { return "1.0.0" }
+func (p *Plugin) Version() string { return pluginMeta.Version }
 func (p *Plugin) Description() string {
 	return "GoPress 官方自托管访问统计：匿名采集 PV、UV、新访客、趋势和热门页面。"
 }

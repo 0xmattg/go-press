@@ -37,10 +37,14 @@
                     {{if .HasSettings}}
                     <a href="/admin/plugins/{{.Slug}}/settings" class="btn btn-sm btn-settings">{{T $ "plugin.settings"}}</a>
                     {{end}}
+                    {{if .RequiredByActiveTheme}}
+                    <button class="btn btn-sm btn-secondary" disabled title="{{T $ "deps.required_by_theme"}}">{{T $ "deps.locked"}}</button>
+                    {{else}}
                     <form method="POST" action="/admin/plugins/deactivate" class="inline-form">
                         <input type="hidden" name="name" value="{{.Name}}">
                         <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('{{T $ "confirm.deactivate_plugin" .Name}}')">{{T $ "plugin.deactivate"}}</button>
                     </form>
+                    {{end}}
                 {{else}}
                     <form method="POST" action="/admin/plugins/activate" class="inline-form">
                         <input type="hidden" name="name" value="{{.Name}}">

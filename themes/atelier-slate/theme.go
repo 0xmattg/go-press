@@ -44,7 +44,7 @@ func New(engine *core.Engine, themeDir string) *AtelierSlateTheme {
 	// Initialize BaseTheme with engine capabilities and theme-specific funcs.
 	// Theme-specific helpers go here so they're merged into BaseFuncMap and
 	// thus available to every template loader (page bundle, hierarchy loader).
-	t.InitBase(engine, themeDir, template.FuncMap{
+	t.InitBase(engine, themeDir, themeTOML, template.FuncMap{
 		"formatDateTime": func(tm *time.Time) string {
 			if tm == nil {
 				return ""
@@ -94,7 +94,7 @@ func NewWithDB(db *gorm.DB, themeDir string) *AtelierSlateTheme {
 	t := &AtelierSlateTheme{
 		handler: handler,
 	}
-	t.InitBase(nil, themeDir, template.FuncMap{
+	t.InitBase(nil, themeDir, themeTOML, template.FuncMap{
 		"formatDateTime": func(tm *time.Time) string {
 			if tm == nil {
 				return ""
@@ -119,13 +119,6 @@ func NewWithDB(db *gorm.DB, themeDir string) *AtelierSlateTheme {
 }
 
 // --- Metadata ---
-
-func (t *AtelierSlateTheme) Name() string    { return "Atelier Slate" }
-func (t *AtelierSlateTheme) Version() string { return "1.0.0" }
-func (t *AtelierSlateTheme) Description() string {
-	return "An editorial black-and-white digital studio theme with tactile image cards, rounded panels, and complete CMS page coverage."
-}
-func (t *AtelierSlateTheme) Author() string { return "GoPress Team" }
 
 // --- Lifecycle ---
 

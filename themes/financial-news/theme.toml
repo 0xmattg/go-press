@@ -4,6 +4,16 @@ version = "1.0.0"
 description = "A fast, data-driven financial news portal theme for GoPress."
 author = "GoPress Team"
 
+# Declarative plugin dependencies (theme -> plugin). Core resolves these on boot
+# and theme switch: inactive required plugins are auto-activated, and a required
+# plugin cannot be deactivated while this theme is active. See the "Theme
+# Dependencies and Versioning" guide.
+[requires]
+plugins = [
+  # This news theme relies on seo-extras for per-article SEO overrides.
+  { slug = "seo-extras", version = ">=1.0.0" },
+]
+
 [[content_types]]
 name = "market_update"
 label = "行情快讯"

@@ -4,12 +4,13 @@ package theme
 // following a WordPress-style template hierarchy.
 //
 // Examples:
-//   Content single: single-product-air-shower.tmpl → single-product.tmpl → single.tmpl → index.tmpl
-//   Archive:        archive-product.tmpl → archive.tmpl → index.tmpl
-//   Taxonomy:       taxonomy-category-news.tmpl → taxonomy-category.tmpl → taxonomy.tmpl → archive.tmpl → index.tmpl
-//   Page:           page-about.tmpl → page.tmpl → single.tmpl → index.tmpl
-//   Home:           front-page.tmpl → home.tmpl → index.tmpl
-//   404:            404.tmpl → index.tmpl
+//
+//	Content single: single-product-air-shower.tmpl → single-product.tmpl → single.tmpl → index.tmpl
+//	Archive:        archive-product.tmpl → archive.tmpl → index.tmpl
+//	Taxonomy:       taxonomy-category-news.tmpl → taxonomy-category.tmpl → taxonomy.tmpl → archive.tmpl → index.tmpl
+//	Page:           page-about.tmpl → page.tmpl → single.tmpl → index.tmpl
+//	Home:           front-page.tmpl → home.tmpl → index.tmpl
+//	404:            404.tmpl → index.tmpl
 func ResolveTemplate(contentType, slug, taxonomy, term string, isArchive, isHome, is404 bool) []string {
 	var candidates []string
 

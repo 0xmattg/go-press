@@ -13,6 +13,8 @@
                     <h3 title="{{.Name}}">{{.Name}}</h3>
                     <div class="extension-card-badges">
                         <span class="extension-version">v{{.Version}}</span>
+                        {{if .DepBlocked}}<span class="badge badge-dep-blocked" title="{{.DepReason}}">{{T $ "deps.badge_blocked"}}</span>
+                        {{else if .DepInactivePlugins}}<span class="badge badge-dep-warn" title="{{.DepInactiveSummary}}">{{T $ "deps.badge_needs"}}</span>{{end}}
                         {{if .Active}}<span class="badge badge-active">{{T $ "theme.active"}}</span>{{end}}
                     </div>
                 </div>
@@ -53,10 +55,12 @@
                             </form>
                         {{end}}
                     {{end}}
+                {{else if .DepBlocked}}
+                    <button class="btn btn-secondary btn-sm" disabled title="{{.DepReason}}">{{T $ "deps.blocked"}}</button>
                 {{else}}
                     <form method="POST" action="/admin/themes/switch" class="inline-form">
                         <input type="hidden" name="theme" value="{{.Slug}}">
-                        <button type="submit" class="btn btn-primary btn-sm" onclick="return confirm('{{T $ "confirm.switch_theme" .Name}}')">{{T $ "action.enable_theme"}}</button>
+                        <button type="submit" class="btn btn-primary btn-sm" onclick="return confirm('{{if .DepInactiveSummary}}{{T $ "confirm.switch_theme_deps" .Name .DepInactiveSummary}}{{else}}{{T $ "confirm.switch_theme" .Name}}{{end}}')">{{T $ "action.enable_theme"}}</button>
                     </form>
                 {{end}}
             </div>

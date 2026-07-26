@@ -66,6 +66,7 @@ func runGen(root string) error {
 	if err != nil {
 		return err
 	}
+	warnExtensionDeps(root, themes, plugins)
 	changed, err := writeAutoload(root, themes, plugins)
 	if err != nil {
 		return err
@@ -77,4 +78,3 @@ func runGen(root string) error {
 	}
 	return nil
 }
-
