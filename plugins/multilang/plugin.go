@@ -80,7 +80,7 @@ func New() *Plugin {
 // --- Plugin interface ---
 
 func (p *Plugin) Name() string    { return PluginName }
-func (p *Plugin) Version() string { return "2.0.0" }
+func (p *Plugin) Version() string { return pluginMeta.Version }
 func (p *Plugin) Description() string {
 	return "WPML-like 多语言内容翻译插件：独立URL、内容克隆、语言前缀路由"
 }

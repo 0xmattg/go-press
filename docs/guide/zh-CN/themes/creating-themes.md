@@ -270,6 +270,10 @@ func (t *MyTheme) DemoSeedPath() string {
 }
 ```
 
+## 依赖插件
+
+如果主题需要某些插件才能正常工作，可在 `theme.toml` 的 `[requires]` 段按 slug 声明依赖，core 会在切换主题时预检、并自动启用未激活的所需插件。详见 [主题依赖与版本](dependencies.md)。
+
 ## 后台卡片 Logo
 
 后台「主题管理」的卡片会在标题旁显示主题图标。约定极简：**在 `static/logo.svg` 放一个 SVG 即可**——`BaseTheme` 已实现可选接口 `LogoProvider.LogoSVG()`，会自动读取该文件，**无需写任何 Go 代码**。

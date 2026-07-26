@@ -27,6 +27,7 @@
 
 * [主题系统总览](themes/overview.md)
 * [创建主题](themes/creating-themes.md)
+* [主题依赖与版本](themes/dependencies.md)
 * [SEO 接入规范](themes/seo-integration.md)
 * [图片接入规范](themes/image-pipeline.md)
 * [媒体变体管线](themes/media-variants.md)

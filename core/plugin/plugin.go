@@ -1,6 +1,38 @@
 package plugin
 
-import "go-press/core/user"
+import (
+	"go-press/core/user"
+
+	"github.com/BurntSushi/toml"
+)
+
+// Meta is the [plugin] metadata parsed from a plugin.toml file. plugin.toml is
+// the single source of truth for a plugin's version (consumed by theme
+// dependency resolution); Name() remains the Go slug identity, distinct from the
+// human-facing Meta.Name.
+type Meta struct {
+	// Slug is the plugin's stable machine identity — it must equal the plugin's
+	// Name() and is what themes reference in [requires].plugins. Distinct from
+	// the human-facing Name.
+	Slug        string `toml:"slug"`
+	Name        string `toml:"name"`
+	Version     string `toml:"version"`
+	Description string `toml:"description"`
+	Author      string `toml:"author"`
+}
+
+// ParseMetaString parses the [plugin] table from embedded plugin.toml content.
+// On error it returns a zero Meta so the plugin still loads; version validation
+// at boot/build time surfaces a malformed or missing version separately.
+func ParseMetaString(data string) Meta {
+	var file struct {
+		Plugin Meta `toml:"plugin"`
+	}
+	if _, err := toml.Decode(data, &file); err != nil {
+		return Meta{}
+	}
+	return file.Plugin
+}
 
 // App is the runtime object passed to Plugin lifecycle methods.
 //
@@ -141,4 +173,15 @@ func (m *Manager) ActivePlugins() []Plugin {
 // RegisteredPlugins returns all registered plugins.
 func (m *Manager) RegisteredPlugins() []Plugin {
 	return m.registered
+}
+
+// FindBySlug returns the registered plugin whose identity (Name/Slug) matches,
+// or false when no such plugin is compiled into this build.
+func (m *Manager) FindBySlug(slug string) (Plugin, bool) {
+	for _, p := range m.registered {
+		if Slug(p) == slug {
+			return p, true
+		}
+	}
+	return nil, false
 }

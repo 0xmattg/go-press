@@ -43,6 +43,7 @@ type ThemeController interface {
 	ImportDemo(slug string) error
 	SettingsTemplate(slug string) string
 	LocaleCatalog(slug string) *coreI18n.Catalog
+	ActiveDepWarning() string
 }
 
 func (m *ThemeManager) Switch(name string) error {
@@ -85,6 +86,13 @@ func (m *ThemeManager) LocaleCatalog(slug string) *coreI18n.Catalog {
 		return nil
 	}
 	return m.LocaleCatalogFn(slug)
+}
+
+func (m *ThemeManager) ActiveDepWarning() string {
+	if m == nil || m.ActiveDepWarningFn == nil {
+		return ""
+	}
+	return m.ActiveDepWarningFn()
 }
 
 // CacheController exposes cache management to admin handlers.

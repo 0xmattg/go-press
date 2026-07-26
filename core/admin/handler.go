@@ -34,6 +34,14 @@ type ThemeDisplayInfo struct {
 	DemoImported bool          // demo data has already been imported
 	HasSettings  bool          // theme provides a settings page
 	LogoSVG      template.HTML // sanitized inline SVG logo, or "" for none
+
+	// Dependency status (theme.toml [requires]). DepBlocked themes cannot be
+	// switched to; DepInactivePlugins list plugins that will be auto-activated on
+	// switch (used to build the confirm message).
+	DepBlocked         bool
+	DepReason          string
+	DepInactivePlugins []string
+	DepInactiveSummary string // e.g. "multi-language, seo-extras"
 }
 
 // ThemeManager provides theme switching callbacks to the admin handler.
@@ -44,6 +52,10 @@ type ThemeManager struct {
 	ImportDemoFn       func(slug string) error  // import demo data for a theme
 	SettingsTemplateFn func(slug string) string // returns settings template path
 	LocaleCatalogFn    func(slug string) *coreI18n.Catalog
+	// ActiveDepWarningFn returns a non-empty message when the active theme has an
+	// unmet dependency (e.g. a required plugin missing from the build), for the
+	// admin-wide warning banner. Returns "" when dependencies are satisfied.
+	ActiveDepWarningFn func() string
 }
 
 // CacheManagerInfo holds cache status for admin display.
@@ -87,6 +99,10 @@ type PluginInfo struct {
 	Active      bool
 	HasSettings bool
 	LogoSVG     template.HTML // sanitized inline SVG logo, or "" for none
+
+	// RequiredByActiveTheme is true when the active theme declares a hard
+	// dependency on this plugin; the admin then disables its deactivate button.
+	RequiredByActiveTheme bool
 }
 
 // PluginCallbacks provides plugin management callbacks to the admin handler.
@@ -722,6 +738,11 @@ func (h *Handler) render(c *gin.Context, name string, data gin.H) {
 	data["SiteName"] = h.svc.SiteName()
 	data["PublicBaseURL"] = requestBaseURL(c)
 	data["GoPressVersion"] = version.String()
+	if h.themeManager != nil {
+		if w := h.themeManager.ActiveDepWarning(); w != "" {
+			data["ActiveDepWarning"] = w
+		}
+	}
 
 	if success := c.Query("success"); success != "" {
 		data["Success"] = success

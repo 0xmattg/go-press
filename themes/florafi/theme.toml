@@ -4,6 +4,19 @@ version = "1.0.0"
 description = "A polished stablecoin and fintech product theme with growth-focused visuals."
 author = "GoPress Team"
 
+# Declarative dependencies (theme -> plugin). Resolved/enforced by core on boot
+# and theme switch. See the "Theme Dependencies and Versioning" guide.
+#   - core:    running core is 0.6.19, so ">=0.6.0" is satisfied. Change it to
+#              ">=0.7.0" and rebuild to see the blocked state + admin banner.
+#   - plugins: seo-extras is auto-activated when this theme is active; while
+#              active it cannot be deactivated. Bump the constraint to ">=99.0.0"
+#              to test the version-mismatch block.
+[requires]
+core = ">=0.6.0"
+plugins = [
+  { slug = "seo-extras", version = ">=1.0.0" },
+]
+
 # Content types supported by the theme.
 [[content_types]]
 name = "product"

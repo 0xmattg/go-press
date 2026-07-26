@@ -58,7 +58,7 @@ func New() *Plugin { return &Plugin{} }
 // --- Plugin interface ---
 
 func (p *Plugin) Name() string    { return PluginName }
-func (p *Plugin) Version() string { return "1.0.0" }
+func (p *Plugin) Version() string { return pluginMeta.Version }
 func (p *Plugin) Description() string {
 	return "Yoast 风格的内容级 SEO 覆盖：在每条内容编辑页提供独立的 SEO Title / Description / Open Graph 图片 / Robots 字段"
 }

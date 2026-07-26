@@ -55,21 +55,50 @@ type BaseTheme struct {
 	PageTemplates map[string]*template.Template
 	CustomRoutes  map[string]map[string]gin.HandlerFunc // path → method → handler
 	customFuncMap template.FuncMap
+	fileConfig    *FileConfig    // full theme.toml parsed from the embedded copy
+	meta          Config         // [theme] metadata (single source of truth, baked in)
+	requires      RequiresConfig // [requires] dependency block
 }
 
 // InitBase initializes the BaseTheme. Call this from the theme constructor.
 //
-// extraFuncs are merged after common engine functions, so theme-specific
-// helpers can add names without reimplementing the shared FuncMap. Avoid
-// overriding core helper names unless a theme deliberately needs different
-// behavior.
-func (b *BaseTheme) InitBase(app App, themeDir string, extraFuncs template.FuncMap) {
+// themeTOML is the theme's own theme.toml content (via //go:embed theme.toml in
+// the theme package), so metadata, dependencies, and content types are baked
+// into the binary — the same way plugins embed plugin.toml — rather than read
+// from disk at runtime. extraFuncs are merged after common engine functions, so
+// theme-specific helpers can add names without reimplementing the shared FuncMap.
+func (b *BaseTheme) InitBase(app App, themeDir, themeTOML string, extraFuncs template.FuncMap) {
 	b.App = app
 	b.ThemeDir = themeDir
 	b.PageTemplates = make(map[string]*template.Template)
 	b.CustomRoutes = make(map[string]map[string]gin.HandlerFunc)
 	b.customFuncMap = extraFuncs
+	// Parse the embedded theme.toml once. It is the single source of truth for
+	// theme metadata (so Name/Version/... don't drift against hardcoded Go) and
+	// declared dependencies.
+	if cfg, err := ParseFileConfig(themeTOML); err == nil {
+		b.fileConfig = cfg
+		b.meta = cfg.Theme
+		b.requires = cfg.Requires
+	}
 }
+
+// FileConfig implements FileConfigProvider: the full theme.toml parsed from the
+// embedded copy (metadata, content types, menu locations, dependencies).
+func (b *BaseTheme) FileConfig() *FileConfig { return b.fileConfig }
+
+// Requires implements RequirementsProvider: the theme's declared plugin/core
+// dependencies from theme.toml [requires]. Empty when none are declared.
+func (b *BaseTheme) Requires() RequiresConfig { return b.requires }
+
+// Name/Version/Description/Author return the theme metadata declared in
+// theme.toml's [theme] block. Themes embedding BaseTheme get these for free and
+// should not hardcode them in Go — that is exactly the drift this removes. A
+// theme may still override any of them when it needs computed values.
+func (b *BaseTheme) Name() string        { return b.meta.Name }
+func (b *BaseTheme) Version() string     { return b.meta.Version }
+func (b *BaseTheme) Description() string { return b.meta.Description }
+func (b *BaseTheme) Author() string      { return b.meta.Author }
 
 // LogoSVG implements the optional LogoProvider interface: it returns the raw SVG
 // markup from static/logo.svg in the theme directory, or "" when absent. Every

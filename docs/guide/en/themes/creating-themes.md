@@ -219,6 +219,12 @@ func (t *MyTheme) DemoSeedPath() string {
 }
 ```
 
+## Required Plugins
+
+If a theme needs certain plugins to work, declare them by slug in `theme.toml`'s
+`[requires]` block. Core pre-checks them on theme switch and auto-activates any
+that are compiled in but inactive. See [Dependencies and Versioning](dependencies.md).
+
 ## Admin Card Logo
 
 The admin **Themes** page shows an icon next to each theme name. The convention is minimal: **just drop a `static/logo.svg`** — `BaseTheme` implements the optional `LogoProvider.LogoSVG()` and reads that file automatically, so no Go code is required.

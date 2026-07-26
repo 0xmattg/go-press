@@ -40,7 +40,7 @@ func New(engine *core.Engine, themeDir string) *FinancialNewsTheme {
 	}
 
 	// Initialize BaseTheme with engine capabilities and theme-specific funcs
-	t.InitBase(engine, themeDir, template.FuncMap{
+	t.InitBase(engine, themeDir, themeTOML, template.FuncMap{
 		"formatDateTime": func(tm *time.Time) string {
 			if tm == nil {
 				return ""
@@ -94,7 +94,7 @@ func NewWithDB(db *gorm.DB, themeDir string) *FinancialNewsTheme {
 	t := &FinancialNewsTheme{
 		handler: handler,
 	}
-	t.InitBase(nil, themeDir, nil)
+	t.InitBase(nil, themeDir, themeTOML, nil)
 	t.AddRoute("GET", "/", t.handler.Home)
 	t.AddRoute("GET", "/articles", t.handler.Articles)
 	t.AddRoute("GET", "/market", t.handler.Market)
@@ -104,13 +104,6 @@ func NewWithDB(db *gorm.DB, themeDir string) *FinancialNewsTheme {
 }
 
 // --- Metadata ---
-
-func (t *FinancialNewsTheme) Name() string    { return "Financial News" }
-func (t *FinancialNewsTheme) Version() string { return "1.0.0" }
-func (t *FinancialNewsTheme) Description() string {
-	return "A fast, data-driven financial news portal theme for GoPress."
-}
-func (t *FinancialNewsTheme) Author() string { return "GoPress Team" }
 
 // --- Lifecycle ---
 

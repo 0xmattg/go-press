@@ -20,9 +20,8 @@ import (
 )
 
 const (
-	PluginName    = "google-identity"
-	pluginVersion = "1.0.1"
-	providerID    = "google"
+	PluginName = "google-identity"
+	providerID = "google"
 
 	startPath    = "/auth/google/start"
 	callbackPath = "/auth/google/callback"

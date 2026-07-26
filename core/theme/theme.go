@@ -144,6 +144,37 @@ type FileConfig struct {
 	Theme         Config               `toml:"theme"`
 	ContentTypes  []ContentTypeConfig  `toml:"content_types"`
 	MenuLocations []MenuLocationConfig `toml:"menu_locations"`
+	Requires      RequiresConfig       `toml:"requires"`
+}
+
+// RequiresConfig is the theme's declarative dependency block (theme.toml
+// [requires]). It is a module/assembly-level contract resolved and enforced by
+// core: the theme names the plugins it needs by slug (and optional version
+// constraint), but never imports or calls them — interaction stays core-mediated.
+// Dependency direction is theme→plugin only.
+type RequiresConfig struct {
+	// Core is an optional semver constraint on the GoPress core version, e.g. ">=0.7.0".
+	Core string `toml:"core"`
+	// Plugins the theme needs active to work correctly.
+	Plugins []PluginRequirement `toml:"plugins"`
+}
+
+// PluginRequirement is one entry in [requires].plugins.
+type PluginRequirement struct {
+	// Slug is the required plugin's stable identifier (its Name()), e.g. "multi-language".
+	Slug string `toml:"slug"`
+	// Version is an optional semver constraint, e.g. ">=2.0.0" or "^1.0". Empty = any version.
+	Version string `toml:"version"`
+	// Optional, when true, downgrades an unmet dependency to a soft warning
+	// rather than blocking theme activation.
+	Optional bool `toml:"optional"`
+}
+
+// RequirementsProvider is the optional interface a theme implements to expose
+// its declared dependencies. BaseTheme implements it by reading theme.toml, so
+// themes get it for free.
+type RequirementsProvider interface {
+	Requires() RequiresConfig
 }
 
 // ContentTypeConfig maps a [[content_types]] entry in theme.toml.
@@ -176,6 +207,25 @@ type TemplateConfig struct {
 type MenuLocationConfig struct {
 	Name  string `toml:"name"`
 	Label string `toml:"label"`
+}
+
+// FileConfigProvider is implemented by themes (via BaseTheme) that carry their
+// theme.toml parsed from an embedded copy, so core can read content types and
+// dependencies from the binary rather than from disk at runtime.
+type FileConfigProvider interface {
+	FileConfig() *FileConfig
+}
+
+// ParseFileConfig parses theme.toml content (typically go:embed'd) into a
+// FileConfig. Mirrors LoadFileConfig but from an in-memory string, so theme
+// metadata/dependencies are baked into the binary — matching how plugins embed
+// plugin.toml — instead of being read from disk at runtime.
+func ParseFileConfig(content string) (*FileConfig, error) {
+	var cfg FileConfig
+	if _, err := toml.Decode(content, &cfg); err != nil {
+		return nil, err
+	}
+	return &cfg, nil
 }
 
 // LoadFileConfig parses theme.toml from a theme directory.

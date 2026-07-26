@@ -38,7 +38,7 @@ func New(engine *core.Engine, themeDir string) *LandingTheme {
 		handler: handler,
 	}
 
-	t.InitBase(engine, themeDir, DefaultFuncMap(engine.SiteLocation()))
+	t.InitBase(engine, themeDir, themeTOML, DefaultFuncMap(engine.SiteLocation()))
 	t.handler.loadTemplates(t.TemplateFuncs())
 
 	// Single-page: only the root route
@@ -53,18 +53,11 @@ func NewWithDB(db *gorm.DB, themeDir string) *LandingTheme {
 	svc := NewPageServiceDB(db)
 	handler := NewHandler(svc, themeDir, nil)
 	t := &LandingTheme{handler: handler}
-	t.InitBase(nil, themeDir, DefaultFuncMap(time.UTC))
+	t.InitBase(nil, themeDir, themeTOML, DefaultFuncMap(time.UTC))
 	t.handler.loadTemplates(t.TemplateFuncs())
 	t.AddRoute("GET", "/", t.handler.Home)
 	return t
 }
-
-func (t *LandingTheme) Name() string    { return "GoPress Landing" }
-func (t *LandingTheme) Version() string { return "1.0.0" }
-func (t *LandingTheme) Description() string {
-	return "A futuristic, single-page tech landing page theme for GoPress."
-}
-func (t *LandingTheme) Author() string { return "GoPress Team" }
 
 // Setup registers landing-page menu locations.
 func (t *LandingTheme) Setup(app coreTheme.App) {

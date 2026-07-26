@@ -42,6 +42,12 @@
             </div>
         </header>
 
+        {{if .ActiveDepWarning}}
+        <div class="alert alert-error dep-warning" id="dep-warning" data-dep-key="{{.ActiveDepWarning}}">
+            <span class="dep-warning-text"><strong>{{T . "deps.banner_title"}}</strong> {{.ActiveDepWarning}}</span>
+            <button type="button" class="dep-warning-close" aria-label="{{T . "action.dismiss"}}" title="{{T . "action.dismiss"}}">&times;</button>
+        </div>
+        {{end}}
         {{if .Success}}
         <div class="alert alert-success">{{.Success}}</div>
         {{end}}
@@ -136,6 +142,6 @@
         editorVisualModeTitle: {{jsT . "editor.visual_mode_title"}}
     };
     </script>
-    <script src="/static/admin/js/admin.js?v=14"></script>
+    <script src="/static/admin/js/admin.js?v=15"></script>
 </body>
 </html>{{end}}
