@@ -144,7 +144,19 @@ type FileConfig struct {
 	Theme         Config               `toml:"theme"`
 	ContentTypes  []ContentTypeConfig  `toml:"content_types"`
 	MenuLocations []MenuLocationConfig `toml:"menu_locations"`
+	PageTemplates []PageTemplateConfig `toml:"page_templates"`
 	Requires      RequiresConfig       `toml:"requires"`
+}
+
+// PageTemplateConfig maps a [[page_templates]] entry in theme.toml. It lets a
+// theme advertise selectable per-page templates (WordPress-style "page
+// templates") to the admin page editor. Template is the page-bundle name — a
+// file under templates/pages/ without the ".tmpl" suffix — and Name is the
+// human label shown in the editor dropdown. The selection is stored per page as
+// the page_template content meta and consumed by BaseTheme.renderSingle.
+type PageTemplateConfig struct {
+	Name     string `toml:"name"`
+	Template string `toml:"template"`
 }
 
 // RequiresConfig is the theme's declarative dependency block (theme.toml
@@ -191,7 +203,10 @@ type ContentTypeConfig struct {
 	MetaFields      []content.MetaFieldDef `toml:"meta_fields"`
 	Taxonomies      []string               `toml:"taxonomies"`
 	HasArchive      bool                   `toml:"has_archive"`
+	Hierarchical    bool                   `toml:"hierarchical"`
+	ReadOnly        bool                   `toml:"read_only"`
 	RewriteSlug     string                 `toml:"rewrite_slug"`
+	Rootless        bool                   `toml:"rootless"`
 	Templates       TemplateConfig         `toml:"templates"`
 	MenuIcon        string                 `toml:"menu_icon"`
 	MenuOrder       int                    `toml:"menu_order"`
@@ -281,7 +296,9 @@ func RegisterContentTypesFromConfig(registry *content.Registry, cfg *FileConfig)
 			MetaFields:      append([]content.MetaFieldDef(nil), ct.MetaFields...),
 			Taxonomies:      append([]string(nil), ct.Taxonomies...),
 			HasArchive:      ct.HasArchive,
-			Rewrite:         content.RewriteRule{Slug: ct.RewriteSlug},
+			Hierarchical:    ct.Hierarchical,
+			ReadOnly:        ct.ReadOnly,
+			Rewrite:         content.RewriteRule{Slug: ct.RewriteSlug, Rootless: ct.Rootless},
 			Templates: content.TemplateDef{
 				Archive: ct.Templates.Archive,
 				Single:  ct.Templates.Single,

@@ -325,6 +325,23 @@ func (e *Engine) activateTheme(name string) error {
 // so anything listed here is treated as framework-level surface area rather
 // than a theme-specific model.
 func (e *Engine) registerCoreTypes() {
+	// page: root-level standalone pages (about, terms, privacy). A core type on
+	// the unified Content model — hierarchical, rootless permalinks (/about), no
+	// public archive, fully authorable in admin. Rendered through the active
+	// theme's base layout so nav/footer/styling are shared automatically.
+	e.Registry.RegisterType(content.ContentTypeDef{
+		Name:         "page",
+		Label:        "页面",
+		LabelPlural:  "页面",
+		HasArchive:   false,
+		Hierarchical: true,
+		Supports:     []string{"title", "content", "excerpt", "thumbnail"},
+		Taxonomies:   []string{"category"},
+		Rewrite:      content.RewriteRule{Rootless: true},
+		MenuIcon:     "page",
+		MenuOrder:    20,
+	})
+
 	e.Registry.RegisterType(content.ContentTypeDef{
 		Name:        "post",
 		Label:       "文章",
@@ -341,6 +358,7 @@ func (e *Engine) registerCoreTypes() {
 		Label:       "联系留言",
 		LabelPlural: "联系留言",
 		HasArchive:  false,
+		ReadOnly:    true,
 		MetaFields: []content.MetaFieldDef{
 			{Key: "email", Label: "邮箱", Type: "string"},
 			{Key: "phone", Label: "电话", Type: "string"},
@@ -352,7 +370,7 @@ func (e *Engine) registerCoreTypes() {
 		Name:         "category",
 		Label:        "分类",
 		LabelPlural:  "分类列表",
-		ContentTypes: []string{"post"},
+		ContentTypes: []string{"post", "page"},
 		Hierarchical: true,
 	})
 
@@ -498,6 +516,20 @@ func (e *Engine) ThemeSettingsTemplatePath(slug string) string {
 		return sp.SettingsTemplatePath()
 	}
 	return ""
+}
+
+// ActiveThemePageTemplates returns the active theme's declared selectable page
+// templates ([[page_templates]] in theme.toml), used by the admin page editor's
+// template dropdown. Returns nil when the theme declares none.
+func (e *Engine) ActiveThemePageTemplates() []coreTheme.PageTemplateConfig {
+	if t := e.ActiveTheme(); t != nil {
+		if fp, ok := t.(coreTheme.FileConfigProvider); ok {
+			if cfg := fp.FileConfig(); cfg != nil {
+				return cfg.PageTemplates
+			}
+		}
+	}
+	return nil
 }
 
 // ImportThemeDemoData seeds demo data for the specified theme.
@@ -884,6 +916,20 @@ func (e *Engine) SetupAdmin() {
 				return err.Error()
 			}
 			return ""
+		},
+		PageTemplatesFn: func() []admin.PageTemplateOption {
+			tpls := e.ActiveThemePageTemplates()
+			if len(tpls) == 0 {
+				return nil
+			}
+			out := make([]admin.PageTemplateOption, 0, len(tpls))
+			for _, t := range tpls {
+				if t.Template == "" {
+					continue
+				}
+				out = append(out, admin.PageTemplateOption{Template: t.Template, Name: t.Name})
+			}
+			return out
 		},
 	})
 

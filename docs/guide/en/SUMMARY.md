@@ -14,6 +14,7 @@
   - [Public Authentication](architecture/public-authentication.md)
 - [Admin](admin/overview.md)
   - [Admin Overview](admin/overview.md)
+  - [Standalone Pages](admin/pages.md)
   - [Admin Extension Points](admin/extension-points.md)
   - [Menu Management](admin/menus.md)
 - [Theme Development](themes/overview.md)

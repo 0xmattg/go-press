@@ -250,16 +250,6 @@ func (h *Handler) BlogPost(c *gin.Context) {
 	h.render(c, "post-detail", data)
 }
 
-// TaxonomyArchive renders the taxonomy archive page (/category/{slug} or /tag/{slug}).
-func (h *Handler) TaxonomyArchive(c *gin.Context, taxonomyType, termSlug string) {
-	data, err := h.pageService.ForRequest(c).GetTaxonomyArchive(taxonomyType, termSlug)
-	if err != nil || data == nil {
-		c.String(http.StatusNotFound, "Not found")
-		return
-	}
-	h.render(c, "taxonomy-archive", data)
-}
-
 // Health returns a simple health check response.
 func (h *Handler) Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{

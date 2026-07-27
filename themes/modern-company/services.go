@@ -218,30 +218,6 @@ type PostDetailData struct {
 	Tags       []TagView
 }
 
-// TaxonomyArchiveItem represents a single content item in a taxonomy archive page (cross-type).
-type TaxonomyArchiveItem struct {
-	ID          uint
-	Title       string
-	Slug        string
-	Excerpt     string
-	ImageURL    string
-	ContentType string // "product", "service", "showcase", "post"
-	TypeLabel   string // localized display label, e.g. product/service/showcase/post
-	DetailURL   string // full URL to the detail page
-	PublishedAt *time.Time
-	CreatedAt   time.Time
-}
-
-// TaxonomyArchiveData is the view data for /category/{slug} and /tag/{slug} pages.
-type TaxonomyArchiveData struct {
-	PageData
-	TaxonomyType string // "category" or "tag"
-	TermName     string
-	TermSlug     string
-	Items        []TaxonomyArchiveItem
-	Total        int
-}
-
 // ======== PageService ========
 
 // PageService assembles page data using the GoPress core engine.
@@ -878,77 +854,6 @@ func (s *PageService) GetPostDetail(slug string) (*PostDetailData, error) {
 	return data, nil
 }
 
-// GetTaxonomyArchive loads all content (across all content types) that belongs to a given term.
-// taxonomyType is "category" or "tag", termSlug is the term's URL slug.
-func (s *PageService) GetTaxonomyArchive(taxonomyType, termSlug string) (*TaxonomyArchiveData, error) {
-	// Look up the term to get its display name
-	term, err := s.Tax.GetTermBySlug(termSlug)
-	if err != nil {
-		return nil, err
-	}
-
-	// Query all published content that has this taxonomy term, across all types
-	q := content.NewQuery(s.DB).
-		Status(content.StatusPublished).
-		Taxonomy(taxonomyType, termSlug).
-		OrderBy(dbprefix.Table("contents")+".created_at", "DESC")
-
-	items, err := q.Get()
-	if err != nil {
-		return nil, err
-	}
-
-	// Type → rewrite slug map for building detail URLs
-	typeRewrite := map[string]string{
-		"product":  "products",
-		"service":  "services",
-		"showcase": "showcase",
-		"post":     "blog",
-	}
-
-	archiveItems := make([]TaxonomyArchiveItem, len(items))
-	for i, c := range items {
-		rewrite := typeRewrite[c.Type]
-		if rewrite == "" {
-			rewrite = c.Type
-		}
-		excerpt := c.Excerpt
-		if excerpt == "" && len(c.Content) > 200 {
-			excerpt = stripHTMLTags(c.Content[:200]) + "..."
-		} else if excerpt == "" {
-			excerpt = stripHTMLTags(c.Content)
-		}
-		archiveItems[i] = TaxonomyArchiveItem{
-			ID:          c.ID,
-			Title:       c.Title,
-			Slug:        c.Slug,
-			Excerpt:     excerpt,
-			ImageURL:    c.ImageURL,
-			ContentType: c.Type,
-			TypeLabel:   s.localizedContentTypeLabel(c.Type),
-			DetailURL:   "/" + rewrite + "/" + c.Slug,
-			PublishedAt: c.PublishedAt,
-			CreatedAt:   c.CreatedAt,
-		}
-	}
-
-	// Build page title
-	taxLabel := "分类"
-	if taxonomyType == "tag" {
-		taxLabel = "标签"
-	}
-	pageTitle := taxLabel + ": " + term.Name
-
-	return &TaxonomyArchiveData{
-		PageData:     s.buildPageData(pageTitle, ""),
-		TaxonomyType: taxonomyType,
-		TermName:     term.Name,
-		TermSlug:     termSlug,
-		Items:        archiveItems,
-		Total:        len(archiveItems),
-	}, nil
-}
-
 // stripHTMLTags removes HTML tags from a string.
 func stripHTMLTags(s string) string {
 	return strings.TrimSpace(reHTMLTags.ReplaceAllString(s, " "))
@@ -979,17 +884,6 @@ func (s *PageService) getContentList(contentType, orderField, orderDir string) (
 		Status(content.StatusPublished).
 		OrderBy(orderField, orderDir).
 		Get()
-}
-
-func (s *PageService) localizedContentTypeLabel(contentType string) string {
-	if s.Registry == nil {
-		return contentType
-	}
-	typeDef := s.Registry.GetType(contentType)
-	if typeDef == nil {
-		return contentType
-	}
-	return coreTheme.LocalizedContentTypeLabel(s.ReqCtx, s.I18n, typeDef)
 }
 
 // ======== Model Converters ========

@@ -131,21 +131,6 @@ func NewWithDB(db *gorm.DB, themeDir string) *ModernCompanyTheme {
 	return t
 }
 
-func isProductArchiveURL(c *gin.Context, engine *core.Engine, raw string) bool {
-	return isContentArchiveURL(c, engine, "product", raw)
-}
-
-func isContentArchiveURL(c *gin.Context, engine *core.Engine, contentType string, raw string) bool {
-	if engine == nil || engine.Rewrite == nil {
-		return false
-	}
-	route := engine.Rewrite.Resolve(normalizeNavPath(c, raw))
-	if route == nil || !route.IsArchive {
-		return false
-	}
-	return route.ContentType == strings.TrimSpace(contentType)
-}
-
 func normalizeNavPath(c *gin.Context, raw string) string {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {

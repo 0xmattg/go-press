@@ -10,6 +10,14 @@ import "sync"
 type RewriteRule struct {
 	Slug      string // URL prefix, e.g. "products"
 	WithFront bool   // prepend global permalink front base
+	// Rootless makes single-item URLs omit the type prefix, resolving at the
+	// site root as /{slug} instead of /{prefix}/{slug}. It is how root-level
+	// standalone pages (the core "page" type) expose /about, /privacy, etc.
+	// Only meaningful for non-archive singular types; the rewrite engine
+	// resolves these as a last resort, after every prefixed content type and
+	// taxonomy has been tried, so a rootless slug never shadows an archive
+	// prefix or system route.
+	Rootless bool
 }
 
 // MetaFieldDef describes an admin-managed custom field for a content type.
@@ -40,10 +48,35 @@ type ContentTypeDef struct {
 	MetaFields      []MetaFieldDef `json:"meta_fields"`
 	Taxonomies      []string       `json:"taxonomies"`
 	HasArchive      bool           `json:"has_archive"`
-	Rewrite         RewriteRule    `json:"rewrite"`
-	Templates       TemplateDef    `json:"templates"`
-	MenuIcon        string         `json:"menu_icon"` // optional: built-in icon key or raw SVG
-	MenuOrder       int            `json:"menu_order"`
+	// Hierarchical enables parent/child relationships (a content tree) for the
+	// type, backed by Content.ParentID. Core uses it to render a parent picker
+	// in the admin editor. Pages are hierarchical; posts are not.
+	Hierarchical bool `json:"hierarchical"`
+	// ReadOnly makes the admin expose only a read-only detail view instead of a
+	// full create/edit/delete editor. It decouples "authorable in admin" from
+	// HasArchive so that non-archive authored types (pages) still get a full
+	// editor while ingest-only types (contact_message) stay read-only.
+	ReadOnly  bool        `json:"read_only"`
+	Rewrite   RewriteRule `json:"rewrite"`
+	Templates TemplateDef `json:"templates"`
+	MenuIcon  string      `json:"menu_icon"` // optional: built-in icon key or raw SVG
+	MenuOrder int         `json:"menu_order"`
+}
+
+// HasPublicRoute reports whether the type is reachable on the public site,
+// either through an archive listing or a rootless single-page URL. Admin-only
+// types such as contact_message have no public route.
+func (d *ContentTypeDef) HasPublicRoute() bool {
+	if d == nil {
+		return false
+	}
+	return d.HasArchive || d.Rewrite.Rootless
+}
+
+// IsEditable reports whether the admin should expose full create/edit/delete
+// CRUD for the type. Read-only types only get a detail view.
+func (d *ContentTypeDef) IsEditable() bool {
+	return d != nil && !d.ReadOnly
 }
 
 // TemplateDef optionally maps a content type to theme page template names.

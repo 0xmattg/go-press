@@ -64,7 +64,7 @@ func (t *MyTheme) StaticDir() string               { return filepath.Join(t.Them
 
 ## 内容类型配置
 
-主题自定义内容类型写在 `theme.toml`，不要在 `Setup()` 里重复调用 `RegisterType()`。引擎激活主题时会先注册核心类型 `post` / `contact_message` / `category` / `tag`，再读取当前主题的 `[[content_types]]` 并自动挂载配置的分类法。
+主题自定义内容类型写在 `theme.toml`，不要在 `Setup()` 里重复调用 `RegisterType()`。引擎激活主题时会先注册核心类型 `post` / `page` / `contact_message` / `category` / `tag`，再读取当前主题的 `[[content_types]]` 并自动挂载配置的分类法。
 
 下面以一个由主题声明的 `product` 内容管理项为例。`product` 不是 core 内置类型，只是一个常见的自定义内容类型示例。
 

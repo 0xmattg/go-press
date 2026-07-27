@@ -362,6 +362,12 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 	funcs["safeHTML"] = func(s string) template.HTML {
 		return template.HTML(content.SanitizeHTML(s))
 	}
+	// embedHTML is the trust boundary for the per-page embed field: it renders
+	// pasted iframe/embed markup through the iframe-allowlist sanitizer, so a
+	// page can carry a third-party widget without opening a raw-HTML/script hole.
+	funcs["embedHTML"] = func(s string) template.HTML {
+		return template.HTML(content.SanitizeEmbed(s))
+	}
 	return funcs
 }
 
@@ -592,15 +598,17 @@ func (b *BaseTheme) renderSingle(c *gin.Context, route *rewrite.ResolvedRoute) {
 	}
 
 	typeDef := b.App.ContentRegistry().GetType(route.ContentType)
-	pageTmpl := b.resolvePageTemplate(singlePageCandidates(route.ContentType, route.Slug, typeDef))
+
+	// Load meta up front so a per-page selected template (page_template) can
+	// steer template resolution before we choose which template to render.
+	meta, _ := b.App.ContentRepo().GetMeta(item.ID)
+	selectedTemplate := strings.TrimSpace(meta["page_template"])
+
+	pageTmpl := b.resolvePageTemplate(pageBundleCandidates(typeDef, route.ContentType, route.Slug, selectedTemplate))
 	var tmpl *template.Template
 	if pageTmpl == nil && b.Templates != nil {
-		candidates := ResolveTemplate(route.ContentType, route.Slug, "", "", false, false, false)
-		tmpl = b.Templates.Resolve(candidates)
+		tmpl = b.Templates.Resolve(singleEngineCandidates(typeDef, route.ContentType, route.Slug, selectedTemplate))
 	}
-
-	// Load meta
-	meta, _ := b.App.ContentRepo().GetMeta(item.ID)
 
 	// Load taxonomies
 	var categories, tags []map[string]interface{}
@@ -800,6 +808,44 @@ func archivePageCandidates(contentType string, typeDef *content.ContentTypeDef) 
 		candidates = append(candidates, typeDef.Templates.Archive)
 	}
 	candidates = append(candidates, "archive")
+	return uniqueStrings(candidates)
+}
+
+// pageBundleCandidates returns the page-bundle template names (no ".tmpl") to
+// try for a single item, honoring an optional per-page selected template and
+// the page hierarchy (page-{slug} → page) for rootless page types, then falling
+// back to the generic single-item hierarchy. Themes without page templates keep
+// their existing single-* templates; a selected template that a switched theme
+// no longer provides degrades gracefully to the page/single fallbacks.
+func pageBundleCandidates(typeDef *content.ContentTypeDef, contentType, slug, selectedTemplate string) []string {
+	var candidates []string
+	if selectedTemplate != "" {
+		candidates = append(candidates, selectedTemplate)
+	}
+	if typeDef != nil && typeDef.Rewrite.Rootless {
+		if slug != "" {
+			candidates = append(candidates, "page-"+slug)
+		}
+		candidates = append(candidates, "page")
+	}
+	candidates = append(candidates, singlePageCandidates(contentType, slug, typeDef)...)
+	return uniqueStrings(candidates)
+}
+
+// singleEngineCandidates is the ".tmpl" equivalent of pageBundleCandidates for
+// the legacy TemplateEngine resolution path.
+func singleEngineCandidates(typeDef *content.ContentTypeDef, contentType, slug, selectedTemplate string) []string {
+	var candidates []string
+	if selectedTemplate != "" {
+		candidates = append(candidates, selectedTemplate+".tmpl")
+	}
+	if typeDef != nil && typeDef.Rewrite.Rootless {
+		if slug != "" {
+			candidates = append(candidates, "page-"+slug+".tmpl")
+		}
+		candidates = append(candidates, "page.tmpl")
+	}
+	candidates = append(candidates, ResolveTemplate(contentType, slug, "", "", false, false, false)...)
 	return uniqueStrings(candidates)
 }
 

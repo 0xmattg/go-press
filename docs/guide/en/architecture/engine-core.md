@@ -16,7 +16,7 @@ The engine is the runtime container of GoPress. It wires together storage, conte
 
 ## Core Types
 
-Core content types such as `post`, `contact_message`, `category`, and `tag` are registered by the engine and are not owned by any theme. They remain available across theme switches and are used by admin, REST APIs, sitemap generation, and fallback templates.
+Core content types such as `post`, `page`, `contact_message`, `category`, and `tag` are registered by the engine and are not owned by any theme. They remain available across theme switches and are used by admin, REST APIs, sitemap generation, and fallback templates.
 
 Theme-specific content types are declared in `theme.toml`. During activation, the engine reads the active theme metadata and registers those types in the content registry.
 

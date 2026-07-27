@@ -20,6 +20,7 @@
 ## 后台管理
 
 * [功能总览](admin/overview.md)
+* [独立页面](admin/pages.md)
 * [后台扩展点](admin/extension-points.md)
 * [菜单管理](admin/menus.md)
 

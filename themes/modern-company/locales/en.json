@@ -101,6 +101,7 @@
   "archive_label_category": "Category",
   "archive_label_tag": "Tag",
   "archive_items_found": "items found",
+  "content_type.page": "Page",
   "content_type.post": "Article",
   "content_type.product": "Product",
   "content_type.service": "Service",

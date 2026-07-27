@@ -368,7 +368,7 @@ func (h *Handler) ContentList(c *gin.Context) {
 	}
 	role := c.GetString("admin_role")
 	canBulkDelete := h.svc.rbac.Can(role, h.mapResource(typeName), "delete")
-	canBulkPublish := typeDef.HasArchive && h.svc.rbac.Can(role, h.mapResource(typeName), "update")
+	canBulkPublish := typeDef.HasPublicRoute() && h.svc.rbac.Can(role, h.mapResource(typeName), "update")
 	canBulkUnpublish := canBulkPublish
 	canBulkActions := canBulkDelete || canBulkPublish || canBulkUnpublish
 	if canBulkActions {
@@ -450,6 +450,133 @@ func (h *Handler) ContentList(c *gin.Context) {
 
 // ==================== Content New ====================
 
+// ParentPageOption is one selectable parent in the hierarchical page editor.
+type ParentPageOption struct {
+	ID    uint
+	Title string
+}
+
+// addPageAttributesData injects the parent-page and page-template editor
+// controls for hierarchical / rootless (page-like) content types. It is a no-op
+// for ordinary types, so the shared content form is unchanged for
+// posts/products/etc. On a POST re-render (validation error) it honors the
+// just-submitted selection; on a GET edit it reflects the stored value.
+func (h *Handler) addPageAttributesData(c *gin.Context, typeName string, typeDef *content.ContentTypeDef, item *content.Content, data gin.H) {
+	if typeDef == nil {
+		return
+	}
+
+	if typeDef.Hierarchical {
+		var currentID, currentParent uint
+		if item != nil {
+			currentID = item.ID
+			if item.ParentID != nil {
+				currentParent = *item.ParentID
+			}
+		}
+		if v := strings.TrimSpace(c.PostForm("parent_id")); v != "" {
+			if pid, err := strconv.ParseUint(v, 10, 64); err == nil {
+				currentParent = uint(pid)
+			}
+		}
+		items, _ := h.svc.ListContent(typeName, "title", "ASC")
+		opts := make([]ParentPageOption, 0, len(items))
+		for _, it := range items {
+			if currentID != 0 && it.ID == currentID {
+				continue // a page cannot be its own parent
+			}
+			opts = append(opts, ParentPageOption{ID: it.ID, Title: it.Title})
+		}
+		data["ParentOptions"] = opts
+		data["CurrentParentID"] = currentParent
+		data["ShowParentField"] = true
+	}
+
+	if typeDef.Rewrite.Rootless && h.themeManager != nil {
+		if tpls := h.themeManager.PageTemplates(); len(tpls) > 0 {
+			current := ""
+			if item != nil {
+				current = strings.TrimSpace(item.GetMeta("page_template"))
+			}
+			if v, ok := c.GetPostForm("page_template"); ok {
+				current = strings.TrimSpace(v)
+			}
+			data["PageTemplateOptions"] = tpls
+			data["CurrentPageTemplate"] = current
+			data["ShowPageTemplateField"] = true
+		}
+	}
+
+	// Per-page embed code (rootless pages). Stored raw in the embed_code meta and
+	// sanitized at render through the iframe-allowlist policy (embedHTML).
+	if typeDef.Rewrite.Rootless {
+		embed := ""
+		if item != nil {
+			embed = item.GetMeta("embed_code")
+		}
+		if v, ok := c.GetPostForm("embed_code"); ok {
+			embed = v
+		}
+		data["CurrentEmbedCode"] = embed
+		data["ShowEmbedField"] = true
+	}
+}
+
+// applyParentFromForm sets item.ParentID from the submitted parent_id for
+// hierarchical types, guarding against a page being its own parent.
+func applyParentFromForm(c *gin.Context, typeDef *content.ContentTypeDef, item *content.Content) {
+	if typeDef == nil || !typeDef.Hierarchical {
+		return
+	}
+	item.ParentID = nil
+	if pid, err := strconv.ParseUint(strings.TrimSpace(c.PostForm("parent_id")), 10, 64); err == nil && pid > 0 {
+		p := uint(pid)
+		if p != item.ID { // a page cannot be its own parent
+			item.ParentID = &p
+		}
+	}
+}
+
+// systemReservedSlugs are top-level path segments owned by the engine/router. A
+// rootless page whose slug matches one would be shadowed by the real route and
+// therefore unreachable, so saving it is rejected.
+var systemReservedSlugs = map[string]bool{
+	"admin": true, "api": true, "static": true, "uploads": true,
+	"auth": true, "swagger": true, "health": true,
+	"sitemap.xml": true, "robots.txt": true, "favicon.ico": true,
+}
+
+// isReservedPageSlug reports whether slug collides with a system route, a
+// content-type archive prefix, or a taxonomy prefix — any of which would make a
+// rootless page at /{slug} unreachable because those routes resolve first.
+func (h *Handler) isReservedPageSlug(slug string) bool {
+	slug = strings.ToLower(strings.Trim(strings.TrimSpace(slug), "/"))
+	if slug == "" {
+		return false
+	}
+	if systemReservedSlugs[slug] {
+		return true
+	}
+	for _, td := range h.registry.AllTypes() {
+		if td.Rewrite.Rootless {
+			continue
+		}
+		prefix := td.Rewrite.Slug
+		if prefix == "" {
+			prefix = td.Name
+		}
+		if strings.EqualFold(prefix, slug) {
+			return true
+		}
+	}
+	for _, tax := range h.registry.AllTaxonomies() {
+		if strings.EqualFold(tax.Name, slug) {
+			return true
+		}
+	}
+	return false
+}
+
 func (h *Handler) ContentNew(c *gin.Context) {
 	typeDef, typeName := h.getContentType(c)
 	if typeDef == nil {
@@ -477,6 +604,7 @@ func (h *Handler) ContentNew(c *gin.Context) {
 
 	// Load taxonomy forms for selectors
 	h.loadTaxonomyForms(typeDef, nil, data)
+	h.addPageAttributesData(c, typeName, typeDef, nil, data)
 
 	h.render(c, "content_form", data)
 }
@@ -536,21 +664,35 @@ func (h *Handler) ContentCreate(c *gin.Context) {
 		}
 	}
 	ensurePublishedAtForPublished(item)
+	applyParentFromForm(c, typeDef, item)
 
 	filterQuery := listFilterQuery(c)
-	if err := h.svc.CreateContent(item); err != nil {
+
+	renderCreateError := func(msg string) {
 		view := h.svc.ToDynamicContentView(*item, typeDef)
 		data := gin.H{
 			"Title": adminT(lang, "content.new", label), "Active": slug,
 			"TypeDef": typeDef, "TypeName": typeName, "Slug": slug,
 			"Item":      view,
-			"Error":     adminT(lang, "error.create_failed", err.Error()),
+			"Error":     msg,
 			"HookItem":  item,
 			"BackURL":   listURLWithFilter(slug, filterQuery),
 			"BackQuery": filterQuery,
 		}
 		h.loadTaxonomyForms(typeDef, &view, data)
+		h.addPageAttributesData(c, typeName, typeDef, item, data)
 		h.render(c, "content_form", data)
+	}
+
+	// A rootless page slug that collides with a system route or an existing
+	// archive/taxonomy prefix would be unreachable, so reject it up front.
+	if typeDef.Rewrite.Rootless && h.isReservedPageSlug(item.Slug) {
+		renderCreateError(adminT(lang, "error.slug_reserved", item.Slug))
+		return
+	}
+
+	if err := h.svc.CreateContent(item); err != nil {
+		renderCreateError(adminT(lang, "error.create_failed", err.Error()))
 		return
 	}
 
@@ -565,6 +707,13 @@ func (h *Handler) ContentCreate(c *gin.Context) {
 	// Save gallery images (multi-image support)
 	if hasSupport(typeDef.Supports, "thumbnail") {
 		h.svc.contentRepo.SaveMeta(item.ID, "gallery_images", c.PostForm("gallery_images"))
+	}
+
+	// Save the selected page template + per-page embed code (rootless pages only).
+	// embed_code is stored raw and sanitized at render time via embedHTML.
+	if typeDef.Rewrite.Rootless {
+		h.svc.contentRepo.SaveMeta(item.ID, "page_template", strings.TrimSpace(c.PostForm("page_template")))
+		h.svc.contentRepo.SaveMeta(item.ID, "embed_code", strings.TrimSpace(c.PostForm("embed_code")))
 	}
 
 	// Save taxonomy relationships
@@ -630,7 +779,7 @@ func (h *Handler) ContentBulkAction(c *gin.Context) {
 		redirectWith("error", adminT(lang, "error.bulk_action_required"))
 		return
 	}
-	if (action == contentBulkActionPublish || action == contentBulkActionUnpublish) && !typeDef.HasArchive {
+	if (action == contentBulkActionPublish || action == contentBulkActionUnpublish) && !typeDef.HasPublicRoute() {
 		redirectWith("error", adminT(lang, "error.bulk_action_unavailable"))
 		return
 	}
@@ -727,6 +876,7 @@ func (h *Handler) ContentEdit(c *gin.Context) {
 
 	// Load taxonomy forms with selection state
 	h.loadTaxonomyForms(typeDef, &view, data)
+	h.addPageAttributesData(c, typeName, typeDef, item, data)
 
 	h.render(c, "content_form", data)
 }
@@ -790,20 +940,31 @@ func (h *Handler) ContentUpdate(c *gin.Context) {
 		}
 	}
 	ensurePublishedAtForPublished(item)
+	applyParentFromForm(c, typeDef, item)
 
-	if err := h.svc.UpdateContent(item); err != nil {
+	renderUpdateError := func(msg string) {
 		view := h.svc.ToDynamicContentView(*item, typeDef)
 		data := gin.H{
 			"Title": adminT(lang, "content.edit", label), "Active": slug,
 			"TypeDef": typeDef, "TypeName": typeName, "Slug": slug,
 			"Item":      view,
-			"Error":     adminT(lang, "error.update_failed", err.Error()),
+			"Error":     msg,
 			"HookItem":  item,
 			"BackURL":   listURLWithFilter(slug, filterQuery),
 			"BackQuery": filterQuery,
 		}
 		h.loadTaxonomyForms(typeDef, &view, data)
+		h.addPageAttributesData(c, typeName, typeDef, item, data)
 		h.render(c, "content_form", data)
+	}
+
+	if typeDef.Rewrite.Rootless && h.isReservedPageSlug(item.Slug) {
+		renderUpdateError(adminT(lang, "error.slug_reserved", item.Slug))
+		return
+	}
+
+	if err := h.svc.UpdateContent(item); err != nil {
+		renderUpdateError(adminT(lang, "error.update_failed", err.Error()))
 		return
 	}
 
@@ -815,6 +976,13 @@ func (h *Handler) ContentUpdate(c *gin.Context) {
 	// Save gallery images (multi-image support)
 	if hasSupport(typeDef.Supports, "thumbnail") {
 		h.svc.contentRepo.SaveMeta(item.ID, "gallery_images", c.PostForm("gallery_images"))
+	}
+
+	// Save the selected page template + per-page embed code (rootless pages only).
+	// embed_code is stored raw and sanitized at render time via embedHTML.
+	if typeDef.Rewrite.Rootless {
+		h.svc.contentRepo.SaveMeta(item.ID, "page_template", strings.TrimSpace(c.PostForm("page_template")))
+		h.svc.contentRepo.SaveMeta(item.ID, "embed_code", strings.TrimSpace(c.PostForm("embed_code")))
 	}
 
 	// Update taxonomy relationships

@@ -1,14 +1,14 @@
 {{define "content"}}
 <!-- Page Banner -->
 <section class="page-banner page-banner-archive">
-    <span class="banner-watermark">{{if eq .TaxonomyType "category"}}{{T $.Ctx "archive_label_category"}}{{else}}{{T $.Ctx "archive_label_tag"}}{{end}}</span>
+    <span class="banner-watermark">{{if eq .TaxSlug "category"}}{{T $.Ctx "archive_label_category"}}{{else}}{{T $.Ctx "archive_label_tag"}}{{end}}</span>
     <div class="container">
-        <span class="section-label">{{if eq .TaxonomyType "category"}}{{T $.Ctx "archive_label_category"}}{{else}}{{T $.Ctx "archive_label_tag"}}{{end}}</span>
+        <span class="section-label">{{if eq .TaxSlug "category"}}{{T $.Ctx "archive_label_category"}}{{else}}{{T $.Ctx "archive_label_tag"}}{{end}}</span>
         <h1>{{.TermName}}</h1>
-        <p class="banner-subtitle">{{.Total}} {{T $.Ctx "archive_items_found"}}</p>
+        <p class="banner-subtitle">{{len .Items}} {{T $.Ctx "archive_items_found"}}</p>
         <div class="breadcrumb">
             <a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a> <span>/</span>
-            <span>{{if eq .TaxonomyType "category"}}{{T $.Ctx "archive_label_category"}}{{else}}{{T $.Ctx "archive_label_tag"}}{{end}}</span> <span>/</span>
+            <span>{{if eq .TaxSlug "category"}}{{T $.Ctx "archive_label_category"}}{{else}}{{T $.Ctx "archive_label_tag"}}{{end}}</span> <span>/</span>
             <span>{{.TermName}}</span>
         </div>
     </div>

@@ -50,8 +50,10 @@ func SetupRoutes(r *gin.Engine, h *Handler, auth *user.Auth, registry *content.R
 			group.POST("/bulk", h.ContentBulkAction)
 			group.POST("/:id/delete", h.ContentDelete)
 
-			if typeDef.HasArchive {
-				// Full CRUD for archive-enabled content types
+			if typeDef.IsEditable() {
+				// Full CRUD for authorable types. Decoupled from HasArchive so
+				// non-archive authored types like pages still get a full editor;
+				// only explicitly read-only types (contact_message) are excluded.
 				group.GET("/new", h.ContentNew)
 				group.POST("/new", h.ContentCreate)
 				group.GET("/:id/edit", h.ContentEdit)
@@ -59,7 +61,7 @@ func SetupRoutes(r *gin.Engine, h *Handler, auth *user.Auth, registry *content.R
 				// Drag-and-drop reorder (returns JSON)
 				group.POST("/reorder", h.ContentReorder)
 			} else {
-				// Read-only detail for non-archive types (e.g. contact_message)
+				// Read-only detail for ingest-only types (e.g. contact_message)
 				group.GET("/:id", h.ContentDetail)
 			}
 		}

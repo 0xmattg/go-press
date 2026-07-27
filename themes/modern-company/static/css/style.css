@@ -2460,6 +2460,7 @@ h1,h2,h3,h4,h5 { line-height:1.25; color: var(--primary); font-weight:700; }
 .badge-service { background: #7c3aed; }
 .badge-showcase { background: #059669; }
 .badge-post { background: #d97706; }
+.badge-page { background: #334155; }
 .archive-card-body h3 {
     font-size: 1.1rem;
     margin-bottom: 8px;
@@ -2689,6 +2690,21 @@ h1,h2,h3,h4,h5 { line-height:1.25; color: var(--primary); font-weight:700; }
     color: var(--text-secondary);
     line-height: 1.9;
     font-size: 1.02rem;
+    /* Wrap long unbroken strings (pasted URLs, CJK runs, page content) so rich
+       text from the editor can never overflow the content column. */
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+/* Responsive container for the per-page embed field (pasted iframes). Forces
+   full width and a sensible min height so a pasted widget always shows. */
+.gp-embed { margin: 24px 0; width: 100%; }
+.gp-embed iframe {
+    width: 100%;
+    max-width: 100%;
+    min-height: 500px;
+    border: 0;
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(0,0,0,.06);
 }
 .post-body h2, .post-body h3 {
     color: var(--primary);

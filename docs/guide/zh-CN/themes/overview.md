@@ -5,7 +5,7 @@ GoPress 的主题系统借鉴 WordPress 设计：主题是一个 Go 包，通过
 ## 核心特性
 
 - **BaseTheme 运行时引擎** — 主题嵌入 `BaseTheme` 即可获得 URL 解析、模板层级、SEO 注入等运行时能力
-- **核心类型保护** — 引擎在 `Registry.Clear()` 后自动 `registerCoreTypes()`，`post` / `contact_message` / `category` / `tag` 跨主题切换永久保留
+- **核心类型保护** — 引擎在 `Registry.Clear()` 后自动 `registerCoreTypes()`，`post` / `page` / `contact_message` / `category` / `tag` 跨主题切换永久保留
 - **配置化内容类型** — 主题自定义内容类型由 `theme.toml` 的 `[[content_types]]` 声明；后台导航、CRUD、REST API、Rewrite、模板映射和菜单图标都从注册表读取
 - **内置回退模板** — 当主题未提供对应模板时，BaseTheme 自动使用内置的分类归档、单页、列表回退模板，避免 404
 - **详情页标签展示** — 任意挂载 `tag` 分类法的内容详情页都可以显示关联 Tags，链接到对应分类归档页
@@ -25,7 +25,7 @@ GoPress 的主题系统借鉴 WordPress 设计：主题是一个 Go 包，通过
 
 ## 配置驱动内容路由
 
-core 不假设一个站点一定有 `product`、`service` 或 `showcase`。除核心保留的 `post` / `contact_message` 等类型外，主题需要的业务内容类型都由 `theme.toml` 声明。
+core 不假设一个站点一定有 `product`、`service` 或 `showcase`。除核心保留的 `post` / `page` / `contact_message` 等类型外，主题需要的业务内容类型都由 `theme.toml` 声明。
 
 每个内容类型的 `rewrite_slug` 决定前台归档和详情 URL；当内容类型名、URL 和视觉模板名不一致时，可以通过 `templates` 显式指定复用哪个页面模板：
 

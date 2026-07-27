@@ -164,7 +164,7 @@ gopress serve     # 装完之后任意目录都能跑
 | [介绍](docs/guide/zh-CN/README.md) | 项目定位、设计原则 |
 | [快速开始](docs/guide/zh-CN/getting-started/installation.md) | 安装、配置、Web 安装器 |
 | [架构](docs/guide/zh-CN/architecture/overview.md) | 引擎启动流程、内容模型、前台身份登录、URL/SEO、缓存、i18n、Content Scope、Hook 系统 |
-| [后台管理](docs/guide/zh-CN/admin/overview.md) | 后台 CMS、扩展点、菜单管理 |
+| [后台管理](docs/guide/zh-CN/admin/overview.md) | 后台 CMS、独立页面、扩展点、菜单管理 |
 | [主题开发](docs/guide/zh-CN/themes/overview.md) | 创建主题、SEO 接入规范、图片管线、媒体变体 |
 | [插件开发](docs/guide/zh-CN/plugins/overview.md) | 创建插件、Hook 列表、内置 multilang / seo-extras / code-snippets / gopress-analytics |
 | [参考资料](docs/guide/zh-CN/reference/project-structure.md) | 项目结构、数据库表前缀、REST API、技术栈、路线图 |
@@ -209,7 +209,8 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 
 ### 引擎核心
 
-- **统一内容模型** — `Content` + `ContentMeta` + `ContentType` 注册表；核心保留 `post` / `contact_message`，主题通过 `theme.toml` 声明自定义类型
+- **统一内容模型** — `Content` + `ContentMeta` + `ContentType` 注册表；核心保留 `post` / `page` / `contact_message`，主题通过 `theme.toml` 声明自定义类型
+- **独立页面** — 内置 `page` 类型，用于 About/条款/隐私等独立页：根级永久链接（`/about`）、层级父页面、按页选主题模板、以及 iframe 白名单的嵌入代码字段。详见[独立页面](docs/guide/zh-CN/admin/pages.md)
 - **配置驱动内容路由** — `theme.toml` 的 `rewrite_slug` 和可选 `templates = { archive = "...", single = "..." }` 统一驱动归档 URL、详情 URL、Sitemap、后台永久链接和动态模板解析。`product` / `service` / `showcase` 只是示例类型，不是框架内置假设。
 - **链式查询构建器** — 下面以主题声明的 `product` 内容类型为例：`ContentQuery.Type("product").Published().Taxonomy("category", "hepa").Paginate(1, 20)`
 - **Hook 事件总线** — `AddAction` / `DoAction` / `AddFilter` / `ApplyFilter`，热拔插友好（每个 Add 返回 `Handle` 可精准 Remove）
@@ -231,6 +232,7 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 
 - **数据驱动 CRUD** — 按 ContentType 注册表自动生成列表/编辑界面，零样板代码
 - **主题内容模型配置化** — `theme.toml` 的 `[[content_types]]` 驱动后台导航、CRUD、REST API、Rewrite、模板映射和菜单图标
+- **独立页面管理** — 专门的「页面」管理界面，支持层级、根级永久链接、按页选页面模板，以及粘贴第三方 iframe 的每页嵌入代码字段
 - **RBAC 权限** — admin/editor/author/subscriber，全后台 `checkPermission` 加固
 - **列表显示选项与分页** — 内容列表支持按当前页面动态列生成显示选项、标题搜索、日期/分类筛选和服务端分页
 - **邮件设置与通知** — 独立 SMTP 设置页，默认使用 go-mail SMTP 驱动并保留 Go 标准库选项，`mail.mail_key` 保存在站点级 `config.toml`，支持 Gmail 常用的 `587 + STARTTLS`、测试邮件和新联系留言邮件通知开关

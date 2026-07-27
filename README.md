@@ -164,7 +164,7 @@ The documentation lives under [`docs/guide/`](docs/guide/) and is organized as a
 | [Introduction](docs/guide/en/README.md) | Positioning and design principles |
 | [Getting Started](docs/guide/en/getting-started/installation.md) | Installation, configuration, and the web installer |
 | [Architecture](docs/guide/en/architecture/overview.md) | Engine boot flow, content model, public authentication, URL/SEO, cache, i18n, content scope, and hooks |
-| [Admin](docs/guide/en/admin/overview.md) | Admin CMS, extension points, and menu management |
+| [Admin](docs/guide/en/admin/overview.md) | Admin CMS, standalone pages, extension points, and menu management |
 | [Themes](docs/guide/en/themes/overview.md) | Creating themes, SEO integration, image pipeline, and media variants |
 | [Plugins](docs/guide/en/plugins/overview.md) | Creating plugins, hook contracts, and bundled plugins |
 | [Reference](docs/guide/en/reference/project-structure.md) | Project structure, table prefixes, REST API, tech stack, and roadmap |
@@ -213,7 +213,8 @@ See [Public Authentication](docs/guide/en/architecture/public-authentication.md)
 
 ### Engine Core
 
-- **Unified content model** — `Content` + `ContentMeta` + `ContentType` registry; core keeps `post` and `contact_message`, while themes declare custom types in `theme.toml`.
+- **Unified content model** — `Content` + `ContentMeta` + `ContentType` registry; core keeps `post`, `page`, and `contact_message`, while themes declare custom types in `theme.toml`.
+- **Standalone pages** — a built-in `page` type for About/Terms/Privacy-style pages: root-level permalinks (`/about`), hierarchical parents, per-page theme templates, and an iframe-allowlisted embed field. See [Standalone Pages](docs/guide/en/admin/pages.md).
 - **Config-driven content routing** — `theme.toml` `rewrite_slug` and optional `templates = { archive = "...", single = "..." }` drive archive URLs, detail URLs, sitemap entries, admin permalinks, and dynamic template resolution. `product`, `service`, and `showcase` are examples, not framework assumptions.
 - **Chainable content queries** — for example: `ContentQuery.Type("product").Published().Taxonomy("category", "hepa").Paginate(1, 20)`.
 - **Hook event bus** — `AddAction` / `DoAction` / `AddFilter` / `ApplyFilter`, with removable handles for clean plugin deactivation.
@@ -235,6 +236,7 @@ See [Public Authentication](docs/guide/en/architecture/public-authentication.md)
 
 - **Data-driven CRUD** — admin list/edit screens are generated from the registered `ContentType` definitions.
 - **Theme-declared content models** — `theme.toml` drives admin navigation, CRUD, REST API exposure, rewrite rules, template mapping, and menu icons.
+- **Standalone pages** — a dedicated Pages screen for hierarchical, root-level pages, with a page-template picker and a per-page embed-code field for third-party iframes.
 - **RBAC** — `admin`, `editor`, `author`, and `subscriber` roles enforced throughout the admin surface.
 - **List screen options and pagination** — content lists support dynamic column visibility, title search, date/taxonomy filters, and server-side pagination.
 - **Mail settings and notifications** — dedicated SMTP settings page, go-mail SMTP driver with Go stdlib option, site-level `config.toml` storage for `mail.mail_key`, test emails, Gmail-friendly `587 + STARTTLS` setup, and a switch for new contact-message notifications.
