@@ -1,0 +1,24 @@
+{{define "content"}}
+<!-- Full-width page template (selectable via the admin "Page Template" dropdown).
+     No hero banner; content spans the full container width. Still rendered
+     through the theme base layout, so header/footer/styling are shared. -->
+<section class="section" style="padding-top:120px;">
+    <div class="container">
+        <article class="post-content post-content-full">
+            <h1 style="margin-bottom:24px;">{{.Item.Title}}</h1>
+            {{if .Item.ImageURL}}
+            <div class="post-featured-image">
+                {{responsiveImagePriority .Item.ImageURL .Item.Title "" "100vw"}}
+            </div>
+            {{end}}
+            <div class="post-body">
+                {{safeHTML .Item.Content}}
+            </div>
+            {{$embed := index .Item.Meta "embed_code"}}
+            {{if $embed}}
+            <div class="gp-embed">{{embedHTML $embed}}</div>
+            {{end}}
+        </article>
+    </div>
+</section>
+{{end}}

@@ -56,6 +56,18 @@ type ThemeManager struct {
 	// unmet dependency (e.g. a required plugin missing from the build), for the
 	// admin-wide warning banner. Returns "" when dependencies are satisfied.
 	ActiveDepWarningFn func() string
+	// PageTemplatesFn returns the active theme's declared selectable page
+	// templates for the page editor's template dropdown. Nil/empty when the
+	// theme declares none.
+	PageTemplatesFn func() []PageTemplateOption
+}
+
+// PageTemplateOption is one selectable page template offered by the active
+// theme for the admin page editor. Template is the page-bundle name stored as
+// the page_template meta; Name is the label shown in the dropdown.
+type PageTemplateOption struct {
+	Template string
+	Name     string
 }
 
 // CacheManagerInfo holds cache status for admin display.
@@ -625,6 +637,7 @@ var menuIcons = map[string]string{
 	"edit":            `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 20 5.2-1.3L20 7.9 16.1 4 5.3 14.8z"/><path d="M14.8 5.3 18.7 9.2"/></svg>`,
 	"collection":      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="6" width="17" height="12.5" rx="2.3"/><path d="M3.5 9.5h17"/><path d="M8 6V4.2"/><path d="M16 6V4.2"/></svg>`,
 	"post":            `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.8" width="14" height="16.4" rx="2"/><path d="M8.2 8.2h7.6M8.2 12h7.6M8.2 15.8h5.2"/></svg>`,
+	"page":            `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 3.5H7A1.8 1.8 0 0 0 5.2 5.3v13.4A1.8 1.8 0 0 0 7 20.5h10a1.8 1.8 0 0 0 1.8-1.8V8.8z"/><path d="M13.3 3.6V8a1 1 0 0 0 1 1h4.3"/><path d="M8.5 13h7M8.5 16.3h4.5"/></svg>`,
 	"contact_message": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a8 8 0 1 1-3-6.3"/><path d="M8 20.2 6 22"/></svg>`,
 
 	"category": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.8 12h8.5l3.7-5h4l-3.4 10.2h-4z"/><circle cx="8.2" cy="16.8" r="1.8"/></svg>`,

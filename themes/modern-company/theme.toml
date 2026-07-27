@@ -72,3 +72,22 @@ label = "顶部导航"
 [[menu_locations]]
 name = "footer"
 label = "底部导航"
+
+# Selectable page templates for the standalone Pages module. The admin page
+# editor shows these in a "Page Template" dropdown; the choice is stored per
+# page (page_template meta) and resolved to templates/pages/<template>.tmpl.
+# The empty "default" choice falls back to page-<slug> → page automatically.
+[[page_templates]]
+name = "标准页面"
+template = "page"
+
+[[page_templates]]
+name = "全宽页面"
+template = "page-full-width"
+
+# "The page is a feature" example: embeds an independent functional fragment
+# (a stock K-line iframe widget). Theme-authored trusted markup, so iframes/JS
+# are allowed here — unlike the sanitized rich-text body.
+[[page_templates]]
+name = "嵌入功能页（iframe）"
+template = "page-embed"

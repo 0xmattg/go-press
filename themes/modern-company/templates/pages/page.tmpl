@@ -1,0 +1,33 @@
+{{define "content"}}
+<!-- Standalone page (Pages module). Rendered through the theme base layout, so
+     it shares the site header, footer, and styling automatically. -->
+<section class="page-banner">
+    <span class="banner-watermark">{{.Item.Title}}</span>
+    <div class="container">
+        <h1>{{.Item.Title}}</h1>
+        <div class="breadcrumb">
+            <a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a> <span>/</span> <span>{{.Item.Title}}</span>
+        </div>
+    </div>
+    <div class="page-banner-accent"></div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <article class="post-content" style="max-width:820px;margin:0 auto;">
+            {{if .Item.ImageURL}}
+            <div class="post-featured-image">
+                {{responsiveImagePriority .Item.ImageURL .Item.Title "" "(max-width: 768px) 100vw, 80vw"}}
+            </div>
+            {{end}}
+            <div class="post-body">
+                {{safeHTML .Item.Content}}
+            </div>
+            {{$embed := index .Item.Meta "embed_code"}}
+            {{if $embed}}
+            <div class="gp-embed">{{embedHTML $embed}}</div>
+            {{end}}
+        </article>
+    </div>
+</section>
+{{end}}

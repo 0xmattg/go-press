@@ -55,6 +55,12 @@ func (e *Engine) Resolve(path string) *ResolvedRoute {
 
 	// Check content type rewrite rules
 	for _, typeDef := range e.registry.AllTypes() {
+		// Rootless types (pages) have no URL prefix; they resolve only through the
+		// flat fallback below. Skipping them here keeps a page's canonical URL at
+		// /{slug} and prevents a duplicate /{type-name}/{slug} from resolving.
+		if typeDef.Rewrite.Rootless {
+			continue
+		}
 		slug := typeDef.Rewrite.Slug
 		if slug == "" {
 			slug = typeDef.Name
@@ -95,6 +101,21 @@ func (e *Engine) Resolve(path string) *ResolvedRoute {
 		}
 	}
 
+	// Rootless single-page fallback. A single path segment that matched no
+	// content-type prefix and no taxonomy may be a root-level page (the core
+	// "page" type, or any type declaring Rewrite.Rootless). It is resolved as a
+	// single item and the renderer confirms the row exists in the database, so
+	// the engine itself stays DB-free and a missing page simply 404s. Only
+	// single-segment paths are treated as pages here; nested page paths are not
+	// supported in this version.
+	if len(parts) == 1 {
+		for _, typeDef := range e.registry.AllTypes() {
+			if typeDef.Rewrite.Rootless {
+				return &ResolvedRoute{ContentType: typeDef.Name, Slug: prefix}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -107,6 +128,13 @@ func (e *Engine) BuildURL(contentType, slug string) string {
 	typeDef := e.registry.GetType(contentType)
 	if typeDef == nil {
 		return "/" + contentType + "/" + slug
+	}
+	// Rootless types (pages) live at the site root: /{slug}, no type prefix.
+	if typeDef.Rewrite.Rootless {
+		if slug == "" {
+			return "/"
+		}
+		return "/" + slug
 	}
 	prefix := typeDef.Rewrite.Slug
 	if prefix == "" {

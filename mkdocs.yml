@@ -90,6 +90,7 @@ nav:
           - Hook System: en/architecture/hooks.md
       - Admin:
           - Admin Overview: en/admin/overview.md
+          - Standalone Pages: en/admin/pages.md
           - Admin Extension Points: en/admin/extension-points.md
           - Menu Management: en/admin/menus.md
       - Theme Development:
@@ -124,6 +125,7 @@ nav:
           - Hook 系统: zh-CN/architecture/hooks.md
       - 后台管理:
           - 功能总览: zh-CN/admin/overview.md
+          - 独立页面: zh-CN/admin/pages.md
           - 后台扩展点: zh-CN/admin/extension-points.md
           - 菜单管理: zh-CN/admin/menus.md
       - 主题开发:

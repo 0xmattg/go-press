@@ -1,0 +1,51 @@
+{{define "content"}}
+<!-- Example "the page IS a feature" template.
+
+     A standalone page that embeds an independent functional fragment — here a
+     stock K-line chart via a third-party iframe widget. This markup is
+     theme-authored, TRUSTED code, so (unlike the rich-text body) it is NOT run
+     through the content sanitizer: iframes, scripts, and custom JS are allowed
+     here. Still renders through the theme base layout, so header/footer/styling
+     are shared.
+
+     Selectable per page from the admin "Page Template" dropdown. To embed a
+     different widget, change $embedURL below (or wire it to a page field). The
+     optional rich-text body renders above the widget as intro copy. -->
+{{$embedURL := "https://s.tradingview.com/widgetembed/?symbol=NASDAQ%3AAAPL&interval=D&theme=light&style=1&locale=en&hideideas=1"}}
+<section class="page-banner">
+    <span class="banner-watermark">{{.Item.Title}}</span>
+    <div class="container">
+        <h1>{{.Item.Title}}</h1>
+        <div class="breadcrumb">
+            <a href="{{langPrefixURL $.Ctx "/"}}">{{T $.Ctx "nav_home"}}</a> <span>/</span> <span>{{.Item.Title}}</span>
+        </div>
+    </div>
+    <div class="page-banner-accent"></div>
+</section>
+
+<section class="section">
+    <div class="container">
+        {{if .Item.Content}}
+        <div class="post-body" style="max-width:820px;margin:0 auto 32px;">
+            {{safeHTML .Item.Content}}
+        </div>
+        {{end}}
+        {{$embed := index .Item.Meta "embed_code"}}
+        {{if $embed}}
+        {{/* Editor-provided embed code (sanitized via the iframe allowlist). */}}
+        <div class="gp-embed">{{embedHTML $embed}}</div>
+        {{else}}
+        {{/* Fallback demo embed when no per-page embed code is entered. */}}
+        <div style="position:relative;width:100%;padding-top:60%;border-radius:12px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,.08);">
+            <iframe
+                src="{{$embedURL}}"
+                title="{{.Item.Title}}"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                allowfullscreen
+                style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe>
+        </div>
+        {{end}}
+    </div>
+</section>
+{{end}}

@@ -14,11 +14,12 @@
         <div class="form-group">
             <label for="slug">Slug *</label>
             <div class="slug-permalink-wrapper">
-                <span class="permalink-prefix">{{if .TypeDef.Rewrite.Slug}}/{{.TypeDef.Rewrite.Slug}}/{{else}}/{{.TypeName}}/{{end}}</span>
+                <span class="permalink-prefix">{{if .TypeDef.Rewrite.Rootless}}/{{else if .TypeDef.Rewrite.Slug}}/{{.TypeDef.Rewrite.Slug}}/{{else}}/{{.TypeName}}/{{end}}</span>
                 <input type="text" id="slug" name="slug" value="{{if .Item}}{{.Item.Slug}}{{end}}" required>
             </div>
             {{if .Item}}
             {{$base := printf "/%s/%s" (or .TypeDef.Rewrite.Slug .TypeName) .Item.Slug}}
+            {{if .TypeDef.Rewrite.Rootless}}{{$base = printf "/%s" .Item.Slug}}{{end}}
             {{$full := printf "%s%s" .PermalinkPrefix $base}}
             <small class="permalink-display">{{T . "content.permalink"}} <a href="{{$full}}" target="_blank">{{$full}}</a></small>
             {{end}}
@@ -73,6 +74,38 @@
                 <option value="archived" {{if .Item}}{{if eq .Item.Status "archived"}}selected{{end}}{{end}}>{{T . "content.status.archived"}}</option>
             </select>
         </div>
+
+        {{if .ShowParentField}}
+        <div class="form-group">
+            <label for="parent_id">{{T . "content.parent"}}</label>
+            <select id="parent_id" name="parent_id" style="padding:0.4rem 0.8rem; border:1px solid #d1d5db; border-radius:6px;">
+                <option value="0">{{T . "content.parent_none"}}</option>
+                {{range .ParentOptions}}
+                <option value="{{.ID}}" {{if eq $.CurrentParentID .ID}}selected{{end}}>{{.Title}}</option>
+                {{end}}
+            </select>
+        </div>
+        {{end}}
+
+        {{if .ShowPageTemplateField}}
+        <div class="form-group">
+            <label for="page_template">{{T . "content.page_template"}}</label>
+            <select id="page_template" name="page_template" style="padding:0.4rem 0.8rem; border:1px solid #d1d5db; border-radius:6px;">
+                <option value="">{{T . "content.page_template_default"}}</option>
+                {{range .PageTemplateOptions}}
+                <option value="{{.Template}}" {{if eq $.CurrentPageTemplate .Template}}selected{{end}}>{{.Name}}</option>
+                {{end}}
+            </select>
+        </div>
+        {{end}}
+
+        {{if .ShowEmbedField}}
+        <div class="form-group">
+            <label for="embed_code">{{T . "content.embed_code"}}</label>
+            <textarea id="embed_code" name="embed_code" rows="4" placeholder="<iframe ...></iframe>">{{.CurrentEmbedCode}}</textarea>
+            <small>{{T . "content.embed_code_help"}}</small>
+        </div>
+        {{end}}
 
         {{if hasSupport .TypeDef.Supports "publish_date"}}
         <div class="form-group">

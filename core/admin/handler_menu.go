@@ -8,6 +8,9 @@ import (
 	"strconv"
 	"strings"
 
+	"go-press/core/content"
+	"go-press/core/rewrite"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -226,8 +229,14 @@ type ContentOption struct {
 // getContentItemsForMenu returns published content items grouped by type for the menu editor.
 func (h *Handler) getContentItemsForMenu() map[string][]ContentOption {
 	result := make(map[string][]ContentOption)
+	// Registry-backed URL builder resolves each type's real permalink shape:
+	// prefixed singles (/blog/x) for archive types, rootless URLs (/about) for
+	// pages.
+	rw := rewrite.NewEngine(h.registry)
 	for _, typeDef := range h.registry.AllTypes() {
-		if !typeDef.HasArchive {
+		// Only types reachable on the public site can be linked from a menu.
+		// This now includes rootless pages, not just archive types.
+		if !typeDef.HasPublicRoute() {
 			continue
 		}
 		items, err := h.svc.ListContent(typeDef.Name, "title", "ASC")
@@ -236,14 +245,14 @@ func (h *Handler) getContentItemsForMenu() map[string][]ContentOption {
 		}
 		var options []ContentOption
 		for _, item := range items {
-			if item.Status != "publish" {
+			if item.Status != content.StatusPublished {
 				continue
 			}
 			options = append(options, ContentOption{
 				ID:    item.ID,
 				Title: item.Title,
 				Type:  typeDef.Label,
-				URL:   "/" + item.Slug,
+				URL:   rw.BuildURL(typeDef.Name, item.Slug),
 			})
 		}
 		if len(options) > 0 {

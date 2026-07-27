@@ -13,6 +13,9 @@ var (
 
 	svgPolicyOnce sync.Once
 	svgPolicy     *bluemonday.Policy
+
+	embedPolicyOnce sync.Once
+	embedPolicy     *bluemonday.Policy
 )
 
 // SanitizeHTML removes executable or otherwise unsafe markup while preserving
@@ -60,6 +63,38 @@ func SanitizeSVG(value string) string {
 	out = strings.ReplaceAll(out, " viewbox=", " viewBox=")
 	out = strings.ReplaceAll(out, " preserveaspectratio=", " preserveAspectRatio=")
 	return out
+}
+
+// SanitizeEmbed returns an inline-safe copy of a page "embed code" snippet: it
+// allows <iframe> plus a small set of wrapper/formatting elements and their safe
+// attributes, restricts iframe/link URLs to http(s), and strips every scripting
+// vector (<script>, <object>, <embed>, on* handlers, javascript: URLs). It is
+// the render-time gate for the per-page embed field, whose raw value is stored
+// unsanitized in content meta and must only ever reach a template through this
+// function. The embedded document still runs in its own isolated browsing
+// context, so it cannot read the GoPress page's DOM or cookies; authors keep
+// full control of the iframe's own sandbox attribute when they include one.
+func SanitizeEmbed(value string) string {
+	if strings.TrimSpace(value) == "" {
+		return ""
+	}
+	embedPolicyOnce.Do(func() {
+		p := bluemonday.NewPolicy()
+		p.AllowElements("iframe", "div", "p", "span", "br", "figure", "figcaption")
+		p.AllowAttrs("class", "style").OnElements("div", "p", "span", "figure", "figcaption")
+		p.AllowAttrs(
+			"src", "width", "height", "style", "class", "title", "name",
+			"frameborder", "scrolling", "marginwidth", "marginheight",
+			"allow", "allowfullscreen", "allowtransparency", "loading",
+			"referrerpolicy", "sandbox",
+		).OnElements("iframe")
+		// iframe src (and any URL attrs) are limited to http(s); javascript: and
+		// data: URLs are dropped.
+		p.AllowURLSchemes("http", "https")
+		p.RequireParseableURLs(true)
+		embedPolicy = p
+	})
+	return embedPolicy.Sanitize(value)
 }
 
 func sanitizeContent(item *Content) {
