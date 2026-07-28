@@ -62,4 +62,4 @@ Use `loginProviders` to discover enabled sign-in choices and link through each p
 
 ## Theme and Plugin Boundary
 
-Themes should expose semantic hook slots and use core helpers. Plugins should inject through those slots. Neither side should import the other.
+Built-in GoPress themes and themes intended for production use must expose the standard semantic hook slots and use core helpers. Plugins should inject through those slots. Neither side should import the other. The required slots and the repository-level contract test are documented in [Creating Themes](creating-themes.md#base-layout-contract).

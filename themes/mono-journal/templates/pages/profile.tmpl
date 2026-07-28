@@ -1,0 +1,14 @@
+{{define "content"}}
+{{$account := .Account}}
+<section class="mj-profile mj-shell">
+    <header class="mj-profile-head">
+        <div class="mj-profile-avatar">{{if $account.AvatarURL}}<img src="{{$account.AvatarURL}}" alt="">{{else}}{{authorInitials $account.DisplayName}}{{end}}</div>
+        <div><p class="mj-kicker">{{T .Ctx "profile.eyebrow"}}</p><h1>{{if $account.DisplayName}}{{$account.DisplayName}}{{else}}{{$account.Username}}{{end}}</h1><p>{{T .Ctx "profile.member_since"}} {{journalDate $account.CreatedAt}}</p></div>
+        <form method="post" action="{{logoutURL}}"><input type="hidden" name="return_to" value="{{langPrefixURL .Ctx "/"}}"><button type="submit" class="mj-outline-link">{{T .Ctx "auth.sign_out"}}</button></form>
+    </header>
+    <div class="mj-profile-grid">
+        <section class="mj-profile-details"><h2>{{T .Ctx "profile.account"}}</h2><dl><div><dt>{{T .Ctx "profile.username"}}</dt><dd>{{$account.Username}}</dd></div><div><dt>{{T .Ctx "profile.email"}}</dt><dd>{{$account.Email}}</dd></div><div><dt>{{T .Ctx "profile.role"}}</dt><dd>{{T .Ctx (profileRoleKey $account.Role)}}</dd></div></dl></section>
+        <section class="mj-profile-activity"><div class="mj-profile-section-head"><h2>{{T .Ctx "profile.comments"}}</h2><span>{{.CommentCount}}</span></div>{{if .Recent}}<ol>{{range .Recent}}<li><a href="{{langPrefixURL $.Ctx (buildURL .TargetType .TargetSlug)}}#comment-{{.ID}}"><span>{{.TargetTitle}}</span><small>{{journalDate .CreatedAt}} · {{if eq .Status "pending"}}{{T $.Ctx "comments.pending"}}{{else}}{{T $.Ctx "comments.approved"}}{{end}}</small><p>{{.Body}}</p></a></li>{{end}}</ol>{{else}}<p class="mj-comments-empty">{{T .Ctx "profile.no_comments"}}</p>{{end}}</section>
+    </div>
+</section>
+{{end}}

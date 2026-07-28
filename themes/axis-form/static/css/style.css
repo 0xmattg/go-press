@@ -103,13 +103,13 @@ img {
     text-underline-offset: 5px;
 }
 
-.af-header .gp-lang-dropdown {
+.af-nav-list > li:has(> ul) {
     list-style: none !important;
     margin: 0 !important;
     padding: 10px 0 !important;
 }
 
-.af-header .gp-lang-trigger {
+.af-nav-list > li:has(> ul) > a {
     padding: 0 !important;
     color: #191919 !important;
     font-size: 0.72rem !important;
@@ -117,18 +117,18 @@ img {
     gap: 5px !important;
 }
 
-.af-header .gp-lang-trigger:hover {
+.af-nav-list > li:has(> ul) > a:hover {
     color: #191919 !important;
     text-decoration: underline;
     text-underline-offset: 5px;
 }
 
-.af-header .gp-lang-menu {
+.af-nav-list > li > ul {
     top: 100% !important;
     z-index: 10000 !important;
 }
 
-.af-header .gp-lang-menu::before {
+.af-nav-list > li > ul::before {
     content: "";
     position: absolute;
     left: 0;

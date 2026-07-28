@@ -103,6 +103,9 @@ func SetupRoutes(r *gin.Engine, h *Handler, auth *user.Auth, registry *content.R
 		admin.POST("/users/:id/edit", h.UserUpdate)
 		admin.POST("/users/:id/delete", h.UserDelete)
 
+		admin.GET("/comments", h.CommentList)
+		admin.POST("/comments/:id/status", h.CommentStatusUpdate)
+
 		admin.GET("/themes", h.ThemeList)
 		admin.POST("/themes/switch", h.ThemeSwitch)
 		admin.POST("/themes/demo-import", h.ThemeDemoImport)

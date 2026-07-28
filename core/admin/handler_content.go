@@ -637,6 +637,9 @@ func (h *Handler) ContentCreate(c *gin.Context) {
 	if st := c.PostForm("status"); st != "" {
 		item.Status = st
 	}
+	if hasSupport(typeDef.Supports, "comments") {
+		item.CommentStatus = commentStatusFromForm(c.PostForm("comment_status"))
+	}
 
 	// Standard fields based on Supports
 	if hasSupport(typeDef.Supports, "content") {
@@ -727,6 +730,13 @@ func (h *Handler) ContentCreate(c *gin.Context) {
 	h.invalidatePageCache()
 	h.logAction(c, "create", typeName, item.ID, item.Title)
 	c.Redirect(http.StatusFound, listRedirectURL(slug, filterQuery, "success", adminT(lang, "notice.created")))
+}
+
+func commentStatusFromForm(value string) string {
+	if strings.EqualFold(strings.TrimSpace(value), "closed") {
+		return "closed"
+	}
+	return "open"
 }
 
 func ensurePublishedAtForPublished(item *content.Content) {
@@ -842,7 +852,7 @@ func (h *Handler) ContentEdit(c *gin.Context) {
 	label := h.contentTypeLabel(lang, typeName, typeDef.Label)
 	filterQuery := listFilterQuery(c)
 	item, err := h.svc.GetContent(getIDParam(c))
-	if err != nil {
+	if err != nil || !contentMatchesType(item, typeName) {
 		c.Redirect(http.StatusFound, listRedirectURL(slug, filterQuery, "error", adminT(lang, "error.not_found")))
 		return
 	}
@@ -898,7 +908,7 @@ func (h *Handler) ContentUpdate(c *gin.Context) {
 	label := h.contentTypeLabel(lang, typeName, typeDef.Label)
 	filterQuery := listFilterQuery(c)
 	item, err := h.svc.GetContent(getIDParam(c))
-	if err != nil {
+	if err != nil || !contentMatchesType(item, typeName) {
 		c.Redirect(http.StatusFound, listRedirectURL(slug, filterQuery, "error", adminT(lang, "error.not_found")))
 		return
 	}
@@ -909,6 +919,9 @@ func (h *Handler) ContentUpdate(c *gin.Context) {
 	// Set status from form
 	if st := c.PostForm("status"); st != "" {
 		item.Status = st
+	}
+	if hasSupport(typeDef.Supports, "comments") {
+		item.CommentStatus = commentStatusFromForm(c.PostForm("comment_status"))
 	}
 
 	if hasSupport(typeDef.Supports, "content") {
@@ -1016,7 +1029,7 @@ func (h *Handler) ContentDetail(c *gin.Context) {
 	lang := h.svc.AdminLanguage()
 	label := h.contentTypeLabel(lang, typeName, typeDef.Label)
 	item, err := h.svc.GetContent(getIDParam(c))
-	if err != nil {
+	if err != nil || !contentMatchesType(item, typeName) {
 		c.Redirect(http.StatusFound, listRedirectURL(slug, filterQuery, "error", adminT(lang, "error.not_found")))
 		return
 	}
@@ -1055,10 +1068,19 @@ func (h *Handler) ContentDelete(c *gin.Context) {
 
 	slug := AdminSlug(typeName)
 	id := getIDParam(c)
+	item, err := h.svc.GetContent(id)
+	if err != nil || !contentMatchesType(item, typeName) {
+		c.Redirect(http.StatusFound, listRedirectURL(slug, listFilterQuery(c), "error", adminT(h.svc.AdminLanguage(), "error.not_found")))
+		return
+	}
 	_ = h.svc.DeleteContent(id)
 	h.invalidatePageCache()
 	h.logAction(c, "delete", typeName, id, "")
 	c.Redirect(http.StatusFound, listRedirectURL(slug, listFilterQuery(c), "success", adminT(h.svc.AdminLanguage(), "notice.deleted")))
+}
+
+func contentMatchesType(item *content.Content, contentType string) bool {
+	return item != nil && contentType != "" && item.Type == contentType
 }
 
 // ==================== Content Reorder (drag & drop) ====================

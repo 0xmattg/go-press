@@ -39,6 +39,7 @@ type PublicUserView struct {
 	DisplayName string
 	AvatarURL   string
 	Role        string
+	CreatedAt   time.Time
 }
 
 func NewPublicAuth(broker *IdentityBroker, sessions *SessionManager, providers *ProviderRegistry, policy *RegistrationPolicy, secureCookies bool, siteName func() string) *PublicAuth {
@@ -230,6 +231,7 @@ func CurrentUserView(c *gin.Context) *PublicUserView {
 	return &PublicUserView{
 		ID: account.ID, Username: account.Username, Email: account.EmailValue(),
 		DisplayName: account.DisplayName, AvatarURL: account.AvatarURL, Role: account.Role,
+		CreatedAt: account.CreatedAt,
 	}
 }
 

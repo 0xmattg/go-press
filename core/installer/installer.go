@@ -640,7 +640,7 @@ func applyDefaults(cfg *config.Config) *config.Config {
 		cfg.Site.Timezone = config.DefaultTimezoneName()
 	}
 	if cfg.Site.Theme == "" {
-		cfg.Site.Theme = "modern-company"
+		cfg.Site.Theme = "mono-journal"
 	}
 
 	if cfg.Server.Host == "" {

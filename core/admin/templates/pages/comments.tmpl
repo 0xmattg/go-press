@@ -1,0 +1,57 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>{{T . "nav.comments"}}</h2>
+</div>
+<div class="comment-list-toolbar">
+    <div class="list-toolbar">
+        <a class="btn btn-sm{{if not .Status}} btn-primary{{end}}" href="/admin/comments">{{T . "comment.filter.all"}}</a>
+        <a class="btn btn-sm{{if eq .Status "pending"}} btn-primary{{end}}" href="/admin/comments?status=pending">{{T . "comment.status.pending"}}</a>
+        <a class="btn btn-sm{{if eq .Status "approved"}} btn-primary{{end}}" href="/admin/comments?status=approved">{{T . "comment.status.approved"}}</a>
+        <a class="btn btn-sm{{if eq .Status "spam"}} btn-primary{{end}}" href="/admin/comments?status=spam">{{T . "comment.status.spam"}}</a>
+        <a class="btn btn-sm{{if eq .Status "trash"}} btn-primary{{end}}" href="/admin/comments?status=trash">{{T . "comment.status.trash"}}</a>
+    </div>
+    {{with .Pagination}}
+    <div class="admin-pagination" aria-label="{{T $ "screen.pagination"}}">
+        <span class="admin-pagination-total">{{T $ "screen.total_items" .Total}}</span>
+        <a class="admin-page-btn{{if le .Page 1}} disabled{{end}}" href="{{.FirstURL}}" aria-label="{{T $ "screen.first_page"}}">«</a>
+        <a class="admin-page-btn{{if le .Page 1}} disabled{{end}}" href="{{.PrevURL}}" aria-label="{{T $ "action.previous_page"}}">‹</a>
+        <form method="GET" action="/admin/comments" class="admin-page-form">
+            {{if $.Status}}<input type="hidden" name="status" value="{{$.Status}}">{{end}}
+            <span>{{T $ "screen.page_prefix"}}</span>
+            <input type="number" name="page" min="1" max="{{.TotalPages}}" value="{{.Page}}" class="admin-page-input" aria-label="{{T $ "screen.current_page"}}">
+            <span>{{T $ "screen.page_of" .TotalPages}}</span>
+        </form>
+        <a class="admin-page-btn{{if ge .Page .TotalPages}} disabled{{end}}" href="{{.NextURL}}" aria-label="{{T $ "action.next_page"}}">›</a>
+        <a class="admin-page-btn{{if ge .Page .TotalPages}} disabled{{end}}" href="{{.LastURL}}" aria-label="{{T $ "screen.last_page"}}">»</a>
+    </div>
+    {{end}}
+</div>
+<div class="card">
+    <table class="data-table comment-admin-table">
+        <thead><tr><th>{{T . "comment.author"}}</th><th>{{T . "comment.body"}}</th><th>{{T . "comment.content"}}</th><th>{{T . "content.status"}}</th><th>{{T . "content.created_at"}}</th><th>{{T . "comment.actions"}}</th></tr></thead>
+        <tbody>
+        {{range .Items}}
+        <tr>
+            <td><strong>{{if .Author.DisplayName}}{{.Author.DisplayName}}{{else}}{{.Author.Username}}{{end}}</strong><br><small>{{.Author.EmailValue}}</small></td>
+            <td class="comment-admin-body">{{.Body}}</td>
+            <td class="comment-admin-context">
+                <div class="comment-admin-context-main">
+                    <span class="comment-admin-context-kind{{if .IsReply}} is-reply{{else}} is-content{{end}}">{{if .IsReply}}{{T $ "comment.context.reply"}}{{else}}{{T $ "comment.context.content"}}{{end}}</span>
+                    <a class="comment-admin-context-link" href="{{.ContextURL}}" target="_blank" rel="noopener noreferrer" title="{{.ContextText}}">{{.ContextText}}</a>
+                </div>
+                {{if .IsReply}}<a class="comment-admin-context-target" href="{{.TargetURL}}" target="_blank" rel="noopener noreferrer" title="{{.Target.Title}}">{{T $ "comment.context.on"}} {{.Target.Title}}</a>{{end}}
+            </td>
+            <td><span class="badge">{{T $ (commentStatusLabelKey .Status)}}</span></td>
+            <td>{{formatDate .CreatedAt}}</td>
+            <td class="actions comment-admin-actions">
+                {{if ne .Status "approved"}}<form method="POST" action="/admin/comments/{{.ID}}/status"><input type="hidden" name="status" value="approved"><button class="btn btn-sm btn-primary" type="submit">{{T $ "comment.approve"}}</button></form>{{end}}
+                {{if ne .Status "pending"}}<form method="POST" action="/admin/comments/{{.ID}}/status"><input type="hidden" name="status" value="pending"><button class="btn btn-sm" type="submit">{{T $ "comment.unapprove"}}</button></form>{{end}}
+                {{if ne .Status "spam"}}<form method="POST" action="/admin/comments/{{.ID}}/status"><input type="hidden" name="status" value="spam"><button class="btn btn-sm" type="submit">{{T $ "comment.mark_spam"}}</button></form>{{end}}
+                {{if ne .Status "trash"}}<form method="POST" action="/admin/comments/{{.ID}}/status"><input type="hidden" name="status" value="trash"><button class="btn btn-sm btn-danger" type="submit">{{T $ "comment.trash"}}</button></form>{{end}}
+            </td>
+        </tr>
+        {{else}}<tr><td colspan="6" class="empty-msg">{{T . "comment.empty"}}</td></tr>{{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}

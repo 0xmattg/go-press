@@ -174,16 +174,79 @@ Avoid hard-coded checks such as `.ActivePage == "products"` in reusable themes. 
 
 ## Base Layout Contract
 
-Every plugin-friendly theme should declare:
+Every built-in GoPress theme and every third-party theme intended for production use **must** expose the standard frontend slots. A deliberately closed, minimal theme may omit them, but it should then be treated as incompatible with generic frontend plugins.
 
 ```gotemplate
-{{renderHook "theme.head.end" .}}
-{{renderHook "theme.body.open" .}}
-{{renderHook "theme.footer.end" .}}
-{{renderHook "header.nav.after" .}}
+{{define "base"}}<!DOCTYPE html>
+<html lang="{{currentLang .Ctx}}">
+<head>
+  ...
+  {{renderHook "theme.head.end" .}}
+</head>
+<body>
+  {{renderHook "theme.body.open" .}}
+  {{template "header" .}}
+  <main>{{template "content" .}}</main>
+  {{template "footer" .}}
+  <script src="/static/js/main.js"></script>
+  {{renderHook "theme.footer.end" .}}
+</body>
+</html>{{end}}
+```
+
+The navigation slot belongs to the Header contract. Put it at the end of the primary navigation list and pass the complete current template data:
+
+```gotemplate
+{{define "header"}}
+<header class="site-header">
+  <nav class="site-nav" aria-label="Primary navigation">
+    <ul>
+      {{with menuByLocation "header"}}
+        {{range .Items}}
+        <li><a href="{{.URL}}" class="{{if isMenuURLActive $.Ctx .URL}}active{{end}}">{{.Title}}</a></li>
+        {{end}}
+      {{end}}
+      {{renderHook "header.nav.after" .}}
+    </ul>
+  </nav>
+</header>
+{{end}}
 ```
 
 Use `pageTitleFor`, `seoHeadFor`, `settingOr`, `archiveURL`, `contentURL`, `isMenuURLActive`, `currentLang`, `langPrefixURL`, `menuByLocation`, and the responsive image helpers from the core funcmap instead of implementing theme-local equivalents.
+
+### Navigation Extension Styling And Interaction
+
+Scope theme navigation styles to the structure owned by the theme so they do not overwrite nested menus contributed by extensions:
+
+```css
+/* Recommended: style only direct primary-navigation children. */
+.site-nav > ul > li > a { /* ... */ }
+
+/* Avoid: these also overwrite nested extension menus. */
+.site-nav ul { /* ... */ }
+.site-nav a { /* ... */ }
+```
+
+On mobile, a top-level extension item may contain a direct child `<ul>`. Detect submenus from the DOM structure rather than plugin-specific class names, keep `aria-expanded` synchronized, and collapse open submenus when the primary navigation closes. Themes must not import plugin packages, read plugin-private settings, or depend on implementation classes such as `.gp-lang-*`.
+
+### Standard Frontend Contract Checklist
+
+| Check | Requirement |
+|---|---|
+| `theme.head.end` | Exactly once, immediately before `</head>` |
+| `theme.body.open` | Exactly once, immediately after `<body>` opens |
+| `theme.footer.end` | Exactly once, after theme scripts and before `</body>` |
+| `header.nav.after` | Exactly once, inside the primary-navigation `<ul>`, receiving `.` |
+| CSS scope | Direct-child selectors for primary navigation; nested extension menus remain untouched |
+| Mobile behavior | Generic submenu support with synchronized `aria-expanded` state |
+| Architecture | Core hooks only; no knowledge of a specific plugin implementation |
+
+The repository-level `internal/contracts/theme_contracts_test.go` test automatically discovers every built-in theme containing `theme.toml` and validates the four standard hooks, their template-data argument, and their semantic positions. New themes require no manual registration, but must pass:
+
+```bash
+go test ./internal/contracts
+```
 
 ## Dates And Site Timezone
 
@@ -233,3 +296,16 @@ The admin **Themes** page shows an icon next to each theme name. The convention 
 - Core runs `content.SanitizeSVG` (stripping `<script>`, `on*` handlers, `javascript:` URIs, …) before inlining, so even a third-party theme's logo cannot smuggle script into the admin origin.
 - With no such file, the card simply shows no icon.
 - To generate the logo dynamically, override `LogoSVG() string` on the theme.
+
+## Authenticated Comments And Profile Routes
+
+For comments, account pages, bookmarks, or other authenticated theme workflows:
+
+- Use core's provider-neutral `currentUser`, `loginURL`, `CommentApp`, and `PublicAuthorizationApp` contracts.
+- Declare a required identity plugin only in `theme.toml`; never import it or inspect its private options/provider ID at runtime.
+- Protect every state-changing route with same-origin validation and a concrete `resource.action` capability.
+- Validate submitted content/comment IDs against their type, target, ownership, and parent relationship.
+- Keep own-account pages on a fixed route, set `Cache-Control: private, no-store`, and never expose another user's email.
+- Add tests proving an unauthenticated or permissionless role is rejected and an authorized role succeeds.
+
+See [Comments and Replies](../architecture/comments.md).

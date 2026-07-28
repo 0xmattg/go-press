@@ -171,9 +171,9 @@ img { display: block; max-width: 100%; }
     background: var(--tt-ink);
 }
 
-.tt-header .gp-lang-dropdown { list-style: none !important; margin: 0 !important; padding: 0 !important; }
-.tt-header .gp-lang-trigger { min-height: 20px !important; padding: 0 8px !important; color: var(--tt-ink) !important; font-size: 0.68rem !important; font-weight: 620 !important; line-height: 1 !important; }
-.tt-header .gp-lang-menu { top: 100% !important; z-index: 10000 !important; }
+.tt-nav-list > li:has(> ul) { list-style: none !important; margin: 0 !important; padding: 0 !important; }
+.tt-nav-list > li:has(> ul) > a { min-height: 20px !important; padding: 0 8px !important; color: var(--tt-ink) !important; font-size: 0.68rem !important; font-weight: 620 !important; line-height: 1 !important; }
+.tt-nav-list > li > ul { top: 100% !important; z-index: 10000 !important; }
 
 .tt-hero {
     position: relative;

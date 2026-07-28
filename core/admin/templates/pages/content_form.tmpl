@@ -75,6 +75,16 @@
             </select>
         </div>
 
+        {{if hasSupport .TypeDef.Supports "comments"}}
+        <div class="form-group">
+            <label for="comment_status">{{T . "content.comment_status"}}</label>
+            <select id="comment_status" name="comment_status">
+                <option value="open" {{if .Item}}{{if ne .Item.CommentStatus "closed"}}selected{{end}}{{else}}selected{{end}}>{{T . "content.comments_open"}}</option>
+                <option value="closed" {{if .Item}}{{if eq .Item.CommentStatus "closed"}}selected{{end}}{{end}}>{{T . "content.comments_closed"}}</option>
+            </select>
+        </div>
+        {{end}}
+
         {{if .ShowParentField}}
         <div class="form-group">
             <label for="parent_id">{{T . "content.parent"}}</label>

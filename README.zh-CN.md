@@ -163,7 +163,7 @@ gopress serve     # 装完之后任意目录都能跑
 |---|---|
 | [介绍](docs/guide/zh-CN/README.md) | 项目定位、设计原则 |
 | [快速开始](docs/guide/zh-CN/getting-started/installation.md) | 安装、配置、Web 安装器 |
-| [架构](docs/guide/zh-CN/architecture/overview.md) | 引擎启动流程、内容模型、前台身份登录、URL/SEO、缓存、i18n、Content Scope、Hook 系统 |
+| [架构](docs/guide/zh-CN/architecture/overview.md) | 引擎启动流程、内容模型、前台身份登录、登录用户评论、URL/SEO、缓存、i18n、Content Scope、Hook 系统 |
 | [后台管理](docs/guide/zh-CN/admin/overview.md) | 后台 CMS、独立页面、扩展点、菜单管理 |
 | [主题开发](docs/guide/zh-CN/themes/overview.md) | 创建主题、SEO 接入规范、图片管线、媒体变体 |
 | [插件开发](docs/guide/zh-CN/plugins/overview.md) | 创建插件、Hook 列表、内置 multilang / seo-extras / code-snippets / gopress-analytics |
@@ -207,6 +207,15 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 
 完整核心模型、Google/MetaMask 配置、插件契约与主题接入见 [前台用户注册与身份登录](docs/guide/zh-CN/architecture/public-authentication.md)。
 
+### 登录用户评论
+
+- **Core 独立评论模型** — 评论数据不随主题切换丢失，并可关联任何声明支持 `comments` 的注册内容类型。
+- **仅注册用户参与** — 已登录且具备 `comment.create` 权限的活跃用户可以发表评论和一级直接回复，不接受匿名提交。
+- **审核可见性与安全控制** — 新评论默认待审核，已批准评论公开可见，作者可看到自己的待审核评论；Core 同时校验正文长度、用户频率、目标发布状态和内容级评论开关。
+- **主题无关的账号接入** — 主题通过 Core 契约获取安全评论投影、当前用户权限和本人评论活动，无需导入或识别具体身份插件。
+
+数据模型、主题契约、审核流程、安全规则和扩展点详见[评论与审核](docs/guide/zh-CN/architecture/comments.md)。
+
 ### 引擎核心
 
 - **统一内容模型** — `Content` + `ContentMeta` + `ContentType` 注册表；核心保留 `post` / `page` / `contact_message`，主题通过 `theme.toml` 声明自定义类型
@@ -235,6 +244,7 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 - **独立页面管理** — 专门的「页面」管理界面，支持层级、根级永久链接、按页选页面模板，以及粘贴第三方 iframe 的每页嵌入代码字段
 - **RBAC 权限** — admin/editor/author/subscriber，全后台 `checkPermission` 加固
 - **列表显示选项与分页** — 内容列表支持按当前页面动态列生成显示选项、标题搜索、日期/分类筛选和服务端分页
+- **评论审核** — 支持待审核、已批准、垃圾评论和回收站筛选及服务端分页，可跳转到关联内容或父评论，并强制校验 `comment.moderate` RBAC 权限
 - **邮件设置与通知** — 独立 SMTP 设置页，默认使用 go-mail SMTP 驱动并保留 Go 标准库选项，`mail.mail_key` 保存在站点级 `config.toml`，支持 Gmail 常用的 `587 + STARTTLS`、测试邮件和新联系留言邮件通知开关
 - **拖拽排序 + 富文本** — Quill 2.0 编辑器、媒体选择器、内容列表 HTML5 DnD
 - **后台扩展点** — `admin.HookContentListTabs` / `admin.HookContentPermalinkPrefix` / `admin.content_form.fields` / `admin.content.saved` / `mail.message` 等通用 hook，多语言/SEO/通知等插件按需注入
@@ -248,9 +258,9 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 - **插件热拔插** — `Bus.AddAction/AddFilter` 返回 `Handle`，`Deactivate` 中 `Remove*` 干净下线，运行时即时切换无需重启
 - **零交叉耦合** — 主题和插件之间不存在直接调用或类型依赖，core 是唯一交汇点
 
-### 内置主题（8 个）
+### 公开主题（9 个）
 
-`atelier-slate` / `axis-form`（Axis Form，建筑设计） / `florafi`（FloraFi，稳定币/金融科技） / `civic-estate` / `financial-news` / `go-press-landing` / `modern-company` / `terra-trail`
+`atelier-slate` / `axis-form`（Axis Form，建筑设计） / `florafi`（FloraFi，稳定币/金融科技） / `civic-estate` / `financial-news` / `go-press-landing` / `modern-company` / `mono-journal` / `terra-trail`
 
 详见 [docs/guide/zh-CN/themes/overview.md](docs/guide/zh-CN/themes/overview.md)。
 

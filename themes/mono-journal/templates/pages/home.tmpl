@@ -1,0 +1,44 @@
+{{define "content"}}
+{{$s := .Settings}}
+<section class="mj-intro mj-shell">
+    <p class="mj-kicker">{{settingOr $s "home_intro_eyebrow" "Independent journal"}}</p>
+    <h1>{{settingOr $s "home_intro_title" "Ideas for making thoughtful things."}}</h1>
+    <p class="mj-intro-copy">{{settingOr $s "home_intro_text" "Essays and field notes on design, software, creative practice, and building a life with intention."}}</p>
+    <div class="mj-intro-meta"><span>{{settingOr $s "about_author_name" "Alex Morgan"}}</span><span>{{settingOr $s "about_location" "Shanghai / Remote"}}</span></div>
+</section>
+{{with .Featured}}
+<section class="mj-feature mj-shell" aria-labelledby="featured-title">
+    <div class="mj-section-heading"><p>{{settingOr $s "home_featured_label" "Featured note"}}</p><span>01</span></div>
+    <article class="mj-feature-grid">
+        <a class="mj-feature-image" href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{if .ImageURL}}{{responsiveImagePriority .ImageURL .Title "" "(max-width: 760px) 100vw, 60vw"}}{{else}}<span aria-hidden="true"></span>{{end}}</a>
+        <div class="mj-feature-copy">
+            <div class="mj-post-meta">{{if .Category.Name}}<a href="{{langPrefixURL $.Ctx (printf "/category/%s" .Category.Slug)}}">{{.Category.Name}}</a>{{end}}<time>{{journalDate .PublishedAt}}</time><span>{{readingTime .Content}} {{T $.Ctx "post.min_read"}}</span></div>
+            <h2 id="featured-title"><a href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{.Title}}</a></h2>
+            <p>{{if .Excerpt}}{{.Excerpt}}{{else}}{{truncate (plainText .Content) 220}}{{end}}</p>
+            <a class="mj-text-link" href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{T $.Ctx "post.read"}} <span aria-hidden="true">&#8599;</span></a>
+        </div>
+    </article>
+</section>
+{{end}}
+<section class="mj-latest mj-shell">
+    <div class="mj-section-heading"><h2>{{settingOr $s "home_latest_title" "Latest writing"}}</h2><a href="{{langPrefixURL .Ctx (archiveURL "post")}}">{{T .Ctx "post.view_all"}}</a></div>
+    <div class="mj-post-grid">
+        {{range .Posts}}
+        <article class="mj-post-card">
+            <a class="mj-post-image" href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 760px) 100vw, 33vw" "lazy"}}{{else}}<span aria-hidden="true"></span>{{end}}</a>
+            <div class="mj-post-meta">{{if .Category.Name}}<a href="{{langPrefixURL $.Ctx (printf "/category/%s" .Category.Slug)}}">{{.Category.Name}}</a>{{end}}<time>{{journalDate .PublishedAt}}</time></div>
+            <h3><a href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{.Title}}</a></h3>
+            <p>{{if .Excerpt}}{{truncate .Excerpt 145}}{{else}}{{truncate (plainText .Content) 145}}{{end}}</p>
+        </article>
+        {{else}}<p class="mj-empty">{{T .Ctx "post.empty"}}</p>{{end}}
+    </div>
+</section>
+{{if .Categories}}<section class="mj-topics mj-shell"><div class="mj-section-heading"><h2>{{T .Ctx "topics.title"}}</h2><span>{{len .Categories}} {{T .Ctx "topics.count"}}</span></div><div class="mj-topic-list">{{range .Categories}}<a href="{{langPrefixURL $.Ctx (printf "/category/%s" .Slug)}}"><span>{{.Name}}</span><small>{{.Count}}</small></a>{{end}}</div></section>{{end}}
+<section class="mj-author-band">
+    <div class="mj-shell mj-author-grid">
+        {{$avatar := settingOr $s "about_author_avatar" ""}}<div class="mj-author-avatar">{{if $avatar}}<img src="{{$avatar}}" alt="{{settingOr $s "about_author_name" "Alex Morgan"}}">{{else}}{{authorInitials (settingOr $s "about_author_name" "Alex Morgan")}}{{end}}</div>
+        <div><p class="mj-kicker">{{settingOr $s "about_author_role" "Designer and independent writer"}}</p><h2>{{settingOr $s "home_about_title" "Notes from the workbench."}}</h2><p>{{settingOr $s "home_about_text" "I write about the decisions behind useful products, durable systems, and a more deliberate creative practice."}}</p></div>
+        <a class="mj-outline-link" href="{{langPrefixURL .Ctx "/about"}}">{{T .Ctx "author.more"}} <span aria-hidden="true">&#8594;</span></a>
+    </div>
+</section>
+{{end}}

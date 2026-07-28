@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -17,6 +18,7 @@ import (
 	"time"
 
 	"go-press/config"
+	"go-press/core/comment"
 	"go-press/core/content"
 	coreMail "go-press/core/mail"
 	coreMedia "go-press/core/media"
@@ -45,9 +47,18 @@ type Service struct {
 	mailer        *coreMail.Service
 	sitePublicDir string
 	registry      *content.Registry
+	comments      CommentService
 
 	mediaVariantJobMu sync.Mutex
 	mediaVariantJob   MediaVariantJob
+}
+
+// CommentService is the narrow comment capability required by admin. Keeping
+// it as an interface makes permission tests independent from a real database.
+type CommentService interface {
+	AdminList(status string, page, perPage int) (*comment.Page, error)
+	Moderate(ctx context.Context, id uint, status string) (*comment.Comment, error)
+	DeleteByContentIDs(tx *gorm.DB, ids []uint) error
 }
 
 // MediaVariantJob tracks the in-memory status of a media variant rebuild task.
@@ -98,6 +109,8 @@ func NewService(
 		registry:      registry,
 	}
 }
+
+func (s *Service) SetCommentService(service CommentService) { s.comments = service }
 
 func (s *Service) SiteName() string {
 	if s.options != nil {
@@ -269,6 +282,11 @@ func (s *Service) BulkHardDeleteContent(contentType string, ids []uint) (int, er
 	}
 
 	err := s.db.Transaction(func(tx *gorm.DB) error {
+		if s.comments != nil {
+			if err := s.comments.DeleteByContentIDs(tx, matched); err != nil {
+				return err
+			}
+		}
 		if err := tx.Where("content_id IN ?", matched).Delete(&content.ContentMeta{}).Error; err != nil {
 			return err
 		}
@@ -283,6 +301,20 @@ func (s *Service) BulkHardDeleteContent(contentType string, ids []uint) (int, er
 		return 0, err
 	}
 	return len(matched), nil
+}
+
+func (s *Service) ListComments(status string, page, perPage int) (*comment.Page, error) {
+	if s.comments == nil {
+		return nil, errors.New("comment service unavailable")
+	}
+	return s.comments.AdminList(status, page, perPage)
+}
+
+func (s *Service) ModerateComment(ctx context.Context, id uint, status string) (*comment.Comment, error) {
+	if s.comments == nil {
+		return nil, errors.New("comment service unavailable")
+	}
+	return s.comments.Moderate(ctx, id, status)
 }
 
 // BulkPublishContent publishes selected rows of the given type. Existing
@@ -376,21 +408,22 @@ func (s *Service) ReorderContent(contentType string, ids []uint, offset int) err
 // using the ContentTypeDef to load relevant meta fields and taxonomies.
 func (s *Service) ToDynamicContentView(c content.Content, typeDef *content.ContentTypeDef) DynamicContentView {
 	view := DynamicContentView{
-		ID:          c.ID,
-		Title:       c.Title,
-		AuthorID:    c.AuthorID,
-		AuthorName:  "-",
-		Slug:        c.Slug,
-		Content:     c.Content,
-		Excerpt:     c.Excerpt,
-		ImageURL:    c.ImageURL,
-		Status:      c.Status,
-		SortOrder:   c.SortOrder,
-		PublishedAt: c.PublishedAt,
-		CreatedAt:   c.CreatedAt,
-		UpdatedAt:   c.UpdatedAt,
-		Meta:        make(map[string]string),
-		Taxonomies:  make(map[string][]TaxonomyItemView),
+		ID:            c.ID,
+		Title:         c.Title,
+		AuthorID:      c.AuthorID,
+		AuthorName:    "-",
+		Slug:          c.Slug,
+		Content:       c.Content,
+		Excerpt:       c.Excerpt,
+		ImageURL:      c.ImageURL,
+		Status:        c.Status,
+		CommentStatus: c.CommentStatus,
+		SortOrder:     c.SortOrder,
+		PublishedAt:   c.PublishedAt,
+		CreatedAt:     c.CreatedAt,
+		UpdatedAt:     c.UpdatedAt,
+		Meta:          make(map[string]string),
+		Taxonomies:    make(map[string][]TaxonomyItemView),
 	}
 
 	// Load meta fields defined in the ContentTypeDef + gallery_images
@@ -1323,6 +1356,9 @@ func (s *Service) UpdateMediaMeta(id uint, altText, title, caption string) error
 // ==================== Audit ====================
 
 func (s *Service) LogAction(userID uint, username, action, resource string, resourceID uint, details, ip string) {
+	if s == nil || s.db == nil {
+		return
+	}
 	entry := &AuditLog{
 		UserID:     userID,
 		Username:   username,
