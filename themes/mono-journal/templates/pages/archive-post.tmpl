@@ -1,0 +1,10 @@
+{{define "content"}}
+<section class="mj-page-head mj-shell"><p class="mj-kicker">{{T .Ctx "archive.eyebrow"}}</p><h1>{{.Title}}</h1><p>{{T .Ctx "archive.description"}}</p></section>
+<section class="mj-archive mj-shell">
+    <div class="mj-filter-row"><span>{{.Pagination.Total}} {{T .Ctx "archive.entries"}}</span>{{if .Categories}}<div><a class="{{if not .ActiveCat}}is-active{{end}}" href="{{langPrefixURL .Ctx .ArchiveURL}}">{{T .Ctx "archive.all"}}</a>{{range .Categories}}<a class="{{if eq $.ActiveCat .Slug}}is-active{{end}}" href="{{langPrefixURL $.Ctx (printf "%s?category=%s" $.ArchiveURL .Slug)}}">{{.Name}}</a>{{end}}</div>{{end}}</div>
+    <div class="mj-archive-list">
+    {{range .Items}}<article class="mj-archive-item"><a class="mj-archive-image" href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 760px) 100vw, 280px" "lazy"}}{{end}}</a><div><div class="mj-post-meta">{{if .Category.Name}}<a href="{{langPrefixURL $.Ctx (printf "/category/%s" .Category.Slug)}}">{{.Category.Name}}</a>{{end}}<time>{{journalDate .PublishedAt}}</time><span>{{readingTime .Content}} {{T $.Ctx "post.min_read"}}</span></div><h2><a href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{.Title}}</a></h2><p>{{if .Excerpt}}{{.Excerpt}}{{else}}{{truncate (plainText .Content) 190}}{{end}}</p></div></article>{{else}}<p class="mj-empty">{{T .Ctx "post.empty"}}</p>{{end}}
+    </div>
+    {{if gt .Pagination.TotalPages 1}}<nav class="mj-pagination" aria-label="Pagination">{{if gt .Pagination.Page 1}}<a href="{{journalPageURL .Ctx (previousPage .Pagination.Page)}}">{{T .Ctx "pagination.previous"}}</a>{{else}}<span></span>{{end}}<strong>{{.Pagination.Page}} / {{.Pagination.TotalPages}}</strong>{{if lt .Pagination.Page .Pagination.TotalPages}}<a href="{{journalPageURL .Ctx (nextPage .Pagination.Page)}}">{{T .Ctx "pagination.next"}}</a>{{end}}</nav>{{end}}
+</section>
+{{end}}

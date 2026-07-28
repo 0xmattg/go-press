@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Mono Journal">
+  <rect width="64" height="64" rx="8" fill="#171717"/>
+  <path d="M15 16h7l10 20 10-20h7v32h-7V29L35 43h-6l-7-14v19h-7V16Z" fill="#fff"/>
+</svg>

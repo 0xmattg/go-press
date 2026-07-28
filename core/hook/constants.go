@@ -99,6 +99,18 @@ const (
 	AdminContentSaved = "admin.content.saved"
 )
 
+// Comment hooks expose the framework-owned comment lifecycle without coupling
+// themes or plugins to the persistence implementation.
+const (
+	// CommentCreated fires after a comment has been validated and persisted.
+	// Args: (*comment.Comment).
+	CommentCreated = "comment.created"
+
+	// CommentStatusChanged fires after moderation changes public visibility.
+	// Args: (*comment.Comment, oldStatus string, newStatus string).
+	CommentStatusChanged = "comment.status_changed"
+)
+
 // Mail hooks expose the framework mail pipeline. Plugins can adjust the
 // message before transport, observe success/failure, or replace behavior at a
 // higher layer without core depending on a concrete plugin.

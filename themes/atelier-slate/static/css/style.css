@@ -70,6 +70,7 @@ img { max-width: 100%; display: block; }
   border: 1px solid rgba(255,255,255,.16);
   backdrop-filter: blur(10px);
 }
+.as-nav-extensions { display: contents; margin: 0; padding: 0; list-style: none; }
 .as-nav a {
   color: rgba(255,255,255,.82);
   font-size: 12px;

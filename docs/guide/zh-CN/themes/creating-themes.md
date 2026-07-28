@@ -201,7 +201,7 @@ archive
 
 ## 基础布局契约
 
-主题的 `layouts/base.tmpl` 是前台插件接入的主要契约面。新主题应在基础布局中声明这些标准插槽，插件才能在不修改主题文件的前提下注入站点级代码、语言切换器或其它局部 HTML。
+主题的 `layouts/base.tmpl` 是前台插件接入的主要契约面。GoPress 内置主题和面向生产使用的第三方主题**必须**声明这些标准插槽，插件才能在不修改主题文件的前提下注入站点级代码、导航扩展或其它局部 HTML。只用于封闭场景的最小主题可以主动省略插槽，但应明确视为不兼容通用前台插件。
 
 ```gotemplate
 {{define "base"}}<!DOCTYPE html>
@@ -228,6 +228,25 @@ archive
 </html>{{end}}
 ```
 
+导航扩展插槽属于 Header 契约，应放在主导航列表末尾，并传入完整的当前模板数据：
+
+```gotemplate
+{{define "header"}}
+<header class="site-header">
+    <nav class="site-nav" aria-label="Primary navigation">
+        <ul>
+            {{with menuByLocation "header"}}
+                {{range .Items}}
+                <li><a href="{{.URL}}" class="{{if isMenuURLActive $.Ctx .URL}}active{{end}}">{{.Title}}</a></li>
+                {{end}}
+            {{end}}
+            {{renderHook "header.nav.after" .}}
+        </ul>
+    </nav>
+</header>
+{{end}}
+```
+
 位置约定：
 
 - `theme.head.end` 放在 `</head>` 前，用于站点验证 meta、Analytics、preconnect、第三方 CSS 等。
@@ -236,6 +255,39 @@ archive
 - `header.nav.after` 放在导航列表尾部，插件输出应匹配周围结构，通常是 `<li>...</li>`。
 
 这些插槽应在基础布局或对应语义位置只声明一次，避免插件输出重复。
+
+### 导航扩展的样式与交互
+
+导航样式应限定在主题拥有的顶层结构，避免覆盖扩展项内部的下拉菜单：
+
+```css
+/* 推荐：只定义主导航的直接子项。 */
+.site-nav > ul > li > a { /* ... */ }
+
+/* 避免：会同时覆盖扩展注入的嵌套菜单。 */
+.site-nav ul { /* ... */ }
+.site-nav a { /* ... */ }
+```
+
+移动端导航必须允许顶层扩展项包含直接子级 `<ul>`。展开逻辑应按 DOM 结构识别子菜单，而不是判断某个插件类名；同时维护触发项的 `aria-expanded`，关闭主导航时收起已打开的子菜单。主题不得引用插件包、插件私有配置或类似 `.gp-lang-*` 的实现类名。
+
+### 标准前台契约检查表
+
+| 检查项 | 要求 |
+|---|---|
+| `theme.head.end` | 恰好一次，位于 `</head>` 前 |
+| `theme.body.open` | 恰好一次，位于 `<body>` 后 |
+| `theme.footer.end` | 恰好一次，位于主题脚本之后、`</body>` 前 |
+| `header.nav.after` | 恰好一次，位于主导航 `<ul>` 内并传入 `.` |
+| CSS 作用域 | 顶层导航使用直接子级选择器，不覆盖扩展项的嵌套 `<ul>` |
+| 移动端 | 通用支持含子菜单的扩展项，并同步 `aria-expanded` 状态 |
+| 架构边界 | 只使用 core Hook；主题不识别或依赖具体插件实现 |
+
+仓库级 `internal/contracts/theme_contracts_test.go` 会自动发现所有包含 `theme.toml` 的内置主题，并检查四个标准 Hook 的数量、模板数据参数和语义位置。新增主题无需登记，但必须通过：
+
+```bash
+go test ./internal/contracts
+```
 
 ## 主题目录结构（推荐）
 
@@ -344,3 +396,16 @@ data["Products"] = productViews  // []ProductView，模板里照样有字段提�
 ```
 
 这样既享受框架级免维护，又保留了模板里的智能提示。
+
+## 登录评论与 Profile 路由
+
+主题实现评论、账号页、收藏等登录态工作流时：
+
+- 只使用 core 提供的 `currentUser`、`loginURL`、`CommentApp`、`PublicAuthorizationApp` 通用契约。
+- 所需身份插件只能在 `theme.toml` 声明；运行时不得 import 插件、读取私有配置或判断 Provider ID。
+- 每个写路由都必须执行同源校验和明确的 `resource.action` 权限检查。
+- 表单中的内容 ID、评论 ID 必须校验类型、目标、所有权和父子归属。
+- 当前用户资料页使用固定路径，并设置 `Cache-Control: private, no-store`，不能泄露其他用户邮箱。
+- 测试必须证明匿名或无权限角色被拒绝，并覆盖有权限角色成功执行。
+
+详见[评论与回复](../architecture/comments.md)。

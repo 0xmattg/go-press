@@ -1,0 +1,45 @@
+{{define "header"}}
+{{$brand := settingOr .Settings "home_logo_text" "Mono Journal"}}
+<header class="mj-header" data-site-header>
+    <div class="mj-shell mj-header-inner">
+        <a class="mj-brand" href="{{langPrefixURL .Ctx "/"}}" aria-label="{{$brand}}">
+            {{$logo := settingOr .Settings "home_logo_image" ""}}
+            {{if $logo}}<img src="{{$logo}}" alt="">{{else}}<span class="mj-brand-mark" aria-hidden="true">{{authorInitials $brand}}</span>{{end}}
+            <span>{{$brand}}</span>
+        </a>
+        <nav class="mj-nav" aria-label="Primary navigation" data-site-nav>
+            <ul>
+                {{$menu := menuByLocation "header"}}
+                {{if $menu}}
+                    {{range $menu.Items}}<li><a class="{{if isMenuURLActive $.Ctx .URL}}is-active{{end}}" href="{{.URL}}" {{if eq .Target "_blank"}}target="_blank" rel="noopener"{{end}}>{{.Title}}</a></li>{{end}}
+                {{else}}
+                    <li><a class="{{if isMenuURLActive .Ctx "/"}}is-active{{end}}" href="{{langPrefixURL .Ctx "/"}}">{{T .Ctx "nav.home"}}</a></li>
+                    <li><a class="{{if isMenuURLActive .Ctx (archiveURL "post")}}is-active{{end}}" href="{{langPrefixURL .Ctx (archiveURL "post")}}">{{T .Ctx "nav.writing"}}</a></li>
+                    <li><a class="{{if isMenuURLActive .Ctx "/about"}}is-active{{end}}" href="{{langPrefixURL .Ctx "/about"}}">{{T .Ctx "nav.about"}}</a></li>
+                {{end}}
+                {{renderHook "header.nav.after" .}}
+            </ul>
+        </nav>
+        <div class="mj-header-actions">
+            <button class="mj-icon-button" type="button" aria-label="{{T .Ctx "search.open"}}" title="{{T .Ctx "search.open"}}" data-search-open>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+            </button>
+            {{if isLoggedIn .Ctx}}
+                {{$account := currentUser .Ctx}}
+                <a class="mj-account-link" href="{{langPrefixURL .Ctx "/profile"}}" aria-label="{{T .Ctx "profile.open"}}" title="{{T .Ctx "profile.open"}}">
+                    {{if $account.AvatarURL}}<img src="{{$account.AvatarURL}}" alt="">{{else}}<span>{{authorInitials $account.DisplayName}}</span>{{end}}
+                </a>
+            {{else}}
+                <a class="mj-signin-link" href="{{loginURL .Ctx}}" aria-label="{{T .Ctx "auth.sign_in"}}"><span>{{T .Ctx "auth.sign_in"}}</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20a7 7 0 0 1 14 0"></path></svg></a>
+            {{end}}
+            <button class="mj-menu-button" type="button" aria-label="{{T .Ctx "nav.toggle"}}" aria-expanded="false" data-nav-toggle><span></span><span></span></button>
+        </div>
+    </div>
+    <div class="mj-search-drawer" data-search-drawer hidden>
+        <form class="mj-shell" action="{{langPrefixURL .Ctx "/search"}}" method="get" role="search">
+            <label for="mj-search">{{T .Ctx "search.label"}}</label>
+            <div><input id="mj-search" name="q" type="search" maxlength="80" placeholder="{{T .Ctx "search.placeholder"}}" autocomplete="off"><button type="submit">{{T .Ctx "search.submit"}}</button></div>
+        </form>
+    </div>
+</header>
+{{end}}

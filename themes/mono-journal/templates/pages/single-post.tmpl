@@ -1,0 +1,55 @@
+{{define "content"}}
+{{$p := .Item}}
+<article class="mj-article">
+    <header class="mj-article-head mj-reading-shell"><a class="mj-back-link" href="{{langPrefixURL .Ctx .ArchiveURL}}">&#8592; {{T .Ctx "post.back"}}</a><div class="mj-post-meta">{{if $p.Category.Name}}<a href="{{langPrefixURL .Ctx (printf "/category/%s" $p.Category.Slug)}}">{{$p.Category.Name}}</a>{{end}}<time>{{journalDate $p.PublishedAt}}</time><span>{{readingTime $p.Content}} {{T .Ctx "post.min_read"}}</span></div><h1>{{$p.Title}}</h1>{{if $p.Excerpt}}<p class="mj-article-deck">{{$p.Excerpt}}</p>{{end}}</header>
+    {{if $p.ImageURL}}<figure class="mj-article-hero mj-shell">{{responsiveImagePriority $p.ImageURL $p.Title "" "(max-width: 1280px) 100vw, 1200px"}}</figure>{{end}}
+    <div class="mj-article-layout mj-shell">
+        <aside class="mj-article-aside"><div class="mj-author-mini"><span>{{authorInitials (settingOr .Settings "about_author_name" "Alex Morgan")}}</span><div><strong>{{settingOr .Settings "about_author_name" "Alex Morgan"}}</strong><small>{{settingOr .Settings "about_author_role" "Independent writer"}}</small></div></div><a href="#article-end">{{T .Ctx "post.skip_end"}} &#8595;</a></aside>
+        <div class="mj-richtext mj-reading-shell">{{safeHTML $p.Content}}<div id="article-end" class="mj-article-end"><span></span></div>{{if .Tags}}<div class="mj-tag-list">{{range .Tags}}<a href="{{langPrefixURL $.Ctx (printf "/tag/%s" .Slug)}}">#{{.Name}}</a>{{end}}</div>{{end}}</div>
+    </div>
+</article>
+<section class="mj-comments mj-reading-shell" id="comments">
+    <div class="mj-comments-heading">
+        <div><p class="mj-kicker">{{T .Ctx "comments.eyebrow"}}</p><h2>{{T .Ctx "comments.title"}}</h2></div>
+        <span>{{.CommentCount}}</span>
+    </div>
+    {{if eq .CommentNotice "pending"}}<div class="mj-comment-notice" role="status">{{T .Ctx "comments.pending_notice"}}</div>{{end}}
+    {{if .CommentError}}<div class="mj-comment-notice is-error" role="alert">{{if eq .CommentError "body"}}{{T .Ctx "comments.error_body"}}{{else if eq .CommentError "closed"}}{{T .Ctx "comments.error_closed"}}{{else if eq .CommentError "reply"}}{{T .Ctx "comments.error_reply"}}{{else if eq .CommentError "rate"}}{{T .Ctx "comments.error_rate"}}{{else}}{{T .Ctx "comments.error_invalid"}}{{end}}</div>{{end}}
+
+    {{if .Comments}}
+    <div class="mj-comment-list">
+        {{range .Comments}}
+        <article class="mj-comment{{if eq .Status "pending"}} is-pending{{end}}" id="comment-{{.ID}}">
+            <div class="mj-comment-avatar">{{if .Author.AvatarURL}}<img src="{{.Author.AvatarURL}}" alt="">{{else}}{{authorInitials .Author.DisplayName}}{{end}}</div>
+            <div class="mj-comment-content">
+                <header><strong>{{.Author.DisplayName}}</strong><time>{{journalDate .CreatedAt}}</time>{{if eq .Status "pending"}}<span>{{T $.Ctx "comments.pending"}}</span>{{end}}</header>
+                <p>{{.Body}}</p>
+                {{if and $.CanComment (eq .Status "approved")}}<button type="button" class="mj-comment-reply-button" data-comment-reply="reply-{{.ID}}">{{T $.Ctx "comments.reply"}}</button>{{end}}
+                {{if $.CanComment}}
+                <form class="mj-comment-form mj-reply-form" id="reply-{{.ID}}" method="post" action="{{langPrefixURL $.Ctx "/comments"}}" hidden>
+                    <input type="hidden" name="content_id" value="{{$.Item.ID}}"><input type="hidden" name="parent_id" value="{{.ID}}"><input type="hidden" name="return_to" value="{{langPrefixURL $.Ctx $.Permalink}}">
+                    <label for="reply-body-{{.ID}}">{{T $.Ctx "comments.reply_to"}} {{.Author.DisplayName}}</label>
+                    <textarea id="reply-body-{{.ID}}" name="body" rows="4" minlength="2" maxlength="4000" required></textarea>
+                    <div><button type="submit">{{T $.Ctx "comments.submit_reply"}}</button><button type="button" class="mj-comment-cancel" data-comment-cancel="reply-{{.ID}}">{{T $.Ctx "comments.cancel"}}</button></div>
+                </form>
+                {{end}}
+                {{if .Replies}}<div class="mj-comment-replies">{{range .Replies}}<article class="mj-comment{{if eq .Status "pending"}} is-pending{{end}}" id="comment-{{.ID}}"><div class="mj-comment-avatar">{{if .Author.AvatarURL}}<img src="{{.Author.AvatarURL}}" alt="">{{else}}{{authorInitials .Author.DisplayName}}{{end}}</div><div class="mj-comment-content"><header><strong>{{.Author.DisplayName}}</strong><time>{{journalDate .CreatedAt}}</time>{{if eq .Status "pending"}}<span>{{T $.Ctx "comments.pending"}}</span>{{end}}</header><p>{{.Body}}</p></div></article>{{end}}</div>{{end}}
+            </div>
+        </article>
+        {{end}}
+    </div>
+    {{else}}<p class="mj-comments-empty">{{T .Ctx "comments.empty"}}</p>{{end}}
+
+    {{if .CommentsOpen}}
+        {{if .CanComment}}
+        <form class="mj-comment-form mj-comment-main-form" method="post" action="{{langPrefixURL .Ctx "/comments"}}">
+            <input type="hidden" name="content_id" value="{{.Item.ID}}"><input type="hidden" name="return_to" value="{{langPrefixURL .Ctx .Permalink}}">
+            <label for="comment-body">{{T .Ctx "comments.leave"}}</label>
+            <textarea id="comment-body" name="body" rows="5" minlength="2" maxlength="4000" placeholder="{{T .Ctx "comments.placeholder"}}" required></textarea>
+            <div><small>{{T .Ctx "comments.moderated"}}</small><button type="submit">{{T .Ctx "comments.submit"}}</button></div>
+        </form>
+        {{else if not (isLoggedIn .Ctx)}}<div class="mj-comment-signin"><p>{{T .Ctx "comments.signin_text"}}</p><a href="{{loginURL .Ctx}}">{{T .Ctx "comments.signin"}}</a></div>{{end}}
+    {{else}}<p class="mj-comments-closed">{{T .Ctx "comments.closed"}}</p>{{end}}
+</section>
+{{if .Related}}<section class="mj-related mj-shell"><div class="mj-section-heading"><h2>{{T .Ctx "post.related"}}</h2></div><div class="mj-post-grid">{{range .Related}}<article class="mj-post-card"><a class="mj-post-image" href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width:760px) 100vw,33vw" "lazy"}}{{end}}</a><div class="mj-post-meta"><time>{{journalDate .PublishedAt}}</time></div><h3><a href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{.Title}}</a></h3></article>{{end}}</div></section>{{end}}
+{{end}}

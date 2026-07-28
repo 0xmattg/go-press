@@ -168,13 +168,13 @@ img {
     color: #fff;
 }
 
-.ce-header .gp-lang-dropdown {
+.ce-nav-list > li:has(> ul) {
     list-style: none !important;
     margin: 0 !important;
     padding: 10px 0 !important;
 }
 
-.ce-header .gp-lang-trigger {
+.ce-nav-list > li:has(> ul) > a {
     padding: 0 !important;
     color: var(--ce-ink) !important;
     font-size: 0.73rem !important;
@@ -182,24 +182,24 @@ img {
     gap: 5px !important;
 }
 
-.ce-header .gp-lang-trigger:hover {
+.ce-nav-list > li:has(> ul) > a:hover {
     color: var(--ce-accent) !important;
 }
 
-.ce-page-home .ce-header .gp-lang-trigger {
+.ce-page-home .ce-nav-list > li:has(> ul) > a {
     color: rgba(255, 255, 255, 0.92) !important;
 }
 
-.ce-page-home .ce-header .gp-lang-trigger:hover {
+.ce-page-home .ce-nav-list > li:has(> ul) > a:hover {
     color: #fff !important;
 }
 
-.ce-header .gp-lang-menu {
+.ce-nav-list > li > ul {
     top: 100% !important;
     z-index: 10000 !important;
 }
 
-.ce-header .gp-lang-menu::before {
+.ce-nav-list > li > ul::before {
     content: "";
     position: absolute;
     left: 0;

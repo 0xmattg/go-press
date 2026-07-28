@@ -217,6 +217,18 @@ func TestSiteDirNameFromURL(t *testing.T) {
 	}
 }
 
+func TestApplyDefaultsUsesMonoJournalTheme(t *testing.T) {
+	cfg := applyDefaults(&config.Config{})
+	if cfg.Site.Theme != "mono-journal" {
+		t.Fatalf("default theme = %q, want mono-journal", cfg.Site.Theme)
+	}
+
+	explicit := applyDefaults(&config.Config{Site: config.SiteConfig{Theme: "existing-theme"}})
+	if explicit.Site.Theme != "existing-theme" {
+		t.Fatalf("explicit theme was overwritten with %q", explicit.Site.Theme)
+	}
+}
+
 func TestPrepareSiteConfigPathRenamesDefaultDirectory(t *testing.T) {
 	t.Parallel()
 

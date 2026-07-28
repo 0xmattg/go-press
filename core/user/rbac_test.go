@@ -23,3 +23,21 @@ func TestCapabilityGrantPreservesExistingPolicy(t *testing.T) {
 		t.Fatal("runtime capability was not revoked")
 	}
 }
+
+func TestDefaultPublicCommentAndProfileCapabilities(t *testing.T) {
+	rbac := NewRBAC()
+	for _, role := range []string{RoleSubscriber, RoleContributor, RoleAuthor, RoleEditor} {
+		if !rbac.Can(role, "comment", "create") {
+			t.Errorf("%s must be able to create comments", role)
+		}
+		if !rbac.Can(role, "profile", "read_own") {
+			t.Errorf("%s must be able to read its own profile", role)
+		}
+	}
+	if rbac.Can(RoleSubscriber, "comment", "moderate") {
+		t.Fatal("subscriber must not moderate comments")
+	}
+	if !rbac.Can(RoleEditor, "comment", "moderate") {
+		t.Fatal("editor must be able to moderate comments")
+	}
+}

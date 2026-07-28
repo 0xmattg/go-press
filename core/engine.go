@@ -19,6 +19,7 @@ import (
 	"go-press/core/admin"
 	"go-press/core/api"
 	"go-press/core/cache"
+	"go-press/core/comment"
 	"go-press/core/content"
 	"go-press/core/hook"
 	coreI18n "go-press/core/i18n"
@@ -98,6 +99,7 @@ type Engine struct {
 	// Repositories are thin data access layers. Higher-level workflows should
 	// still go through services where those exist, especially in admin code.
 	Content      *content.Repository
+	Comments     *comment.Service
 	Taxonomy     *taxonomy.Repository
 	Users        *user.Repository
 	Identities   *user.IdentityRepository
@@ -210,6 +212,7 @@ func New(cfg *config.Config, db *gorm.DB) *Engine {
 		themes:        make(map[string]coreTheme.Theme),
 		PluginManager: plugin.NewManager(),
 	}
+	e.Comments = comment.NewService(db, hookBus, e.Registry)
 
 	// URL / SEO (depends on Registry, created after it)
 	e.Rewrite = rewrite.NewEngine(e.Registry)
@@ -244,6 +247,19 @@ func New(cfg *config.Config, db *gorm.DB) *Engine {
 			return cfg.Site.Name
 		},
 	)
+
+	// Comment visibility changes affect anonymous full-page caches. Pending
+	// comments are private to their authors and do not require a public flush.
+	e.Hooks.AddAction(hook.CommentStatusChanged, func(_ context.Context, args ...interface{}) {
+		if len(args) < 3 {
+			return
+		}
+		oldStatus, _ := args[1].(string)
+		newStatus, _ := args[2].(string)
+		if oldStatus == comment.StatusApproved || newStatus == comment.StatusApproved {
+			cache.InvalidatePageCache(e.Cache)
+		}
+	}, 10)
 
 	// Initialize core i18n
 	e.I18n = coreI18n.NewManager(cfg.Site.Language)
@@ -347,7 +363,7 @@ func (e *Engine) registerCoreTypes() {
 		Label:       "文章",
 		LabelPlural: "文章列表",
 		HasArchive:  true,
-		Supports:    []string{"title", "content", "excerpt", "thumbnail", "publish_date"},
+		Supports:    []string{"title", "content", "excerpt", "thumbnail", "publish_date", "comments"},
 		Taxonomies:  []string{"category", "tag"},
 		Rewrite:     content.RewriteRule{Slug: "blog"},
 		MenuOrder:   100,
@@ -868,6 +884,7 @@ func (e *Engine) SetupAdmin() {
 		e.SitePublicPath(),
 		e.Registry,
 	)
+	svc.SetCommentService(e.Comments)
 	h := admin.NewHandler(svc, e.Registry, "core/admin/templates")
 
 	// Inject engine hook bus so handlers can invoke plugin-provided filters
@@ -1259,6 +1276,7 @@ func (e *Engine) Shutdown(ctx context.Context) error {
 
 func (e *Engine) Database() *gorm.DB                    { return e.DB }
 func (e *Engine) ContentRepo() *content.Repository      { return e.Content }
+func (e *Engine) CommentService() *comment.Service      { return e.Comments }
 func (e *Engine) TaxonomyRepo() *taxonomy.Repository    { return e.Taxonomy }
 func (e *Engine) ContentRegistry() *content.Registry    { return e.Registry }
 func (e *Engine) OptionsStore() *option.Store           { return e.Options }
@@ -1281,6 +1299,16 @@ func (e *Engine) PublicAuthProviders() []user.ProviderDescriptor {
 		return nil
 	}
 	return e.AuthProviders.All()
+}
+
+// CanPublicUser applies core RBAC to the authenticated public account in the
+// request context. It deliberately carries no identity-provider information.
+func (e *Engine) CanPublicUser(c *gin.Context, resource, action string) bool {
+	if e == nil || e.RBAC == nil {
+		return false
+	}
+	account := user.CurrentUser(c)
+	return account != nil && account.IsActive && e.RBAC.Can(account.Role, resource, action)
 }
 
 func (e *Engine) SiteTimezone() string {

@@ -31,7 +31,9 @@
                 <a href="{{langPrefixURL $.Ctx (archiveURL "post")}}" class="{{if isMenuURLActive $.Ctx (archiveURL "post")}}active{{end}}">{{T $.Ctx "nav_news"}}</a>
                 <a href="{{langPrefixURL $.Ctx "/about"}}" class="{{if isMenuURLActive $.Ctx "/about"}}active{{end}}">{{T $.Ctx "nav_about"}}</a>
             {{end}}
-            {{renderHook "header.nav.after" .}}
+            <ul class="as-nav-extensions">
+                {{renderHook "header.nav.after" .}}
+            </ul>
         </nav>
         <a class="as-nav-cta" href="{{langPrefixURL $.Ctx (settingOr .Settings "home_cta_link" "/contact")}}">{{settingOr .Settings "home_cta_text" "Start Today"}} <span>↗</span></a>
     </div>

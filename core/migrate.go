@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"go-press/core/admin"
+	"go-press/core/comment"
 	"go-press/core/content"
 	coreMedia "go-press/core/media"
 	"go-press/core/menu"
@@ -59,6 +60,8 @@ func coreModels() []interface{} {
 		&user.UserMeta{},
 		&user.UserIdentity{},
 		&user.UserSession{},
+		// Comments reference both content and users.
+		&comment.Comment{},
 		// Options
 		&option.Option{},
 		// Menus

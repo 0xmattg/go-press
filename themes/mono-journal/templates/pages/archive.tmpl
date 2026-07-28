@@ -1,0 +1,4 @@
+{{define "content"}}
+<section class="mj-page-head mj-shell"><p class="mj-kicker">{{T .Ctx "archive.eyebrow"}}</p><h1>{{.Title}}</h1></section>
+<section class="mj-archive mj-shell"><div class="mj-archive-list">{{range .Items}}<article class="mj-archive-item"><a class="mj-archive-image" href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width:760px) 100vw,280px" "lazy"}}{{end}}</a><div><div class="mj-post-meta"><time>{{journalDate .PublishedAt}}</time></div><h2><a href="{{langPrefixURL $.Ctx (contentURL . "post")}}">{{.Title}}</a></h2><p>{{if .Excerpt}}{{.Excerpt}}{{else}}{{truncate (plainText .Content) 190}}{{end}}</p></div></article>{{else}}<p class="mj-empty">{{T .Ctx "post.empty"}}</p>{{end}}</div></section>
+{{end}}

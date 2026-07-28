@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"go-press/core/comment"
 	"go-press/core/content"
 	"go-press/core/hook"
 	coreI18n "go-press/core/i18n"
@@ -74,6 +75,19 @@ type App interface {
 // implement authentication. BaseTheme consumes it only for provider discovery.
 type PublicAuthApp interface {
 	PublicAuthProviders() []user.ProviderDescriptor
+}
+
+// CommentApp is optional so themes that render comments can consume the
+// framework service without expanding the mandatory App contract.
+type CommentApp interface {
+	CommentService() *comment.Service
+}
+
+// PublicAuthorizationApp exposes provider-neutral RBAC checks for front-end
+// workflows. Themes must use this instead of inspecting concrete identity
+// providers or core RBAC internals.
+type PublicAuthorizationApp interface {
+	CanPublicUser(c *gin.Context, resource, action string) bool
 }
 
 // Theme is the runtime contract every GoPress theme must implement.

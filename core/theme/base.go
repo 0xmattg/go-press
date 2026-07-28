@@ -287,6 +287,10 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 			}
 			return authApp.PublicAuthProviders()
 		}
+		engineFuncs["canCurrentUser"] = func(c *gin.Context, resource, action string) bool {
+			authz, ok := b.App.(PublicAuthorizationApp)
+			return ok && authz.CanPublicUser(c, resource, action)
+		}
 		if mediaRepo := b.App.MediaRepo(); mediaRepo != nil {
 			engineFuncs["responsiveImage"] = func(src, alt, className, sizes, loading string) template.HTML {
 				return renderResponsiveImage(mediaRepo, src, alt, imageAttrs{
@@ -640,6 +644,30 @@ func (b *BaseTheme) renderSingle(c *gin.Context, route *rewrite.ResolvedRoute) {
 	data["Related"] = related
 	data["ContentType"] = route.ContentType
 	data["TypeDef"] = typeDef
+	commentsOpen := contentTypeSupports(typeDef, "comments") && item.CommentStatus == "open"
+	data["CommentsOpen"] = commentsOpen
+	data["CanComment"] = false
+	data["Comments"] = nil
+	data["CommentCount"] = int64(0)
+	data["CommentNotice"] = strings.TrimSpace(c.Query("comment"))
+	data["CommentError"] = strings.TrimSpace(c.Query("comment_error"))
+	if commentApp, ok := b.App.(CommentApp); ok && contentTypeSupports(typeDef, "comments") {
+		if service := commentApp.CommentService(); service != nil {
+			viewerID := uint(0)
+			if account := user.CurrentUser(c); account != nil {
+				viewerID = account.ID
+			}
+			if comments, err := service.ListVisible(item.ID, viewerID); err == nil {
+				data["Comments"] = comments
+			}
+			if count, err := service.CountApproved(item.ID); err == nil {
+				data["CommentCount"] = count
+			}
+		}
+	}
+	if authz, ok := b.App.(PublicAuthorizationApp); ok {
+		data["CanComment"] = commentsOpen && authz.CanPublicUser(c, "comment", "create")
+	}
 	if rw := b.App.RewriteEngine(); rw != nil {
 		data["ArchiveURL"] = rw.BuildArchiveURL(route.ContentType)
 		data["Permalink"] = rw.BuildURL(route.ContentType, item.Slug)

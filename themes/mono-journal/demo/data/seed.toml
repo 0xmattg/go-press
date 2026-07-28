@@ -1,0 +1,233 @@
+# Mono Journal demo data. Importing this file replaces content and taxonomies,
+# while GoPress preserves users and core installation options.
+
+[[settings]]
+key = "theme_color_scheme"
+value = "ink"
+
+[[settings]]
+key = "home_logo_text"
+value = "Northbound Notes"
+
+[[settings]]
+key = "home_intro_eyebrow"
+value = "Independent journal · 2026"
+
+[[settings]]
+key = "home_intro_title"
+value = "Ideas for making thoughtful things."
+
+[[settings]]
+key = "home_intro_text"
+value = "Essays and field notes on design, software, creative practice, and building a life with intention."
+
+[[settings]]
+key = "home_featured_label"
+value = "Featured note"
+
+[[settings]]
+key = "home_latest_title"
+value = "Latest writing"
+
+[[settings]]
+key = "home_about_title"
+value = "Notes from the workbench."
+
+[[settings]]
+key = "home_about_text"
+value = "I write about the decisions behind useful products, durable systems, and a more deliberate creative practice."
+
+[[settings]]
+key = "about_author_name"
+value = "Alex Morgan"
+
+[[settings]]
+key = "about_author_role"
+value = "Designer, builder, and independent writer"
+
+[[settings]]
+key = "about_author_bio"
+value = "I work between product design and software, helping small teams turn complicated ideas into calm, useful tools. This journal is where I document the methods, mistakes, and questions that stay with me."
+
+[[settings]]
+key = "about_location"
+value = "Shanghai / Remote"
+
+[[settings]]
+key = "about_author_avatar"
+value = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=900&h=1100&fit=crop&q=84"
+
+[[settings]]
+key = "social_email"
+value = "hello@example.com"
+
+[[settings]]
+key = "social_github"
+value = "https://github.com/"
+
+[[settings]]
+key = "social_linkedin"
+value = "https://www.linkedin.com/"
+
+[[settings]]
+key = "footer_text"
+value = "Thoughtfully made notes for the long term."
+
+[[categories]]
+name = "Craft"
+slug = "cat-craft"
+
+[[categories]]
+name = "Systems"
+slug = "cat-systems"
+
+[[categories]]
+name = "Field Notes"
+slug = "cat-field-notes"
+
+[[tags]]
+name = "Design"
+slug = "tag-design"
+
+[[tags]]
+name = "Software"
+slug = "tag-software"
+
+[[tags]]
+name = "Process"
+slug = "tag-process"
+
+[[tags]]
+name = "Attention"
+slug = "tag-attention"
+
+[[tags]]
+name = "Independent Work"
+slug = "tag-independent-work"
+
+[[contents]]
+type = "post"
+title = "The Quiet Advantage of Making Fewer Decisions"
+slug = "quiet-advantage-fewer-decisions"
+image_url = "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=1600&h=1000&fit=crop&q=84"
+sort_order = 1
+category = "cat-systems"
+tags = ["tag-process", "tag-attention"]
+excerpt = "A restrained system is not a lack of ambition. It is a way to reserve attention for the decisions that change the work."
+content = """<p>Every project begins with a burst of possibility. There are dozens of tools to try, directions to explore, and details that could become important. Left unchecked, that possibility becomes a tax: the team keeps reopening choices that should already be settled.</p>
+<h2>Constraints are stored decisions</h2>
+<p>A useful system records choices once. A type scale prevents every heading from becoming a debate. A release rhythm tells the team when work is ready to move. A short list of principles gives people a way to resolve ambiguity without waiting for permission.</p>
+<blockquote>Good constraints do not make the work smaller. They make attention available.</blockquote>
+<p>The important distinction is between a constraint and a habit. Habits persist because they are familiar. Constraints earn their place because they protect quality, speed, or clarity. When they stop doing that, they should change.</p>
+<h2>Build a decision budget</h2>
+<p>At the start of a week, identify the three decisions that deserve original thought. Everything else should follow an existing pattern, use a default, or wait. This is especially useful for independent work, where the same person is often designer, editor, and operator.</p>
+<ul><li>Write down defaults before the project becomes busy.</li><li>Make exceptions visible and explain why they exist.</li><li>Review the system after delivery, not in the middle of every task.</li></ul>
+<p>The result is not rigid work. It is work with a clear center of gravity.</p>"""
+
+[[contents]]
+type = "post"
+title = "Designing a Personal Site That Can Age Well"
+slug = "personal-site-that-can-age-well"
+image_url = "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1600&h=1000&fit=crop&q=84"
+sort_order = 2
+category = "cat-craft"
+tags = ["tag-design", "tag-independent-work"]
+excerpt = "The best personal sites feel current without depending on fashion. Their durability comes from structure, voice, and editorial discipline."
+content = """<p>A personal site is often treated like a launch campaign. It gets a new visual identity, a dramatic homepage, and a week of concentrated attention. Then the content becomes harder to maintain than expected and the design starts to feel tied to a particular year.</p>
+<h2>Begin with the publishing habit</h2>
+<p>Before choosing a layout, decide what you can publish repeatedly. It may be a monthly essay, a project note, a photo log, or a short list of useful links. The interface should make that habit easier rather than asking the habit to serve the interface.</p>
+<p>I prefer a small set of durable page types: an index, an archive, an article, and an about page. A category system is useful only when readers can understand why the categories exist.</p>
+<h2>Let typography carry the identity</h2>
+<p>Strong typography, generous image treatment, and consistent spacing can create a specific voice without relying on decorative effects. This also keeps the site readable across devices and resilient when content length changes.</p>
+<p>A design that ages well leaves room for the person behind it to change.</p>"""
+
+[[contents]]
+type = "post"
+title = "A Field Guide to Useful Project Notes"
+slug = "field-guide-useful-project-notes"
+image_url = "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1600&h=1000&fit=crop&q=84"
+sort_order = 3
+category = "cat-field-notes"
+tags = ["tag-process", "tag-independent-work"]
+excerpt = "Project notes become valuable when they preserve context, not just activity. A simple structure can turn a daily log into institutional memory."
+content = """<p>Most project notes record what happened: a meeting took place, a file changed, a decision was made. Useful notes go one level deeper and preserve the context that will otherwise disappear.</p>
+<h2>Record the reason and the boundary</h2>
+<p>For each meaningful decision, capture the problem, the option selected, and the condition that would cause the team to revisit it. This last part matters. It prevents a decision from becoming permanent simply because nobody remembers its original boundary.</p>
+<h2>Keep the format close to the work</h2>
+<p>A note should take less than five minutes to add. Use a date, a short heading, two or three sentences of context, and links to the relevant artifacts. The goal is not comprehensive documentation. The goal is a reliable trail.</p>
+<ol><li>What changed?</li><li>Why did it change?</li><li>Who needs to know?</li><li>What remains uncertain?</li></ol>
+<p>Over time, these notes reveal patterns that a polished case study usually hides.</p>"""
+
+[[contents]]
+type = "post"
+title = "What Small Teams Need From a Design System"
+slug = "small-team-design-system"
+image_url = "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1600&h=1000&fit=crop&q=84"
+sort_order = 4
+category = "cat-systems"
+tags = ["tag-design", "tag-software", "tag-process"]
+excerpt = "For a small team, the system should reduce repeated decisions and expose product intent. A component catalog alone is not enough."
+content = """<p>Large organizations can support dedicated design-system teams. Small teams cannot. Their system has to live inside product work and improve the speed of delivery immediately.</p>
+<h2>Start with recurring friction</h2>
+<p>Look for disagreements that repeat: spacing, validation behavior, empty states, table density, mobile navigation. Document the default and build the shared component only after the pattern has appeared more than once.</p>
+<p>The most useful artifact is often a short decision note beside the component. It explains when the pattern applies, what it optimizes, and where it should not be used.</p>
+<h2>Measure consistency by experience</h2>
+<p>Two screens can use identical tokens and still feel unrelated if their interaction logic differs. A mature small-team system aligns language, states, keyboard behavior, loading feedback, and error recovery as carefully as color and radius.</p>"""
+
+[[contents]]
+type = "post"
+title = "An Afternoon Without Notifications"
+slug = "afternoon-without-notifications"
+image_url = "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1600&h=1000&fit=crop&q=84"
+sort_order = 5
+category = "cat-field-notes"
+tags = ["tag-attention"]
+excerpt = "Removing interruption for a few hours changed not only the quantity of work, but the kind of questions I was able to hold."
+content = """<p>At noon I closed messaging, put the phone in another room, and left the browser on a single document. The first half hour felt unusually slow. I kept reaching for an update that was not there.</p>
+<p>Then the work changed. Instead of resolving the nearest visible task, I could hold the shape of the whole problem. Connections that had seemed separate in the morning became part of the same decision.</p>
+<blockquote>Attention is not only a resource. It is the environment in which certain ideas become possible.</blockquote>
+<p>The lesson was not that every day should be disconnected. Teams need responsiveness, and collaboration depends on timely signals. The useful practice is to create explicit periods when responsiveness is not the primary job.</p>"""
+
+[[contents]]
+type = "post"
+title = "Shipping the Smallest Complete Version"
+slug = "smallest-complete-version"
+image_url = "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1600&h=1000&fit=crop&q=84"
+sort_order = 6
+category = "cat-craft"
+tags = ["tag-software", "tag-process"]
+excerpt = "Small does not have to mean partial. A carefully chosen first release can be narrow in scope and still feel whole."
+content = """<p>Teams often use “minimum” to justify gaps that users experience as broken promises. The better target is the smallest complete version: a narrow workflow with a clear beginning, a dependable middle, and a resolved ending.</p>
+<h2>Choose one promise</h2>
+<p>Write the release promise as a sentence a user could verify. Then remove every feature that does not make that sentence more true. This makes scope conversations concrete and protects the quality of the core path.</p>
+<h2>Finish the edges</h2>
+<p>Loading, empty, error, permission, and recovery states are part of the feature. They often determine whether a small product feels intentional or provisional. Completeness lives at these edges.</p>"""
+
+[[contents]]
+type = "post"
+title = "A Better Weekly Review for Creative Work"
+slug = "better-weekly-review-creative-work"
+image_url = "https://images.unsplash.com/photo-1456324504439-367cee3b3c32?w=1600&h=1000&fit=crop&q=84"
+sort_order = 7
+category = "cat-field-notes"
+tags = ["tag-attention", "tag-independent-work"]
+excerpt = "Reviewing output is useful. Reviewing the conditions that produced it is how the next week actually improves."
+content = """<p>A conventional weekly review asks what was completed and what remains. For creative work, that is only half the picture. The quality of the week also depends on how attention moved and which conditions supported difficult thinking.</p>
+<h2>Review energy, not just tasks</h2>
+<p>Mark the sessions that produced unusually good work. Note the time, location, preparation, collaborators, and level of interruption. Do the same for sessions that remained stuck.</p>
+<p>After several weeks, patterns become visible. The review turns from an administrative ritual into a way of designing better working conditions.</p>"""
+
+[[contents]]
+type = "page"
+title = "About Alex"
+slug = "about"
+image_url = "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1600&h=1000&fit=crop&q=84"
+excerpt = "Designer, builder, and independent writer working between product strategy and software."
+content = """<h2>I care about work that remains useful.</h2>
+<p>My practice sits between product design, writing, and software. I help small teams clarify complicated systems, shape interfaces that support repeated work, and build the operational habits that let quality survive growth.</p>
+<p>This journal is not a finished collection of answers. It is a public notebook for methods that have held up, decisions I would make differently, and questions worth carrying into the next project.</p>
+<h2>What I write about</h2>
+<p>The recurring subjects are design systems, independent publishing, software craft, attention, and the practical side of creative work. I am most interested in the point where an abstract principle has to survive contact with a real deadline.</p>
+<h2>Working together</h2>
+<p>I take on a small number of advisory and hands-on product engagements. The best fit is a compact team with a meaningful product, complicated information, and the willingness to simplify.</p>
+<p>For project inquiries, write to <a href="mailto:hello@example.com">hello@example.com</a>.</p>"""

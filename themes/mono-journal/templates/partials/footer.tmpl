@@ -1,0 +1,21 @@
+{{define "footer"}}
+<footer class="mj-footer">
+    <div class="mj-shell mj-footer-grid">
+        <div>
+            <a class="mj-footer-brand" href="{{langPrefixURL .Ctx "/"}}">{{settingOr .Settings "home_logo_text" "Mono Journal"}}</a>
+            <p>{{settingOr .Settings "footer_text" "Thoughtfully made notes for the long term."}}</p>
+        </div>
+        <nav aria-label="Footer navigation">
+            {{$menu := menuByLocation "footer"}}
+            {{if $menu}}{{range $menu.Items}}<a href="{{.URL}}" {{if eq .Target "_blank"}}target="_blank" rel="noopener"{{end}}>{{.Title}}</a>{{end}}{{else}}
+            <a href="{{langPrefixURL .Ctx (archiveURL "post")}}">{{T .Ctx "nav.writing"}}</a><a href="{{langPrefixURL .Ctx "/about"}}">{{T .Ctx "nav.about"}}</a>{{end}}
+        </nav>
+        <div class="mj-socials">
+            {{with settingOr .Settings "social_github" ""}}<a href="{{.}}" target="_blank" rel="noopener">GitHub</a>{{end}}
+            {{with settingOr .Settings "social_x" ""}}<a href="{{.}}" target="_blank" rel="noopener">X</a>{{end}}
+            {{with settingOr .Settings "social_linkedin" ""}}<a href="{{.}}" target="_blank" rel="noopener">LinkedIn</a>{{end}}
+        </div>
+    </div>
+    <div class="mj-shell mj-footer-meta"><span>&copy; {{currentYear}} {{settingOr .Settings "about_author_name" "Independent Author"}}</span><span>{{T .Ctx "footer.powered"}}</span></div>
+</footer>
+{{end}}

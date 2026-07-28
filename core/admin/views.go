@@ -10,21 +10,22 @@ import (
 // DynamicContentView is a generic view model for any registered content type.
 // Used by the data-driven admin to render list/form pages dynamically.
 type DynamicContentView struct {
-	ID          uint
-	Title       string
-	AuthorID    uint
-	AuthorName  string
-	Slug        string
-	Content     string
-	Excerpt     string
-	ImageURL    string
-	Status      string
-	SortOrder   int
-	PublishedAt *time.Time
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Meta        map[string]string             // dynamic meta fields from ContentTypeDef.MetaFields
-	Taxonomies  map[string][]TaxonomyItemView // taxonomy type name -> items
+	ID            uint
+	Title         string
+	AuthorID      uint
+	AuthorName    string
+	Slug          string
+	Content       string
+	Excerpt       string
+	ImageURL      string
+	Status        string
+	CommentStatus string
+	SortOrder     int
+	PublishedAt   *time.Time
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	Meta          map[string]string             // dynamic meta fields from ContentTypeDef.MetaFields
+	Taxonomies    map[string][]TaxonomyItemView // taxonomy type name -> items
 }
 
 // AdminListColumn declares one configurable table column for an admin list page.

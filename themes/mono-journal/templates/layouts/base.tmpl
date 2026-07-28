@@ -1,0 +1,24 @@
+{{define "base"}}<!doctype html>
+<html lang="{{currentLang .Ctx}}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {{$brand := settingOr .Settings "home_logo_text" "Mono Journal"}}
+    <title>{{pageTitleFor . (printf "%s | %s" .Title $brand)}}</title>
+    {{with seoHeadFor .}}{{.}}{{else}}<meta name="description" content="{{settingOr $.Settings "site_description" "Independent notes on craft, systems, and a considered life."}}">{{faviconLinks (settingOr $.Settings "site_icon" "")}}{{end}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css?v=mono-journal-5">
+    {{renderHook "theme.head.end" .}}
+</head>
+<body class="mj-page-{{.ActivePage}}" data-palette="{{journalPalette (settingOr .Settings "theme_color_scheme" "ink")}}">
+    {{renderHook "theme.body.open" .}}
+    <div class="mj-reading-progress" aria-hidden="true"><span></span></div>
+    {{template "header" .}}
+    <main id="main-content">{{template "content" .}}</main>
+    {{template "footer" .}}
+    <script src="/static/js/main.js?v=mono-journal-3"></script>
+    {{renderHook "theme.footer.end" .}}
+</body>
+</html>{{end}}

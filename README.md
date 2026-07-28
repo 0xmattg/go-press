@@ -163,7 +163,7 @@ The documentation lives under [`docs/guide/`](docs/guide/) and is organized as a
 |---|---|
 | [Introduction](docs/guide/en/README.md) | Positioning and design principles |
 | [Getting Started](docs/guide/en/getting-started/installation.md) | Installation, configuration, and the web installer |
-| [Architecture](docs/guide/en/architecture/overview.md) | Engine boot flow, content model, public authentication, URL/SEO, cache, i18n, content scope, and hooks |
+| [Architecture](docs/guide/en/architecture/overview.md) | Engine boot flow, content model, public authentication, authenticated comments, URL/SEO, cache, i18n, content scope, and hooks |
 | [Admin](docs/guide/en/admin/overview.md) | Admin CMS, standalone pages, extension points, and menu management |
 | [Themes](docs/guide/en/themes/overview.md) | Creating themes, SEO integration, image pipeline, and media variants |
 | [Plugins](docs/guide/en/plugins/overview.md) | Creating plugins, hook contracts, and bundled plugins |
@@ -211,6 +211,15 @@ go run ./cmd/gendoc/
 
 See [Public Authentication](docs/guide/en/architecture/public-authentication.md) for the core model, Google and MetaMask setup, plugin contracts, and theme integration.
 
+### Authenticated Comments
+
+- **Core-owned comment domain** — comments remain available across theme switches and can target any registered content type that declares `comments` support.
+- **Registered-user participation** — active signed-in users with `comment.create` can post top-level comments and one level of direct replies; anonymous submissions are not accepted.
+- **Moderated visibility and safety** — new comments start as pending, approved comments are public, authors can see their own pending comments, and core enforces body limits, per-user rate limits, published-target checks, and per-content open/closed status.
+- **Theme-neutral account integration** — themes consume safe comment projections, current-user authorization, and own comment activity through core contracts without importing a specific identity plugin.
+
+See [Comments and Moderation](docs/guide/en/architecture/comments.md) for the data model, theme contract, moderation flow, security rules, and extension points.
+
 ### Engine Core
 
 - **Unified content model** — `Content` + `ContentMeta` + `ContentType` registry; core keeps `post`, `page`, and `contact_message`, while themes declare custom types in `theme.toml`.
@@ -239,6 +248,7 @@ See [Public Authentication](docs/guide/en/architecture/public-authentication.md)
 - **Standalone pages** — a dedicated Pages screen for hierarchical, root-level pages, with a page-template picker and a per-page embed-code field for third-party iframes.
 - **RBAC** — `admin`, `editor`, `author`, and `subscriber` roles enforced throughout the admin surface.
 - **List screen options and pagination** — content lists support dynamic column visibility, title search, date/taxonomy filters, and server-side pagination.
+- **Comment moderation** — filterable, server-paginated review queues support pending, approved, spam, and trash states, with direct links to the related content or parent comment and `comment.moderate` RBAC enforcement.
 - **Mail settings and notifications** — dedicated SMTP settings page, go-mail SMTP driver with Go stdlib option, site-level `config.toml` storage for `mail.mail_key`, test emails, Gmail-friendly `587 + STARTTLS` setup, and a switch for new contact-message notifications.
 - **Drag sorting and rich text** — Quill 2.0 editor, media picker, and HTML5 drag-and-drop ordering.
 - **Admin extension points** — hooks such as `admin.HookContentListTabs`, `admin.HookContentPermalinkPrefix`, `admin.content_form.fields`, `admin.content.saved`, and `mail.message`.
@@ -252,9 +262,9 @@ See [Public Authentication](docs/guide/en/architecture/public-authentication.md)
 - **Hot-pluggable plugins** — `Bus.AddAction/AddFilter` return handles; `Deactivate` removes hooks cleanly without restarting the process.
 - **No cross-dependency between themes and plugins** — core is the only integration boundary.
 
-### Bundled Themes
+### Public Themes
 
-`atelier-slate` / `axis-form` (Axis Form, architecture and design) / `florafi` (FloraFi, stablecoin and fintech) / `civic-estate` / `financial-news` / `go-press-landing` / `modern-company` / `terra-trail`
+`atelier-slate` / `axis-form` (Axis Form, architecture and design) / `florafi` (FloraFi, stablecoin and fintech) / `civic-estate` / `financial-news` / `go-press-landing` / `modern-company` / `mono-journal` / `terra-trail`
 
 See [docs/guide/en/themes/overview.md](docs/guide/en/themes/overview.md).
 

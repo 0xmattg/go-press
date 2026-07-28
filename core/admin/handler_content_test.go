@@ -50,6 +50,16 @@ func TestEnsurePublishedAtForPublishedLeavesDraftUnset(t *testing.T) {
 	}
 }
 
+func TestContentMatchesTypeRejectsForgedRouteID(t *testing.T) {
+	item := &content.Content{ID: 9, Type: "service"}
+	if contentMatchesType(item, "post") {
+		t.Fatal("a service ID must not be accepted by a post route")
+	}
+	if !contentMatchesType(item, "service") {
+		t.Fatal("matching content type should be accepted")
+	}
+}
+
 func TestAdminDateTimeInputRoundTripsInLocalTime(t *testing.T) {
 	svc := &Service{siteTimezone: "Asia/Shanghai"}
 

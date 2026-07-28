@@ -67,7 +67,7 @@ templates = { archive = "products", single = "product-detail" }
 
 GoPress 在 core/theme 层提供模板级 hook 函数，解决"插件想在主题固定语义位置注入局部 HTML，但又不应该扫描和修改整页 HTML"的问题。
 
-插件友好的主题至少应在基础布局里声明三个全局页面插槽：
+GoPress 内置主题和面向生产使用的主题必须在基础布局里声明三个全局页面插槽：
 
 ```gotemplate
 <head>

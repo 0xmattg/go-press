@@ -11,7 +11,7 @@
     {{faviconLinks $siteIcon}}
     {{end}}
     {{if eq .ActivePage "home"}}<link rel="preload" as="image" href="{{settingOr .Settings "home_hero_1_image" "/static/images/atelier-hero.svg"}}">{{end}}
-    <link rel="stylesheet" href="/static/css/style.css?v=9">
+    <link rel="stylesheet" href="/static/css/style.css?v=10">
     {{renderHook "theme.head.end" .}}
 </head>
 <body data-page="{{.ActivePage}}">

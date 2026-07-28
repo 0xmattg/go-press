@@ -15,6 +15,7 @@ import (
 	_ "go-press/themes/florafi"
 	_ "go-press/themes/go-press-landing"
 	_ "go-press/themes/modern-company"
+	_ "go-press/themes/mono-journal"
 	_ "go-press/themes/terra-trail"
 
 	// Plugins
