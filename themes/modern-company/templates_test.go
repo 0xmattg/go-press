@@ -3,7 +3,9 @@ package moderncompany
 import (
 	"bytes"
 	"html/template"
+	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -12,6 +14,7 @@ import (
 
 	"go-press/core"
 	"go-press/core/content"
+	coreI18n "go-press/core/i18n"
 	"go-press/core/rewrite"
 	coreTheme "go-press/core/theme"
 )
@@ -96,6 +99,51 @@ func TestContentMegaMenuForURLUsesRewriteSlugFromRegistry(t *testing.T) {
 	}
 }
 
+func TestContentTaxonomyURLUsesCanonicalTaxonomyPath(t *testing.T) {
+	engine := newArchiveURLTestEngine()
+	svc := &PageService{rewriteEngine: engine.Rewrite}
+	if got := svc.contentTaxonomyURL("category", "cleanroom-standards"); got != "/category/cleanroom-standards" {
+		t.Fatalf("contentTaxonomyURL() = %q", got)
+	}
+}
+
+func TestRedirectLegacyTaxonomyFilterPreservesLanguage(t *testing.T) {
+	engine := newArchiveURLTestEngine()
+	engine.I18n = coreI18n.NewManager("en")
+	theme := &ModernCompanyTheme{engine: engine}
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	c.Request = httptest.NewRequest(http.MethodGet, "https://example.test/blog?category=cleanroom-standards", nil)
+	c.Set(coreI18n.CtxKeyLang, "es")
+
+	if !theme.redirectLegacyTaxonomyFilter(c) {
+		t.Fatal("expected legacy taxonomy filter to redirect")
+	}
+	if recorder.Code != http.StatusMovedPermanently {
+		t.Fatalf("status = %d", recorder.Code)
+	}
+	if location := recorder.Header().Get("Location"); location != "/es/category/cleanroom-standards" {
+		t.Fatalf("Location = %q", location)
+	}
+}
+
+func TestTemplatesDoNotGenerateLegacyTaxonomyQueryLinks(t *testing.T) {
+	paths := []string{
+		"templates/pages/blog.tmpl",
+		"templates/pages/post-detail.tmpl",
+		"templates/pages/services.tmpl",
+	}
+	for _, path := range paths {
+		body, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(string(body), "?category=") || strings.Contains(string(body), "?tag=") {
+			t.Fatalf("%s still contains a legacy taxonomy query link", path)
+		}
+	}
+}
+
 func newArchiveURLTestEngine() *core.Engine {
 	registry := content.NewRegistry()
 	registry.RegisterType(content.ContentTypeDef{
@@ -116,8 +164,11 @@ func newArchiveURLTestEngine() *core.Engine {
 	registry.RegisterType(content.ContentTypeDef{
 		Name:       "post",
 		HasArchive: true,
+		Taxonomies: []string{"category", "tag"},
 		Rewrite:    content.RewriteRule{Slug: "blog"},
 	})
+	registry.RegisterTaxonomy(content.TaxonomyDef{Name: "category", Hierarchical: true})
+	registry.RegisterTaxonomy(content.TaxonomyDef{Name: "tag"})
 	return &core.Engine{
 		Registry: registry,
 		Rewrite:  rewrite.NewEngine(registry),

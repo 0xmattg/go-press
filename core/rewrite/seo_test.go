@@ -22,3 +22,19 @@ func TestRenderHeadUsesGeneratedFaviconFirst(t *testing.T) {
 		}
 	}
 }
+
+func TestForTaxonomyUsesTermCanonical(t *testing.T) {
+	builder := NewSEOBuilder("https://example.com/", "Example", NewEngine(nil))
+
+	got := builder.ForTaxonomy("category", "Cleanroom Standards", "cleanroom-standards")
+
+	if got.CanonicalURL != "https://example.com/category/cleanroom-standards" {
+		t.Fatalf("CanonicalURL = %q", got.CanonicalURL)
+	}
+	if got.Title != "Cleanroom Standards | Example" {
+		t.Fatalf("Title = %q", got.Title)
+	}
+	if got.Robots != "index,follow" {
+		t.Fatalf("Robots = %q", got.Robots)
+	}
+}

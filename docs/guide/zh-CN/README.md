@@ -10,6 +10,9 @@ GoPress 旨在把传统 CMS 中经过验证的内容模型、主题系统、插�
 
 框架同时提供 Provider-neutral 的前台用户、外部身份绑定、可撤销 Session 和注册策略；当前可通过独立 Google OIDC 插件或 MetaMask EIP-4361 SIWE 插件登录，两者复用同一套 core 账号与 Session 边界。
 
+评论也是 core 的稳定领域：支持仅登录用户发表评论、一级直接回复、审核状态、
+后台分页与 RBAC，并允许主题使用统一前台账号上下文呈现评论和 Profile。
+
 这个项目不是 WordPress 的逐行重写，也不是对 PHP 生态的替代宣言。GoPress 更关注一类具体场景：开发者希望保留 CMS 的编辑体验和扩展模型，同时获得 Go 在部署、并发、可观测性和长期维护上的工程优势。
 
 ## 项目状态
@@ -41,12 +44,15 @@ GoPress 当前处于 **beta** 阶段。核心内容模型、后台管理、主�
 5. **SEO 内建** — URL 重写、永久链接、Canonical、Sitemap、Meta、模板映射、重定向等能力在核心层统一处理。
 6. **API First** — 内容类型可暴露 REST API，并通过 Swagger / OpenAPI 描述接口。
 7. **多实例隔离** — 支持表前缀和站点级配置，便于多实例共享基础设施并隔离数据边界。
+8. **后台优先** — 内容团队应能从 CMS 管理大部分站点行为，而不是依赖修改代码。
+9. **开放扩展边界** — 公开 API、文档和契约面向第三方主题与插件长期演进。
 
 ## 文档导航
 
 - **[快速开始](getting-started/installation.md)** — 安装、配置、第一次启动
 - **[架构](architecture/overview.md)** — 引擎结构、Hook 系统、URL/SEO、内容过滤
 - **[前台用户注册与身份登录](architecture/public-authentication.md)** — 用户/Identity/Session、注册策略、Google 插件、主题接入与钱包扩展
+- **[评论与回复](architecture/comments.md)** — 评论模型、一级回复、登录/RBAC 与缓存契约
 - **[后台管理](admin/overview.md)** — 后台 CMS 功能、扩展点、菜单管理
 - **[主题开发](themes/overview.md)** — 主题接入、SEO 规范、图片管线、媒体变体
 - **[插件开发](plugins/overview.md)** — 创建插件、内置插件参考（multilang / seo-extras / code-snippets / gopress-analytics / google-identity / metamask-identity）

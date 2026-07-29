@@ -2,6 +2,11 @@
 
 Admin extension points let plugins and themes add behavior to the CMS while keeping the core admin stable.
 
+Every extension point follows the same contract: core defines a stable data
+shape, hook/provider name, and trigger location; extensions register an
+implementation during activation; with no extension, filters pass through and
+actions have no side effects.
+
 ## Plugin Settings Pages
 
 A plugin can provide an admin settings page by implementing settings provider interfaces. The admin will show a **Plugin Settings** button on the plugin card and route requests to the plugin-owned template or renderer.
@@ -26,6 +31,18 @@ Plugins can listen to `admin.content.saved` and persist additional form values. 
 ## Content List Tabs
 
 The admin exposes `admin.HookContentListTabs` for plugins that need additional list filters. The multilingual plugin uses it to add language tabs and counts to content list pages.
+
+Tabs normally compose with the [Content Scope API](../architecture/content-scope.md):
+the selected query parameter registers a request scope, and totals, filters, and
+pagination all use the scoped query.
+
+## Content Permalink Prefix
+
+`admin.HookContentPermalinkPrefix` lets an extension prepend a contextual
+segment such as `/zh` or `/site-2` to the permalink shown in the content editor.
+Its value is an empty string by default, and its arguments are the current
+`*gin.Context` and content row. The hook changes the editor preview only through
+the same core URL contract; themes do not need to know why the prefix exists.
 
 ## Dashboard Widgets
 
@@ -81,6 +98,21 @@ Themes can access the same capability through `theme.App.MailSender()` or `t.Mai
 
 SMTP configuration, notification switches, and delivery behavior stay in core or plugin extension points.
 
+## Frontend Template Slots
+
+The same core hook bus exposes semantic frontend locations:
+
+| Hook | Location |
+|---|---|
+| `theme.head.end` | Immediately before `</head>`. |
+| `theme.body.open` | Immediately after `<body>`. |
+| `theme.footer.end` | After theme scripts and before `</body>`. |
+| `header.nav.after` | At the end of the primary navigation list. |
+
+Themes declare these locations with `renderHook`; plugins return markup that
+matches the surrounding semantics. Extensions must not scan or post-process a
+complete HTML response to find an insertion point.
+
 ## Translation Requirements
 
 Admin-facing theme and plugin settings should not hard-code Chinese or English in templates. They should use the admin translation helper or component-owned locale files. If a component ships only one language, the admin should fall back to that available language instead of hiding the UI.
@@ -88,3 +120,8 @@ Admin-facing theme and plugin settings should not hard-code Chinese or English i
 ## Design Rule
 
 Extensions should communicate with the admin through core hooks, providers, and template functions. Avoid direct imports between themes and plugins, and avoid post-processing full HTML responses to inject admin UI.
+
+Every plugin must retain returned hook handles and remove them in
+`Deactivate`. Core rebuilds the router and clears relevant cache paths after
+activation changes so middleware, routes, admin UI, and frontend output reflect
+the new state without a restart.

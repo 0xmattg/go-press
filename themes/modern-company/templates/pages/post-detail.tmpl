@@ -35,7 +35,7 @@
                 {{if .Post.Tags}}
                 <div class="post-tags">
                     <strong>{{T $.Ctx "sidebar_tags"}}:</strong>
-                    {{range .Post.Tags}}<a href="{{langPrefixURL $.Ctx (archiveURL "post")}}?tag={{.Slug}}" class="tag-link">{{.Name}}</a>{{end}}
+                    {{range .Post.Tags}}<a href="{{langPrefixURL $.Ctx (taxonomyURL "tag" .Slug)}}" class="tag-link">{{.Name}}</a>{{end}}
                 </div>
                 {{end}}
                 <div class="post-nav">
@@ -56,7 +56,7 @@
                 <div class="sidebar-widget">
                     <h4>{{T $.Ctx "sidebar_categories"}}</h4>
                     {{range .Categories}}
-                    <a href="{{langPrefixURL $.Ctx (archiveURL "post")}}?category={{.Slug}}" class="sidebar-cat">{{.Name}}</a>
+                    <a href="{{langPrefixURL $.Ctx (taxonomyURL "category" .Slug)}}" class="sidebar-cat">{{.Name}}</a>
                     {{end}}
                 </div>
                 {{end}}
@@ -64,7 +64,7 @@
                 <div class="sidebar-widget">
                     <h4>{{T $.Ctx "sidebar_tags"}}</h4>
                     <div class="sidebar-tags">
-                        {{range .Tags}}<a href="{{langPrefixURL $.Ctx (archiveURL "post")}}?tag={{.Slug}}" class="tag-badge">{{.Name}}</a>{{end}}
+                        {{range .Tags}}<a href="{{langPrefixURL $.Ctx (taxonomyURL "tag" .Slug)}}" class="tag-badge">{{.Name}}</a>{{end}}
                     </div>
                 </div>
                 {{end}}

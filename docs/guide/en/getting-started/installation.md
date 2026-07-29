@@ -5,7 +5,7 @@ GoPress can be started directly from source during development. In production, i
 ## Requirements
 
 - Go 1.25 or newer.
-- PostgreSQL 13 or newer.
+- PostgreSQL 14 or newer.
 - Redis is optional.
 - `cwebp` is optional and only required for WebP media variants.
 
@@ -53,6 +53,15 @@ gopress serve           # works from any directory after install
 
 Open `http://localhost:8080/install` on first run. The installer verifies the PostgreSQL connection, writes the site configuration, initializes tables, creates the administrator account, and switches the current process to the live site after setup.
 
+After installation:
+
+| URL | Purpose |
+|---|---|
+| `http://localhost:8080` | Public site. |
+| `http://localhost:8080/admin` | CMS admin. |
+| `http://localhost:8080/swagger/index.html` | Interactive API documentation. |
+| `http://localhost:8080/api/v1/content` | Generic public content API. |
+
 ## Build a Production Binary
 
 ```bash
@@ -90,7 +99,7 @@ go build -p 1 -v -o build/gopress-server ./cmd/server
 
 ## First-run Installer
 
-The web installer has three stages:
+The web installer uses a two-screen flow followed by a completion phase:
 
 1. Database connection and table prefix.
 2. Site name, default theme, admin account, and interface language.
@@ -142,10 +151,25 @@ go test ./...
 
 No edit to `cmd/server/main.go` is required.
 
+## Media Processing Dependency
+
+The Go standard library handles JPEG/PNG decoding, resizing, and encoding.
+Optional WebP output requires the `cwebp` command:
+
+```bash
+# macOS
+brew install webp
+
+# Debian/Ubuntu
+apt-get install webp
+```
+
+Without `cwebp`, GoPress still generates resized JPEG/PNG variants and theme
+helpers fall back automatically. See [Media Variants](../themes/media-variants.md).
+
 ## After Installation
 
 - Visit `/admin` to manage content, themes, plugins, media, users, and settings.
 - Use **System Settings** to set site name, site description, site language, admin language, favicon, and Powered by GoPress display.
 - Use **Themes** to activate a theme and import demo data.
 - Use **Plugins** to enable multilingual support, SEO extras, code snippets, or custom plugins.
-

@@ -2,6 +2,7 @@ package moderncompany
 
 import (
 	"html/template"
+	"net/http"
 	"net/url"
 	"path/filepath"
 	"strings"
@@ -192,7 +193,48 @@ func (t *ModernCompanyTheme) Setup(app coreTheme.App) {
 
 // ServeHTTP delegates frontend routing to BaseTheme. Content archives and singles are resolved from the active content registry and theme.toml rewrite slugs.
 func (t *ModernCompanyTheme) ServeHTTP(c *gin.Context) {
+	if t.redirectLegacyTaxonomyFilter(c) {
+		return
+	}
 	t.BaseTheme.ServeHTTP(c)
+}
+
+func (t *ModernCompanyTheme) redirectLegacyTaxonomyFilter(c *gin.Context) bool {
+	if t.engine == nil || c == nil || c.Request == nil || c.Request.Method != http.MethodGet {
+		return false
+	}
+	rw := t.engine.RewriteEngine()
+	registry := t.engine.ContentRegistry()
+	if rw == nil || registry == nil {
+		return false
+	}
+	route := rw.Resolve(c.Request.URL.Path)
+	if route == nil || !route.IsArchive || route.ContentType == "" || route.Page > 0 {
+		return false
+	}
+	typeDef := registry.GetType(route.ContentType)
+	if typeDef == nil {
+		return false
+	}
+	for _, taxonomyName := range typeDef.Taxonomies {
+		termSlug, ok := safeTaxonomyTermSlug(c.Query(taxonomyName))
+		if !ok || registry.GetTaxonomy(taxonomyName) == nil {
+			continue
+		}
+		target := rw.BuildTaxonomyURL(taxonomyName, termSlug)
+		target = coreTheme.LanguagePrefixURL(c, t.engine.I18nManager(), target)
+		c.Redirect(http.StatusMovedPermanently, target)
+		return true
+	}
+	return false
+}
+
+func safeTaxonomyTermSlug(raw string) (string, bool) {
+	slug := strings.TrimSpace(raw)
+	if slug == "" || strings.ContainsAny(slug, "/\\?#") {
+		return "", false
+	}
+	return url.PathEscape(slug), true
 }
 
 // --- Templates ---

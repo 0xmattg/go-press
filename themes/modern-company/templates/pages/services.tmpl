@@ -64,7 +64,7 @@
                     <h4>{{T $.Ctx "sidebar_tags"}}</h4>
                     <div class="tag-cloud">
                         {{range .Tags}}
-                        <a href="{{langPrefixURL $.Ctx (archiveURL "post")}}?category={{.Slug}}" class="tag">{{.Name}}</a>
+                        <a href="{{langPrefixURL $.Ctx (taxonomyURL "tag" .Slug)}}" class="tag">{{.Name}}</a>
                         {{end}}
                     </div>
                 </div>

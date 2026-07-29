@@ -151,6 +151,24 @@ func (e *Engine) BuildArchiveURL(contentType string) string {
 	return e.BuildURL(contentType, "")
 }
 
+// BuildTaxonomyURL generates the public archive URL for a taxonomy term.
+func (e *Engine) BuildTaxonomyURL(taxonomy, term string) string {
+	return BuildTaxonomyURL(taxonomy, term)
+}
+
+// BuildTaxonomyURL generates a taxonomy term path without requiring an Engine.
+func BuildTaxonomyURL(taxonomy, term string) string {
+	taxonomy = strings.Trim(taxonomy, "/")
+	term = strings.Trim(term, "/")
+	if taxonomy == "" {
+		return "/"
+	}
+	if term == "" {
+		return "/" + taxonomy
+	}
+	return "/" + taxonomy + "/" + term
+}
+
 func parsePageNum(s string) int {
 	n := 0
 	for _, c := range s {

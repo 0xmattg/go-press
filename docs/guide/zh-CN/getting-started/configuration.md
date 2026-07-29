@@ -2,6 +2,18 @@
 
 GoPress 使用 TOML 作为配置格式。每个站点一份独立的 `config.toml`，多站点可共享数据库（通过表前缀隔离）。
 
+## 配置发现顺序
+
+```text
+-config <path>                  显式参数，优先级最高
+sites/{first-host}/config.toml  自动发现的第一个站点配置
+sites/default/config.toml       最终回退路径
+```
+
+`config/config.toml` 只是随源码提供的模板，不参与运行时回退；其中的
+`jwt_secret` 有意留空。Web 安装器会把实际配置写入
+`sites/<host>/config.toml`，文件权限为 `0600`。
+
 ## 完整示例
 
 ```toml
@@ -10,7 +22,7 @@ name = "My Website"
 url = "https://example.com"
 language = "zh"
 timezone = "Asia/Shanghai"
-theme = "modern-company"
+theme = "mono-journal"
 
 [server]
 host = "0.0.0.0"

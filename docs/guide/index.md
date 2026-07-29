@@ -10,9 +10,8 @@ This documentation is available in English and Simplified Chinese.
 ## Documentation Structure
 
 - **Getting Started** — installation, configuration, and first-run setup.
-- **Architecture** — engine lifecycle, content scope, hooks, caching, i18n, URL routing, and SEO.
+- **Architecture** — engine lifecycle, content scope, hooks, caching, i18n, URL/SEO, public authentication, and comments.
 - **Admin** — the built-in CMS admin, menu management, and extension points.
-- **Theme Development** — theme registration, templates, media helpers, SEO integration, and responsive image variants.
-- **Plugin Development** — plugin lifecycle, settings pages, multilingual content, SEO extensions, and code snippets.
+- **Theme Development** — theme registration, dependencies, templates, media helpers, SEO integration, and responsive image variants.
+- **Plugin Development** — plugin lifecycle, settings pages, multilingual content, SEO extensions, code snippets, analytics, and external identity.
 - **Reference** — project structure, database prefixes, REST API, technology stack, and roadmap.
-

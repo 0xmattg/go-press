@@ -18,6 +18,10 @@ e.Hooks.ApplyFilter(name, value, args...) interface{}
 
 `priority` 数值越小越先执行。`AddAction` / `AddFilter` 返回的 `hook.Handle` 是热拔插的关键——插件 `Deactivate` 时按 handle 摘除，运行时即可完整下线。
 
+Hook 名称和参数属于公开契约。新增 Hook 时应使用稳定、与业务实现无关的
+payload；不要把主题私有 struct 或插件 SDK 类型暴露给另一侧。Filter 必须在
+没有订阅者时原样返回输入值，Action 在没有订阅者时不产生副作用。
+
 ## 引擎生命周期 Hook
 
 | Hook 名称 | 触发时机 | 参数 |

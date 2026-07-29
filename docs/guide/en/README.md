@@ -12,6 +12,35 @@ It is not a line-by-line rewrite of WordPress, and it is not a claim that PHP-ba
 - A plugin system based on Go interfaces, actions, filters, and optional settings providers.
 - Core services for caching, workers, URL rewriting, sitemap generation, redirects, REST APIs, i18n, and table-prefix isolation.
 - Provider-neutral public accounts, external identity bindings, revocable sessions, registration policy, Google OIDC login, and MetaMask EIP-4361 wallet login.
+- Core comments with authenticated posting, one-level replies, moderation, admin
+  pagination, cache invalidation, and theme-owned account/profile presentation.
+
+## Project Status
+
+GoPress is currently **beta** software. The content model, admin, theme runtime,
+plugin contracts, SEO, cache, media pipeline, public accounts, and bundled
+examples are usable, but broader production validation, benchmarks, migration
+guidance, and continuing security review remain active work.
+
+For production adoption, start with an internal site, company site,
+documentation site, or content application, and establish load testing,
+database backup, media backup, and rollback procedures for the deployment.
+
+## Why GoPress
+
+The project retains the proven CMS shape of content models, themes, plugins,
+menus, and editorial administration while using a compiled Go service,
+goroutines, static typing, and a standard Go toolchain. The goal is not to rank
+technology ecosystems; it is to offer a maintainable self-hosted option for
+teams that want CMS workflows inside a Go architecture.
+
+| Dimension | Traditional WordPress deployment | GoPress |
+|---|---|---|
+| Runtime | PHP-FPM/web-server request lifecycle | Long-running compiled Go service |
+| Extension model | Mature runtime-loaded theme/plugin ecosystem | Compiled Go interfaces and removable hooks |
+| Cache | Commonly assembled from plugins, object cache, and proxy layers | Core L1, optional Redis, and page-cache paths |
+| Scheduled work | WP-Cron or system cron | In-process worker pool and scheduler |
+| Delivery | Web server, PHP runtime, database, and related services | One server binary, PostgreSQL, and optional Redis |
 
 ## Core Design Principles
 
@@ -21,7 +50,9 @@ It is not a line-by-line rewrite of WordPress, and it is not a claim that PHP-ba
 4. **Cache by default** — the engine provides L1 memory cache, optional Redis, and page-level cache paths.
 5. **SEO and URLs belong to the framework** — rewrite rules, canonical URLs, sitemap output, metadata, template mapping, and SEO overrides are coordinated in core.
 6. **Admin first** — content teams should manage most site behavior from the CMS instead of editing code.
-7. **Open-source ready architecture** — public APIs, docs, and extension boundaries are designed to survive third-party themes and plugins.
+7. **API first** — public content types can expose REST APIs documented through Swagger/OpenAPI.
+8. **Multi-instance isolation** — site configuration and table prefixes let instances share infrastructure without sharing data boundaries.
+9. **Open-source ready architecture** — public APIs, docs, and extension boundaries are designed to survive third-party themes and plugins.
 
 ## Start Here
 
@@ -29,5 +60,6 @@ It is not a line-by-line rewrite of WordPress, and it is not a claim that PHP-ba
 - [Configuration](getting-started/configuration.md)
 - [Architecture Overview](architecture/overview.md)
 - [Public Authentication](architecture/public-authentication.md)
+- [Comments and Replies](architecture/comments.md)
 - [Theme Development](themes/overview.md)
 - [Plugin Development](plugins/overview.md)

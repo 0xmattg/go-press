@@ -20,6 +20,13 @@ func pageTestRegistry() *content.Registry {
 	return reg
 }
 
+func TestBuildTaxonomyURL(t *testing.T) {
+	e := NewEngine(pageTestRegistry())
+	if got := e.BuildTaxonomyURL("category", "cleanroom-standards"); got != "/category/cleanroom-standards" {
+		t.Fatalf("BuildTaxonomyURL() = %q, want /category/cleanroom-standards", got)
+	}
+}
+
 func TestResolveRootlessPage(t *testing.T) {
 	e := NewEngine(pageTestRegistry())
 

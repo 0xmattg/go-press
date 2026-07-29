@@ -19,7 +19,7 @@
         <div class="blog-filter">
             <a href="{{langPrefixURL $.Ctx (archiveURL "post")}}" class="filter-btn {{if and (eq .ActiveCat "") (eq .ActiveTag "")}}active{{end}}">{{T $.Ctx "filter_all"}}</a>
             {{range .Categories}}
-            <a href="{{langPrefixURL $.Ctx (archiveURL "post")}}?category={{.Slug}}" class="filter-btn {{if eq $.ActiveCat .Slug}}active{{end}}">{{.Name}}</a>
+            <a href="{{langPrefixURL $.Ctx (taxonomyURL "category" .Slug)}}" class="filter-btn {{if eq $.ActiveCat .Slug}}active{{end}}">{{.Name}}</a>
             {{end}}
         </div>
 

@@ -43,6 +43,9 @@ curl http://localhost:8080/api/v1/content \
   -H "X-API-Key: <key>"
 ```
 
+认证不能代替授权。每个受保护 Handler 仍须检查该操作对应的 capability；
+来自路径、query 或 JSON body 的资源 ID 必须校验类型、作用域与所有权。
+
 ## 通用查询参数
 
 公开 REST API 只返回已到发布时间的 `published` 内容。`contact_message`

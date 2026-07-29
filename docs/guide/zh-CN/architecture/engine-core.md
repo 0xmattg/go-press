@@ -1,74 +1,117 @@
 # 引擎核心
 
-GoPress 的引擎核心提供了所有 CMS 功能赖以运行的基础能力。
+GoPress 引擎是 CMS 的运行时容器，负责装配存储、内容仓储、Rewrite、SEO
+渲染、Hook、缓存、异步任务、后台与 API 路由、安装器路由，以及当前启用的
+前台主题。
+
+## 主要模块
+
+| 模块 | 职责 |
+|---|---|
+| `core/engine.go` | 引擎生命周期、路由装配、优雅关停及共享 `App` 能力接口。 |
+| `core/bootstrap.go` | 一站式构建与启动编排。 |
+| `core/migrate.go` | 对 core 及已注册扩展表执行 GORM AutoMigrate。 |
+| `core/seeder.go` | 基于 TOML 的声明式演示数据导入。 |
+| `core/themes.go` | 主题注册表与工厂查找。 |
+| `core/plugins.go` | 插件注册表与激活生命周期。 |
+| `core/table_registry.go` | 跟踪 core、插件和主题拥有的数据表。 |
 
 ## 内容系统
 
-- **统一内容模型** — `Content` + `ContentMeta` + `ContentType` 注册表，一套模型驱动所有内容类型
-- **核心内容类型** — `post`（文章）、`page`（页面）、`contact_message`（联系留言）、`category`（分类）、`tag`（标签）在引擎层注册，主题切换后仍保留，不丢失数据
-- **主题内容类型** — 主题在 `theme.toml` 的 `[[content_types]]` 中声明自定义内容类型，core 激活主题时自动注册
-- **配置驱动路由/模板** — 同一个 `ContentTypeDef` 同时驱动后台导航、CRUD 表单、REST API、Rewrite、Sitemap、分类归档和 BaseTheme 动态归档/详情渲染；`rewrite_slug` 控制公开 URL，`templates = { archive = "...", single = "..." }` 可把内容类型映射到指定页面模板
-- **链式查询构建器** — 以主题声明的 `product` 内容类型为例：`ContentQuery.Type("product").Published().Taxonomy("category", "hepa").Paginate(1, 20)`
-- **分类法系统** — 支持层级分类和标签，多对多关联，自动计数；主题内容类型通过 `theme.toml` 的 `taxonomies = ["category", "tag"]` 挂载核心分类法
-- **分类归档页** — `/category/{slug}` 和 `/tag/{slug}` 跨内容类型聚合展示，类型标签优先使用当前主题 locale 的 `content_type.<name>`，缺失时回退到当前注册的 `ContentTypeDef.Label`
-- **分类法类型过滤** — 归档页自动过滤当前主题未注册的内容类型，主题切换后仅显示有效内容
-- **动态归档过滤** — BaseTheme 动态归档页会识别该内容类型已声明的 taxonomy query，例如 `/blog?category=industry-news`、`/blog?tag=cleanroom`；未挂载到该内容类型的 taxonomy query 会被忽略
+- **统一模型** — `Content`、`ContentMeta` 与 `ContentType` 注册表共同驱动
+  所有编辑型内容。
+- **核心类型** — `post`、`page`、`contact_message`、`category` 和 `tag`
+  由引擎注册，切换主题时仍然保留。
+- **主题类型** — 主题在 `theme.toml` 的 `[[content_types]]` 中声明自定义
+  类型，core 在主题激活时统一注册。
+- **注册表驱动行为** — 同一个 `ContentTypeDef` 同时驱动后台导航、CRUD
+  表单、REST API、Rewrite、Sitemap、分类归档和 BaseTheme 归档/详情渲染。
+  `rewrite_slug` 控制公开 URL，`templates = { archive = "...", single = "..." }`
+  可把内容类型映射到不同名称的视觉页面 bundle。
+- **链式查询** — 主题可使用共享查询构建器，例如
+  `ContentQuery.Type("product").Published().Taxonomy("category", "hepa").Paginate(1, 20)`。
+- **分类法系统** — 层级分类与扁平标签支持多对多关系和自动计数；主题通过
+  `taxonomies = ["category", "tag"]` 挂载到内容类型。
+- **规范 term 归档** — `/category/{slug}` 与 `/tag/{slug}` 跨已注册内容
+  类型聚合。类型徽标优先读取当前主题的 `content_type.<name>` locale key，
+  缺失时回退到注册表 label。
+- **安全过滤** — 分类归档会忽略当前主题未注册的内容类型。动态内容归档只
+  接受该类型声明过的 taxonomy query；需要被索引的 term 链接应使用规范
+  分类归档 URL，而不是 query 参数过滤页。
 
-`product` / `service` / `showcase` 是示例主题常用约定，不是 core 必须存在的模型。主题可以声明 `module`、`project`、`case_study` 等任意类型，并获得同样的后台、API、路由和模板渲染能力。
+`product`、`service`、`showcase` 只是部分主题采用的命名约定，不是 core
+要求。主题可以声明 `module`、`project`、`case_study` 或任意其它类型，并
+获得相同的后台、API、路由和模板能力。
 
 ## Hook 事件总线
 
-`AddAction` / `DoAction` / `AddFilter` / `ApplyFilter`，插件可拦截生命周期；主题模板通过 `{{renderHook "slot.name" .}}` 暴露前台扩展插槽。详见 [Hook 系统](hooks.md)。
+`AddAction`、`DoAction`、`AddFilter`、`ApplyFilter` 为整个引擎生命周期提供
+有优先级的扩展点；主题通过 `{{renderHook "slot.name" .}}` 暴露语义化前台
+插槽。每次注册都会返回 handle，插件可在运行时停用时精确摘除 action 和
+filter。详见 [Hook 系统](hooks.md)。
 
 ## 多级缓存
 
-- **L1 进程内内存缓存 + L2 Redis** — 缓存 Key 自动包含语言维度，按标签批量失效
-- **整页缓存** — 中间件级别缓存完整 HTML 响应，命中时 < 1ms 返回
-- 详见 [缓存与 i18n](caching-and-i18n.md)
+- **L1 内存 + 可选 L2 Redis** — 缓存 Key 包含语言维度；Redis 不可用时
+  安全降级到进程内缓存。
+- **标签失效** — 可按标签批量清理相关缓存。
+- **整页缓存** — 中间件可在主题渲染前直接返回完整 HTML 响应。
+
+详见 [缓存与 i18n](caching-and-i18n.md)。
 
 ## 异步任务
 
-- **Worker Pool** — Goroutine 工作池 + Cron 定时调度器，异步处理后台任务
+Worker Pool 组合 goroutine worker 与 Cron 风格调度器，用于执行不应阻塞
+页面渲染的后台任务。
 
 ## 用户与权限
 
-- **用户系统** — JWT 认证 + Session，RBAC 角色权限（admin/editor/author/subscriber）
+Core 统一管理用户、JWT 与前台 Session、角色、Capability 和审计日志。受
+保护 Handler 必须检查明确的 `resource.action` 权限，不能只判断是否存在
+登录会话。主题和身份插件通过 Provider-neutral 的前台认证契约协作，不能
+自行建立另一套用户或 Session 存储。
 
-## 媒体库
+## 媒体
 
-- **文件上传 + 响应式变体** — 上传时自动生成 thumb/480w/768w/1024w/1440w，配合 WebP 优先输出
-- 详见 [媒体变体管线](../themes/media-variants.md)
+媒体服务负责上传、元数据、响应式变体、可选 WebP 生成和后台媒体库。前台
+主题通过共享响应式图片 helper 消费变体，不直接查询媒体表。
 
-## 导航菜单
+## 菜单
 
-- **Menu + Item 树形结构** — 多菜单位置注册（header/footer 等），后台可视化拖拽管理
-- 详见 [菜单管理](../admin/menus.md)
+主题声明 `header`、`footer` 等命名位置。Core 负责存储菜单、构建嵌套菜单
+树、通过 Rewrite 注册表解析内容关联 URL，并暴露位置解析 Hook 供语言菜单
+分配等通用扩展使用。
 
-## 全局设置
+## 全局选项
 
-- **启动时加载到内存** — `Options.Get()` 零数据库查询
-- admin「系统设置 > 网站设置」`site_name` / `site_description` 是全主题统一的"WordPress blogname / blogdescription"等价物
+Options Repository 保存站点设置、主题设置、插件设置及主题/插件启用状态。
+组件可注册需要翻译的 option key，运行时统一通过 core option 与 i18n helper
+读取。
 
-## 国际化（i18n）
+## 国际化
 
-- **核心 i18n 系统** — `core/i18n` Manager + go-i18n 引擎，`T()` 模板函数，3 层翻译回退（DB → locale 文件 → message ID）
-- **Translatable 注册表** — `core/option` 提供 `RegisterTranslatable`，主题设置项无耦合翻译
-- `current_lang` 作为 ctx key 由核心统一持有，`langPrefixURL` / `currentLang` / `T` / `renderHook` 均走 `BaseFuncMap` 下发，主题和插件对接点只有字符串 key，无类型耦合
-- 详见 [缓存与 i18n](caching-and-i18n.md) 中的 i18n 段
+Core i18n Manager 加载核心、主题和插件 locale 文件，并向模板提供 `T`
+helper。可选的数据库翻译可覆盖 UI 字符串、主题设置和网站设置，同时不引入
+主题与插件之间的直接依赖。
 
-## Demo 数据
+## 演示数据
 
-- **DemoDataProvider 接口** — 主题实现该接口，后台一键导入演示数据（含远程图片下载 + 媒体库注册）
+主题可通过 `DemoDataProvider` 暴露 TOML seed 路径。导入器负责创建内容、
+Meta、分类关系和引用媒体，并记录该主题是否已经导入过演示数据。
 
 ## 数据库表前缀
 
-借鉴 WordPress 的 `wp_` 前缀机制，GoPress 内置完整的表前缀系统：
+所有表都使用当前站点配置的前缀。Core、插件和主题的表名 helper 还会编码
+所有权，使多个 GoPress 实例可以安全共享同一个 PostgreSQL 数据库。详见
+[数据库表前缀](../reference/database-prefix.md)。
 
-- **可配置前缀** — 默认 `gp_`，通过 `pg.table_prefix` 自定义，Web 安装器中可设置
-- **核心表** — `gp_contents`、`gp_users`、`gp_options`、`gp_media_variants` 等
-- **插件表** — 带 `plgn_` 中缀隔离：`gp_plgn_multilang_translations`
-- **主题表** — 带 `thm_` 中缀隔离：`gp_thm_financial-news_tickers`
-- **表注册表** — `core.RegisterPluginTable()` / `core.RegisterThemeTable()` 追踪所有表的归属，支持按 Owner 查询
-- **双重保障** — Model `TableName()` + GORM `NamingStrategy` 双重机制确保表名正确
+## 运行时边界
 
-详见 [数据库表前缀](../reference/database-prefix.md)。
+GoPress 明确保持以下依赖方向：
+
+- Core 拥有共享服务、数据模型、授权与扩展契约。
+- 主题依赖 core 契约并负责呈现，不能 import 插件。
+- 插件依赖 core 契约，通过 Hook、Provider、中间件、路由和设置页贡献行为，
+  不能 import 主题。
+- 主题可以在 `theme.toml` 声明模块级插件依赖，但运行时实现仍只能通过
+  core 的通用 API 协作。

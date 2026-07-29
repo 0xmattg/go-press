@@ -38,10 +38,8 @@ func New(engine *core.Engine, themeDir string) *MyTheme {
     return t
 }
 
-func (t *MyTheme) Name() string        { return "My Theme" }
-func (t *MyTheme) Version() string     { return "1.0.0" }
-func (t *MyTheme) Description() string { return "My custom theme" }
-func (t *MyTheme) Author() string      { return "Me" }
+// Name / Version / Description / Author 由内嵌 BaseTheme 从 theme.toml 解析，
+// 不要在 Go 中再手写一份。
 
 // Setup 只放主题运行时初始化，例如菜单位置、可翻译设置键、自定义 hook。
 // 内容类型由 theme.toml 的 [[content_types]] 声明，core 在激活主题时自动注册。
@@ -98,6 +96,10 @@ label = "顶部导航"
 ```
 
 `menu_icon` 使用 admin 内置图标 key（例如 `blocks` / `edit` / `collection` / `post` / `contact_message` / `media`），也可以传入完整 SVG 字符串。`post` 和 `contact_message` 是核心内容类型，主题不应在 `theme.toml` 中重新声明。
+
+主题版本必须是合法 semver。`BaseTheme` 会解析 `[theme]` 并实现 `Name`、
+`Version`、`Description`、`Author`；主题不要在 Go 方法中重复这些值，确保
+后台卡片和依赖校验都以 `theme.toml` 为唯一来源。
 
 `product` 只是一个常见示例，不是 core 的固定假设。主题可以声明 `module`、`project`、`case_study`、`destination` 等任意业务内容类型。
 
@@ -181,11 +183,14 @@ archive
 ```gotemplate
 <a href="{{archiveURL "product"}}">产品</a>
 <a href="{{contentURL . "product"}}">{{.Title}}</a>
+<a href="{{taxonomyURL "category" .Slug}}">{{.Name}}</a>
 ```
 
-`archiveURL` 和 `contentURL` 会读取 Rewrite 注册表；后续把 `rewrite_slug = "products"` 改成 `catalog` 时，模板不需要跟着硬改。
+`archiveURL`、`contentURL` 和 `taxonomyURL` 会读取 Rewrite 注册表；后续把 `rewrite_slug = "products"` 改成 `catalog` 时，模板不需要跟着硬改。
 
 动态归档页也会识别该内容类型声明过的 taxonomy query 参数。例如 `post` 声明了 `taxonomies = ["category", "tag"]` 时，`/blog?category=industry-news` 和 `/blog?tag=cleanroom` 会应用对应过滤；未挂载到该内容类型的 taxonomy query 会被忽略。
+
+上述查询参数应只作为兼容入口或不参与索引的界面筛选。可索引的 term 落地页必须使用 `taxonomyURL`，并按需套用 `langPrefixURL`，让站内链接、taxonomy canonical 与 sitemap 统一指向 `/category/{term}` 或 `/tag/{term}`。
 
 导航当前页状态同样应走 core helper，让模板只关心菜单 URL，不关心业务内容类型名或菜单标题：
 
@@ -391,8 +396,10 @@ func (t *MyTheme) ServeHTTP(c *gin.Context) {
 类型安全和 BaseTheme 不冲突——可以用 `BaseTheme + gin.H` 的路由 / SEO，同时把内部数据写成类型化切片塞进 map：
 
 ```go
-data := b.buildBaseData("Products")
-data["Products"] = productViews  // []ProductView，模板里照样有字段提示
+data := gin.H{
+    "Title":    "Products",
+    "Products": productViews, // []ProductView，模板里照样有字段提示
+}
 ```
 
 这样既享受框架级免维护，又保留了模板里的智能提示。

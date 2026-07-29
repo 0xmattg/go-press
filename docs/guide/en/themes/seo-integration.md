@@ -54,7 +54,7 @@ For archive pages, set `archive_title_key` on `[[content_types]]` when the front
 ```toml
 [[content_types]]
 name = "service"
-label_plural = "服务列表"
+label_plural = "Services"
 archive_title_key = "page_title_service"
 rewrite_slug = "services"
 ```
@@ -131,8 +131,32 @@ All bundled themes now embed the shared scaffolding:
 |---|---|---|
 | `atelier-slate`, `civic-estate`, `florafi`, `terra-trail`, `axis-form` | `coreTheme.BasePageService` | Archive / single injected by BaseTheme; custom pages use `gin.H` |
 | `modern-company`, `financial-news` | `coreTheme.SEOPageService` | Inherited `BuildHomeSEO` / `BuildArchiveSEO` / `BuildContentSEO` |
+| `mono-journal` | `coreTheme.SEOPageService` | Inherited request-aware SEO plus theme-owned account/comment pages |
 | `go-press-landing` | `coreTheme.BasePageService` + own `buildHomeSEO` | Single page, non-request `ApplySiteOptionOverridesFromOptions` |
+
+## Type Safety and Framework Maintenance
+
+BaseTheme and typed view models are compatible. A theme can keep core routing
+and SEO while placing typed slices or structs inside `gin.H` for template field
+checks. When a fully typed page-data object is preferable, embed the shared page
+service scaffolding and add only theme-specific view assembly.
+
+Avoid copying site-option override, archive-title localization, scoped query, or
+per-content filter logic into a theme. Those pipelines evolve in core, and the
+shared service is how themes receive fixes without repeated edits.
 
 ## Per-content SEO
 
 Activate the `seo-extras` plugin when editors need per-content SEO title, description, Open Graph image, or robots overrides. Themes that follow the contracts above receive those values automatically.
+
+The plugin composes three generic extension points:
+
+```text
+admin.content_form.fields -> render optional fields
+admin.content.saved       -> persist plugin-owned metadata
+seo.content.meta          -> transform SEOMeta after core defaults
+```
+
+Other SEO plugins can subscribe to the same metadata filter at a chosen
+priority. They should remain additive and provider-neutral rather than
+importing a theme or replacing its complete `<head>`.

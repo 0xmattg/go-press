@@ -37,6 +37,10 @@ curl http://localhost:8080/api/v1/content \
   -H "X-API-Key: <key>"
 ```
 
+Authentication does not replace authorization. Every protected handler must
+check the capability for its operation, and a resource ID from a path, query,
+or JSON body must be validated for type, scope, and ownership.
+
 ## Common Query Parameters
 
 The public REST API only exposes content types with a public archive and only
@@ -63,3 +67,29 @@ go run ./cmd/gendoc
 ```
 
 The command updates `docs/docs.go`, `docs/swagger.json`, and `docs/swagger.yaml`.
+
+## Handler Annotations
+
+```go
+// @Summary     List content items
+// @Tags        Content
+// @Param       page query int false "Page number" default(1)
+// @Param       per_page query int false "Items per page" default(20)
+// @Success     200 {object} response{data=[]contentDTO}
+// @Failure     400 {object} errorResponse
+// @Router      /content [get]
+func (h *Handler) ListContent(c *gin.Context) { ... }
+```
+
+`cmd/gendoc` scans handler annotations and regenerates the checked-in OpenAPI
+artifacts.
+
+## Documentation Outputs
+
+The guide and API specification are separate products:
+
+- `docs/guide/` contains the bilingual Markdown documentation.
+- `docs/docs.go`, `docs/swagger.json`, and `docs/swagger.yaml` contain the
+  generated Swagger package and OpenAPI definitions.
+
+Updating one does not silently regenerate the other.

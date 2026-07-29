@@ -12,7 +12,7 @@ GoPress 的主题系统借鉴 WordPress 设计：主题是一个 Go 包，通过
 - **Theme 接口** — 实现 `Name()` / `Setup()` / `ServeHTTP()` / `TemplateFuncs()` 即可
 - **App 接口** — 主题通过 `theme.App` 接口访问 DB、ContentRepo、RewriteEngine、SEOBuilder、MediaRepo、HookBus、SiteLocation 等引擎能力
 - **模板层级回退** — 类 WordPress 的模板查找：`single-{type}-{slug}.tmpl` → `single-{type}.tmpl` → `single.tmpl` → `index.tmpl`
-- **统一模板函数（Single-Source FuncMap）** — `CommonFuncMap()` + BaseTheme 的引擎感知 helpers（`buildURL`、`archiveURL`、`contentURL`、`pageTitleFor`、`seoHeadFor`、`seoHead`、`menuByLocation`、`isMenuURLActive`、`formatDate`、`formatDateTime`、`T`、`currentLang`、`langPrefixURL`、`renderHook`、`responsiveImage`、`responsiveImagePriority`、`responsiveImagePreload`）通过 `BaseFuncMap()` 统一下发。**所有主题、所有模板加载路径共享同一份 funcmap**。`formatDate` / `formatDateTime` 会按 `site_timezone` 展示内容时间；`isMenuActive` 仅保留给旧主题兼容，新主题应使用请求感知的 `isMenuURLActive`
+- **统一模板函数（Single-Source FuncMap）** — `CommonFuncMap()` + BaseTheme 的引擎感知 helpers（`buildURL`、`archiveURL`、`contentURL`、`taxonomyURL`、`pageTitleFor`、`seoHeadFor`、`seoHead`、`menuByLocation`、`isMenuURLActive`、`formatDate`、`formatDateTime`、`T`、`currentLang`、`langPrefixURL`、`renderHook`、`responsiveImage`、`responsiveImagePriority`、`responsiveImagePreload`）通过 `BaseFuncMap()` 统一下发。**所有主题、所有模板加载路径共享同一份 funcmap**。`formatDate` / `formatDateTime` 会按 `site_timezone` 展示内容时间；`isMenuActive` 仅保留给旧主题兼容，新主题应使用请求感知的 `isMenuURLActive`
 - **前台模板 Hook 插槽** — 主题在语义位置声明 `{{renderHook "theme.head.end" .}}` / `{{renderHook "theme.body.open" .}}` / `{{renderHook "theme.footer.end" .}}` / `{{renderHook "header.nav.after" .}}` 等标准插槽，插件注册同名 filter 输出 HTML
 - **LoadPageBundle 核心级页面模板编译器** — `core/theme/page_bundle.go` 提供 `LoadPageBundle(theme, pages)` 和 `LoadAllPageBundles(theme)`：自动发现 `layouts/base.tmpl` + `partials/*.tmpl` + `pages/*.tmpl`，对每个页面独立编译（允许不同页面重新定义同名 block）
 - **自定义路由 + 动态路由** — 静态页面（`/about`）通过 `AddRoute()` 注册，动态 URL（例如主题声明的 `product` 对应 `/products/:slug`）由 Rewrite 引擎按当前内容类型配置自动解析；`product` / `service` / `showcase` 只是常见示例，不是 core 固定模型
@@ -135,6 +135,7 @@ e.Hooks.RemoveFilter(handle)
 | **terra-trail** | Terra Trail | 户外旅行 | BaseTheme + gin.H | 完整 |
 | **axis-form** | Axis Form | 建筑设计 / 室内作品集 | BaseTheme + gin.H | 完整 |
 | **go-press-landing** | GoPress Landing | SaaS Landing | 自定义 PageData struct | 完整 |
+| **mono-journal** | Mono Journal | 个人博客 / 随笔 | `coreTheme.SEOPageService` | 完整 |
 
 上表「渲染方式」列里的「自定义 PageData struct」主题，其 `PageService` 现在都嵌入 core 的共享脚手架（`coreTheme.BasePageService`，需要 SEO 的用 `coreTheme.SEOPageService`），不再各自复制数据访问与 SEO 管道。新主题若想要类型安全的数据装配，直接嵌入这两个之一即可，成本很低；只想快速起步则走 [BaseTheme + gin.H 路径](seo-integration.md)。
 
@@ -143,6 +144,13 @@ e.Hooks.RemoveFilter(handle)
 主题可以通过 core 提供的 `currentUser`、`isLoggedIn`、`loginURL`、`logoutURL` 和 `loginProviders` helper 渲染与 Provider 无关的账号界面。主题负责决定账号入口的布局和视觉，但不能 import 或特判 Google Identity、MetaMask Identity 等插件。
 
 主题应通过 `loginProviders` 发现当前启用的登录方式，并使用 core 发布的 Provider 登录入口。模板示例、页面缓存和安全注意事项见[前台账号与外部身份登录](../architecture/public-authentication.md#主题接入)。
+
+## 主题与插件边界
+
+主题负责呈现，插件通过稳定的 core Hook、Filter、funcmap 和 capability
+贡献行为；双方不能 import 对方、读取对方私有 option key 或依赖实现类名。
+主题可以在 `theme.toml` 声明模块级插件依赖，但运行时代码仍只使用 core
+通用扩展点。
 
 ## 下一步
 

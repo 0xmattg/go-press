@@ -16,7 +16,7 @@ core/menu/
 
 | 功能 | 说明 |
 |------|------|
-| **位置注册** | 主题通过 `app.MenuStore().RegisterLocation("header", "顶部导航")` 声明可用位置 |
+| **位置注册** | 主题优先通过 `theme.toml` 的 `[[menu_locations]]` 声明可用位置 |
 | **树形结构** | 菜单项支持任意层级嵌套（ParentID → Children），自动构建树 |
 | **内存缓存** | `LoadAll()` 启动时加载全部菜单到内存，`GetByLocation()` 零 DB 查询 |
 | **内容关联** | 菜单项可关联 `ContentID`，URL 自动解析为对应内容的永久链接 |
@@ -25,14 +25,21 @@ core/menu/
 
 ## 主题中使用菜单
 
-主题在 `Setup()` 中注册需要的菜单位置：
+主题优先在 `theme.toml` 中声明菜单位置，使 core 在运行时 Setup 之前就能检查
+并展示这些位置：
 
-```go
-func (t *MyTheme) Setup(app coreTheme.App) {
-    app.MenuStore().RegisterLocation("header", "顶部导航")
-    app.MenuStore().RegisterLocation("footer", "底部导航")
-}
+```toml
+[[menu_locations]]
+name = "header"
+label = "顶部导航"
+
+[[menu_locations]]
+name = "footer"
+label = "底部导航"
 ```
+
+确需动态位置或兼容旧主题时，仍可在 `Setup()` 调用
+`app.MenuStore().RegisterLocation(name, label)`，但不要与 manifest 重复声明。
 
 模板中渲染：
 

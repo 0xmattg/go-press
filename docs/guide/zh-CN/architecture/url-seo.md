@@ -1,6 +1,8 @@
 # URL 与 SEO
 
-GoPress 把 SEO 相关能力内建在引擎层，主题和插件**不需要**自己重新实现 canonical / og:* / sitemap 这些。
+GoPress 把 URL 与 SEO 元数据作为框架级能力：主题负责模板和内容呈现，core
+统一拥有 Rewrite 解析、canonical、Sitemap、重定向和 SEO 元数据装配。主题
+和插件**不需要**自己重新实现 canonical / og:* / sitemap。
 
 ## URL 解析
 
@@ -31,12 +33,15 @@ templates = { archive = "products", single = "product-detail" }
 
 ## SEO Meta
 
-核心 `SEOBuilder` 为 home / archive / single 三类页面统一生成：
+核心 `SEOBuilder` 为 home / archive / single / taxonomy 四类页面统一生成：
 
 - `<meta description>`
 - `<link rel="canonical">`
 - `og:title` / `og:description` / `og:image` / `og:type`
 - JSON-LD（Article / WebSite schema）
+
+Taxonomy 归档会生成独立的自引用 canonical。请求感知 SEO 渲染还会在非默认
+语言下保留当前语言前缀，使 canonical 与页面实际 URL 一致。
 
 主题模板用 `{{seoHeadFor .}}` 一键渲染所有标签。详见 [主题 SEO 接入规范](../themes/seo-integration.md)。
 
@@ -64,6 +69,10 @@ templates = { archive = "products", single = "product-detail" }
 ```gotemplate
 {{archiveURL "module"}}
 {{contentURL . "module"}}
+{{taxonomyURL "category" .Slug}}
 ```
 
-`archiveURL` 返回当前内容类型归档 URL；`contentURL` 优先使用 item 上已有的 `URL` 字段，否则按 item 的 `Type` / `Slug` 和 Rewrite 注册表构造 URL，并以传入的 fallback type 兜底。
+`archiveURL` 返回当前内容类型归档 URL；`contentURL` 优先使用 item 上已有的 `URL` 字段，否则按 item 的 `Type` / `Slug` 和 Rewrite 注册表构造 URL，并以传入的 fallback type 兜底；`taxonomyURL` 生成站内链接和 sitemap 共用的规范 term 归档路径。
+
+`taxonomyURL` 应作为可索引 term 链接的统一来源；query-string taxonomy
+过滤只用于兼容入口或界面筛选，避免 canonical、站内链接与 Sitemap 分裂。

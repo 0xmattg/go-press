@@ -101,6 +101,7 @@ func CommonFuncMap() template.FuncMap {
 			}
 			return "/" + strings.Trim(contentType, "/")
 		},
+		"taxonomyURL": rewrite.BuildTaxonomyURL,
 		"contentURL": func(item interface{}, fallbackType string) string {
 			if url := stringField(item, "URL"); url != "" {
 				return url
