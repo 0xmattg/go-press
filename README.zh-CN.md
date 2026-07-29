@@ -41,6 +41,12 @@ GoPress 当前处于 **beta** 阶段。核心内容模型、后台管理、主�
 | 定时任务 | 常见方案包括 WP-Cron 或系统 Cron | 由服务进程内的调度器执行 |
 | 部署形态 | Web Server、PHP 运行时、数据库等多组件协作 | 编译后以单一服务进程交付，外接数据库与可选 Redis |
 
+## 顶层架构
+
+GoPress 将公开站点交付、后台工作流、REST / OpenAPI、内容服务与治理能力组织在同一个编译后的 Go 运行时中。主题通过通用核心扩展契约提供呈现能力，插件通过同一契约提供业务能力，二者不在运行时直接耦合；PostgreSQL、可选 Redis、媒体资源、Worker 与调度共同构成运行时基础。
+
+![GoPress 顶层平台架构图](docs/resources/architecture/gopress-arch.png)
+
 ## 核心设计原则
 
 1. **内容优先** — 以统一的 `Content + Meta` 模型承载文章、联系留言，以及主题声明的自定义内容类型。

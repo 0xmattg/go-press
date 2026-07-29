@@ -41,6 +41,12 @@ The comparison below is not meant to rank technology stacks. It describes the de
 | Scheduled work | Commonly handled through WP-Cron or system cron | Process-owned scheduler and worker pool |
 | Deployment shape | Web server, PHP runtime, database, and optional cache services | Compiled Go service plus database and optional Redis |
 
+## Architecture At A Glance
+
+GoPress brings public delivery, admin workflows, REST / OpenAPI, content services, and governance into one compiled Go runtime. Themes contribute presentation and plugins contribute capabilities through the generic core extension contract rather than direct runtime coupling, while PostgreSQL, optional Redis, media assets, workers, and scheduling form the runtime foundation.
+
+![GoPress top-level platform architecture](docs/resources/architecture/gopress-arch.png)
+
 ## Design Principles
 
 1. **Content first** — a unified `Content + Meta` model supports posts, contact messages, and theme-declared custom content types.
