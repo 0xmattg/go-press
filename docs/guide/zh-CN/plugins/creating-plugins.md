@@ -74,13 +74,29 @@ func init() {
 
 ```toml
 [plugin]
+slug = "my-plugin"
 name = "My Plugin"
 version = "1.0.0"
 description = "插件简介"
 author = "Me"
 ```
 
-保留字段后续可能扩展（例如依赖声明、兼容版本范围）；目前请坚守 `[plugin]` 顶层表，方便向前兼容。
+`slug` 是 `Name()` 返回的运行时标识，也是主题声明依赖时使用的值。
+`version` 必须是合法 semver，并且是唯一版本来源：插件应嵌入并解析
+`plugin.toml`，`Version()` 返回解析结果，不要再在 Go 中手写一份版本号。
+
+```go
+import (
+    _ "embed"
+
+    "go-press/core/plugin"
+)
+
+//go:embed plugin.toml
+var pluginTOML string
+
+var pluginMeta = plugin.ParseMetaString(pluginTOML)
+```
 
 ## Plugin 接口可选扩展
 

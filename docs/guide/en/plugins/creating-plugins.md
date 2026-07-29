@@ -10,40 +10,49 @@ package myplugin
 
 import (
     "go-press/core"
-    corePlugin "go-press/core/plugin"
+    "go-press/core/hook"
+    "go-press/core/plugin"
 )
-
-func init() {
-    core.RegisterPlugin("my-plugin", func(engine *core.Engine) corePlugin.Plugin {
-        return New(engine)
-    })
-}
 
 type Plugin struct {
     engine *core.Engine
-    hooks  []core.HookHandle
+    hooks  []hook.Handle
 }
 
-func New(engine *core.Engine) *Plugin {
-    return &Plugin{engine: engine}
-}
+func New() *Plugin { return &Plugin{} }
 
 func (p *Plugin) Name() string        { return "my-plugin" }
-func (p *Plugin) Version() string     { return "1.0.0" }
+func (p *Plugin) Version() string     { return pluginMeta.Version }
 func (p *Plugin) Description() string { return "Example plugin" }
 
-func (p *Plugin) Activate() error {
-    handle := p.engine.Hooks.AddFilter("theme.footer.end", p.renderFooter, 10)
+func (p *Plugin) Activate(app plugin.App) {
+    engine, ok := app.(*core.Engine)
+    if !ok {
+        return
+    }
+    p.engine = engine
+    handle := engine.Hooks.AddFilter("theme.footer.end", p.renderFooter, 10)
     p.hooks = append(p.hooks, handle)
-    return nil
 }
 
-func (p *Plugin) Deactivate() error {
+func (p *Plugin) Deactivate(_ plugin.App) {
     for _, handle := range p.hooks {
         p.engine.Hooks.RemoveFilter(handle)
     }
     p.hooks = nil
-    return nil
+}
+```
+
+```go
+// plugins/my-plugin/register.go
+package myplugin
+
+import "go-press/core"
+
+func init() {
+    core.RegisterPlugin("my-plugin", func(engine *core.Engine) {
+        engine.LoadPlugin(New())
+    })
 }
 ```
 
@@ -55,13 +64,30 @@ Every plugin must ship a `plugin.toml` at its root — it both serves as the aut
 
 ```toml
 [plugin]
+slug = "my-plugin"
 name = "My Plugin"
 version = "1.0.0"
 description = "Short summary of what the plugin does."
 author = "Me"
 ```
 
-Reserved keys may grow over time (for example dependency declarations or compatibility ranges); keep your file forward-compatible by sticking to the `[plugin]` table for now.
+`slug` is the runtime identity returned by `Name()` and used by theme dependency
+declarations. `version` must be valid semver and is the single source of truth:
+embed and parse `plugin.toml`, then return the parsed value from `Version()`
+instead of writing the version again in Go.
+
+```go
+import (
+    _ "embed"
+
+    "go-press/core/plugin"
+)
+
+//go:embed plugin.toml
+var pluginTOML string
+
+var pluginMeta = plugin.ParseMetaString(pluginTOML)
+```
 
 ## Plugin Data
 
@@ -103,6 +129,28 @@ Use standard theme hook slots:
 - `header.nav.after`
 
 The plugin output must match the semantic location. For example, `header.nav.after` should normally output navigation list items, not a floating widget.
+
+## Request-level Content Filtering
+
+Extensions that implement language, visibility, tenant, or preview rules should
+register a request-local scope through `content.AddContentScope` in
+`middleware.early`. Core repositories, BaseTheme, custom `PageService` clones,
+and scoped admin lists can then consume the condition without plugin-specific
+code. See the [Content Scope API](../architecture/content-scope.md).
+
+## Common Hooks
+
+| Hook | Type | Purpose |
+|---|---|---|
+| `engine.init` | action | Run after bootstrap. |
+| `middleware.early` | action | Register middleware before page cache. |
+| `routes.register` | action | Register routes before the frontend catch-all. |
+| `admin.content_form.fields` | filter | Add content-editor fields. |
+| `admin.content.saved` | action | Persist extension-owned values after content save. |
+| `admin.dashboard.widgets` | filter | Add a trusted, permission-aware dashboard widget. |
+| `seo.content.meta` | filter | Transform per-content SEO metadata. |
+| `theme.head.end`, `theme.body.open`, `theme.footer.end` | filter | Contribute frontend markup at semantic slots. |
+| `header.nav.after` | filter | Add a primary-navigation item. |
 
 ## Identity Provider Plugins
 

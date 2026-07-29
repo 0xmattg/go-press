@@ -185,6 +185,7 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 		if rw != nil {
 			engineFuncs["buildURL"] = rw.BuildURL
 			engineFuncs["archiveURL"] = rw.BuildArchiveURL
+			engineFuncs["taxonomyURL"] = rw.BuildTaxonomyURL
 			engineFuncs["contentURL"] = func(item interface{}, fallbackType string) string {
 				if url := stringField(item, "URL"); url != "" {
 					return url
@@ -332,31 +333,7 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 			// (no prefix for the default language). Themes use this for SEO-clean
 			// internal links like /zh/products/xxx so the language stays consistent.
 			engineFuncs["langPrefixURL"] = func(c *gin.Context, path string) string {
-				if path == "" {
-					return path
-				}
-				if !isLanguagePrefixableURL(path) {
-					return path
-				}
-				defLang := i18nMgr.DefaultLang()
-				lang := defLang
-				if c != nil {
-					if v, ok := c.Get("current_lang"); ok {
-						if s, ok := v.(string); ok && s != "" {
-							lang = s
-						}
-					}
-				}
-				if lang == defLang {
-					return path
-				}
-				if path[0] != '/' {
-					path = "/" + path
-				}
-				if path == "/" {
-					return "/" + lang + "/"
-				}
-				return "/" + lang + path
+				return LanguagePrefixURL(c, i18nMgr, path)
 			}
 		}
 	}
@@ -743,6 +720,14 @@ func (b *BaseTheme) renderTaxonomy(c *gin.Context, route *rewrite.ResolvedRoute)
 	data["TaxLabel"] = taxLabel
 	data["TermName"] = termName
 	data["Items"] = b.taxonomyArchiveViews(c, items)
+
+	// Taxonomy archives are canonical landing pages, not filtered variants of
+	// a content-type archive. Give each term its own indexable SEO identity.
+	if b.App.SEOBuilder() != nil {
+		seo := b.App.SEOBuilder().ForTaxonomy(route.TaxSlug, termName, route.TermSlug)
+		ApplySiteOptionOverridesForRequest(c, b.App, &seo)
+		data["SEO"] = seo
+	}
 
 	// If theme has a template, use it (with "base" block)
 	if pageTmpl != nil {
@@ -1222,7 +1207,11 @@ func ApplySiteOptionOverridesFromOptions(opts interface{ Get(string) string }, b
 // ApplySiteOptionOverridesFromOptionsForRequest applies runtime site options to
 // SEO metadata after translating system site options for the current request.
 func ApplySiteOptionOverridesFromOptionsForRequest(c *gin.Context, opts interface{ Get(string) string }, mgr *coreI18n.Manager, builder *rewrite.SEOBuilder, seo *rewrite.SEOMeta) {
-	if opts == nil || seo == nil {
+	if seo == nil {
+		return
+	}
+	seo.CanonicalURL = canonicalURLForRequest(c, mgr, seo.CanonicalURL)
+	if opts == nil {
 		return
 	}
 
@@ -1398,4 +1387,51 @@ func isLanguagePrefixableURL(raw string) bool {
 		return false
 	}
 	return true
+}
+
+// LanguagePrefixURL prepends the active non-default request language to a
+// local URL. It is shared by templates and theme-owned redirects so both emit
+// the same multilingual URL shape.
+func LanguagePrefixURL(c *gin.Context, mgr *coreI18n.Manager, path string) string {
+	if path == "" || mgr == nil || !isLanguagePrefixableURL(path) {
+		return path
+	}
+	defLang := mgr.DefaultLang()
+	lang := defLang
+	if c != nil {
+		if v, ok := c.Get(coreI18n.CtxKeyLang); ok {
+			if s, ok := v.(string); ok && s != "" {
+				lang = s
+			}
+		}
+	}
+	if lang == defLang {
+		return path
+	}
+	if path[0] != '/' {
+		path = "/" + path
+	}
+	if path == "/" {
+		return "/" + lang + "/"
+	}
+	if path == "/"+lang || strings.HasPrefix(path, "/"+lang+"/") {
+		return path
+	}
+	return "/" + lang + path
+}
+
+func canonicalURLForRequest(c *gin.Context, mgr *coreI18n.Manager, raw string) string {
+	if raw == "" || mgr == nil {
+		return raw
+	}
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		return raw
+	}
+	prefixed := LanguagePrefixURL(c, mgr, parsed.Path)
+	if prefixed == parsed.Path {
+		return raw
+	}
+	parsed.Path = prefixed
+	return parsed.String()
 }

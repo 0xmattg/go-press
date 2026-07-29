@@ -1,35 +1,97 @@
 # Caching and i18n
 
-GoPress includes cache and internationalization as core services because both affect routes, templates, admin labels, plugin settings, and frontend rendering.
+GoPress treats cache and internationalization as core services because both
+affect routes, templates, admin labels, settings, SEO, and frontend rendering.
 
-## Cache Layers
+## Multi-level Cache
 
-| Layer | Role |
-|---|---|
-| L1 memory cache | Fast in-process cache for hot data and page output. |
-| L2 Redis cache | Optional shared cache for multi-process or multi-node deployments. |
-| Database | Source of truth for content, options, menus, media, and plugin data. |
+| Layer | Medium | Role |
+|---|---|---|
+| L1 | In-process LRU | Hot data with no network round trip. |
+| L2 | Optional Redis | Shared cache for multi-process or multi-node deployments. |
+| Full page | Reuses L1 and L2 | Returns complete HTML before theme rendering on a hit. |
+| Database | PostgreSQL | Source of truth for content, options, menus, media, and extension data. |
 
-When Redis is unavailable or not configured, the system continues with memory cache and database access.
+Cache keys include the language dimension so translated pages never share HTML
+entries. Content writes, menu updates, settings changes, theme switches, and
+plugin activation changes invalidate the corresponding tags or cache paths. The
+admin cache page also provides manual all-cache, page-cache, and fragment-cache
+operations.
 
-## Cache Invalidation
+Redis is optional. When it is missing or unavailable, GoPress continues with the
+in-process cache and database rather than making the site unavailable.
 
-Admin writes, theme switching, plugin activation, menu changes, and selected settings updates clear relevant cache paths. The cache admin page also provides manual operations for clearing all cache, page cache, or fragment cache.
+## Core i18n Architecture
 
-## Core i18n
+Core owns localization primitives; an optional multilingual plugin contributes
+database overrides and management UI through public contracts:
 
-The core i18n manager loads locale files and exposes translation helpers to admin templates, installer templates, theme templates, and plugins. It supports fallback behavior so missing keys do not break the page.
+```text
+core/i18n.Manager
+  -> load core, plugin, and theme locale files
+  -> T(ctx, key)
+  -> TranslateOption / TranslateSettings
 
-## Language Scope
+core/option registry
+  -> RegisterTranslatable(key, section, label)
+  -> IsTranslatable / AllTranslatableKeys
 
-The multilingual plugin adds content-language scoping through the Content Scope API. Core remains language-aware but does not directly depend on the plugin. This allows a site to run as a single-language CMS or as a multilingual CMS with the same theme and admin surface.
+resolution priority
+  1. database StringTranslation override
+     domain="theme" for UI; domain="option" for settings
+  2. component locale file
+  3. original message ID
+```
 
-Templates should use core URL helpers so language prefixing and rewrite slugs stay aligned:
+This fallback chain keeps a page usable when a translation is incomplete. Core
+remains a complete single-language CMS when no plugin supplies database
+translations.
+
+### UI Strings
+
+Themes place JSON messages under `locales/` and use `{{T .Ctx "welcome"}}` in
+templates. A multilingual extension may add or override messages in the
+database without editing theme files.
+
+### Translatable Settings
+
+Themes register copy-oriented option keys such as hero headings or About text.
+Core translates only registered keys when rendering the settings map:
+
+```go
+func registerTranslatableOptions() {
+    option.RegisterTranslatable("home_hero_title", "hero", "Hero title")
+    option.RegisterTranslatable("home_about_title", "about", "About title")
+}
+
+func (p *PageData) TranslateSettings(c *gin.Context, manager *i18n.Manager) {
+    p.Settings = manager.TranslateSettings(
+        c, p.Settings, option.IsTranslatable, option.AllTranslatableKeys())
+}
+```
+
+### Template Helpers
 
 ```gotemplate
+{{T .Ctx "welcome"}}
+{{currentLang .Ctx}}
 {{langPrefixURL .Ctx "/about"}}
 {{archiveURL "product"}}
 {{contentURL . "product"}}
+{{taxonomyURL "category" .Slug}}
 ```
 
-`product` is only an example content type. `archiveURL` and `contentURL` read the current rewrite registry, so custom types and changed `rewrite_slug` values do not require hard-coded template link updates.
+`product` is only an example theme-defined type. The URL helpers consult the
+rewrite registry, so custom type names and changed `rewrite_slug` values do not
+require hard-coded link changes.
+
+## Language Scope
+
+A multilingual plugin can add language-aware queries through the generic
+[Content Scope API](content-scope.md), resolve per-language menus through menu
+hooks, and add URL prefixes through core helpers. Core and themes do not import
+or inspect that plugin; without it, the same APIs retain single-language
+behavior.
+
+See the [Multilingual Plugin](../plugins/multilang.md) for content translation,
+menu assignment, URL detection, and language-switching behavior.

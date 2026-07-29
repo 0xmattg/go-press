@@ -2,66 +2,51 @@
 
 ## 已完成里程碑
 
-- [x] 引擎骨架 + 数据基础 (Phase 1)
-- [x] 内容系统核心 (Phase 2)
-- [x] 用户 + 选项 + 菜单 (Phase 3)
-- [x] Hook + Cache + Worker (Phase 4)
-- [x] URL / SEO / REST API (Phase 5)
-- [x] 主题引擎 + 后台 CMS (Phase 6)
-- [x] modern-company + financial-news 主题 (Phase 7)
-- [x] Web 安装器（引导配置 + 热切换）
-- [x] BaseTheme 运行时引擎（Rewrite 解析 + 模板层级 + SEO 注入）
-- [x] Admin RBAC 权限加固（全后台页面权限检查）
-- [x] API 双认证（JWT + API Key）
-- [x] 主题热切换路由自动重建
-- [x] 数据库表前缀系统（核心/插件/主题表隔离 + 表注册表）
-- [x] 富文本编辑器（Quill 2.0）+ 媒体选择器
-- [x] Demo 数据导入（DemoDataProvider 接口，图片自动下载 + 媒体注册）
-- [x] 核心内容类型 post/contact_message/category/tag（跨主题切换保留）
-- [x] 主题内容类型配置化（`theme.toml` 的 `[[content_types]]` 驱动后台菜单、CRUD、REST API、Rewrite、模板映射和图标）
-- [x] 分类归档页（跨类型聚合 + 类型标签徽章 + 主题类型过滤）
-- [x] 内置回退模板（分类/单页/列表，主题未提供时自动回退）
-- [x] 详情页标签展示（任意挂载 tag 的内容详情页显示关联 Tags）
-- [x] Sitemap 增强（含分类法 URL + 后台一键生成按钮）
-- [x] 请求级内容过滤 API（`content.AddContentScope` / `content.ScopedDB`，插件/主题完全解耦）
-- [x] WPML-like 多语言插件（内容翻译 + 菜单翻译 + 语言前缀路由 + 智能语言切换 + 翻译管理后台）
-- [x] 菜单管理系统（Menu + Item 树形结构 + 位置注册 + 后台可视化管理）
-- [x] 菜单语言分配（按位置为每种语言分配独立菜单，通过 `menu.location.resolve` 透明切换 + URL 重写）
-- [x] 插件设置系统（`SettingsProvider` / `SettingsDataProvider` / `SettingsSaveProvider` 接口）
-- [x] 内容状态管理（published/draft/archived + 后台状态选择器 + 列表状态徽章）
-- [x] 核心 i18n 系统（`core/i18n` Manager + go-i18n + 3 层翻译回退 + `T()` 模板函数）
-- [x] 主题设置翻译（`core/option` Translatable 注册表 + `TranslateSettings` + `_opt.` 前缀 + 管理后台）
-- [x] 后台内容列表过滤 Tab（`admin.HookContentListTabs` filter + `ContentListTab` 抽象，多语言插件注入语言 Tab + 计数徽章）
-- [x] 内容列表拖拽排序（`sort_order` 支持类型自动启用，`POST /{slug}/reorder` 事务批量写 + 前端原生 HTML5 DnD + toast）
-- [x] 插件热拔插（`hook.Handle` + `RemoveAction/RemoveFilter`、`SitemapGenerator.RemoveTransformer`、Gin 中间件 `IsActive` 自守卫，`plugin_active_<name>` option 持久化启用状态）
-- [x] 前台模板 Hook 插槽（`renderHook` + `theme.head.end` / `theme.body.open` / `theme.footer.end` / `header.nav.after`，站点代码片段和多语言导航切换器均由插件 filter 注入，主题不再依赖 HTML 后处理）
-- [x] 配置驱动动态内容渲染（`rewrite_slug` + `templates.archive` / `templates.single` 驱动归档/详情 URL、页面模板、Sitemap 和后台永久链接，移除对 product/service/showcase 的特殊路由假设）
-- [x] WPML 同 slug 跨语言语义（`FindBySlugScoped` / `EnsureUniqueSlugScoped` + 主题 PageService 注入 `reqCtx` + multilang 克隆默认复用源 slug，例如主题声明的 `product` 可对应 SEO `/products/foo` ↔ `/zh/products/foo`）
-- [x] 后台编辑页永久链接前缀注入（`admin.HookContentPermalinkPrefix` filter，例如多语言时显示 `/zh/products/foo` 区分同 slug 翻译版本）
-- [x] 统一站点信息（admin「系统设置 > 网站设置」`site_name` / `site_description` 作为 WordPress `blogname` / `blogdescription` 等价物，全部主题统一来源 + 主题兜底默认）
-- [x] 统一 SEO 渲染管线（`seoHeadFor` 模板助手 + `ApplySiteOptionOverrides` 兜底，全主题 `<title>` / `<meta description>` / canonical / og:* / JSON-LD 输出一致）
-- [x] Per-content SEO 覆盖能力（`seo-extras` 插件 + 三个通用 hook：`admin.content_form.fields` / `admin.content.saved` / `seo.content.meta`）
-- [x] WPCode-like 代码片段插件（`code-snippets` 通过三个主题插槽注入站点级 HTML/JS，无需修改主题文件）
+- **引擎与存储基础** — 生命周期编排、PostgreSQL/GORM、迁移、带前缀的表名、
+  表所有权注册、Options、Worker、缓存和结构化日志。
+- **统一内容系统** — Content/Meta 模型、注册表驱动内容类型、链式查询、请求
+  Scope、分类法、内容状态、定时发布、排序，以及不受主题切换影响的核心类型。
+- **后台 CMS** — 数据驱动 CRUD、Quill 编辑器、媒体选择器、服务端筛选与
+  分页、显示选项、菜单、重定向、缓存、邮件、主题、插件、用户、评论、系统
+  设置、审计日志和 RBAC 强制校验。
+- **主题运行时** — BaseTheme、配置驱动 Rewrite 与模板映射、页面 Bundle、
+  回退层级、统一 FuncMap、语义化前台 Hook、主题设置、Logo、演示数据导入和
+  主题热切换。
+- **SEO 与公开 URL** — Canonical、Open Graph、JSON-LD、favicon、重定向、
+  分类归档、动态/静态 Sitemap、语言感知内链和内容级 SEO 扩展 Hook。
+- **媒体管线** — 上传元数据、响应式 JPEG/PNG 变体、可选 WebP、预加载与
+  优先级 helper，以及历史变体重建。
+- **插件运行时** — 可摘除 handle 的 Action/Filter、Settings Provider、受保护
+  路由/中间件注册、Router 重建、缓存失效、插件自有表和运行时完整停用。
+- **国际化** — Core locale Manager、后台语言、语言感知缓存与 URL、主题/
+  网站设置翻译、内容与菜单翻译、跨语言同 slug，以及 Sitemap hreflang
+  Transformer。
+- **前台账号** — Provider-neutral 用户、身份绑定、可撤销 Session、注册策略、
+  Google OIDC 与 EIP-4361 SIWE Provider，以及主题账号 helper。
+- **评论与 Profile** — 登录评论、一级直接回复、审核与 RBAC、缓存失效、后台
+  分页和仅当前账号可见的 Profile 契约。
+- **内置运营插件** — 多语言管理、内容级 SEO 覆盖、站点代码片段和带保留
+  策略、本地 GeoIP 的自托管访问统计。
+- **交付工具** — 支持 Handler 热切换的 Web 安装器、`gopress` autoload/
+  build 流程、Swagger 生成、站点级配置和站点级公开生成物。
 
 ## 进行中 / 计划中
 
-- [ ] Shortcode 解析器
-- [ ] 读写分离连接池
-- [ ] Prometheus 监控指标
-- [ ] CI/CD 流水线
-- [ ] 压力测试 & 性能调优
-- [ ] 主题/插件版本升级机制（`Migrate(fromVersion)` 钩子）
-- [ ] 在线主题市场 + 一键安装
+- Shortcode 解析器。
+- 读写数据库连接分离。
+- Prometheus 监控指标。
+- CI/CD 流水线加固。
+- Benchmark 与性能调优。
+- 主题/插件版本迁移 Hook。
+- 在线主题市场与一键安装。
 
 ## 贡献
 
-欢迎提交 Issue 和 Pull Request。请遵循以下规范：
-
-1. Fork 本仓库
-2. 创建特性分支 (`git checkout -b feature/amazing-feature`)
-3. 提交更改 (`git commit -m 'Add amazing feature'`)
-4. 推送到分支 (`git push origin feature/amazing-feature`)
-5. 创建 Pull Request
+1. Fork 本仓库。
+2. 创建聚焦单一问题的特性分支。
+3. 为受影响的公开契约补充测试和文档。
+4. 提交聚焦的改动并推送分支。
+5. 创建 Pull Request；涉及迁移、安全或兼容性时说明对应影响。
 
 ## 开源协议
 

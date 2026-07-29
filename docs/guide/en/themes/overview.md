@@ -28,6 +28,7 @@ GoPress themes are Go packages that register themselves with the engine. A theme
 | `civic-estate` | Civic Estate | Commercial real estate. |
 | `terra-trail` | Terra Trail | Outdoor travel. |
 | `go-press-landing` | GoPress Landing | SaaS landing page. |
+| `mono-journal` | Mono Journal | Monochrome personal journal and blog. |
 
 ## Dynamic Content Routing
 
@@ -48,11 +49,44 @@ templates = { archive = "products", single = "product-detail" }
 
 With that configuration, `/modules` and `/modules/{slug}` resolve to the `module` content type while reusing `templates/pages/products.tmpl` and `templates/pages/product-detail.tmpl`. If `templates` is omitted, BaseTheme tries conventional names derived from the content type and rewrite slug before falling back to generic archive/single templates and built-in fallback pages.
 
-Templates should generate content links with `archiveURL` and `contentURL` instead of hard-coding `/products`, `/services`, or similar paths.
+Templates should generate content and term links with `archiveURL`, `contentURL`, and `taxonomyURL` instead of hard-coding `/products`, `/services`, `/category`, or similar paths.
 
 Navigation active state should also come from core helpers. Use `isMenuURLActive .Ctx menuURL` against menu item URLs instead of comparing `.ActivePage` to theme-specific content type names or labels. The helper follows the current request URL, rewrite slugs, language prefixes, and detail-page paths.
 
 A custom `PageService` is now cheap: it embeds core scaffolding (`coreTheme.BasePageService`, or `coreTheme.SEOPageService` when the theme renders SEO), so it no longer duplicates data-access or SEO plumbing. New themes can pick either the `BaseTheme + gin.H` path for the quickest start, or a typed `PageService` for type safety — see the [SEO integration guide](seo-integration.md).
+
+## Frontend Extension Slots
+
+Production themes expose stable semantic locations instead of requiring plugins
+to inspect final HTML:
+
+```gotemplate
+<head>
+  ...
+  {{renderHook "theme.head.end" .}}
+</head>
+<body>
+  {{renderHook "theme.body.open" .}}
+  ...
+  <script src="/static/js/main.js"></script>
+  {{renderHook "theme.footer.end" .}}
+</body>
+```
+
+The primary navigation list also ends with
+`{{renderHook "header.nav.after" .}}`. Theme CSS should style direct navigation
+children rather than every descendant, and mobile code should detect nested
+extension menus from DOM structure while keeping `aria-expanded` synchronized.
+
+| Slot | Typical use |
+|---|---|
+| `theme.head.end` | Verification tags, analytics, preconnect, external CSS. |
+| `theme.body.open` | Noscript tags, bootstrap code, site banners. |
+| `theme.footer.end` | Deferred scripts, chat, heatmaps. |
+| `header.nav.after` | Language and account menus. |
+
+Each slot appears exactly once. Plugins return markup matching its surrounding
+semantics and remove their filter handles when deactivated.
 
 ## Public Account UI
 
@@ -63,3 +97,6 @@ Use `loginProviders` to discover enabled sign-in choices and link through each p
 ## Theme and Plugin Boundary
 
 Built-in GoPress themes and themes intended for production use must expose the standard semantic hook slots and use core helpers. Plugins should inject through those slots. Neither side should import the other. The required slots and the repository-level contract test are documented in [Creating Themes](creating-themes.md#base-layout-contract).
+
+Module-level plugin requirements may be declared in `theme.toml`, but runtime
+theme code still uses only generic core hooks, helpers, and capabilities.

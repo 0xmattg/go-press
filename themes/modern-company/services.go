@@ -2,7 +2,6 @@ package moderncompany
 
 import (
 	"context"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -348,18 +347,24 @@ func (s *PageService) contentMegaCategories(c *gin.Context, contentType string, 
 		return nil
 	}
 
-	archiveURL := s.contentArchiveURL(contentType)
 	out := make([]ContentMegaCategory, 0, len(rows))
 	for _, row := range rows {
 		out = append(out, ContentMegaCategory{
 			ID:    row.ID,
 			Name:  row.Name,
 			Slug:  row.Slug,
-			URL:   archiveURL + "?category=" + url.QueryEscape(row.Slug),
+			URL:   s.contentTaxonomyURL("category", row.Slug),
 			Count: row.Count,
 		})
 	}
 	return out
+}
+
+func (s *PageService) contentTaxonomyURL(taxonomyName, termSlug string) string {
+	if s != nil && s.rewriteEngine != nil {
+		return s.rewriteEngine.BuildTaxonomyURL(taxonomyName, termSlug)
+	}
+	return rewrite.BuildTaxonomyURL(taxonomyName, termSlug)
 }
 
 func (s *PageService) contentMegaItems(c *gin.Context, contentType string, categorySlugs []string, limit int) []ContentMegaItem {

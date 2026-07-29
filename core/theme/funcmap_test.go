@@ -132,6 +132,19 @@ func TestApplySiteOptionOverridesForRequestTranslatesSiteOptions(t *testing.T) {
 	}
 }
 
+func TestApplySiteOptionOverridesForRequestPrefixesCanonicalLanguage(t *testing.T) {
+	mgr := coreI18n.NewManager("en")
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c.Set(coreI18n.CtxKeyLang, "es")
+	seo := rewrite.SEOMeta{CanonicalURL: "https://example.test/category/hvac"}
+
+	ApplySiteOptionOverridesFromOptionsForRequest(c, nil, mgr, nil, &seo)
+
+	if seo.CanonicalURL != "https://example.test/es/category/hvac" {
+		t.Fatalf("CanonicalURL = %q", seo.CanonicalURL)
+	}
+}
+
 func TestApplySiteOptionOverridesDoesNotRewriteCustomTitle(t *testing.T) {
 	builder := rewrite.NewSEOBuilder("https://example.test", "Config Site", rewrite.NewEngine(content.NewRegistry()))
 	seo := rewrite.SEOMeta{

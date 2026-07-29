@@ -25,7 +25,9 @@ go-press/
 │   │   └── repository.go       #   通用 CRUD（Create/Update/Delete/Find/FindBySlug）
 │   │
 │   ├── taxonomy/               # 分类法（Term + Taxonomy + TermRelationship）
+│   ├── comment/                # 评论、一级回复、审核状态与查询仓储
 │   ├── user/                   # 用户 + JWT 认证 + RBAC（角色/能力）
+│   ├── mail/                   # 通用邮件对象、Sender 能力与 SMTP 投递
 │   ├── i18n/                   # 核心 i18n 系统（Manager + go-i18n Bundle + T() + TranslateOption/TranslateSettings）
 │   ├── option/                 # 全局设置 + Translatable 注册表（RegisterTranslatable / IsTranslatable / AllTranslatableKeys）
 │   ├── menu/                   # 导航菜单（Menu + Item 树形结构 + 位置注册 + 语言 Hook）
@@ -61,6 +63,7 @@ go-press/
 │   ├── civic-estate/           #   商业地产主题
 │   ├── financial-news/         #   财经新闻门户主题
 │   ├── go-press-landing/       #   SaaS Landing 主题
+│   ├── mono-journal/           #   Mono Journal 个人博客主题
 │   └── terra-trail/            #   户外旅行主题
 │
 ├── plugins/                    # ========== 插件目录 ==========
@@ -69,20 +72,23 @@ go-press/
 │   │   ├── models.go           #     Translation/Language/StringTranslation/MenuTranslation 数据模型
 │   │   ├── repository.go       #     翻译/语言/字符串/菜单翻译 CRUD
 │   │   ├── register.go         #     init() 自注册
-│   │   └── templates/admin/    #     后台设置页模板（4 Tab：语言/翻译管理/设置/帮助）
+│   │   └── templates/admin/    #     语言、内容、菜单、字符串与设置翻译后台
 │   ├── seo-extras/             #   Yoast-like per-content SEO 覆盖
 │   │   ├── plugin.go           #     3 个 hook 实现 + meta box HTML 构造
 │   │   └── register.go         #     init() 自注册
-│   └── code-snippets/          #   WPCode-like 站点级代码注入
-│       ├── plugin.go           #     theme.head/body/footer 三个插槽的 filter
-│       ├── register.go         #     init() 自注册
-│       └── templates/admin/    #     插件设置页模板（三个代码片段 textarea）
+│   ├── code-snippets/          #   WPCode-like 站点级代码注入
+│   ├── gopress-analytics/      #   自托管 PV/UV/访客与归属地统计
+│   ├── google-identity/        #   Google OIDC 前台身份 Provider
+│   └── metamask-identity/      #   EIP-4361 SIWE 钱包身份 Provider
 │
-	├── sites/                      # 站点配置（Web 安装器自动生成）
-	│   └── localhost/              #   本地开发站点
-	│       ├── config.toml         #     站点配置文件
-	│       └── public/             #     站点级公开生成物（sitemap.xml、robots.txt、llms.txt 等）
-	│
+├── internal/autoload/          # gopress gen 自动生成的主题/插件 blank import
+├── internal/contracts/         # 跨主题公开契约测试（themes/ 根只放主题包）
+│
+├── sites/                      # 站点配置（Web 安装器自动生成）
+│   └── localhost/              #   本地开发站点
+│       ├── config.toml         #     站点配置文件
+│       └── public/             #     站点级公开生成物（sitemap.xml、robots.txt、llms.txt 等）
+│
 ├── pkg/                        # ========== 基础设施 ==========
 │   ├── dbprefix/               #   表前缀工具（Set/Get/Table/PluginTable/ThemeTable）
 │   ├── logger/                 #   结构化日志 (slog)
@@ -95,7 +101,7 @@ go-press/
 │   └── config.toml             #   配置模板（密钥留空，非运行时配置；实际站点用 sites/<host>/config.toml）
 │
 ├── docs/                       # 文档
-│   ├── guide/                  #   GitBook 文字文档（你正在看的部分）
+│   ├── guide/                  #   MkDocs 文字文档（你正在看的部分）
 │   ├── docs.go                 #   Swagger Go 包（main.go 通过 _ "go-press/docs" 引用）
 │   ├── swagger.json            #   OpenAPI 规范
 │   └── swagger.yaml
@@ -107,3 +113,32 @@ go-press/
     │   └── xxxx-1024w.png      #   原格式 fallback 变体
     └── demo/                   #   演示数据图片
 ```
+
+## Core
+
+`core/` 是框架运行时。`engine.go`、`bootstrap.go`、`migrate.go` 和
+`seeder.go` 负责启动、迁移和数据导入；`content/`、`taxonomy/`、`comment/`
+和 `user/` 提供稳定领域模型；`theme/`、`plugin/` 与 `hook/` 定义公开扩展
+契约；其余目录提供 Rewrite、缓存、媒体、菜单、邮件、API 和安装器等共享
+服务。
+
+## 主题
+
+主题位于 `themes/{slug}`，根目录必须包含 `theme.toml` 与非测试 Go 源文件，
+并通过 `init()` 向 core 注册。常见目录包括 `locales/`、`demo/data/`、
+`static/` 及 `templates/{layouts,partials,pages}`。跨主题公开契约测试位于
+`internal/contracts/`，因此 `themes/` 根目录只保留主题包。
+
+## 插件
+
+插件位于 `plugins/{slug}`，以 `plugin.toml` 作为 manifest。插件只能通过
+core Hook、Settings Provider、受保护路由、中间件、表注册和前台语义插槽
+扩展系统；插件自有表通过 `dbprefix.PluginTable` 命名，运行时不能 import
+主题。
+
+## 运行站点
+
+`sites/{host}/config.toml` 由安装器生成或由运维维护；
+`sites/{host}/public/` 保存 `sitemap.xml` 等站点级公开生成物。
+`uploads/YYYY/MM/` 保存原图与响应式变体。配置、凭据、上传文件和生成物属于
+运行时数据，默认不应提交到公开源码仓库。

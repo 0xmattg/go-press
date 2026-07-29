@@ -109,6 +109,19 @@ func (b *SEOBuilder) ForArchiveTitle(typeDef *content.ContentTypeDef, archiveTit
 	}
 }
 
+// ForTaxonomy generates SEO metadata for a taxonomy term archive.
+func (b *SEOBuilder) ForTaxonomy(taxonomy, termName, termSlug string) SEOMeta {
+	url := b.siteURL + b.rewrite.BuildTaxonomyURL(taxonomy, termSlug)
+	return SEOMeta{
+		Title:        termName + " | " + b.siteName,
+		Description:  termName,
+		CanonicalURL: url,
+		OGTitle:      termName,
+		OGType:       "website",
+		Robots:       "index,follow",
+	}
+}
+
 // ForHome generates SEO metadata for the homepage.
 func (b *SEOBuilder) ForHome(description string) SEOMeta {
 	meta := SEOMeta{

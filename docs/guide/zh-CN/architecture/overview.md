@@ -3,6 +3,22 @@
 ## 总体架构
 
 ```
+
+前台 Theme Dispatcher 是最终 catch-all。健康检查、静态资源、Sitemap、API、
+后台、插件路由和 Swagger 都有机会先匹配，最后才把请求交给当前主题。
+
+## CLI 与构建层
+
+`gopress serve`、`gopress build` 和 `gopress gen` 会扫描主题/插件根目录的
+manifest，并重新生成 `internal/autoload/autoload_gen.go`。因此 server 入口
+始终保持通用：扩展通过自动生成的 blank import 自注册，不需要手改
+`cmd/server/main.go`。
+
+- `gopress serve` 刷新 autoload 后运行服务，并透传 flag 和关停信号。
+- `gopress build` 刷新 autoload 后编译生产 server 二进制。
+- `gopress gen` 只刷新 autoload，适用于 IDE 或 CI。
+
+主题和插件会被编译进二进制，因此生产构建只包含构建时实际存在的扩展。
                 ┌──────────────────────────────────────────────────────┐
                 │                    HTTP 请求                         │
                 └──────────────┬───────────────────────────────────────┘
@@ -64,6 +80,26 @@ main.go
              ├→ /swagger/* (API 文档)
              └→ NoRoute → ActiveTheme.ServeHTTP (前台)
 ```
+
+主题激活会清理旧主题注册项、恢复核心内容类型、读取当前 `theme.toml`、注册
+内容类型与菜单位置并执行主题 Setup。随后插件通过公开扩展点挂载 Hook、
+中间件、路由和设置 Provider；core 还会协调当前主题声明的插件依赖。
+
+## 安装器模式
+
+当不存在已完成的站点配置时，同一个进程会进入 Web 安装器。安装器验证并
+按需创建数据库、写入站点级 `config.toml`、迁移数据表、创建首个管理员，
+最后原子切换到正式站点 Handler，无需手动重启。
+
+## 引擎职责
+
+- 统一拥有内容、分类、用户、Session、权限、媒体、菜单、选项、缓存、
+  Rewrite、SEO、邮件、评论和 Worker 等稳定服务。
+- 注册核心内容类型和配置驱动的主题内容类型。
+- 暴露通用仓储、模板 helper、Hook、Filter、Provider、中间件扩展点及受保护
+  路由 helper。
+- 从同一组注册表生成公开 URL、canonical、Sitemap 和回退模板。
+- 协调扩展激活、依赖校验、数据迁移与缓存失效。
 
 ## 关键解耦点
 

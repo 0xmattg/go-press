@@ -1,6 +1,13 @@
 package theme
 
-import "testing"
+import (
+	"net/http/httptest"
+	"testing"
+
+	coreI18n "go-press/core/i18n"
+
+	"github.com/gin-gonic/gin"
+)
 
 func TestIsLanguagePrefixableURL(t *testing.T) {
 	tests := []struct {
@@ -27,5 +34,27 @@ func TestIsLanguagePrefixableURL(t *testing.T) {
 				t.Fatalf("isLanguagePrefixableURL(%q) = %v, want %v", tt.url, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestLanguagePrefixURL(t *testing.T) {
+	mgr := coreI18n.NewManager("en")
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c.Set(coreI18n.CtxKeyLang, "es")
+
+	tests := []struct {
+		path string
+		want string
+	}{
+		{path: "/category/hvac", want: "/es/category/hvac"},
+		{path: "/blog?category=hvac", want: "/es/blog?category=hvac"},
+		{path: "/es/category/hvac", want: "/es/category/hvac"},
+		{path: "https://example.com/category/hvac", want: "https://example.com/category/hvac"},
+	}
+
+	for _, tt := range tests {
+		if got := LanguagePrefixURL(c, mgr, tt.path); got != tt.want {
+			t.Errorf("LanguagePrefixURL(%q) = %q, want %q", tt.path, got, tt.want)
+		}
 	}
 }

@@ -223,7 +223,7 @@ data["Products"] = productViews  // []ProductView，模板里照样有字段提�
 | 主题 | PageService 脚手架 | SEO 来源 |
 |---|---|---|
 | atelier-slate / civic-estate / florafi（FloraFi） / terra-trail / axis-form（Axis Form） | `coreTheme.BasePageService` | 归档 / 单内容页由 BaseTheme 自动注入；首页等自定义页走 gin.H |
-| modern-company / financial-news | `coreTheme.SEOPageService` | 继承 `BuildHomeSEO` / `BuildArchiveSEO` / `BuildContentSEO` |
+| modern-company / financial-news / mono-journal | `coreTheme.SEOPageService` | 继承 `BuildHomeSEO` / `BuildArchiveSEO` / `BuildContentSEO` |
 | go-press-landing | `coreTheme.BasePageService` + 自写 `buildHomeSEO` | 单页，无逐请求多语言，用非请求版 `ApplySiteOptionOverridesFromOptions` |
 
 新主题按需二选一嵌入 `BasePageService` 或 `SEOPageService`，只写自己的 `Get*Data` 与 view 类型即可，不用再复制那套管道与 SEO 代码。

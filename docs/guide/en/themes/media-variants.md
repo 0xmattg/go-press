@@ -8,8 +8,8 @@ GoPress generates responsive image variants during upload so frontend pages can 
 upload JPEG/PNG
   -> save original to uploads/YYYY/MM/{hash}.jpg
   -> record width and height in gp_media
-  -> generate resized variants
-  -> generate WebP variants when cwebp exists
+  -> generate thumb, 480w, 768w, 1024w, and 1440w resized variants
+  -> generate matching WebP variants and a full-width WebP when cwebp exists
   -> write gp_media_variants
   -> templates resolve variants by original URL
 ```
@@ -24,6 +24,7 @@ upload JPEG/PNG
 | `core/media/repository.go` | Variant lookup and maintenance. |
 | `core/admin/service.go` | Upload, delete, and rebuild workflows. |
 | `core/theme/images.go` | Responsive image template helpers. |
+| `core/engine.go` | Versioned static/upload cache headers and matching GET/HEAD behavior. |
 
 ## Storage Convention
 
@@ -38,9 +39,27 @@ uploads/2026/04/example-full.webp
 
 Content fields and theme settings continue to store the original URL. Existing content does not need to be migrated.
 
+Public URLs use `/static/uploads/YYYY/MM/...`; `gp_media.path` points to the
+original and `gp_media_variants.path` records each derivative.
+
+## Template Usage
+
+```gotemplate
+{{responsiveImage .ImageURL .Title "card-image" "(max-width: 768px) 100vw, 33vw" "lazy"}}
+{{responsiveImagePriority .ImageURL .Title "hero-image" "100vw"}}
+{{responsiveImagePreload (settingOr .Settings "home_hero_1_image" "") "100vw"}}
+```
+
 ## Rebuilding Historical Images
 
-The media library provides actions to generate missing variants or force-rebuild all variants for existing uploads. This is useful after enabling `cwebp` or deploying the media variant feature to a site with old images.
+The media library provides two operations:
+
+- **Generate missing variants** scans existing JPEG/PNG rows and adds only
+  derivatives that are absent. Installing `cwebp` later also adds full WebP
+  variants without re-uploading originals.
+- **Force rebuild variants** removes and recreates all derivatives.
+
+This supports sites upgraded from a version that stored originals only.
 
 ## Dependency
 
@@ -52,4 +71,3 @@ apt-get install webp
 ```
 
 Without `cwebp`, GoPress still generates JPG/PNG resized variants and templates automatically fall back.
-

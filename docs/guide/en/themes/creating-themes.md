@@ -34,10 +34,8 @@ func New(engine *core.Engine, themeDir string) *MyTheme {
     return t
 }
 
-func (t *MyTheme) Name() string        { return "My Theme" }
-func (t *MyTheme) Version() string     { return "1.0.0" }
-func (t *MyTheme) Description() string { return "Example theme" }
-func (t *MyTheme) Author() string      { return "Me" }
+// Name, Version, Description, and Author come from the embedded BaseTheme,
+// which parses theme.toml as their single source of truth.
 func (t *MyTheme) Setup(app coreTheme.App) {}
 func (t *MyTheme) ServeHTTP(c *gin.Context) { t.BaseTheme.ServeHTTP(c) }
 func (t *MyTheme) TemplateFuncs() template.FuncMap { return t.BaseFuncMap() }
@@ -76,6 +74,11 @@ label = "Header Navigation"
 ```
 
 Core types such as `post`, `page`, and `contact_message` should not be redeclared by themes. `product` is only an example custom content type; GoPress does not require a theme to provide products, services, or showcases.
+
+Theme versions must be valid semver. `BaseTheme` parses the `[theme]` block and
+implements `Name`, `Version`, `Description`, and `Author`; do not repeat those
+values in Go methods. This keeps `theme.toml` as the single source used by admin
+cards and dependency validation.
 
 For frontend multilingual labels, add `content_type.<name>` entries to the theme locale files. BaseTheme uses those keys for content type badges on taxonomy archives and falls back to `label` when a locale key is missing:
 
@@ -154,11 +157,14 @@ Inside templates, prefer core URL helpers:
 ```gotemplate
 <a href="{{archiveURL "product"}}">Products</a>
 <a href="{{contentURL . "product"}}">{{.Title}}</a>
+<a href="{{taxonomyURL "category" .Slug}}">{{.Name}}</a>
 ```
 
-`archiveURL` and `contentURL` consult the rewrite registry, so a later `rewrite_slug` change or content-type rename does not require template edits.
+`archiveURL`, `contentURL`, and `taxonomyURL` consult the rewrite registry, so a later `rewrite_slug` change or content-type rename does not require template edits.
 
 Dynamic archive pages also honor query-string filters for taxonomies declared on the content type. For example, a `post` type with `taxonomies = ["category", "tag"]` can be filtered with `/blog?category=industry-news` or `/blog?tag=cleanroom`. Query parameters for taxonomies not registered on that content type are ignored.
+
+Treat those query-string filters as compatibility or non-indexable UI filters. Links to indexable term landing pages must use `taxonomyURL`, optionally wrapped with `langPrefixURL`, so internal links, taxonomy canonicals, and sitemap entries all point to `/category/{term}` or `/tag/{term}` consistently.
 
 For navigation active state, compare the current request URL with the menu item URL through core:
 
@@ -213,7 +219,7 @@ The navigation slot belongs to the Header contract. Put it at the end of the pri
 {{end}}
 ```
 
-Use `pageTitleFor`, `seoHeadFor`, `settingOr`, `archiveURL`, `contentURL`, `isMenuURLActive`, `currentLang`, `langPrefixURL`, `menuByLocation`, and the responsive image helpers from the core funcmap instead of implementing theme-local equivalents.
+Use `pageTitleFor`, `seoHeadFor`, `settingOr`, `archiveURL`, `contentURL`, `taxonomyURL`, `isMenuURLActive`, `currentLang`, `langPrefixURL`, `menuByLocation`, and the responsive image helpers from the core funcmap instead of implementing theme-local equivalents.
 
 ### Navigation Extension Styling And Interaction
 
@@ -271,6 +277,67 @@ func New(engine *core.Engine, themeDir string) *MyTheme {
 ```
 
 This keeps the contract consistent across the admin, frontend, and sitemap path: inputs are parsed in the site timezone, stored as UTC, and displayed in the site timezone. Existing sites without `site_timezone` fall back to the server local timezone until an explicit value is saved.
+
+## Recommended Directory Structure
+
+```text
+themes/my-theme/
+  theme.go
+  theme.toml
+  handlers.go                 # optional custom routes
+  services.go                 # optional typed page services
+  functions.go                # optional template helpers
+  translatable.go             # optional translatable option registration
+  locales/
+    en.json
+    zh.json
+  demo/data/seed.toml         # optional demo data
+  static/
+    logo.svg
+    css/style.css
+    js/main.js
+  templates/
+    layouts/
+    partials/
+    pages/
+```
+
+## Theme Settings
+
+Themes can expose settings for presentation and content such as hero media,
+brand copy, social links, and calls to action. Use section-oriented prefixes
+such as `home_`, `about_`, `social_`, and `footer_` so the engine recognizes and
+persists theme-owned keys.
+
+Do not create theme-local alternatives for shared site identity. Document
+titles, default descriptions, and favicons use `site_name`, `site_description`,
+and `site_icon` from System Settings. Image settings should open the shared
+media picker rather than requiring operators to paste opaque paths.
+
+## Recommended BaseTheme Path
+
+For the lowest maintenance cost, delegate the frontend catch-all to BaseTheme:
+
+```go
+func (t *MyTheme) ServeHTTP(c *gin.Context) {
+    t.BaseTheme.ServeHTTP(c)
+}
+```
+
+Home, archive, taxonomy, and single pages then receive routing, scoped queries,
+fallback templates, and SEO injection from core. A theme that needs custom,
+typed assembly can embed `coreTheme.BasePageService` or
+`coreTheme.SEOPageService` instead of copying repository and SEO plumbing.
+
+Type safety does not require abandoning BaseTheme. A handler may add typed view
+models to its `gin.H` data while retaining core routing and metadata:
+
+```go
+data := gin.H{
+    "Title":    "Products",
+    "Products": productViews, // []ProductView
+}
+```
 
 ## Demo Data
 
