@@ -17,7 +17,29 @@ import (
 const (
 	pageCachePrefix = "page:"
 	defaultPageTTL  = 10 * time.Minute
+	pageCacheBypass = "gopress.page_cache_bypass"
 )
+
+// BypassPageCache marks the current request as private or otherwise unsafe for
+// shared full-page caching. Extensions call this from middleware registered
+// before PageCacheMiddleware; Core remains unaware of extension routes and
+// cookies while still providing one consistent cache boundary.
+func BypassPageCache(c *gin.Context) {
+	if c != nil {
+		c.Set(pageCacheBypass, true)
+	}
+}
+
+// IsPageCacheBypassed reports whether an earlier middleware marked the request
+// as unsafe for shared full-page caching.
+func IsPageCacheBypassed(c *gin.Context) bool {
+	if c == nil {
+		return false
+	}
+	value, exists := c.Get(pageCacheBypass)
+	bypassed, _ := value.(bool)
+	return exists && bypassed
+}
 
 // cachedResponse stores a cached HTTP response.
 type cachedResponse struct {
@@ -42,6 +64,11 @@ func PageCacheMiddleware(mgr *Manager, ttl time.Duration) gin.HandlerFunc {
 		}
 
 		path := c.Request.URL.Path
+		if IsPageCacheBypassed(c) || c.Request.URL.RawQuery != "" {
+			c.Header("X-Cache", "BYPASS")
+			c.Next()
+			return
+		}
 
 		// Skip admin, API, and health paths
 		if strings.HasPrefix(path, "/admin") ||
@@ -91,6 +118,9 @@ func PageCacheMiddleware(mgr *Manager, ttl time.Duration) gin.HandlerFunc {
 		c.Header("X-Cache", "MISS")
 
 		c.Next()
+		if IsPageCacheBypassed(c) || responseDisallowsSharedCache(w.Header()) {
+			return
+		}
 
 		// Only cache successful HTML responses
 		if w.Status() == http.StatusOK {
@@ -102,6 +132,19 @@ func PageCacheMiddleware(mgr *Manager, ttl time.Duration) gin.HandlerFunc {
 			}
 		}
 	}
+}
+
+func responseDisallowsSharedCache(header http.Header) bool {
+	if header.Get("Set-Cookie") != "" {
+		return true
+	}
+	for _, directive := range strings.Split(strings.ToLower(header.Get("Cache-Control")), ",") {
+		switch strings.TrimSpace(directive) {
+		case "private", "no-store", "no-cache":
+			return true
+		}
+	}
+	return false
 }
 
 // InvalidatePageCache removes all page cache entries.

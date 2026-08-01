@@ -1,0 +1,22 @@
+{{define "base"}}<!DOCTYPE html>
+<html lang="{{currentLang .Ctx}}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{if .Title}}{{.Title}} · {{end}}{{settingOr .Ctx .Settings "site_name" "Starter Shop"}}</title>
+  {{with seoHeadFor .}}{{.}}{{else}}
+  <meta name="description" content="{{settingOr .Ctx .Settings "site_description" "A focused storefront powered by GoPress Commerce."}}">
+  {{faviconLinks (settingOr .Ctx .Settings "site_icon" "")}}
+  {{end}}
+  <link rel="stylesheet" href="/static/css/style.css?v=3">
+  {{renderHook "theme.head.end" .}}
+</head>
+<body>{{renderHook "theme.body.open" .}}
+  {{template "header" .}}
+  <main class="ss-main">{{template "content" .}}</main>
+  {{template "footer" .}}
+  {{template "loginModal" .}}
+  <script src="/static/js/main.js?v=2"></script>
+  {{renderHook "theme.footer.end" .}}
+</body>
+</html>{{end}}

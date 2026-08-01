@@ -75,10 +75,11 @@ func CommonFuncMap() template.FuncMap {
 		"currentLang": func(c *gin.Context) string {
 			return "en"
 		},
-		"currentUser": user.CurrentUserView,
-		"isLoggedIn":  user.IsLoggedIn,
-		"loginURL":    user.LoginURL,
-		"logoutURL":   user.LogoutURL,
+		"currentUser":      user.CurrentUserView,
+		"isLoggedIn":       user.IsLoggedIn,
+		"loginURL":         user.LoginURL,
+		"loginProviderURL": user.LoginProviderURL,
+		"logoutURL":        user.LogoutURL,
 		"loginProviders": func() []user.ProviderDescriptor {
 			return nil
 		},
@@ -119,7 +120,7 @@ func CommonFuncMap() template.FuncMap {
 			}
 			return "/" + strings.Trim(contentType, "/") + "/" + strings.TrimPrefix(slug, "/")
 		},
-		"renderHook": func(name string, data interface{}) template.HTML {
+		"renderHook": func(name string, data interface{}, _ ...interface{}) template.HTML {
 			return ""
 		},
 		"faviconLinks": rewrite.FaviconLinks,

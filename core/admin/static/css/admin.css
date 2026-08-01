@@ -16,6 +16,8 @@
     --text-muted: #64748b;
     --border: #e2e8f0;
     --radius: 6px;
+    --admin-settings-bg: #fcfaf5;
+    --admin-settings-border: #f3ebda;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -618,6 +620,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .content-title-link:hover { text-decoration: underline; color: #135e96; }
 .tax-link-icon { display: inline-flex; align-items: center; margin-left: 6px; color: #94a3b8; vertical-align: middle; }
 .tax-link-icon:hover { color: #2271b1; }
+.taxonomy-reference-count-col {
+    width: 7rem;
+    text-align: center !important;
+}
+.data-table td.taxonomy-reference-count-col {
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+}
+.taxonomy-reference-count {
+    display: inline-flex;
+    min-width: 2rem;
+    align-items: center;
+    justify-content: center;
+    padding: .12rem .45rem;
+    border: 1px solid var(--admin-settings-border);
+    border-radius: 4px;
+    background: var(--admin-settings-bg);
+}
 .data-table code { background: #f1f5f9; padding: .15rem .4rem; border-radius: 3px; font-size: .8rem; }
 .empty-msg { text-align: center; color: var(--text-muted); padding: 2rem !important; }
 .actions { white-space: nowrap; }
@@ -839,8 +860,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
     background: #f8fafc;
 }
 .settings-section.settings-section-admin {
-    background: #fcfaf5;
-    border-color: #f3ebda;
+    background: var(--admin-settings-bg);
+    border-color: var(--admin-settings-border);
 }
 .settings-section-title {
     font-size: 1rem;
@@ -920,6 +941,48 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .form-row { display: flex; gap: 1rem; }
 .form-row .form-group { flex: 1; }
 .form-actions { display: flex; gap: .5rem; padding-top: 1rem; border-top: 1px solid var(--border); margin-top: 1rem; }
+
+/* Content editor: keep writing/media work in the main column and collect
+   publishing, extension meta boxes and taxonomies in a compact side column. */
+.content-edit-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
+    gap: 1.25rem;
+    align-items: start;
+}
+.content-edit-main,
+.content-edit-sidebar { min-width: 0; }
+.content-edit-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+}
+.content-edit-panel,
+.content-edit-sidebar > .form-actions {
+    padding: .9rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #f8fafc;
+}
+.content-edit-panel > .form-group:last-child,
+.content-edit-taxonomies-panel > .form-group:last-child { margin-bottom: 0; }
+.content-edit-extensions {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: .85rem;
+}
+.content-edit-extensions:empty { display: none; }
+.content-edit-extensions > .form-group {
+    width: 100%;
+    margin: 0 !important;
+}
+.content-edit-extensions > .form-group > .form-group:last-child { margin-bottom: 0; }
+.content-edit-sidebar > .form-actions {
+    margin: 1.15rem 0 0;
+    padding-top: .9rem;
+}
+.content-edit-sidebar > .form-actions .btn { flex: 1; }
 /* When form-actions sits directly under .card (e.g. content_detail.tmpl,
    no surrounding <form>), add horizontal/bottom padding so buttons aren't
    flush against the card edges. */
@@ -967,6 +1030,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .message-body { font-size: .9rem; line-height: 1.7; white-space: pre-wrap; }
 
 /* ==================== Media ==================== */
+.media-list-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-height: 34px;
+    margin: 1rem 0 0;
+}
 .media-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -1771,6 +1841,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 }
 
 /* ==================== Responsive ==================== */
+@media (max-width: 1280px) {
+    .content-edit-layout { grid-template-columns: 1fr; }
+    .content-edit-sidebar { width: 100%; }
+    .content-edit-sidebar > .form-actions { margin-top: 0; }
+}
+
 @media (max-width: 768px) {
     .sidebar {
         top: 0;
@@ -1787,6 +1863,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
     .settings-grid { grid-template-columns: 1fr; }
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
     .media-grid { grid-template-columns: repeat(2, 1fr); }
+    .media-list-toolbar { justify-content: flex-start; overflow-x: auto; }
     .media-picker-pagination {
         align-items: flex-start;
         flex-direction: column;

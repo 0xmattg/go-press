@@ -1,0 +1,58 @@
+{{define "content"}}
+<section class="section">
+  <div class="container" style="max-width:960px;margin:0 auto;padding:2rem 1rem;">
+    <h1>{{T .Ctx "commerce.checkout.title"}}</h1>
+    {{if .Error}}
+      <div class="commerce-alert" style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:.8rem 1rem;border-radius:8px;margin:1rem 0;">{{.Error}}</div>
+    {{end}}
+
+    <form method="POST" action="/checkout" class="commerce-checkout" style="display:grid;grid-template-columns:1fr 340px;gap:2rem;align-items:start;margin-top:1rem;">
+      <input type="hidden" name="checkout_key" value="{{.CheckoutKey}}">
+      <div>
+        <h2 style="font-size:1.1rem;margin-bottom:.8rem;">{{T .Ctx "commerce.checkout.shipping_information"}}</h2>
+        <div class="form-group"><label for="email">{{T .Ctx "commerce.checkout.email"}} *</label><input type="email" id="email" name="email" required value="{{.Email}}"></div>
+        <div class="form-group"><label for="billing_name">{{T .Ctx "commerce.checkout.recipient"}} *</label><input type="text" id="billing_name" name="billing_name" required></div>
+        <div class="form-group"><label for="billing_phone">{{T .Ctx "commerce.checkout.phone"}}</label><input type="text" id="billing_phone" name="billing_phone"></div>
+        <div class="form-group"><label for="billing_line1">{{T .Ctx "commerce.checkout.address"}} *</label><input type="text" id="billing_line1" name="billing_line1" required></div>
+        <div class="form-group"><label for="billing_line2">{{T .Ctx "commerce.checkout.address_line2"}}</label><input type="text" id="billing_line2" name="billing_line2"></div>
+        <div style="display:flex;gap:1rem;">
+          <div class="form-group" style="flex:1;"><label for="billing_city">{{T .Ctx "commerce.checkout.city"}}</label><input type="text" id="billing_city" name="billing_city"></div>
+          <div class="form-group" style="flex:1;"><label for="billing_state">{{T .Ctx "commerce.checkout.state"}}</label><input type="text" id="billing_state" name="billing_state"></div>
+        </div>
+        <div style="display:flex;gap:1rem;">
+          <div class="form-group" style="flex:1;"><label for="billing_postcode">{{T .Ctx "commerce.checkout.postcode"}}</label><input type="text" id="billing_postcode" name="billing_postcode"></div>
+          <div class="form-group" style="flex:1;"><label for="billing_country">{{T .Ctx "commerce.checkout.country"}}</label><input type="text" id="billing_country" name="billing_country"></div>
+        </div>
+
+        <h2 style="font-size:1.1rem;margin:1.5rem 0 .8rem;">{{T .Ctx "commerce.checkout.payment_method"}}</h2>
+        {{if .Gateways}}
+          {{range $i, $g := .Gateways}}
+            <label class="commerce-pay-method" style="display:flex;align-items:center;gap:.6rem;padding:.7rem .9rem;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:.6rem;cursor:pointer;">
+              <input type="radio" name="payment_method" value="{{$g.ID}}"{{if eq $i 0}} checked{{end}}>
+              <span>{{$g.Icon}} {{$g.Title}}</span>
+            </label>
+          {{end}}
+        {{else}}
+          <p style="color:#b91c1c;">{{T .Ctx "commerce.checkout.no_payment_methods"}}</p>
+        {{end}}
+      </div>
+
+      <aside class="commerce-summary" style="border:1px solid #e2e8f0;border-radius:10px;padding:1.2rem;position:sticky;top:1rem;">
+        <h2 style="font-size:1.05rem;margin-bottom:.8rem;">{{T .Ctx "commerce.checkout.order_summary"}}</h2>
+        <table style="width:100%;border-collapse:collapse;">
+          {{range .Cart.Lines}}
+            <tr>
+              <td style="padding:.35rem 0;">{{.Title}} × {{.Qty}}</td>
+              <td style="padding:.35rem 0;text-align:right;">{{.LineTotalStr}}</td>
+            </tr>
+          {{end}}
+          <tr style="border-top:1px solid #eef2f7;"><td style="padding:.5rem 0;">{{T .Ctx "commerce.common.subtotal"}}</td><td style="padding:.5rem 0;text-align:right;">{{.Cart.SubtotalStr}}</td></tr>
+          <tr><td style="padding:.35rem 0;">{{T .Ctx "commerce.common.shipping"}}</td><td style="padding:.35rem 0;text-align:right;">{{.Shipping}}</td></tr>
+          <tr style="border-top:2px solid #e2e8f0;font-size:1.1rem;"><td style="padding:.6rem 0;"><strong>{{T .Ctx "commerce.common.total"}}</strong></td><td style="padding:.6rem 0;text-align:right;"><strong>{{.GrandTotal}} {{.Cart.Currency}}</strong></td></tr>
+        </table>
+        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:1rem;"{{if not .Gateways}} disabled{{end}}>{{T .Ctx "commerce.checkout.place_order"}}</button>
+      </aside>
+    </form>
+  </div>
+</section>
+{{end}}

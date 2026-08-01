@@ -128,6 +128,7 @@ Themes using `BaseTheme` receive these provider-neutral helpers:
 | `isLoggedIn .Ctx` | Whether the request has a valid public session. |
 | `currentUser .Ctx` | A `PublicUserView` with ID, username, email, display name, avatar URL, and role. |
 | `loginURL .Ctx` | `/login` URL with a safe same-site return path. |
+| `loginProviderURL .BeginURL $.Ctx` | A validated provider start URL carrying the current request as `return_to`. |
 | `logoutURL` | Core `POST /logout` endpoint. |
 | `loginProviders` | Read-only descriptors for currently available providers. |
 
@@ -146,7 +147,7 @@ Typical header rendering:
 {{end}}
 ```
 
-Prefer linking to `loginURL` so core owns provider selection, error handling, and return-path validation. A theme must not import `plugins/google-identity`, check plugin activation options, or branch on provider IDs.
+Use `loginURL` as the progressive fallback for a regular sign-in link. A theme that presents provider selection in a dialog may enumerate `loginProviders` and must build every provider link with `loginProviderURL`; the helper rejects external/invalid start URLs and attaches a safe same-site return path. `shop-starter` demonstrates this overlay pattern while keeping the original link usable without JavaScript. A theme must not import `plugins/google-identity`, check plugin activation options, or branch on provider IDs.
 
 ## Google Identity Plugin
 

@@ -1,0 +1,50 @@
+{{define "content"}}
+<section class="section">
+  <div class="container" style="max-width:900px;margin:0 auto;padding:2rem 1rem;">
+    <h1>{{T .Ctx "commerce.cart.title"}}</h1>
+    {{if .Cart.Empty}}
+      <p style="color:#64748b;">{{T .Ctx "commerce.cart.empty"}}</p>
+    {{else}}
+      <table class="commerce-cart-table" style="width:100%;border-collapse:collapse;margin-top:1rem;">
+        <thead>
+          <tr style="text-align:left;border-bottom:2px solid #e2e8f0;">
+            <th style="padding:.5rem;">{{T .Ctx "commerce.common.product"}}</th>
+            <th style="padding:.5rem;text-align:center;">{{T .Ctx "commerce.common.unit_price"}}</th>
+            <th style="padding:.5rem;text-align:center;">{{T .Ctx "commerce.common.quantity"}}</th>
+            <th style="padding:.5rem;text-align:center;">{{T .Ctx "commerce.common.subtotal"}}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        {{range .Cart.Lines}}
+          <tr style="border-bottom:1px solid #eef2f7;">
+            <td style="padding:.6rem .5rem;"><a href="{{.URL}}">{{.Title}}</a></td>
+            <td style="padding:.6rem .5rem;text-align:center;">{{.UnitPriceStr}} {{$.Cart.Currency}}</td>
+            <td style="padding:.6rem .5rem;text-align:center;">
+              <form method="POST" action="/cart/update" style="display:flex;gap:.3rem;justify-content:center;align-items:center;">
+                <input type="hidden" name="item_id" value="{{.ItemID}}">
+                <input type="number" name="qty" value="{{.Qty}}" min="0" style="width:60px;">
+                <button type="submit" class="btn btn-sm">{{T $.Ctx "commerce.common.update"}}</button>
+              </form>
+            </td>
+            <td style="padding:.6rem .5rem;text-align:center;">{{.LineTotalStr}} {{$.Cart.Currency}}</td>
+            <td style="padding:.6rem .5rem;text-align:center;">
+              <form method="POST" action="/cart/remove">
+                <input type="hidden" name="item_id" value="{{.ItemID}}">
+                <button type="submit" class="btn btn-sm btn-danger">{{T $.Ctx "commerce.common.remove"}}</button>
+              </form>
+            </td>
+          </tr>
+        {{end}}
+        </tbody>
+      </table>
+      <div style="text-align:right;margin-top:1.5rem;font-size:1.15rem;">
+        <strong>{{T .Ctx "commerce.common.total"}}: {{.Cart.SubtotalStr}} {{.Cart.Currency}}</strong>
+      </div>
+      <div style="text-align:right;margin-top:1rem;">
+        <a href="/checkout" class="btn btn-primary">{{T .Ctx "commerce.cart.checkout"}}</a>
+      </div>
+    {{end}}
+  </div>
+</section>
+{{end}}

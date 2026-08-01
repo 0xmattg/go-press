@@ -136,14 +136,15 @@ e.Hooks.RemoveFilter(handle)
 | **axis-form** | Axis Form | 建筑设计 / 室内作品集 | BaseTheme + gin.H | 完整 |
 | **go-press-landing** | GoPress Landing | SaaS Landing | 自定义 PageData struct | 完整 |
 | **mono-journal** | Mono Journal | 个人博客 / 随笔 | `coreTheme.SEOPageService` | 完整 |
+| **shop-starter** | Shop Starter | Commerce 轻量单页商城 | `coreTheme.SEOPageService` | 完整 |
 
 上表「渲染方式」列里的「自定义 PageData struct」主题，其 `PageService` 现在都嵌入 core 的共享脚手架（`coreTheme.BasePageService`，需要 SEO 的用 `coreTheme.SEOPageService`），不再各自复制数据访问与 SEO 管道。新主题若想要类型安全的数据装配，直接嵌入这两个之一即可，成本很低；只想快速起步则走 [BaseTheme + gin.H 路径](seo-integration.md)。
 
 ## 前台账号 UI
 
-主题可以通过 core 提供的 `currentUser`、`isLoggedIn`、`loginURL`、`logoutURL` 和 `loginProviders` helper 渲染与 Provider 无关的账号界面。主题负责决定账号入口的布局和视觉，但不能 import 或特判 Google Identity、MetaMask Identity 等插件。
+主题可以通过 core 提供的 `currentUser`、`isLoggedIn`、`loginURL`、`loginProviderURL`、`logoutURL` 和 `loginProviders` helper 渲染与 Provider 无关的账号界面。主题负责决定账号入口的布局和视觉，但不能 import 或特判 Google Identity、MetaMask Identity 等插件。
 
-主题应通过 `loginProviders` 发现当前启用的登录方式，并使用 core 发布的 Provider 登录入口。模板示例、页面缓存和安全注意事项见[前台账号与外部身份登录](../architecture/public-authentication.md#主题接入)。
+主题应通过 `loginProviders` 发现当前启用的登录方式，再用 `loginProviderURL` 为 core 发布的 Provider 起始路径附加经校验的站内回跳地址。模板示例、页面缓存和安全注意事项见[前台账号与外部身份登录](../architecture/public-authentication.md#主题接入)。
 
 ## 主题与插件边界
 

@@ -16,10 +16,13 @@ import (
 	_ "go-press/themes/go-press-landing"
 	_ "go-press/themes/modern-company"
 	_ "go-press/themes/mono-journal"
+	_ "go-press/themes/shop-starter"
 	_ "go-press/themes/terra-trail"
 
 	// Plugins
 	_ "go-press/plugins/code-snippets"
+	_ "go-press/plugins/commerce"
+	_ "go-press/plugins/commerce-paypal"
 	_ "go-press/plugins/google-identity"
 	_ "go-press/plugins/gopress-analytics"
 	_ "go-press/plugins/metamask-identity"

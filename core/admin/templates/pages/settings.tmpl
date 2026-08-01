@@ -2,6 +2,34 @@
 <div class="content-header">
     <h2>{{T . "settings.system_settings"}}</h2>
 </div>
+{{if .Modules}}
+<div class="card settings-shell" id="modules" style="margin-bottom:1rem;">
+    <section class="settings-section">
+        <h3 class="settings-section-title">{{X . "modules.panel_title" "模块"}}</h3>
+        <p style="color:#64748b;margin:.25rem 0 1rem;">{{X . "modules.panel_help" "可选功能模块，默认关闭。启用后其管理入口会出现在左侧导航。"}}</p>
+        <div class="settings-grid">
+        {{range .Modules}}
+        <div class="settings-item" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem 1rem;">
+            <div>
+                <div style="font-weight:600;">{{.DisplayName}}
+                    {{if .Active}}<span style="color:#059669;font-size:.8rem;">● {{X $ "modules.on" "已启用"}}</span>{{else}}<span style="color:#94a3b8;font-size:.8rem;">○ {{X $ "modules.off" "未启用"}}</span>{{end}}
+                </div>
+                {{if .Description}}<small style="color:#64748b;">{{.Description}}</small>{{end}}
+            </div>
+            {{if can $.CurrentRole "plugin" "update"}}
+            <form method="POST" action="/admin/plugins/{{if .Active}}deactivate{{else}}activate{{end}}" style="margin:0;">
+                <input type="hidden" name="name" value="{{.Name}}">
+                <button type="submit" class="btn btn-sm {{if .Active}}btn-secondary{{else}}btn-primary{{end}}">
+                    {{if .Active}}{{X $ "modules.disable" "停用"}}{{else}}{{X $ "modules.enable" "启用"}}{{end}}
+                </button>
+            </form>
+            {{end}}
+        </div>
+        {{end}}
+        </div>
+    </section>
+</div>
+{{end}}
 <div class="card settings-shell">
     <form method="POST" action="/admin/settings" class="settings-form">
         <section class="settings-section">

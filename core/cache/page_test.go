@@ -76,3 +76,82 @@ func TestPageCacheSkipsPublicAuthenticatedCookie(t *testing.T) {
 		t.Fatalf("authenticated request used anonymous cache: renders=%d X-Cache=%q", renders, recorder.Header().Get("X-Cache"))
 	}
 }
+
+func TestPageCacheHonorsRequestBypassBeforeLookup(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	mgr := NewManager(NewMemoryCache(0), nil)
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		if c.Request.Header.Get("X-Private") == "1" {
+			BypassPageCache(c)
+		}
+		c.Next()
+	})
+	router.Use(PageCacheMiddleware(mgr, time.Minute))
+	renders := 0
+	router.GET("/store", func(c *gin.Context) {
+		renders++
+		c.Header("Content-Type", "text/html; charset=utf-8")
+		c.String(http.StatusOK, "render %d", renders)
+	})
+
+	public := httptest.NewRecorder()
+	router.ServeHTTP(public, httptest.NewRequest(http.MethodGet, "/store", nil))
+	private := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/store", nil)
+	req.Header.Set("X-Private", "1")
+	router.ServeHTTP(private, req)
+	if renders != 2 || private.Header().Get("X-Cache") != "BYPASS" || private.Body.String() != "render 2" {
+		t.Fatalf("private request reused public cache: renders=%d X-Cache=%q body=%q", renders, private.Header().Get("X-Cache"), private.Body.String())
+	}
+}
+
+func TestPageCacheDoesNotStorePrivateResponses(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	for _, cacheControl := range []string{"private", "no-store", "no-cache"} {
+		t.Run(cacheControl, func(t *testing.T) {
+			mgr := NewManager(NewMemoryCache(0), nil)
+			router := gin.New()
+			router.Use(PageCacheMiddleware(mgr, time.Minute))
+			renders := 0
+			router.GET("/private", func(c *gin.Context) {
+				renders++
+				c.Header("Cache-Control", cacheControl)
+				c.Header("Content-Type", "text/html; charset=utf-8")
+				c.String(http.StatusOK, "render %d", renders)
+			})
+
+			for range 2 {
+				recorder := httptest.NewRecorder()
+				router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/private", nil))
+			}
+			if renders != 2 {
+				t.Fatalf("Cache-Control %q response was stored", cacheControl)
+			}
+		})
+	}
+}
+
+func TestPageCacheBypassesQueryStrings(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	mgr := NewManager(NewMemoryCache(0), nil)
+	router := gin.New()
+	router.Use(PageCacheMiddleware(mgr, time.Minute))
+	renders := 0
+	router.GET("/complete", func(c *gin.Context) {
+		renders++
+		c.Header("Content-Type", "text/html; charset=utf-8")
+		c.String(http.StatusOK, "render %d", renders)
+	})
+
+	for range 2 {
+		recorder := httptest.NewRecorder()
+		router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/complete?key=secret", nil))
+		if recorder.Header().Get("X-Cache") != "BYPASS" {
+			t.Fatalf("query response X-Cache = %q", recorder.Header().Get("X-Cache"))
+		}
+	}
+	if renders != 2 {
+		t.Fatalf("query response was cached: renders=%d", renders)
+	}
+}

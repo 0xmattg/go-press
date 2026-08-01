@@ -2,6 +2,8 @@ package theme
 
 import (
 	"net/http/httptest"
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -135,6 +137,57 @@ func TestArchiveQueryTaxonomyFilterIgnoresUnregisteredQuery(t *testing.T) {
 	taxonomy, term := archiveQueryTaxonomyFilter(c, typeDef)
 	if taxonomy != "" || term != "" {
 		t.Fatalf("archiveQueryTaxonomyFilter() = (%q, %q), want empty filter", taxonomy, term)
+	}
+}
+
+func TestArchiveSearchQueryTrimsAndLimitsUnicodeByRunes(t *testing.T) {
+	c := &gin.Context{}
+	c.Request = httptest.NewRequest("GET", "/store?q=++"+strings.Repeat("商", maxArchiveSearchRunes+5)+"++", nil)
+
+	got := archiveSearchQuery(c)
+	if len([]rune(got)) != maxArchiveSearchRunes {
+		t.Fatalf("query rune length = %d, want %d", len([]rune(got)), maxArchiveSearchRunes)
+	}
+	if strings.Contains(got, " ") {
+		t.Fatalf("query was not trimmed: %q", got)
+	}
+}
+
+func TestArchivePageURLPreservesSearchAndTaxonomyFilters(t *testing.T) {
+	c := &gin.Context{}
+	c.Request = httptest.NewRequest("GET", "/zh/store/page/2?q=headphones&product_cat=audio&page=99", nil)
+
+	if got := archivePageURL(c, 3); got != "/zh/store/page/3?product_cat=audio&q=headphones" {
+		t.Fatalf("archivePageURL() = %q", got)
+	}
+	if got := archivePageURL(c, 1); got != "/zh/store?product_cat=audio&q=headphones" {
+		t.Fatalf("first archive page URL = %q", got)
+	}
+}
+
+func TestArchiveBasePathOnlyStripsValidPageSuffix(t *testing.T) {
+	tests := map[string]string{
+		"/store/page/4":      "/store",
+		"/store/page/latest": "/store/page/latest",
+		"/page/2":            "/",
+		"/store/":            "/store",
+	}
+	for input, want := range tests {
+		if got := archiveBasePath(input); got != want {
+			t.Errorf("archiveBasePath(%q) = %q, want %q", input, got, want)
+		}
+	}
+}
+
+func TestArchivePageWindowIsBoundedAroundCurrentPage(t *testing.T) {
+	if got := archivePageWindow(50, 100); !reflect.DeepEqual(got, []int{47, 48, 49, 50, 51, 52, 53}) {
+		t.Fatalf("middle page window = %#v", got)
+	}
+	if got := archivePageWindow(100, 100); !reflect.DeepEqual(got, []int{94, 95, 96, 97, 98, 99, 100}) {
+		t.Fatalf("end page window = %#v", got)
+	}
+	if got := archivePageWindow(1, 3); !reflect.DeepEqual(got, []int{1, 2, 3}) {
+		t.Fatalf("short page window = %#v", got)
 	}
 }
 

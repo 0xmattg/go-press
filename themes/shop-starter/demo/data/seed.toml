@@ -1,0 +1,177 @@
+# Shop Starter demo data. Commerce derives product pricing and stock from the
+# _commerce_* content meta on Core's generic seed.completed hook.
+
+[[settings]]
+key = "site_name"
+value = "Starter Supply"
+[[settings]]
+key = "site_description"
+value = "A focused collection of everyday technology and workspace essentials."
+[[settings]]
+key = "home_announcement"
+value = "Free shipping over $75 · 30-day returns"
+[[settings]]
+key = "home_hero_eyebrow"
+value = "Simple store · Complete flow"
+[[settings]]
+key = "home_hero_title"
+value = "Useful products, thoughtfully selected."
+[[settings]]
+key = "home_hero_description"
+value = "A compact collection for work, travel, and everyday life—with secure checkout and clear delivery from start to finish."
+[[settings]]
+key = "home_hero_primary_cta"
+value = "Shop the collection"
+[[settings]]
+key = "home_hero_secondary_cta"
+value = "Browse highlights"
+[[settings]]
+key = "home_hero_image"
+value = "/static/images/starter-hero.svg"
+[[settings]]
+key = "home_products_title"
+value = "A small collection, ready to sell"
+[[settings]]
+key = "home_products_description"
+value = "Every product below participates in the real cart, stock, checkout, order, and payment flow."
+[[settings]]
+key = "footer_tagline"
+value = "A compact storefront with everything needed to sell online."
+[[settings]]
+key = "company_email"
+value = "hello@starter-supply.example"
+[[settings]]
+key = "social_x"
+value = ""
+[[settings]]
+key = "social_github"
+value = ""
+
+[[taxonomies]]
+taxonomy = "product_cat"
+name = "Audio"
+slug = "starter-audio"
+[[taxonomies]]
+taxonomy = "product_cat"
+name = "Mobile"
+slug = "starter-mobile"
+[[taxonomies]]
+taxonomy = "product_cat"
+name = "Workspace"
+slug = "starter-workspace"
+[[taxonomies]]
+taxonomy = "product_cat"
+name = "Everyday"
+slug = "starter-everyday"
+
+[[taxonomies]]
+taxonomy = "product_tag"
+name = "Featured"
+slug = "starter-featured"
+[[taxonomies]]
+taxonomy = "product_tag"
+name = "New"
+slug = "starter-new"
+
+[[contents]]
+type = "product"
+title = "Quiet Arc Headphones"
+slug = "quiet-arc-headphones"
+image_url = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=900&h=760&fit=crop&q=78"
+sort_order = 1
+excerpt = "Comfortable wireless listening with active noise cancellation and 40-hour battery life."
+content = """<h2>Made for focused listening</h2><p>Quiet Arc combines adaptive noise cancellation, soft memory-foam cushions, and a balanced wireless sound profile.</p><ul><li>Up to 40 hours of playback</li><li>Fast USB-C charging</li><li>Multipoint Bluetooth connection</li></ul>"""
+[contents.taxonomies]
+product_cat = ["starter-audio"]
+product_tag = ["starter-featured"]
+[contents.meta]
+_commerce_price = "189.00"
+_commerce_sale_price = "159.00"
+_commerce_sku = "START-AUDIO-01"
+_commerce_manage_stock = "true"
+_commerce_stock_qty = "48"
+
+[[contents]]
+type = "product"
+title = "Pocket 5G Phone"
+slug = "pocket-5g-phone"
+image_url = "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=900&h=760&fit=crop&q=78"
+sort_order = 2
+excerpt = "A capable everyday phone with a bright display, dependable camera, and all-day battery."
+content = """<h2>Simple, capable, connected</h2><p>A practical 5G phone designed for clear communication, reliable navigation, and everyday photography.</p><ul><li>6.4-inch OLED display</li><li>Dual-SIM 5G</li><li>Fast charging</li></ul>"""
+[contents.taxonomies]
+product_cat = ["starter-mobile"]
+product_tag = ["starter-new"]
+[contents.meta]
+_commerce_price = "349.00"
+_commerce_sku = "START-MOBILE-01"
+_commerce_manage_stock = "true"
+_commerce_stock_qty = "32"
+
+[[contents]]
+type = "product"
+title = "Daylight Desk Lamp"
+slug = "daylight-desk-lamp"
+image_url = "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=900&h=760&fit=crop&q=78"
+sort_order = 3
+excerpt = "A dimmable task light with warm-to-cool color control and a compact footprint."
+content = """<h2>Comfortable light for longer sessions</h2><p>Adjust brightness and color temperature for reading, sketching, or late-evening work.</p><ul><li>Five brightness levels</li><li>USB-C power</li><li>Low-glare diffuser</li></ul>"""
+[contents.taxonomies]
+product_cat = ["starter-workspace"]
+product_tag = ["starter-featured"]
+[contents.meta]
+_commerce_price = "69.00"
+_commerce_sku = "START-WORK-01"
+_commerce_manage_stock = "true"
+_commerce_stock_qty = "75"
+
+[[contents]]
+type = "product"
+title = "Field Notebook Set"
+slug = "field-notebook-set"
+image_url = "https://images.unsplash.com/photo-1531346680769-a1d79b57de5c?w=900&h=760&fit=crop&q=78"
+sort_order = 4
+excerpt = "Three durable lay-flat notebooks for ideas, plans, and notes on the move."
+content = """<h2>Always ready for the next idea</h2><p>A set of three cloth-bound notebooks with dot-grid pages and lay-flat binding.</p><ul><li>Fountain-pen-friendly paper</li><li>Dot-grid layout</li><li>Recycled presentation sleeve</li></ul>"""
+[contents.taxonomies]
+product_cat = ["starter-everyday"]
+[contents.meta]
+_commerce_price = "24.00"
+_commerce_sku = "START-DAY-01"
+_commerce_manage_stock = "true"
+_commerce_stock_qty = "120"
+
+[[contents]]
+type = "product"
+title = "Travel Power Hub"
+slug = "travel-power-hub"
+image_url = "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=900&h=760&fit=crop&q=78"
+sort_order = 5
+excerpt = "One compact charging hub for laptops, phones, and travel accessories."
+content = """<h2>One charger, fewer cables</h2><p>A compact multi-port GaN charger that powers a laptop and smaller devices at the same time.</p><ul><li>100 W total output</li><li>Three USB-C ports</li><li>Foldable travel plug</li></ul>"""
+[contents.taxonomies]
+product_cat = ["starter-mobile", "starter-workspace"]
+product_tag = ["starter-new"]
+[contents.meta]
+_commerce_price = "89.00"
+_commerce_sale_price = "79.00"
+_commerce_sku = "START-POWER-01"
+_commerce_manage_stock = "true"
+_commerce_stock_qty = "64"
+
+[[contents]]
+type = "product"
+title = "Compact Mechanical Keyboard"
+slug = "compact-mechanical-keyboard"
+image_url = "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=900&h=760&fit=crop&q=78"
+sort_order = 6
+excerpt = "A quiet 75% wireless keyboard with a solid frame and comfortable tactile switches."
+content = """<h2>A better everyday typing tool</h2><p>Compact enough for a clean desk, with dedicated arrows and a function row for daily work.</p><ul><li>Bluetooth and USB-C</li><li>Hot-swappable switches</li><li>Mac and Windows layouts</li></ul>"""
+[contents.taxonomies]
+product_cat = ["starter-workspace"]
+product_tag = ["starter-featured", "starter-new"]
+[contents.meta]
+_commerce_price = "119.00"
+_commerce_sku = "START-WORK-02"
+_commerce_manage_stock = "true"
+_commerce_stock_qty = "40"

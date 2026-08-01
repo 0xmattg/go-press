@@ -436,6 +436,7 @@
   "taxonomy.tag": "Tags",
   "taxonomy.name_placeholder": "%s name",
   "taxonomy.new": "New %s",
+  "taxonomy.reference_count": "References",
   "theme.active": "Active",
   "theme.author": "Author:",
   "theme.demo_imported": "Demo Data Imported",

@@ -1,0 +1,22 @@
+{
+  "plugin.name": "Commerce PayPal",
+  "plugin.description": "PayPal payment gateway for GoPress Commerce with Orders v2, sandbox and live modes, webhook signature verification, and refunds. This opt-in satellite depends only on the Core Commerce contracts.",
+  "plugin.settings.back": "Back to Plugins",
+  "plugin.settings.title": "%s - Plugin Settings",
+  "plugin.settings.save": "Save Settings",
+  "plugin.paypal.settings.configuration": "PayPal Configuration",
+  "plugin.paypal.settings.payment": "PayPal Payment",
+  "plugin.paypal.settings.enabled": "Enabled",
+  "plugin.paypal.settings.disabled": "Disabled",
+  "plugin.paypal.settings.payment_help": "When enabled and fully configured, PayPal appears among the checkout payment methods.",
+  "plugin.paypal.settings.environment": "Environment",
+  "plugin.paypal.settings.sandbox": "Sandbox (testing)",
+  "plugin.paypal.settings.live": "Live (production)",
+  "plugin.paypal.settings.secret_configured": "Configured; leave blank to keep unchanged",
+  "plugin.paypal.settings.secret_missing": "Not configured",
+  "plugin.paypal.settings.webhook_id_help": "Enter the Webhook ID created in the PayPal developer dashboard so callbacks can be verified.",
+  "plugin.paypal.settings.webhook_section": "Webhook Callback URL",
+  "plugin.paypal.settings.webhook_help": "Add this URL as a Webhook in the PayPal developer dashboard and subscribe to CHECKOUT.ORDER.APPROVED, PAYMENT.CAPTURE.COMPLETED, PAYMENT.CAPTURE.REFUNDED, and PAYMENT.CAPTURE.DENIED.",
+  "plugin.paypal.settings.ready": "Configuration complete. PayPal will appear at checkout.",
+  "plugin.paypal.settings.not_ready": "Enable PayPal and provide a Client ID and Client Secret before it can appear at checkout."
+}

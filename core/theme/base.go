@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -162,7 +163,10 @@ func (b *BaseTheme) LoadTemplates(t Theme) {
 // are available. Missing services degrade to omitted helpers rather than
 // panicking during template load.
 func (b *BaseTheme) BaseFuncMap() template.FuncMap {
-	engineFuncs := template.FuncMap{}
+	engineFuncs := template.FuncMap{
+		"archivePageURL":    archivePageURL,
+		"archivePageWindow": archivePageWindow,
+	}
 	if b.App != nil {
 		siteLoc := b.App.SiteLocation()
 		if siteLoc == nil {
@@ -258,12 +262,12 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 			}
 		}
 		if hooks := b.App.HookBus(); hooks != nil {
-			engineFuncs["renderHook"] = func(name string, data interface{}) template.HTML {
+			engineFuncs["renderHook"] = func(name string, data interface{}, extra ...interface{}) template.HTML {
 				if name == "" {
 					return ""
 				}
-				args := []interface{}{data}
-				if ctx := templateGinContext(data); ctx != nil {
+				args := append([]interface{}{data}, extra...)
+				if ctx := templateGinContext(data); ctx != nil && !containsGinContext(args) {
 					args = append(args, ctx)
 				}
 				output := hooks.ApplyFilter(name, template.HTML(""), args...)
@@ -280,6 +284,7 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 		engineFuncs["currentUser"] = user.CurrentUserView
 		engineFuncs["isLoggedIn"] = user.IsLoggedIn
 		engineFuncs["loginURL"] = user.LoginURL
+		engineFuncs["loginProviderURL"] = user.LoginProviderURL
 		engineFuncs["logoutURL"] = user.LogoutURL
 		engineFuncs["loginProviders"] = func() []user.ProviderDescriptor {
 			authApp, ok := b.App.(PublicAuthApp)
@@ -350,6 +355,15 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 		return template.HTML(content.SanitizeEmbed(s))
 	}
 	return funcs
+}
+
+func containsGinContext(args []interface{}) bool {
+	for _, arg := range args {
+		if _, ok := arg.(*gin.Context); ok {
+			return true
+		}
+	}
+	return false
 }
 
 func templateGinContext(data interface{}) *gin.Context {
@@ -492,6 +506,10 @@ func (b *BaseTheme) renderArchive(c *gin.Context, route *rewrite.ResolvedRoute) 
 
 	q := content.NewQuery(content.ScopedDB(c, b.App.Database())).
 		Type(route.ContentType).Published()
+	searchQuery := archiveSearchQuery(c)
+	if searchQuery != "" {
+		q = q.Search(searchQuery)
+	}
 	activeTaxonomy, activeTerm := archiveQueryTaxonomyFilter(c, typeDef)
 	if activeTaxonomy != "" && activeTerm != "" {
 		q = q.Taxonomy(activeTaxonomy, activeTerm)
@@ -516,6 +534,7 @@ func (b *BaseTheme) renderArchive(c *gin.Context, route *rewrite.ResolvedRoute) 
 	data["ActiveTaxonomy"] = activeTaxonomy
 	data["ActiveTerm"] = activeTerm
 	data["ActiveTermSlug"] = activeTerm
+	data["SearchQuery"] = searchQuery
 	data["ActiveCat"] = ""
 	data["ActiveTag"] = ""
 	if activeTaxonomy == "category" {
@@ -715,6 +734,8 @@ func (b *BaseTheme) renderTaxonomy(c *gin.Context, route *rewrite.ResolvedRoute)
 	}
 
 	data := b.buildBaseData(c, termName)
+	data["Title"] = termName
+	data["ActivePage"] = route.TaxSlug
 	data["TaxSlug"] = route.TaxSlug
 	data["TermSlug"] = route.TermSlug
 	data["TaxLabel"] = taxLabel
@@ -902,6 +923,110 @@ func archiveQueryTaxonomyFilter(c *gin.Context, typeDef *content.ContentTypeDef)
 		}
 	}
 	return "", ""
+}
+
+const maxArchiveSearchRunes = 100
+
+// archiveSearchQuery normalizes the public archive search input before it is
+// passed to the parameterized content query. The rune limit bounds database
+// work while preserving complete UTF-8 characters for multilingual searches.
+func archiveSearchQuery(c *gin.Context) string {
+	if c == nil || c.Request == nil {
+		return ""
+	}
+	query := strings.TrimSpace(c.Query("q"))
+	runes := []rune(query)
+	if len(runes) > maxArchiveSearchRunes {
+		query = strings.TrimSpace(string(runes[:maxArchiveSearchRunes]))
+	}
+	return query
+}
+
+// archivePageURL builds a path-style archive pagination URL while carrying the
+// current request's filters (including q) forward. It also works on an existing
+// /page/N URL and preserves language prefixes because it derives the base path
+// from the request rather than a hardcoded content route.
+func archivePageURL(c *gin.Context, page int) string {
+	if c == nil || c.Request == nil || c.Request.URL == nil {
+		return "/"
+	}
+	if page < 1 {
+		page = 1
+	}
+	basePath := archiveBasePath(c.Request.URL.Path)
+	pagePath := basePath
+	if page > 1 {
+		pagePath = strings.TrimRight(basePath, "/") + "/page/" + strconv.Itoa(page)
+	}
+	if pagePath == "" {
+		pagePath = "/"
+	}
+	query := c.Request.URL.Query()
+	if _, hasSearch := query["q"]; hasSearch {
+		if normalizedSearch := archiveSearchQuery(c); normalizedSearch != "" {
+			query.Set("q", normalizedSearch)
+		} else {
+			query.Del("q")
+		}
+	}
+	// Older themes used ?page=N even though rewrite pagination is path-based.
+	// Avoid carrying that stale value into canonical /page/N links.
+	query.Del("page")
+	if encoded := query.Encode(); encoded != "" {
+		return pagePath + "?" + encoded
+	}
+	return pagePath
+}
+
+func archiveBasePath(path string) string {
+	path = strings.TrimRight(path, "/")
+	if path == "" {
+		return "/"
+	}
+	marker := strings.LastIndex(path, "/page/")
+	if marker < 0 {
+		return path
+	}
+	pagePart := path[marker+len("/page/"):]
+	if page, err := strconv.Atoi(pagePart); err == nil && page > 0 {
+		base := strings.TrimRight(path[:marker], "/")
+		if base == "" {
+			return "/"
+		}
+		return base
+	}
+	return path
+}
+
+// archivePageWindow bounds the number of page links a theme renders for large
+// archives while keeping the current page near the middle of the window.
+func archivePageWindow(page, totalPages int) []int {
+	if totalPages < 1 {
+		return nil
+	}
+	if page < 1 {
+		page = 1
+	} else if page > totalPages {
+		page = totalPages
+	}
+	const windowSize = 7
+	start := page - windowSize/2
+	if start < 1 {
+		start = 1
+	}
+	end := start + windowSize - 1
+	if end > totalPages {
+		end = totalPages
+		start = end - windowSize + 1
+		if start < 1 {
+			start = 1
+		}
+	}
+	pages := make([]int, 0, end-start+1)
+	for current := start; current <= end; current++ {
+		pages = append(pages, current)
+	}
+	return pages
 }
 
 func contentTypeSupports(typeDef *content.ContentTypeDef, feature string) bool {

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 620" role="img" aria-labelledby="title desc">
+  <title id="title">Modern products and shopping parcels</title>
+  <desc id="desc">A lightweight illustration of a shopping bag, headphones, and parcels.</desc>
+  <defs>
+    <linearGradient id="bg" x1="80" y1="30" x2="660" y2="590" gradientUnits="userSpaceOnUse"><stop stop-color="#f5f3ff"/><stop offset="1" stop-color="#dff8ea"/></linearGradient>
+    <linearGradient id="box" x1="200" y1="210" x2="505" y2="520" gradientUnits="userSpaceOnUse"><stop stop-color="#7d6ff2"/><stop offset="1" stop-color="#4f41cb"/></linearGradient>
+    <linearGradient id="mint" x1="430" y1="120" x2="640" y2="390" gradientUnits="userSpaceOnUse"><stop stop-color="#d6ffe7"/><stop offset="1" stop-color="#91e9b8"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="22" stdDeviation="22" flood-color="#34305c" flood-opacity=".18"/></filter>
+  </defs>
+  <rect width="720" height="620" fill="url(#bg)"/>
+  <circle cx="104" cy="116" r="58" fill="#fff" opacity=".76"/>
+  <circle cx="642" cy="505" r="92" fill="#fff" opacity=".48"/>
+  <path d="M76 468c99-122 198-176 298-164 94 11 153 89 270 41v181H76z" fill="#fff" opacity=".6"/>
+  <g filter="url(#shadow)">
+    <path d="m178 302 198-78 153 91-194 89z" fill="#9388f7"/>
+    <path d="m178 302 157 102v144L178 441z" fill="url(#box)"/>
+    <path d="m335 404 194-89v143l-194 90z" fill="#594bd3"/>
+    <path d="m273 264 158 93" fill="none" stroke="#dcd8ff" stroke-width="9"/>
+    <path d="m378 225 151 90-58 27-153-91z" fill="#6859df"/>
+  </g>
+  <g transform="translate(414 112)" filter="url(#shadow)">
+    <path d="M32 68h178l-16 205H48z" fill="url(#mint)"/>
+    <path d="M72 82C72 33 96 10 121 10s49 23 49 72" fill="none" stroke="#25243a" stroke-width="13" stroke-linecap="round"/>
+    <path d="M74 66c0-35 21-56 47-56s47 21 47 56" fill="none" stroke="#fff" stroke-width="4" opacity=".8"/>
+    <circle cx="83" cy="161" r="34" fill="#25243a"/>
+    <circle cx="159" cy="161" r="34" fill="#25243a"/>
+    <path d="M85 160c9 26 24 38 36 38s27-12 36-38" fill="none" stroke="#25243a" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="83" cy="161" r="21" fill="#5143cc"/>
+    <circle cx="159" cy="161" r="21" fill="#5143cc"/>
+  </g>
+  <g transform="translate(95 117) rotate(-8 110 120)" filter="url(#shadow)">
+    <rect x="12" y="45" width="194" height="204" rx="22" fill="#fff"/>
+    <path d="M65 78c0-41 20-65 44-65s44 24 44 65" fill="none" stroke="#25243a" stroke-width="11" stroke-linecap="round"/>
+    <rect x="55" y="105" width="108" height="108" rx="20" fill="#f0eeff"/>
+    <path d="M82 158h54M109 131v54" stroke="#6657e8" stroke-width="11" stroke-linecap="round"/>
+  </g>
+  <g fill="#6657e8"><circle cx="82" cy="308" r="8"/><circle cx="612" cy="76" r="10"/><circle cx="646" cy="105" r="5"/></g>
+</svg>

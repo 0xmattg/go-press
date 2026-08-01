@@ -1,0 +1,22 @@
+[theme]
+name = "Shop Starter"
+version = "1.0.4"
+description = "A lightweight, single-page Commerce starter with a modern product grid and the complete cart, checkout, order, account, and payment flow."
+author = "GoPress Team"
+
+[requires]
+core = ">=0.6.41"
+plugins = [
+  { slug = "commerce", version = ">=0.2.1" },
+]
+
+# Commerce owns the product content type and its product_cat/product_tag
+# taxonomies. This theme only consumes them through Core's registry and hooks.
+
+[[menu_locations]]
+name = "header"
+label = "Header Navigation"
+
+[[menu_locations]]
+name = "footer"
+label = "Footer Navigation"

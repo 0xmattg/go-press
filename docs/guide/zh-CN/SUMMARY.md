@@ -45,6 +45,15 @@
 * [内置插件：Google Identity](architecture/public-authentication.md#google-identity-插件)
 * [内置插件：MetaMask Identity](architecture/public-authentication.md#metamask-identity-插件)
 
+## Commerce 电商模块
+
+* [总览](commerce/overview.md)
+* [快速上手](commerce/getting-started.md)
+* [架构](commerce/architecture.md)
+* [目录 · 购物车 · 订单](commerce/catalog-orders.md)
+* [支付](commerce/payments.md)
+* [主题接入](commerce/theme-integration.md)
+
 ## 参考资料
 
 * [项目结构](reference/project-structure.md)

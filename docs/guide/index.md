@@ -14,4 +14,5 @@ This documentation is available in English and Simplified Chinese.
 - **Admin** — the built-in CMS admin, menu management, and extension points.
 - **Theme Development** — theme registration, dependencies, templates, media helpers, SEO integration, and responsive image variants.
 - **Plugin Development** — plugin lifecycle, settings pages, multilingual content, SEO extensions, code snippets, analytics, and external identity.
+- **Commerce** — the opt-in e-commerce module: core contracts, catalog, cart, checkout, orders, inventory, payment gateways (including the PayPal satellite), and shop-theme integration.
 - **Reference** — project structure, database prefixes, REST API, technology stack, and roadmap.

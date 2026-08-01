@@ -1,0 +1,67 @@
+{{define "content"}}
+<section class="ss-hero">
+  <div class="ss-shell ss-hero-grid">
+    <div class="ss-hero-copy">
+      <span class="ss-eyebrow">{{settingOr .Ctx .Settings "home_hero_eyebrow" "Simple store · Complete flow"}}</span>
+      <h1>{{settingOr .Ctx .Settings "home_hero_title" "Start selling without the storefront overhead."}}</h1>
+      <p>{{settingOr .Ctx .Settings "home_hero_description" "A focused product experience with cart, checkout, orders, inventory, and payments already connected."}}</p>
+      <div class="ss-hero-actions">
+        <a class="btn btn-primary btn-lg" href="{{langPrefixURL .Ctx (archiveURL "product")}}">{{settingOr .Ctx .Settings "home_hero_primary_cta" "Shop the collection"}} <span aria-hidden="true">→</span></a>
+        <a class="btn btn-secondary btn-lg" href="#products">{{settingOr .Ctx .Settings "home_hero_secondary_cta" "Browse highlights"}}</a>
+      </div>
+      <div class="ss-hero-proof">
+        <span><strong>30</strong> {{T .Ctx "hero.returns"}}</span>
+        <span><strong>24h</strong> {{T .Ctx "hero.dispatch"}}</span>
+        <span><strong>100%</strong> {{T .Ctx "hero.secure"}}</span>
+      </div>
+    </div>
+    <div class="ss-hero-art"><img src="{{.HeroImage}}" alt="" width="720" height="620" fetchpriority="high"></div>
+  </div>
+</section>
+
+{{if .Categories}}
+<section class="ss-category-bar" aria-label="{{T .Ctx "categories.label"}}">
+  <div class="ss-shell ss-category-list">
+    <span>{{T .Ctx "categories.explore"}}</span>
+    {{range .Categories}}<a href="{{langPrefixURL $.Ctx (taxonomyURL "product_cat" .Term.Slug)}}">{{.Term.Name}}</a>{{end}}
+  </div>
+</section>
+{{end}}
+
+<section class="ss-section ss-products" id="products">
+  <div class="ss-shell">
+    <div class="ss-section-head">
+      <div><span class="ss-eyebrow">{{T .Ctx "products.eyebrow"}}</span><h2>{{settingOr .Ctx .Settings "home_products_title" "A small collection, ready to sell"}}</h2><p>{{settingOr .Ctx .Settings "home_products_description" "Demo products use the same catalog, pricing, stock, and checkout contracts as a production store."}}</p></div>
+      <a class="ss-text-link" href="{{langPrefixURL .Ctx (archiveURL "product")}}">{{T .Ctx "products.view_all"}} →</a>
+    </div>
+    {{if .Products}}
+    <div class="ss-product-grid">
+      {{range .Products}}
+      <article class="ss-product-card">
+        <a class="ss-product-media" href="{{contentURL . "product"}}">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width:720px) 100vw, (max-width:1100px) 50vw, 25vw" "lazy"}}{{else}}<span class="ss-product-placeholder"></span>{{end}}</a>
+        <div class="ss-product-body">
+          <h3><a href="{{contentURL . "product"}}">{{.Title}}</a></h3>
+          {{if .Excerpt}}<p>{{.Excerpt}}</p>{{end}}
+          {{renderHook "commerce.product.add_to_cart" . $.Ctx}}
+        </div>
+      </article>
+      {{end}}
+    </div>
+    {{else}}
+    <div class="ss-empty"><strong>{{T .Ctx "products.empty_title"}}</strong><p>{{T .Ctx "products.empty_text"}}</p></div>
+    {{end}}
+  </div>
+</section>
+
+<section class="ss-section ss-benefits">
+  <div class="ss-shell ss-benefit-grid">
+    <article><span class="ss-benefit-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 9h14v13H5zM19 13h4l4 4v5h-8z"/><circle cx="10" cy="23" r="2.5"/><circle cx="23" cy="23" r="2.5"/></svg></span><div><h3>{{T .Ctx "benefit.delivery_title"}}</h3><p>{{T .Ctx "benefit.delivery_text"}}</p></div></article>
+    <article><span class="ss-benefit-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4 26 8v7c0 6.2-4.2 10.6-10 13-5.8-2.4-10-6.8-10-13V8z"/><path d="m11.5 16 3 3 6-7"/></svg></span><div><h3>{{T .Ctx "benefit.checkout_title"}}</h3><p>{{T .Ctx "benefit.checkout_text"}}</p></div></article>
+    <article><span class="ss-benefit-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 8h16v16H8z"/><path d="M12 13h8M12 17h8M12 21h5"/></svg></span><div><h3>{{T .Ctx "benefit.orders_title"}}</h3><p>{{T .Ctx "benefit.orders_text"}}</p></div></article>
+  </div>
+</section>
+
+<section class="ss-section ss-final-cta">
+  <div class="ss-shell ss-final-card"><div><span class="ss-eyebrow">{{T .Ctx "cta.eyebrow"}}</span><h2>{{T .Ctx "cta.title"}}</h2><p>{{T .Ctx "cta.text"}}</p></div><a class="btn btn-inverse btn-lg" href="{{langPrefixURL .Ctx (archiveURL "product")}}">{{T .Ctx "cta.button"}} →</a></div>
+</section>
+{{end}}

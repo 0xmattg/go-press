@@ -1,0 +1,41 @@
+{{define "content"}}
+<div class="content-header">
+    <h2>{{X $ "plugin.commerce.orders.title" "订单"}}</h2>
+</div>
+
+{{if .Success}}<div class="alert alert-success">{{.Success}}</div>{{end}}
+{{if .Error}}<div class="alert alert-error">{{.Error}}</div>{{end}}
+
+<div class="card">
+    {{if .Orders}}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>{{X $ "plugin.commerce.orders.number" "订单号"}}</th>
+                <th>{{X $ "plugin.commerce.orders.status" "状态"}}</th>
+                <th style="text-align:right;">{{X $ "plugin.commerce.orders.amount" "金额"}}</th>
+                <th>{{X $ "plugin.commerce.orders.email" "邮箱"}}</th>
+                <th>{{X $ "plugin.commerce.orders.time" "时间"}}</th>
+            </tr>
+        </thead>
+        <tbody>
+        {{range .Orders}}
+            <tr>
+                <td><a href="/admin/commerce/orders/{{.ID}}"><strong>{{.Number}}</strong></a></td>
+                <td><span class="commerce-status-pill">{{.StatusLabel}}</span></td>
+                <td style="text-align:right;">{{.TotalStr}} {{.Currency}}</td>
+                <td>{{.Email}}</td>
+                <td style="color:var(--text-muted);">{{.CreatedAt}}</td>
+            </tr>
+        {{end}}
+        </tbody>
+    </table>
+    {{else}}
+    <div class="card-body"><p class="empty-msg">{{X $ "plugin.commerce.orders.empty" "暂无订单。"}}</p></div>
+    {{end}}
+</div>
+
+<style>
+.commerce-status-pill{display:inline-block;padding:.15rem .55rem;border-radius:999px;background:#eef2f7;color:#475569;font-size:.78rem;white-space:nowrap;}
+</style>
+{{end}}

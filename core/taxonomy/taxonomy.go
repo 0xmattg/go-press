@@ -29,7 +29,7 @@ func (Taxonomy) TableName() string { return dbprefix.Table("taxonomies") }
 // TermRelationship links content to taxonomy.
 type TermRelationship struct {
 	ContentID  uint `gorm:"primaryKey" json:"content_id"`
-	TaxonomyID uint `gorm:"primaryKey" json:"taxonomy_id"`
+	TaxonomyID uint `gorm:"primaryKey;index" json:"taxonomy_id"`
 	SortOrder  int  `gorm:"default:0" json:"sort_order"`
 }
 

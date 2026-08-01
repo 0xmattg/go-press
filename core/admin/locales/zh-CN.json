@@ -436,6 +436,7 @@
   "taxonomy.tag": "标签",
   "taxonomy.name_placeholder": "%s名称",
   "taxonomy.new": "新建%s",
+  "taxonomy.reference_count": "引用次数",
   "theme.active": "当前启用",
   "theme.author": "作者:",
   "theme.demo_imported": "演示数据已导入",

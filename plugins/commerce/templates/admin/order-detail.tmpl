@@ -1,0 +1,152 @@
+{{define "content"}}
+<div class="content-header">
+    <div class="content-header-left">
+        <a href="/admin/commerce/orders" class="btn btn-secondary btn-sm" style="text-decoration:none;">← {{X $ "plugin.commerce.order.back" "返回订单列表"}}</a>
+        <h2>{{X $ "plugin.commerce.order.title" "订单 %s" .Order.Number}}</h2>
+        <span class="commerce-status-pill">{{.StatusLabel}}</span>
+    </div>
+</div>
+
+{{if .Success}}<div class="alert alert-success">{{.Success}}</div>{{end}}
+{{if .Error}}<div class="alert alert-error">{{.Error}}</div>{{end}}
+
+<div class="commerce-order-grid">
+  <div>
+    <div class="card">
+        <div class="card-header"><h3>{{X $ "plugin.commerce.order.products" "商品"}}</h3></div>
+        <table class="data-table">
+            <thead><tr>
+                <th>{{X $ "plugin.commerce.order.name" "名称"}}</th><th style="text-align:center;">{{X $ "plugin.commerce.order.unit_price" "单价"}}</th>
+                <th style="text-align:center;">{{X $ "plugin.commerce.order.quantity" "数量"}}</th><th style="text-align:right;">{{X $ "plugin.commerce.order.line_total" "小计"}}</th>
+            </tr></thead>
+            <tbody>
+            {{range .Items}}
+                <tr>
+                    <td>{{.NameSnapshot}}</td>
+                    <td style="text-align:center;">{{.UnitPriceStr}}</td>
+                    <td style="text-align:center;">{{.Qty}}</td>
+                    <td style="text-align:right;">{{.LineTotalStr}}</td>
+                </tr>
+            {{end}}
+            </tbody>
+        </table>
+        <div class="card-body">
+            <table class="commerce-totals">
+                <tr><td>{{X $ "plugin.commerce.order.subtotal" "小计"}}</td><td>{{.Order.SubtotalStr}} {{.Order.Currency}}</td></tr>
+                {{if gt .Order.ShippingTotal 0}}<tr><td>{{X $ "plugin.commerce.order.shipping" "运费"}}</td><td>{{.Order.ShippingTotalStr}} {{.Order.Currency}}</td></tr>{{end}}
+                {{if gt .Order.DiscountTotal 0}}<tr><td>{{X $ "plugin.commerce.order.discount" "折扣"}}</td><td>-{{.Order.DiscountTotalStr}} {{.Order.Currency}}</td></tr>{{end}}
+                <tr class="commerce-grand"><td>{{X $ "plugin.commerce.order.total" "合计"}}</td><td>{{.Order.GrandTotalStr}} {{.Order.Currency}}</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3>{{X $ "plugin.commerce.order.addresses" "地址"}}</h3></div>
+        <div class="card-body commerce-address-grid">
+            <div><strong>{{X $ "plugin.commerce.order.billing" "账单"}}</strong><br>{{.Billing.Name}}<br>{{.Billing.Phone}}<br>{{.Billing.Line1}} {{.Billing.Line2}}<br>{{.Billing.City}} {{.Billing.State}} {{.Billing.Postcode}}<br>{{.Billing.Country}}</div>
+            <div><strong>{{X $ "plugin.commerce.order.shipping_address" "收货"}}</strong><br>{{.Shipping.Name}}<br>{{.Shipping.Phone}}<br>{{.Shipping.Line1}} {{.Shipping.Line2}}<br>{{.Shipping.City}} {{.Shipping.State}} {{.Shipping.Postcode}}<br>{{.Shipping.Country}}</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3>{{X $ "plugin.commerce.order.history" "订单记录"}}</h3></div>
+        <div class="card-body">
+            {{if .Notes}}
+            <ul class="commerce-notes">
+                {{range .Notes}}
+                <li>
+                    <div>{{.Note}}</div>
+                    <small>{{.Author}} · {{.CreatedAt.Format "2006-01-02 15:04"}}{{if .IsCustomerNote}} · {{X $ "plugin.commerce.order.customer_visible" "客户可见"}}{{end}}</small>
+                </li>
+                {{end}}
+            </ul>
+            {{else}}<p class="empty-msg">{{X $ "plugin.commerce.order.empty_history" "暂无记录。"}}</p>{{end}}
+            <form method="POST" action="/admin/commerce/orders/{{.Order.ID}}/note" class="commerce-note-form">
+                <input type="text" name="note" placeholder="{{X $ "plugin.commerce.order.add_note" "添加备注…"}}">
+                <label class="commerce-note-check"><input type="checkbox" name="is_customer" value="1"> {{X $ "plugin.commerce.order.customer_visible" "客户可见"}}</label>
+                <button type="submit" class="btn btn-secondary btn-sm">{{X $ "plugin.commerce.order.add" "添加"}}</button>
+            </form>
+        </div>
+    </div>
+  </div>
+
+  <aside>
+    <div class="card">
+        <div class="card-header"><h3>{{X $ "plugin.commerce.order.actions" "操作"}}</h3></div>
+        <div class="card-body">
+            <p class="commerce-meta">{{X $ "plugin.commerce.order.payment_method" "支付方式"}}: {{.Order.PaymentMethod}}<br>{{X $ "plugin.commerce.orders.email" "邮箱"}}: {{.Order.Email}}</p>
+            {{if .CanMarkPaid}}
+            <form method="POST" action="/admin/commerce/orders/{{.Order.ID}}/mark-paid" class="commerce-action-form">
+                <button type="submit" class="btn btn-primary btn-block">{{X $ "plugin.commerce.order.mark_paid" "标记已付款"}}</button>
+            </form>
+            {{end}}
+            {{if .CanShip}}
+            <form method="POST" action="/admin/commerce/orders/{{.Order.ID}}/status" class="commerce-action-form">
+                <input type="hidden" name="event" value="ship">
+                <button type="submit" class="btn btn-primary btn-block">{{X $ "plugin.commerce.order.mark_shipped" "标记发货 · 完成"}}</button>
+            </form>
+            {{end}}
+            {{if .CanCancel}}
+            <form method="POST" action="/admin/commerce/orders/{{.Order.ID}}/status" class="commerce-action-form" onsubmit="return confirm('{{X $ "plugin.commerce.order.cancel_confirm" "确认取消该订单并释放库存？"}}');">
+                <input type="hidden" name="event" value="cancel">
+                <button type="submit" class="btn btn-danger btn-block">{{X $ "plugin.commerce.order.cancel" "取消订单"}}</button>
+            </form>
+            {{end}}
+        </div>
+    </div>
+
+    {{if .CanRefund}}
+    <div class="card">
+        <div class="card-header"><h3>{{X $ "plugin.commerce.order.refund" "退款"}}</h3></div>
+        <div class="card-body">
+            <form method="POST" action="/admin/commerce/orders/{{.Order.ID}}/refund">
+				<input type="hidden" name="idempotency_key" value="{{.RefundKey}}">
+				<div class="form-group"><label>{{X $ "plugin.commerce.order.refund_amount" "金额（%s，最多 %s）" .Order.Currency .Refundable}}</label><input type="text" inputmode="decimal" name="amount" value="{{.RetryAmount}}" placeholder="{{.Refundable}}"></div>
+				<div class="form-group"><label>{{X $ "plugin.commerce.order.reason" "原因"}}</label><input type="text" name="reason" value="{{.RetryReason}}" placeholder="{{X $ "plugin.commerce.order.optional" "可选"}}"></div>
+                <button type="submit" class="btn btn-danger btn-block">{{X $ "plugin.commerce.order.record_refund" "记录退款"}}</button>
+            </form>
+        </div>
+    </div>
+    {{end}}
+
+    <div class="card">
+        <div class="card-header"><h3>{{X $ "plugin.commerce.order.payment" "支付"}}</h3></div>
+        <div class="card-body">
+            {{if .Payments}}
+            <ul class="commerce-txn-list">
+                {{range .Payments}}<li>{{.Gateway}} · {{.Status}}{{if .TxnID}} · {{.TxnID}}{{end}}</li>{{end}}
+            </ul>
+            {{else}}<p class="empty-msg">{{X $ "plugin.commerce.order.no_payments" "暂无支付记录。"}}</p>{{end}}
+            {{if .Refunds}}
+            <h4 class="commerce-subhead">{{X $ "plugin.commerce.order.refund" "退款"}}</h4>
+            <ul class="commerce-txn-list">
+				{{range .Refunds}}<li>-{{.Amount}} {{.Currency}} · {{.Status}}{{if .Reason}} · {{.Reason}}{{end}}{{if .Error}} · {{.Error}}{{end}}</li>{{end}}
+            </ul>
+            {{end}}
+        </div>
+    </div>
+  </aside>
+</div>
+
+<style>
+.commerce-status-pill{display:inline-block;padding:.15rem .55rem;border-radius:999px;background:#eef2f7;color:#475569;font-size:.78rem;white-space:nowrap;}
+.commerce-order-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:1.5rem;align-items:start;}
+.commerce-totals{width:100%;}
+.commerce-totals td{padding:.25rem 0;color:var(--text-muted);}
+.commerce-totals td:last-child{text-align:right;color:var(--text);}
+.commerce-totals .commerce-grand td{padding-top:.6rem;font-size:1.05rem;font-weight:600;color:var(--text);}
+.commerce-address-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;line-height:1.6;}
+.commerce-notes{list-style:none;padding:0;margin:0 0 .8rem;}
+.commerce-notes li{padding:.5rem 0;border-bottom:1px solid var(--border);}
+.commerce-notes small{color:var(--text-muted);}
+.commerce-note-form{display:flex;gap:.5rem;align-items:center;}
+.commerce-note-form input[type=text]{flex:1;}
+.commerce-note-check{display:flex;align-items:center;gap:.3rem;font-size:.85rem;white-space:nowrap;color:var(--text-muted);}
+.commerce-meta{color:var(--text-muted);margin-bottom:.8rem;line-height:1.6;}
+.commerce-action-form{margin-bottom:.5rem;}
+.btn-block{width:100%;}
+.commerce-txn-list{list-style:none;padding:0;margin:0;font-size:.88rem;line-height:1.8;}
+.commerce-subhead{font-size:.85rem;margin:.6rem 0 .2rem;color:var(--text-muted);}
+@media (max-width:900px){.commerce-order-grid{grid-template-columns:1fr;}}
+</style>
+{{end}}

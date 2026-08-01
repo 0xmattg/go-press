@@ -173,6 +173,7 @@ gopress serve     # 装完之后任意目录都能跑
 | [后台管理](docs/guide/zh-CN/admin/overview.md) | 后台 CMS、独立页面、扩展点、菜单管理 |
 | [主题开发](docs/guide/zh-CN/themes/overview.md) | 创建主题、SEO 接入规范、图片管线、媒体变体 |
 | [插件开发](docs/guide/zh-CN/plugins/overview.md) | 创建插件、Hook 列表、内置 multilang / seo-extras / code-snippets / gopress-analytics |
+| [电商模块](docs/guide/zh-CN/commerce/overview.md) | Commerce 电商：核心契约、目录、购物车、结算、订单、库存、支付与商城主题接入 |
 | [参考资料](docs/guide/zh-CN/reference/project-structure.md) | 项目结构、数据库表前缀、REST API、技术栈、路线图 |
 
 API 接口规范单独存放，由 `swag` 从代码注解自动生成：
@@ -264,9 +265,9 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 - **插件热拔插** — `Bus.AddAction/AddFilter` 返回 `Handle`，`Deactivate` 中 `Remove*` 干净下线，运行时即时切换无需重启
 - **零交叉耦合** — 主题和插件之间不存在直接调用或类型依赖，core 是唯一交汇点
 
-### 公开主题（9 个）
+### 公开主题（10 个）
 
-`atelier-slate` / `axis-form`（Axis Form，建筑设计） / `florafi`（FloraFi，稳定币/金融科技） / `civic-estate` / `financial-news` / `go-press-landing` / `modern-company` / `mono-journal` / `terra-trail`
+`atelier-slate` / `axis-form`（Axis Form，建筑设计） / `florafi`（FloraFi，稳定币/金融科技） / `civic-estate` / `financial-news` / `go-press-landing` / `modern-company` / `mono-journal` / `terra-trail` / `shop-starter`（Shop Starter，Commerce 的轻量单页参考主题）
 
 详见 [docs/guide/zh-CN/themes/overview.md](docs/guide/zh-CN/themes/overview.md)。
 
@@ -278,8 +279,10 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 - **gopress-analytics** — GoPress 官方自托管访问统计，支持 PV、UV、新访客、访问趋势、访客构成和热门页面分析
 - **google-identity** — 基于 Provider-neutral 前台认证核心，为 Gmail 和 Google Workspace 账号提供 Google OIDC 登录与注册
 - **metamask-identity** — 基于 EIP-4361 Sign-In with Ethereum 和服务端一次性 Challenge，为 MetaMask 浏览器扩展提供钱包登录与注册
+- **commerce** — 可选电商模块（对标 WooCommerce）：`product` 目录、游客/账号购物车、单事务结算、订单状态机、行锁库存预留、媒介无关的支付网关契约，以及内置离线银行转账网关。默认停用。详见 [docs/guide/zh-CN/commerce/overview.md](docs/guide/zh-CN/commerce/overview.md)。
+- **commerce-paypal** — PayPal（Orders v2）卫星网关：沙盒/生产、买家回跳 capture、webhook 验签与退款。只依赖 `core/commerce` 契约（无 plugin→plugin 依赖）。
 
-详见 [docs/guide/zh-CN/plugins/overview.md](docs/guide/zh-CN/plugins/overview.md)。
+详见 [docs/guide/zh-CN/plugins/overview.md](docs/guide/zh-CN/plugins/overview.md) 与 [电商模块指南](docs/guide/zh-CN/commerce/overview.md)。
 
 ---
 

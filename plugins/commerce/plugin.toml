@@ -1,0 +1,7 @@
+[plugin]
+slug = "commerce"
+name = "Commerce"
+version = "0.2.2"
+description = "E-commerce foundation for shop themes: products, cart, checkout, orders, and pluggable payment/shipping/tax gateways. Opt-in module, disabled by default."
+author = "GoPress Team"
+default_inactive = true

@@ -48,12 +48,20 @@ func (r *Repository) Delete(id uint) error {
 
 // List returns paginated media, optionally filtered by mime type.
 func (r *Repository) List(mimeType string, page, perPage int) ([]Media, int64, error) {
+	if page < 1 {
+		page = 1
+	}
+	if perPage < 1 {
+		perPage = 20
+	}
 	q := r.db.Model(&Media{})
 	if mimeType != "" {
 		q = q.Where("mime_type LIKE ?", mimeType+"%")
 	}
 	var total int64
-	q.Count(&total)
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
 
 	var items []Media
 	err := q.Order("created_at DESC").

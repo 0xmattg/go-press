@@ -544,6 +544,33 @@ func (s *Service) ListTaxonomy(taxType string) ([]taxonomy.Taxonomy, error) {
 	return s.taxRepo.ListByTaxonomy(taxType)
 }
 
+// ListTaxonomyItemViews returns admin taxonomy rows with a live, batched count
+// of active content references. The stable sort preserves the repository order
+// for equal counts while putting the most-used terms first.
+func (s *Service) ListTaxonomyItemViews(taxType string) ([]TaxonomyItemView, error) {
+	items, err := s.ListTaxonomy(taxType)
+	if err != nil {
+		return nil, err
+	}
+	counts, err := s.taxRepo.ContentReferenceCounts(taxType)
+	if err != nil {
+		return nil, err
+	}
+
+	views := s.ToTaxonomyItemViews(items)
+	applyTaxonomyReferenceCounts(views, counts)
+	return views, nil
+}
+
+func applyTaxonomyReferenceCounts(views []TaxonomyItemView, counts map[uint]int64) {
+	for i := range views {
+		views[i].ReferenceCount = counts[views[i].ID]
+	}
+	sort.SliceStable(views, func(i, j int) bool {
+		return views[i].ReferenceCount > views[j].ReferenceCount
+	})
+}
+
 func (s *Service) CreateTaxonomyTerm(name, slug, taxType string) error {
 	term := &taxonomy.Term{Name: name, Slug: slug}
 	if err := s.taxRepo.CreateTerm(term); err != nil {
@@ -553,18 +580,32 @@ func (s *Service) CreateTaxonomyTerm(name, slug, taxType string) error {
 	return s.taxRepo.CreateTaxonomy(tax)
 }
 
-func (s *Service) UpdateTaxonomyTerm(taxID uint, name, slug string) error {
+func (s *Service) UpdateTaxonomyTerm(taxID uint, taxType, name, slug string) error {
 	tax, err := s.taxRepo.GetTaxonomy(taxID)
 	if err != nil {
 		return err
+	}
+	if !taxonomyMatchesType(tax, taxType) {
+		return gorm.ErrRecordNotFound
 	}
 	tax.Term.Name = name
 	tax.Term.Slug = slug
 	return s.db.Save(&tax.Term).Error
 }
 
-func (s *Service) DeleteTaxonomyTerm(taxID uint) error {
+func (s *Service) DeleteTaxonomyTerm(taxID uint, taxType string) error {
+	tax, err := s.taxRepo.GetTaxonomy(taxID)
+	if err != nil {
+		return err
+	}
+	if !taxonomyMatchesType(tax, taxType) {
+		return gorm.ErrRecordNotFound
+	}
 	return s.taxRepo.DeleteTaxonomy(taxID)
+}
+
+func taxonomyMatchesType(item *taxonomy.Taxonomy, taxType string) bool {
+	return item != nil && taxType != "" && item.Taxonomy == taxType
 }
 
 // ==================== Settings ====================

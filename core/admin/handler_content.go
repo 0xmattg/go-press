@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -57,6 +58,26 @@ func listRedirectURL(slug string, filterQuery template.URL, flashKey, flashValue
 	}
 	u += sep + flashKey + "=" + url.QueryEscape(flashValue)
 	return u
+}
+
+// runAdminContentSaved runs extension-owned field persistence and turns any
+// errors reported through gin.Context into a regular handler error. The hook
+// signature stays generic and backward compatible while save failures can no
+// longer be mistaken for a successful content update.
+func runAdminContentSaved(hooks *hook.Bus, c *gin.Context, item *content.Content) error {
+	if hooks == nil {
+		return nil
+	}
+	before := len(c.Errors)
+	hooks.DoAction(context.Background(), hook.AdminContentSaved, c, item)
+	if len(c.Errors) <= before {
+		return nil
+	}
+	reported := make([]error, 0, len(c.Errors)-before)
+	for _, ginErr := range c.Errors[before:] {
+		reported = append(reported, ginErr.Err)
+	}
+	return errors.Join(reported...)
 }
 
 func cleanListQuery(c *gin.Context, dropPage bool) url.Values {
@@ -723,12 +744,20 @@ func (h *Handler) ContentCreate(c *gin.Context) {
 	h.saveTaxonomyRelations(c, typeDef, item.ID)
 
 	// Fire admin.content.saved so plugins can persist their own meta fields.
-	if h.hooks != nil {
-		h.hooks.DoAction(context.Background(), hook.AdminContentSaved, c, item)
-	}
-
+	hookErr := runAdminContentSaved(h.hooks, c, item)
+	// The core content row changed even when an extension-owned field failed.
+	// Always invalidate the public cache and retain an audit trail of that write.
 	h.invalidatePageCache()
 	h.logAction(c, "create", typeName, item.ID, item.Title)
+	if hookErr != nil {
+		// The core row already exists, so return to its edit screen instead of
+		// re-rendering the create form and risking a duplicate on retry.
+		message := adminT(lang, "error.update_failed", hookErr.Error())
+		target := fmt.Sprintf("/admin/%s/%d/edit?error=%s", slug, item.ID, url.QueryEscape(message))
+		c.Redirect(http.StatusFound, target)
+		return
+	}
+
 	c.Redirect(http.StatusFound, listRedirectURL(slug, filterQuery, "success", adminT(lang, "notice.created")))
 }
 
@@ -883,6 +912,9 @@ func (h *Handler) ContentEdit(c *gin.Context) {
 		"BackURL":         listURLWithFilter(slug, filterQuery),
 		"BackQuery":       filterQuery,
 	}
+	if message := strings.TrimSpace(c.Query("error")); message != "" {
+		data["Error"] = message
+	}
 
 	// Load taxonomy forms with selection state
 	h.loadTaxonomyForms(typeDef, &view, data)
@@ -1003,12 +1035,14 @@ func (h *Handler) ContentUpdate(c *gin.Context) {
 
 	// Fire admin.content.saved so plugins can persist their own meta fields
 	// (e.g. seo-extras stores seo_title / seo_description / seo_image / seo_robots).
-	if h.hooks != nil {
-		h.hooks.DoAction(context.Background(), hook.AdminContentSaved, c, item)
-	}
-
+	hookErr := runAdminContentSaved(h.hooks, c, item)
 	h.invalidatePageCache()
 	h.logAction(c, "update", typeName, item.ID, item.Title)
+	if hookErr != nil {
+		renderUpdateError(adminT(lang, "error.update_failed", hookErr.Error()))
+		return
+	}
+
 	c.Redirect(http.StatusFound, listRedirectURL(slug, filterQuery, "success", adminT(lang, "notice.updated")))
 }
 

@@ -85,9 +85,10 @@ type AdminHiddenInput struct {
 
 // TaxonomyItemView is a generic taxonomy term view.
 type TaxonomyItemView struct {
-	ID   uint
-	Name string
-	Slug string
+	ID             uint
+	Name           string
+	Slug           string
+	ReferenceCount int64
 }
 
 // ContentTypeStats holds a count for a single content type on the dashboard.
@@ -164,6 +165,10 @@ type AdminMenuItem struct {
 	Active  string // key used for active class matching
 	Icon    string
 	Section string // non-empty means this is a section header
+	// Resource/Action optionally declare the capability required to display the
+	// item. Empty values preserve the existing behavior for core-owned entries.
+	Resource string
+	Action   string
 }
 
 // TaxonomyFormData holds taxonomy data for rendering form selectors.

@@ -1,0 +1,25 @@
+{{define "loginModal"}}
+{{if not (isLoggedIn .Ctx)}}
+<div class="ss-login-modal" id="ss-login-modal" data-login-modal hidden>
+  <button class="ss-login-backdrop" type="button" tabindex="-1" data-login-close aria-label="{{T .Ctx "auth.close"}}"></button>
+  <section class="ss-login-dialog" role="dialog" aria-modal="true" aria-labelledby="ss-login-title" aria-describedby="ss-login-description" tabindex="-1">
+    <button class="ss-login-close" type="button" data-login-close aria-label="{{T .Ctx "auth.close"}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    <span class="ss-login-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M8 10.5 16 6l8 4.5v11L16 26l-8-4.5z"/><path d="m8.5 10.8 7.5 4.3 7.5-4.3M16 15v10.5"/></svg></span>
+    <span class="ss-eyebrow">{{T .Ctx "auth.eyebrow"}}</span>
+    <h2 id="ss-login-title">{{T .Ctx "auth.title"}} {{settingOr .Ctx .Settings "site_name" "Starter Shop"}}</h2>
+    <p id="ss-login-description">{{T .Ctx "auth.description"}}</p>
+    {{$providers := loginProviders}}
+    {{if $providers}}
+    <div class="ss-login-providers">
+      {{range $providers}}
+      <a href="{{loginProviderURL .BeginURL $.Ctx}}">{{if .IconURL}}<img src="{{.IconURL}}" alt="" width="24" height="24">{{else}}<span class="ss-provider-fallback" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M6 20a6 6 0 0 1 12 0"/></svg></span>{{end}}<span>{{T $.Ctx "auth.continue_with"}} {{.Label}}</span><span aria-hidden="true">→</span></a>
+      {{end}}
+    </div>
+    {{else}}
+    <div class="ss-login-empty" role="status"><strong>{{T .Ctx "auth.no_methods_title"}}</strong><p>{{T .Ctx "auth.no_methods_text"}}</p></div>
+    {{end}}
+    <p class="ss-login-note">{{T .Ctx "auth.note"}}</p>
+  </section>
+</div>
+{{end}}
+{{end}}

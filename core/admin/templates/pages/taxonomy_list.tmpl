@@ -27,6 +27,7 @@
                 <th>ID</th>
                 <th>{{T . "field.name"}}</th>
                 <th>Slug</th>
+                <th class="taxonomy-reference-count-col">{{T . "taxonomy.reference_count"}}</th>
                 <th>{{T . "field.actions"}}</th>
             </tr>
         </thead>
@@ -54,6 +55,7 @@
                         class="inline-input"
                         form="tax-edit-{{$.TaxType}}-{{.ID}}">
                 </td>
+                <td class="taxonomy-reference-count-col"><span class="taxonomy-reference-count">{{.ReferenceCount}}</span></td>
                 <td class="actions">
                     <form
                         method="POST"
@@ -71,6 +73,7 @@
                 {{else}}
                 <td><a href="/{{$.TaxType}}/{{.Slug}}" target="_blank" class="content-title-link">{{.Name}}</a></td>
                 <td><code>{{.Slug}}</code></td>
+                <td class="taxonomy-reference-count-col"><span class="taxonomy-reference-count">{{.ReferenceCount}}</span></td>
                 <td class="actions">
                     {{if can $.CurrentRole $.TaxType "delete"}}
                     <form method="POST" action="/admin/{{$.Slug}}/{{.ID}}/delete" class="inline-form">
@@ -81,7 +84,7 @@
                 {{end}}
             </tr>
             {{else}}
-            <tr><td colspan="4" class="empty-msg">{{T . "taxonomy.empty" (adminTaxonomyLabel .AdminLanguage .TaxType .TaxDef.Label)}}</td></tr>
+            <tr><td colspan="5" class="empty-msg">{{T . "taxonomy.empty" (adminTaxonomyLabel .AdminLanguage .TaxType .TaxDef.Label)}}</td></tr>
             {{end}}
         </tbody>
     </table>

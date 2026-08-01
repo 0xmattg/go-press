@@ -1,0 +1,31 @@
+{{define "content"}}
+<section class="section">
+  <div class="container" style="max-width:900px;margin:0 auto;padding:2rem 1rem;">
+    <h1>{{T .Ctx "commerce.account.orders_title"}}</h1>
+    {{if .Orders}}
+      <table class="commerce-orders-table" style="width:100%;border-collapse:collapse;margin-top:1rem;">
+        <thead>
+          <tr style="text-align:left;border-bottom:2px solid #e2e8f0;">
+            <th style="padding:.6rem;">{{T .Ctx "commerce.common.order_number"}}</th>
+            <th style="padding:.6rem;">{{T .Ctx "commerce.common.status"}}</th>
+            <th style="padding:.6rem;text-align:right;">{{T .Ctx "commerce.common.amount"}}</th>
+            <th style="padding:.6rem;">{{T .Ctx "commerce.common.time"}}</th>
+          </tr>
+        </thead>
+        <tbody>
+        {{range .Orders}}
+          <tr style="border-bottom:1px solid #eef2f7;">
+            <td style="padding:.6rem;"><a href="/my-account/orders/{{.Number}}">{{.Number}}</a></td>
+            <td style="padding:.6rem;">{{.StatusLabel}}</td>
+            <td style="padding:.6rem;text-align:right;">{{.TotalStr}} {{.Currency}}</td>
+            <td style="padding:.6rem;color:#64748b;">{{.CreatedAt}}</td>
+          </tr>
+        {{end}}
+        </tbody>
+      </table>
+    {{else}}
+      <p style="color:#64748b;margin-top:1rem;">{{T .Ctx "commerce.account.empty"}} <a href="/store">{{T .Ctx "commerce.account.shop_now"}}</a></p>
+    {{end}}
+  </div>
+</section>
+{{end}}

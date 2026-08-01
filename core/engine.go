@@ -319,6 +319,10 @@ func (e *Engine) activateTheme(name string) error {
 		}
 	}
 	coreTheme.RegisterContentTypesFromConfig(e.Registry, themeConfig)
+	// Let active plugins contribute content types that must survive theme
+	// switches (the registry was just cleared and rebuilt). Fires on every
+	// activation, including the initial one and later switches.
+	e.Hooks.DoAction(context.Background(), hook.ContentRegisterTypes, e.Registry)
 	theme.Setup(e)
 
 	e.mu.Lock()
@@ -331,6 +335,23 @@ func (e *Engine) activateTheme(name string) error {
 	}
 
 	logger.Info("Theme activated", "theme", theme.Name(), "slug", name)
+	return nil
+}
+
+// RefreshActiveTheme re-activates the current theme (rebuilding the content
+// registry from core + active-theme + plugin-contributed types via the
+// content.register_types hook) and rebuilds the router. Call it after a plugin
+// is toggled so its content types, admin nav, and routes appear or disappear
+// cleanly without a process restart.
+func (e *Engine) RefreshActiveTheme() error {
+	name := e.ActiveThemeName()
+	if name == "" {
+		return nil
+	}
+	if err := e.activateTheme(name); err != nil {
+		return err
+	}
+	e.rebuildRouter()
 	return nil
 }
 
@@ -577,13 +598,31 @@ func (e *Engine) ImportThemeDemoData(slug string) error {
 // Missing option is treated as "active" to preserve first-run behavior.
 func (e *Engine) LoadPlugin(p plugin.Plugin) {
 	e.PluginManager.Register(p)
-	if e.Options != nil && e.Options.Get("plugin_active_"+p.Name()) == "false" {
+	persisted := ""
+	if e.Options != nil {
+		persisted = e.Options.Get("plugin_active_" + p.Name())
+	}
+	switch {
+	case persisted == "false":
 		logger.Info("Plugin registered but inactive (persisted state)",
+			"plugin", p.Name(), "version", p.Version())
+		return
+	case persisted == "" && pluginDefaultInactive(p):
+		// Opt-in module (e.g. commerce): off until the operator enables it.
+		logger.Info("Plugin registered but inactive by default (opt-in module)",
 			"plugin", p.Name(), "version", p.Version())
 		return
 	}
 	e.PluginManager.Activate(p.Name(), e)
 	logger.Info("Plugin activated", "plugin", p.Name(), "version", p.Version())
+}
+
+// pluginDefaultInactive reports whether a plugin declares itself off by default.
+func pluginDefaultInactive(p plugin.Plugin) bool {
+	if dp, ok := p.(plugin.DefaultInactiveProvider); ok {
+		return dp.DefaultInactive()
+	}
+	return false
 }
 
 // LoadAllPlugins loads all auto-registered plugins (those registered via init() + RegisterPlugin).
@@ -934,6 +973,17 @@ func (e *Engine) SetupAdmin() {
 			}
 			return ""
 		},
+		NeedsEnableFn: func() []admin.ModuleInfo {
+			var out []admin.ModuleInfo
+			for _, slug := range e.ActiveThemeDependencies().NeedsEnable() {
+				name := slug
+				if p, ok := e.PluginManager.FindBySlug(slug); ok {
+					name = p.Name()
+				}
+				out = append(out, admin.ModuleInfo{Slug: slug, Name: name})
+			}
+			return out
+		},
 		PageTemplatesFn: func() []admin.PageTemplateOption {
 			tpls := e.ActiveThemePageTemplates()
 			if len(tpls) == 0 {
@@ -1014,6 +1064,7 @@ func (e *Engine) SetupAdmin() {
 					HasSettings:           hasSettings,
 					LogoSVG:               template.HTML(extensionLogoSVG(p)),
 					RequiredByActiveTheme: e.ActiveThemeRequiresPlugin(slug),
+					DefaultInactive:       e.PluginManager.IsDefaultInactive(slug),
 				}
 			}
 			return result
@@ -1029,7 +1080,11 @@ func (e *Engine) SetupAdmin() {
 			if e.Cache != nil {
 				e.Cache.Flush()
 			}
-			e.rebuildRouter()
+			// Rebuild the registry (re-fires content.register_types so the
+			// plugin's content types/admin nav/routes appear) then the router.
+			if err := e.RefreshActiveTheme(); err != nil {
+				e.rebuildRouter()
+			}
 			return nil
 		},
 		DeactivateFn: func(name string) error {
@@ -1049,7 +1104,11 @@ func (e *Engine) SetupAdmin() {
 			if e.Cache != nil {
 				e.Cache.Flush()
 			}
-			e.rebuildRouter()
+			// Rebuild the registry so the plugin's content types/nav/routes are
+			// dropped, then the router.
+			if err := e.RefreshActiveTheme(); err != nil {
+				e.rebuildRouter()
+			}
 			return nil
 		},
 		SettingsTemplateFn: func(slug string) string {
@@ -1080,6 +1139,18 @@ func (e *Engine) SetupAdmin() {
 					}
 				}
 			}
+		},
+		SettingsResourceFn: func(slug string) string {
+			for _, p := range e.PluginManager.ActivePlugins() {
+				if plugin.Slug(p) != slug {
+					continue
+				}
+				if ap, ok := p.(plugin.SettingsAuthorizationProvider); ok {
+					return ap.SettingsPermissionResource()
+				}
+				return "plugin"
+			}
+			return "plugin"
 		},
 		LocaleCatalogFn: func(slug string) *coreI18n.Catalog {
 			for _, p := range e.PluginManager.RegisteredPlugins() {

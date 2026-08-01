@@ -1,0 +1,30 @@
+{{define "content"}}
+<section class="section">
+  <div class="container" style="max-width:760px;margin:0 auto;padding:2rem 1rem;">
+    <h1>{{T .Ctx "commerce.payment.inline_title"}}</h1>
+    <p style="color:#475569;">{{T .Ctx "commerce.common.order_number"}} <strong>{{.Order.Number}}</strong></p>
+    <div id="gopress-inline-payment"
+         data-client="{{.ClientDataJSON}}"
+         data-complete-url="{{.CompleteURL}}"
+         style="margin:1.2rem 0;">
+      {{renderHook "commerce.payment.inline" .}}
+      <noscript>{{T .Ctx "commerce.payment.requires_js"}}</noscript>
+    </div>
+    <p style="color:#64748b;font-size:.9rem;">{{T .Ctx "commerce.payment.inline_note"}}</p>
+    <p><a href="{{.CompleteURL}}" class="btn">{{T .Ctx "commerce.payment.view_status"}}</a></p>
+  </div>
+</section>
+<script>
+(function () {
+  var root = document.getElementById('gopress-inline-payment');
+  if (!root) return;
+  var clientData = {};
+  try { clientData = JSON.parse(root.getAttribute('data-client') || '{}'); } catch (_) {}
+  window.dispatchEvent(new CustomEvent('gopress:payment:inline', {detail: {
+    root: root,
+    clientData: clientData,
+    completeURL: root.getAttribute('data-complete-url') || ''
+  }}));
+}());
+</script>
+{{end}}
