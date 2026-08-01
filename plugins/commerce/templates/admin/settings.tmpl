@@ -1,0 +1,70 @@
+{{define "content"}}
+<div class="content-header">
+    <div style="display:flex; align-items:center; gap:1rem;">
+        <a href="/admin/plugins" class="btn btn-secondary" style="text-decoration:none;">← {{X $ "plugin.settings.back" "返回插件管理"}}</a>
+        <h2>{{X $ "plugin.settings.title" "%s - 插件设置" .PluginName}}</h2>
+    </div>
+</div>
+
+<div class="card settings-shell">
+    <form method="POST" action="/admin/plugins/{{.PluginSlug}}/settings" class="settings-form">
+        <section class="settings-section">
+            <h3 class="settings-section-title">{{X $ "plugin.commerce.settings.store" "店铺设置"}}</h3>
+            <div class="settings-grid">
+                <div class="form-group settings-item">
+                    <label for="storeCurrency">{{X $ "plugin.commerce.settings.currency" "店铺币种"}}</label>
+                    <input type="text" id="storeCurrency" name="plugin_commerce_store_currency" value="{{.StoreCurrency}}" maxlength="8">
+                    <small>{{X $ "plugin.commerce.settings.currency_help" "ISO 4217 币种代码，如 USD、CNY。v1 为单币种。"}}</small>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="storeCountry">{{X $ "plugin.commerce.settings.country" "店铺所在国家/地区"}}</label>
+                    <input type="text" id="storeCountry" name="plugin_commerce_store_country" value="{{.StoreCountry}}" maxlength="2">
+                    <small>{{X $ "plugin.commerce.settings.country_help" "ISO 3166-1 alpha-2，如 US、CN。"}}</small>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="weightUnit">{{X $ "plugin.commerce.settings.weight_unit" "重量单位"}}</label>
+                    <select id="weightUnit" name="plugin_commerce_weight_unit">
+                        <option value="g" {{if eq .WeightUnit "g"}}selected{{end}}>g</option>
+                        <option value="kg" {{if eq .WeightUnit "kg"}}selected{{end}}>kg</option>
+                    </select>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="flatShipping">{{X $ "plugin.commerce.settings.flat_shipping" "统一运费（%s）" .StoreCurrency}}</label>
+                    <input type="text" id="flatShipping" inputmode="decimal" name="plugin_commerce_flat_shipping" value="{{.FlatShipping}}" placeholder="0.00">
+                    <small>{{X $ "plugin.commerce.settings.flat_shipping_help" "结算时对每单收取的固定运费。留空为免运费。"}}</small>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="reservationTTL">{{X $ "plugin.commerce.settings.reservation_ttl" "未支付订单保留（分钟）"}}</label>
+                    <input type="number" id="reservationTTL" name="plugin_commerce_reservation_ttl_minutes" value="{{.ReservationTTL}}" min="5">
+                    <small>{{X $ "plugin.commerce.settings.reservation_ttl_help" "超过此时长仍未支付的订单将自动取消并释放库存。"}}</small>
+                </div>
+            </div>
+        </section>
+
+        <section class="settings-section">
+            <h3 class="settings-section-title">{{X $ "plugin.commerce.settings.offline" "银行转账（离线支付）"}}</h3>
+            <div class="settings-grid">
+                <div class="form-group settings-item">
+                    <label for="offlineAccountName">{{X $ "plugin.commerce.settings.account_name" "收款户名"}}</label>
+                    <input type="text" id="offlineAccountName" name="plugin_commerce_offline_account_name" value="{{.OfflineAccountName}}">
+                </div>
+                <div class="form-group settings-item">
+                    <label for="offlineBankName">{{X $ "plugin.commerce.settings.bank_name" "开户银行"}}</label>
+                    <input type="text" id="offlineBankName" name="plugin_commerce_offline_bank_name" value="{{.OfflineBankName}}">
+                </div>
+                <div class="form-group settings-item">
+                    <label for="offlineAccountNumber">{{X $ "plugin.commerce.settings.account_number" "收款账号"}}</label>
+                    <input type="text" id="offlineAccountNumber" name="plugin_commerce_offline_account_number" value="{{.OfflineAccountNumber}}">
+                </div>
+                <div class="form-group settings-item">
+                    <label for="offlineInstructions">{{X $ "plugin.commerce.settings.instructions" "附加说明"}}</label>
+                    <input type="text" id="offlineInstructions" name="plugin_commerce_offline_instructions" value="{{.OfflineInstructions}}" placeholder="{{X $ "plugin.commerce.settings.instructions_placeholder" "如：转账备注请填订单号"}}">
+                </div>
+            </div>
+        </section>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{{X $ "plugin.settings.save" "保存设置"}}</button>
+        </div>
+    </form>
+</div>
+{{end}}

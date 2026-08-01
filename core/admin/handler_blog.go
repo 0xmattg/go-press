@@ -30,14 +30,18 @@ func (h *Handler) TaxonomyList(c *gin.Context) {
 		return
 	}
 
-	slug := AdminSlug(taxType)
-	items, _ := h.svc.ListTaxonomy(taxType)
 	lang := h.svc.AdminLanguage()
+	slug := AdminSlug(taxType)
+	items, err := h.svc.ListTaxonomyItemViews(taxType)
+	if err != nil {
+		c.String(http.StatusServiceUnavailable, adminT(lang, "status.load_failed"))
+		return
+	}
 
 	h.render(c, "taxonomy_list", gin.H{
 		"Title":   h.taxonomyLabel(lang, taxType, taxDef.LabelPlural),
 		"Active":  slug,
-		"Items":   h.svc.ToTaxonomyItemViews(items),
+		"Items":   items,
 		"TaxDef":  taxDef,
 		"TaxType": taxType,
 		"Slug":    slug,
@@ -65,7 +69,7 @@ func (h *Handler) TaxonomyUpdate(c *gin.Context) {
 	if !h.checkPermission(c, taxType, "update") {
 		return
 	}
-	if err := h.svc.UpdateTaxonomyTerm(getIDParam(c), c.PostForm("name"), c.PostForm("slug")); err != nil {
+	if err := h.svc.UpdateTaxonomyTerm(getIDParam(c), taxType, c.PostForm("name"), c.PostForm("slug")); err != nil {
 		c.Redirect(http.StatusFound, "/admin/"+slug+"?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.update_failed", err.Error())))
 		return
 	}
@@ -81,7 +85,10 @@ func (h *Handler) TaxonomyDelete(c *gin.Context) {
 		return
 	}
 	id := getIDParam(c)
-	_ = h.svc.DeleteTaxonomyTerm(id)
+	if err := h.svc.DeleteTaxonomyTerm(id, taxType); err != nil {
+		c.Redirect(http.StatusFound, "/admin/"+slug+"?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.not_found")))
+		return
+	}
 	h.invalidatePageCache()
 	h.logAction(c, "delete", taxType, id, "")
 	c.Redirect(http.StatusFound, "/admin/"+slug+"?success="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "notice.deleted")))

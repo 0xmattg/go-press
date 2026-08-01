@@ -45,6 +45,7 @@ type ThemeController interface {
 	LocaleCatalog(slug string) *coreI18n.Catalog
 	ActiveDepWarning() string
 	PageTemplates() []PageTemplateOption
+	NeedsEnable() []ModuleInfo
 }
 
 func (m *ThemeManager) Switch(name string) error {
@@ -101,6 +102,13 @@ func (m *ThemeManager) PageTemplates() []PageTemplateOption {
 		return nil
 	}
 	return m.PageTemplatesFn()
+}
+
+func (m *ThemeManager) NeedsEnable() []ModuleInfo {
+	if m == nil || m.NeedsEnableFn == nil {
+		return nil
+	}
+	return m.NeedsEnableFn()
 }
 
 // CacheController exposes cache management to admin handlers.
@@ -175,6 +183,7 @@ type PluginController interface {
 	SettingsTemplate(slug string) string
 	SettingsData(slug string) map[string]interface{}
 	SettingsSave(slug string, settings map[string]string)
+	SettingsResource(slug string) string
 	LocaleCatalog(slug string) *coreI18n.Catalog
 }
 
@@ -218,6 +227,17 @@ func (c *PluginCallbacks) SettingsSave(slug string, settings map[string]string) 
 		return
 	}
 	c.SettingsSaveFn(slug, settings)
+}
+
+func (c *PluginCallbacks) SettingsResource(slug string) string {
+	if c == nil || c.SettingsResourceFn == nil {
+		return "plugin"
+	}
+	resource := c.SettingsResourceFn(slug)
+	if resource == "" {
+		return "plugin"
+	}
+	return resource
 }
 
 func (c *PluginCallbacks) LocaleCatalog(slug string) *coreI18n.Catalog {

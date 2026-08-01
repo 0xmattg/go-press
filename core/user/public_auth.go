@@ -245,6 +245,21 @@ func LoginURL(c *gin.Context) string {
 	return "/login?return_to=" + url.QueryEscape(returnTo)
 }
 
+// LoginProviderURL adds the current same-site request as return_to to a
+// registered identity provider's begin URL. Invalid or external provider URLs
+// fall back to Core's standalone login page instead of becoming an open
+// redirect surface in theme templates.
+func LoginProviderURL(beginURL string, c *gin.Context) string {
+	if !isLocalProviderPath(beginURL) {
+		return LoginURL(c)
+	}
+	returnTo := "/"
+	if c != nil && c.Request != nil {
+		returnTo = SafeReturnTo(c.Request.URL.RequestURI(), "/")
+	}
+	return appendReturnTo(beginURL, returnTo)
+}
+
 func LogoutURL() string { return "/logout" }
 
 func publicLoginError(code string) string {

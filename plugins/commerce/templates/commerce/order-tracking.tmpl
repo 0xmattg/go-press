@@ -1,0 +1,18 @@
+{{define "content"}}
+<section class="section">
+  <div class="container" style="max-width:520px;margin:0 auto;padding:2rem 1rem;">
+    <h1>{{T .Ctx "commerce.tracking.title"}}</h1>
+    <p style="color:#64748b;">{{T .Ctx "commerce.tracking.intro"}}</p>
+
+    {{if .Error}}
+      <div class="commerce-alert" style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:.8rem 1rem;border-radius:8px;margin:1rem 0;">{{.Error}}</div>
+    {{end}}
+
+    <form method="POST" action="/order-tracking" style="margin-top:1rem;">
+      <div class="form-group"><label for="number">{{T .Ctx "commerce.common.order_number"}}</label><input type="text" id="number" name="number" value="{{.Number}}" placeholder="20260731-XXXXXXXX" required></div>
+      <div class="form-group"><label for="email">{{T .Ctx "commerce.common.email"}}</label><input type="email" id="email" name="email" value="{{.Email}}" required></div>
+      <button type="submit" class="btn btn-primary" style="margin-top:.5rem;">{{T .Ctx "commerce.tracking.search"}}</button>
+    </form>
+  </div>
+</section>
+{{end}}

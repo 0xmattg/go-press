@@ -1,0 +1,69 @@
+{{define "content"}}
+<div class="content-header">
+    <div style="display:flex; align-items:center; gap:1rem;">
+        <a href="/admin/plugins" class="btn btn-secondary" style="text-decoration:none;">← {{X $ "plugin.settings.back" "返回插件管理"}}</a>
+        <h2>{{X $ "plugin.settings.title" "%s - 插件设置" .PluginName}}</h2>
+    </div>
+</div>
+
+<div class="card settings-shell">
+    <form method="POST" action="/admin/plugins/{{.PluginSlug}}/settings" class="settings-form">
+        <section class="settings-section">
+            <h3 class="settings-section-title">{{X $ "plugin.paypal.settings.configuration" "PayPal 配置"}}</h3>
+            <div class="settings-grid">
+                <div class="form-group settings-item">
+                    <label for="ppEnabled">{{X $ "plugin.paypal.settings.payment" "PayPal 支付"}}</label>
+                    <select id="ppEnabled" name="plugin_commerce-paypal_enabled">
+                        <option value="1" {{if .Enabled}}selected{{end}}>{{X $ "plugin.paypal.settings.enabled" "启用"}}</option>
+                        <option value="0" {{if not .Enabled}}selected{{end}}>{{X $ "plugin.paypal.settings.disabled" "停用"}}</option>
+                    </select>
+                    <small>{{X $ "plugin.paypal.settings.payment_help" "启用后，PayPal 会出现在结算页的支付方式中。"}}</small>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="ppSandbox">{{X $ "plugin.paypal.settings.environment" "环境"}}</label>
+                    <select id="ppSandbox" name="plugin_commerce-paypal_sandbox">
+                        <option value="1" {{if .Sandbox}}selected{{end}}>{{X $ "plugin.paypal.settings.sandbox" "Sandbox（沙盒测试）"}}</option>
+                        <option value="0" {{if not .Sandbox}}selected{{end}}>{{X $ "plugin.paypal.settings.live" "Live（生产）"}}</option>
+                    </select>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="ppClientID">Client ID</label>
+                    <input type="text" id="ppClientID" name="plugin_commerce-paypal_client_id" value="{{.ClientID}}" autocomplete="off" spellcheck="false">
+                </div>
+                <div class="form-group settings-item">
+                    <label for="ppSecret">Client Secret</label>
+                    <input type="password" id="ppSecret" name="plugin_commerce-paypal_client_secret" value="" autocomplete="new-password" placeholder="{{if .SecretConfigured}}{{X $ "plugin.paypal.settings.secret_configured" "已配置；留空保持不变"}}{{else}}{{X $ "plugin.paypal.settings.secret_missing" "尚未配置"}}{{end}}">
+                </div>
+                <div class="form-group settings-item">
+                    <label for="ppWebhookID">Webhook ID</label>
+                    <input type="text" id="ppWebhookID" name="plugin_commerce-paypal_webhook_id" value="{{.WebhookID}}" autocomplete="off" spellcheck="false">
+                    <small>{{X $ "plugin.paypal.settings.webhook_id_help" "在 PayPal 开发者后台创建 Webhook 后填入其 ID，用于回调验签。"}}</small>
+                </div>
+            </div>
+        </section>
+
+        <section class="settings-section settings-section-admin">
+            <h3 class="settings-section-title">{{X $ "plugin.paypal.settings.webhook_section" "Webhook 回调地址"}}</h3>
+            <div class="form-group settings-item pp-webhook-field">
+                <label for="ppWebhookURL">Webhook URL</label>
+                <input type="text" id="ppWebhookURL" value="{{.WebhookURL}}" readonly>
+                <small>{{X $ "plugin.paypal.settings.webhook_help" "请在 PayPal 开发者后台把此地址添加为 Webhook，并订阅 CHECKOUT.ORDER.APPROVED、PAYMENT.CAPTURE.COMPLETED、PAYMENT.CAPTURE.REFUNDED、PAYMENT.CAPTURE.DENIED 事件。"}}</small>
+            </div>
+            <p class="pp-status {{if .Ready}}ready{{end}}">
+                {{if .Ready}}{{X $ "plugin.paypal.settings.ready" "配置完整，PayPal 会显示在结算页。"}}{{else}}{{X $ "plugin.paypal.settings.not_ready" "启用 PayPal 并填写 Client ID、Client Secret 后，结算页才会出现 PayPal。"}}{{end}}
+            </p>
+        </section>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{{X $ "plugin.settings.save" "保存设置"}}</button>
+        </div>
+    </form>
+</div>
+
+<style>
+.pp-webhook-field { max-width: 760px; }
+.pp-webhook-field input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.pp-status { margin: 1rem 0 0; padding: .75rem 1rem; border-left: 3px solid #94a3b8; background: #f8fafc; color: #475569; }
+.pp-status.ready { border-left-color: #16844b; color: #166534; }
+</style>
+{{end}}

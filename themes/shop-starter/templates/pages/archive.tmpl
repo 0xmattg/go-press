@@ -1,0 +1,4 @@
+{{define "content"}}
+<section class="ss-page-head"><div class="ss-shell"><nav class="ss-breadcrumb"><a href="{{langPrefixURL .Ctx "/"}}">{{T .Ctx "nav.home"}}</a><span>/</span><span>{{.Title}}</span></nav><div class="ss-page-title"><div><span class="ss-eyebrow">{{T .Ctx "archive.content"}}</span><h1>{{.Title}}</h1></div></div></div></section>
+<section class="ss-section"><div class="ss-shell">{{if .Items}}<div class="ss-content-list">{{range .Items}}<article><div>{{if .PublishedAt}}<time>{{formatDate .PublishedAt}}</time>{{end}}<h2><a href="{{.URL}}">{{.Title}}</a></h2>{{if .Excerpt}}<p>{{.Excerpt}}</p>{{end}}</div><a href="{{.URL}}" aria-label="{{.Title}}">→</a></article>{{end}}</div>{{else}}<div class="ss-empty"><strong>{{T .Ctx "archive.empty"}}</strong></div>{{end}}</div></section>
+{{end}}

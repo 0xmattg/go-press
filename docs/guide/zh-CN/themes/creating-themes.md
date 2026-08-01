@@ -408,7 +408,7 @@ data := gin.H{
 
 主题实现评论、账号页、收藏等登录态工作流时：
 
-- 只使用 core 提供的 `currentUser`、`loginURL`、`CommentApp`、`PublicAuthorizationApp` 通用契约。
+- 只使用 core 提供的 `currentUser`、`loginURL`、`loginProviders`、`loginProviderURL`、`CommentApp`、`PublicAuthorizationApp` 通用契约。
 - 所需身份插件只能在 `theme.toml` 声明；运行时不得 import 插件、读取私有配置或判断 Provider ID。
 - 每个写路由都必须执行同源校验和明确的 `resource.action` 权限检查。
 - 表单中的内容 ID、评论 ID 必须校验类型、目标、所有权和父子归属。

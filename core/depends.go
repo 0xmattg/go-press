@@ -20,6 +20,10 @@ const (
 	DepSatisfied DepState = "satisfied"
 	// DepInactive: present and version-compatible but not activated (auto-activatable).
 	DepInactive DepState = "inactive"
+	// DepNeedsEnable: present and version-compatible but not activated AND the
+	// plugin is a default-inactive opt-in module — so it is NOT auto-activated;
+	// the operator must enable it (surfaced as a prominent admin prompt).
+	DepNeedsEnable DepState = "needs_enable"
 	// DepVersionMismatch: present/active but its version fails the constraint.
 	DepVersionMismatch DepState = "version_mismatch"
 	// DepMissing: not compiled into this build; only fixable by rebuilding.
@@ -76,6 +80,19 @@ func (r ThemeDepReport) InactiveDeps() []string {
 	var out []string
 	for _, p := range r.Plugins {
 		if p.State == DepInactive {
+			out = append(out, p.Slug)
+		}
+	}
+	return out
+}
+
+// NeedsEnable returns the slugs of present-but-inactive required plugins that
+// are opt-in modules (default-inactive) — they are NOT auto-activated; the admin
+// surfaces a prominent "enable" prompt for them.
+func (r ThemeDepReport) NeedsEnable() []string {
+	var out []string
+	for _, p := range r.Plugins {
+		if p.State == DepNeedsEnable {
 			out = append(out, p.Slug)
 		}
 	}
@@ -150,9 +167,13 @@ func resolvePluginDeps(reqs []coreTheme.PluginRequirement, mgr *plugin.Manager) 
 				continue
 			}
 		}
-		if mgr.IsActive(p.Name()) {
+		switch {
+		case mgr.IsActive(p.Name()):
 			st.State = DepSatisfied
-		} else {
+		case mgr.IsDefaultInactive(p.Name()):
+			// Opt-in module: don't auto-activate; prompt the operator to enable.
+			st.State = DepNeedsEnable
+		default:
 			st.State = DepInactive
 		}
 		out = append(out, st)

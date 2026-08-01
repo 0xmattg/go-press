@@ -94,9 +94,37 @@ const (
 	// AdminContentSaved fires once after a content row and its built-in
 	// meta fields are persisted. Args: (*gin.Context, *content.Content).
 	// Plugins read their own fields via c.PostForm(...) and persist them
-	// to gp_content_meta with their own keys. Lets plugins own their data
-	// without modifying the core save handler.
+	// to plugin-owned storage. A callback that cannot persist its fields must
+	// report the error with c.Error(err); the core handler then displays a
+	// failure instead of redirecting with a false success notice. Lets plugins
+	// own their data without modifying the core save handler.
 	AdminContentSaved = "admin.content.saved"
+
+	// SeedCompleted fires once after seed/demo data has been imported (both
+	// first-run seeding and admin demo-data import). No args. Generic by design:
+	// plugins that own satellite tables keyed off content (e.g. commerce's
+	// product_data) listen here to derive their rows from the freshly seeded
+	// content + meta, so seed files stay pure core content and never reference
+	// plugin tables. Core fires it without knowing any plugin.
+	SeedCompleted = "seed.completed"
+
+	// ContentRegisterTypes fires during every theme activation, right after the
+	// active theme's theme.toml content types are registered and before
+	// Theme.Setup. Args: (*content.Registry). Plugins that contribute content
+	// types (e.g. a commerce "product" type) must register them idempotently in
+	// this action so they survive theme switches, which rebuild the registry
+	// from core + active-theme definitions only. Plugins should also register
+	// their types once immediately on Activate, since the initial theme
+	// activation may run before the plugin loads.
+	ContentRegisterTypes = "content.register_types"
+
+	// AdminNavItems filters the admin left-nav item list before the System
+	// section is appended. Filter value is []admin.AdminMenuItem; args[0] is the
+	// current admin role and args[1] is the normalized admin UI language.
+	// An active plugin appends its own section + items (e.g. a "Commerce"
+	// module) so a first-class admin module can appear without core knowing the
+	// plugin. Deactivating the plugin removes the filter and the nav entries.
+	AdminNavItems = "admin.nav.items"
 )
 
 // Comment hooks expose the framework-owned comment lifecycle without coupling

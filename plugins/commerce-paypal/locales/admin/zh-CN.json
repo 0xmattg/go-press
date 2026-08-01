@@ -1,0 +1,22 @@
+{
+  "plugin.name": "Commerce PayPal",
+  "plugin.description": "GoPress Commerce 的 PayPal 支付网关，支持 Orders v2、沙盒与生产环境、Webhook 验签及退款。该可选卫星插件只依赖 Core Commerce 契约。",
+  "plugin.settings.back": "返回插件管理",
+  "plugin.settings.title": "%s - 插件设置",
+  "plugin.settings.save": "保存设置",
+  "plugin.paypal.settings.configuration": "PayPal 配置",
+  "plugin.paypal.settings.payment": "PayPal 支付",
+  "plugin.paypal.settings.enabled": "启用",
+  "plugin.paypal.settings.disabled": "停用",
+  "plugin.paypal.settings.payment_help": "启用并完成配置后，PayPal 会出现在结算页的支付方式中。",
+  "plugin.paypal.settings.environment": "环境",
+  "plugin.paypal.settings.sandbox": "Sandbox（沙盒测试）",
+  "plugin.paypal.settings.live": "Live（生产）",
+  "plugin.paypal.settings.secret_configured": "已配置；留空保持不变",
+  "plugin.paypal.settings.secret_missing": "尚未配置",
+  "plugin.paypal.settings.webhook_id_help": "在 PayPal 开发者后台创建 Webhook 后填入其 ID，用于回调验签。",
+  "plugin.paypal.settings.webhook_section": "Webhook 回调地址",
+  "plugin.paypal.settings.webhook_help": "请在 PayPal 开发者后台把此地址添加为 Webhook，并订阅 CHECKOUT.ORDER.APPROVED、PAYMENT.CAPTURE.COMPLETED、PAYMENT.CAPTURE.REFUNDED、PAYMENT.CAPTURE.DENIED 事件。",
+  "plugin.paypal.settings.ready": "配置完整，PayPal 会显示在结算页。",
+  "plugin.paypal.settings.not_ready": "启用 PayPal 并填写 Client ID、Client Secret 后，结算页才会出现 PayPal。"
+}

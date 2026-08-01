@@ -1,0 +1,7 @@
+[plugin]
+slug = "commerce-paypal"
+name = "Commerce PayPal"
+version = "0.1.1"
+description = "PayPal payment gateway for GoPress Commerce (Orders v2, sandbox/live, webhook signature verification + refunds). Satellite plugin that depends only on the core commerce contracts. Opt-in module, disabled by default."
+author = "GoPress Team"
+default_inactive = true

@@ -1,0 +1,7 @@
+{{define "content"}}
+<section class="ss-section ss-product-single"><div class="ss-shell">
+  <nav class="ss-breadcrumb"><a href="{{langPrefixURL .Ctx "/"}}">{{T .Ctx "nav.home"}}</a><span>/</span><a href="{{langPrefixURL .Ctx (archiveURL "product")}}">{{T .Ctx "nav.shop"}}</a><span>/</span><span>{{.Item.Title}}</span></nav>
+  <article class="ss-product-detail"><div class="ss-product-detail-media">{{if .Item.ImageURL}}{{responsiveImagePriority .Item.ImageURL .Item.Title "" "(max-width:760px) 100vw, 50vw"}}{{else}}<span class="ss-product-placeholder"></span>{{end}}</div><div class="ss-product-detail-copy"><span class="ss-eyebrow">{{T .Ctx "product.eyebrow"}}</span><h1>{{.Item.Title}}</h1>{{if .Item.Excerpt}}<p class="ss-product-lead">{{.Item.Excerpt}}</p>{{end}}{{renderHook "commerce.product.add_to_cart" .Item .Ctx}}<ul class="ss-product-assurances"><li>{{T .Ctx "product.shipping"}}</li><li>{{T .Ctx "product.returns"}}</li><li>{{T .Ctx "product.secure"}}</li></ul></div></article>
+  <div class="ss-product-description"><span class="ss-eyebrow">{{T .Ctx "product.details"}}</span><div class="ss-richtext">{{safeHTML .Item.Content}}</div></div>
+</div></section>
+{{end}}

@@ -48,7 +48,7 @@
     <div class="media-card">
         {{if contains .MimeType "image"}}
         <a class="media-preview media-preview-link" href="{{.URL $.PublicBaseURL}}" target="_blank" rel="noopener" title="{{T $ "media.open_image"}}">
-            <img src="{{.URL $.PublicBaseURL}}" alt="{{.OriginalName}}">
+            <img src="{{.URL $.PublicBaseURL}}" alt="{{.OriginalName}}" loading="lazy">
         </a>
         {{else}}
         <a class="media-preview media-file media-preview-link" href="{{.URL $.PublicBaseURL}}" target="_blank" rel="noopener" title="{{T $ "media.open_file"}}">
@@ -76,6 +76,26 @@
     <div class="empty-msg" style="grid-column:1/-1">{{T . "media.empty"}}</div>
     {{end}}
 </div>
+
+{{with .Pagination}}
+<div class="media-list-toolbar">
+    <div class="admin-pagination" aria-label="{{T $ "screen.pagination"}}">
+        <span class="admin-pagination-total">{{T $ "screen.total_items" .Total}}</span>
+        <a class="admin-page-btn{{if le .Page 1}} disabled{{end}}" href="{{.FirstURL}}" aria-label="{{T $ "screen.first_page"}}">«</a>
+        <a class="admin-page-btn{{if le .Page 1}} disabled{{end}}" href="{{.PrevURL}}" aria-label="{{T $ "action.previous_page"}}">‹</a>
+        <form method="GET" action="/admin/media" class="admin-page-form">
+            {{range $.PageHiddenInputs}}
+            <input type="hidden" name="{{.Name}}" value="{{.Value}}">
+            {{end}}
+            <span>{{T $ "screen.page_prefix"}}</span>
+            <input type="number" name="page" min="1" max="{{.TotalPages}}" value="{{.Page}}" class="admin-page-input" aria-label="{{T $ "screen.current_page"}}">
+            <span>{{T $ "screen.page_of" .TotalPages}}</span>
+        </form>
+        <a class="admin-page-btn{{if ge .Page .TotalPages}} disabled{{end}}" href="{{.NextURL}}" aria-label="{{T $ "action.next_page"}}">›</a>
+        <a class="admin-page-btn{{if ge .Page .TotalPages}} disabled{{end}}" href="{{.LastURL}}" aria-label="{{T $ "screen.last_page"}}">»</a>
+    </div>
+</div>
+{{end}}
 
 <!-- Media Meta Edit Modal -->
 <div class="modal-overlay" id="mediaMetaModal">

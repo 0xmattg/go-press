@@ -1,0 +1,34 @@
+{{define "content"}}
+<div class="content-header"><div style="display:flex;align-items:center;gap:1rem;"><a href="/admin/themes" class="btn btn-secondary" style="text-decoration:none;">← {{X $ "shopstarter.settings.back" "Back to themes"}}</a><h2>{{X $ "shopstarter.settings.title" "%s Settings" .ThemeName}}</h2></div></div>
+{{if .Success}}<div class="alert alert-success">{{.Success}}</div>{{end}}
+{{if .Error}}<div class="alert alert-error">{{.Error}}</div>{{end}}
+{{$s := .Settings}}
+<div class="card settings-shell"><form method="POST" action="/admin/themes/{{.ThemeSlug}}/settings" class="settings-form">
+  <section class="settings-section"><h3 class="settings-section-title">{{X $ "shopstarter.settings.identity" "Store identity"}}</h3><div class="settings-grid">
+    <div class="form-group settings-item"><label>{{X $ "shopstarter.settings.site_name" "Store name"}}</label><input type="text" name="site_name" value="{{index $s "site_name"}}" placeholder="Starter Shop"></div>
+    <div class="form-group settings-item"><label>{{X $ "shopstarter.settings.site_description" "Site description / SEO"}}</label><input type="text" name="site_description" value="{{index $s "site_description"}}" placeholder="A focused storefront powered by GoPress Commerce."></div>
+    <div class="form-group settings-item settings-wide"><label>{{X $ "shopstarter.settings.announcement" "Announcement bar"}}</label><input type="text" name="home_announcement" value="{{index $s "home_announcement"}}" placeholder="Free shipping over $75 · 30-day returns"></div>
+  </div></section>
+  <section class="settings-section"><h3 class="settings-section-title">{{X $ "shopstarter.settings.hero" "Homepage hero"}}</h3><div class="settings-grid">
+    <div class="form-group settings-item"><label>{{X $ "shopstarter.settings.hero_eyebrow" "Eyebrow"}}</label><input type="text" name="home_hero_eyebrow" value="{{index $s "home_hero_eyebrow"}}"></div>
+    <div class="form-group settings-item"><label>{{X $ "shopstarter.settings.hero_title" "Title"}}</label><input type="text" name="home_hero_title" value="{{index $s "home_hero_title"}}"></div>
+    <div class="form-group settings-item settings-wide"><label>{{X $ "shopstarter.settings.hero_description" "Description"}}</label><textarea name="home_hero_description" rows="3">{{index $s "home_hero_description"}}</textarea></div>
+    <div class="form-group settings-item"><label>{{X $ "shopstarter.settings.hero_primary" "Primary button"}}</label><input type="text" name="home_hero_primary_cta" value="{{index $s "home_hero_primary_cta"}}"></div>
+    <div class="form-group settings-item"><label>{{X $ "shopstarter.settings.hero_secondary" "Secondary button"}}</label><input type="text" name="home_hero_secondary_cta" value="{{index $s "home_hero_secondary_cta"}}"></div>
+    <div class="form-group settings-item settings-wide"><label>{{X $ "shopstarter.settings.hero_image" "Hero image URL"}}</label><div class="ss-admin-media"><input id="home_hero_image" type="text" name="home_hero_image" value="{{index $s "home_hero_image"}}" placeholder="/static/images/starter-hero.svg"><button type="button" class="btn btn-secondary" onclick="openMediaPicker(function(url){document.getElementById('home_hero_image').value=url})">{{X $ "shopstarter.settings.select_image" "Select image"}}</button></div><small>{{X $ "shopstarter.settings.image_hint" "Use the bundled illustration, choose Media, or enter a local/HTTP(S) image URL."}}</small></div>
+  </div></section>
+  <section class="settings-section"><h3 class="settings-section-title">{{X $ "shopstarter.settings.products" "Product section"}}</h3><div class="settings-grid">
+    <div class="form-group settings-item"><label>{{X $ "shopstarter.settings.products_title" "Section title"}}</label><input type="text" name="home_products_title" value="{{index $s "home_products_title"}}"></div>
+    <div class="form-group settings-item"><label>{{X $ "shopstarter.settings.products_description" "Section description"}}</label><textarea name="home_products_description" rows="3">{{index $s "home_products_description"}}</textarea></div>
+  </div></section>
+  <section class="settings-section"><h3 class="settings-section-title">{{X $ "shopstarter.settings.footer" "Footer & contact"}}</h3><div class="settings-grid">
+    <div class="form-group settings-item"><label>{{X $ "shopstarter.settings.footer_tagline" "Footer tagline"}}</label><textarea name="footer_tagline" rows="3">{{index $s "footer_tagline"}}</textarea></div>
+    <div class="form-group settings-item"><label>{{X $ "shopstarter.settings.email" "Support email"}}</label><input type="email" name="company_email" value="{{index $s "company_email"}}" placeholder="hello@example.com"></div>
+    <div class="form-group settings-item"><label>{{X $ "shopstarter.settings.social_x" "X URL"}}</label><input type="url" name="social_x" value="{{index $s "social_x"}}" placeholder="https://x.com/..."></div>
+    <div class="form-group settings-item"><label>{{X $ "shopstarter.settings.social_github" "GitHub URL"}}</label><input type="url" name="social_github" value="{{index $s "social_github"}}" placeholder="https://github.com/..."></div>
+    <div class="settings-wide"><small>{{X $ "shopstarter.settings.social_hint" "Social links are hidden until a valid HTTP(S) URL is saved."}}</small></div>
+  </div></section>
+  <div class="form-actions"><button type="submit" class="btn btn-primary">{{X $ "shopstarter.settings.save" "Save settings"}}</button></div>
+</form></div>
+<style>.settings-wide{grid-column:1/-1}.ss-admin-media{display:flex;gap:.55rem}.ss-admin-media input{min-width:0;flex:1}.settings-item small,.settings-wide small{display:block;margin-top:.4rem;color:var(--text-muted,#64748b)}@media(max-width:760px){.ss-admin-media{align-items:stretch;flex-direction:column}}</style>
+{{end}}

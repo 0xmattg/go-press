@@ -1,0 +1,39 @@
+{{define "header"}}
+<div class="ss-announcement">
+  <div class="ss-shell">{{settingOr .Ctx .Settings "home_announcement" "Free shipping over $75 · 30-day returns"}}</div>
+</div>
+<header class="ss-header" data-site-header>
+  <div class="ss-shell ss-header-inner">
+    <a class="ss-brand" href="{{langPrefixURL .Ctx "/"}}" aria-label="{{settingOr .Ctx .Settings "site_name" "Starter Shop"}}">
+      <span class="ss-brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M8 10.5 16 6l8 4.5v11L16 26l-8-4.5z"/><path d="m8.5 10.8 7.5 4.3 7.5-4.3M16 15v10.5"/></svg></span>
+      <span>{{settingOr .Ctx .Settings "site_name" "Starter Shop"}}</span>
+    </a>
+
+    <form class="ss-search" action="{{langPrefixURL .Ctx (archiveURL "product")}}" method="get" role="search">
+      <label class="ss-visually-hidden" for="ss-search">{{T .Ctx "search.label"}}</label>
+      <input id="ss-search" type="search" name="q" maxlength="100" value="{{.SearchQuery}}" placeholder="{{T .Ctx "search.placeholder"}}">
+      <button type="submit" aria-label="{{T .Ctx "search.submit"}}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5"/><path d="m16 16 4 4"/></svg></button>
+    </form>
+
+    <nav class="ss-nav" aria-label="{{T .Ctx "nav.primary"}}" data-site-nav>
+      <ul>
+        <li><a class="{{if isMenuURLActive .Ctx "/"}}is-active{{end}}" href="{{langPrefixURL .Ctx "/"}}">{{T .Ctx "nav.home"}}</a></li>
+        <li><a href="{{langPrefixURL .Ctx (archiveURL "product")}}">{{T .Ctx "nav.shop"}}</a></li>
+        <li><a href="{{langPrefixURL .Ctx "/order-tracking"}}">{{T .Ctx "nav.track_order"}}</a></li>
+        {{with menuByLocation "header"}}{{range .Items}}<li><a class="{{if isMenuURLActive $.Ctx .URL}}is-active{{end}}" href="{{.URL}}"{{if eq .Target "_blank"}} target="_blank" rel="noopener"{{end}}>{{.Title}}</a></li>{{end}}{{end}}
+        {{renderHook "header.nav.after" .}}
+        {{if isLoggedIn .Ctx}}
+        <li class="ss-account-actions">
+          <a href="{{langPrefixURL .Ctx "/my-account/orders"}}">{{T .Ctx "nav.my_orders"}}</a>
+          <form method="post" action="{{logoutURL}}"><input type="hidden" name="return_to" value="{{langPrefixURL .Ctx "/"}}"><button type="submit">{{T .Ctx "nav.logout"}}</button></form>
+        </li>
+        {{else}}
+        <li class="ss-login-item"><a href="{{loginURL .Ctx}}" data-login-open aria-haspopup="dialog" aria-controls="ss-login-modal"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.25"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg><span>{{T .Ctx "nav.login_register"}}</span></a></li>
+        {{end}}
+      </ul>
+    </nav>
+
+    <button class="ss-nav-toggle" type="button" aria-label="{{T .Ctx "nav.toggle"}}" aria-expanded="false" data-nav-toggle><span></span><span></span></button>
+  </div>
+</header>
+{{end}}

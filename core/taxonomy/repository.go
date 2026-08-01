@@ -56,6 +56,40 @@ func (r *Repository) ListByTaxonomy(taxonomyType string) ([]Taxonomy, error) {
 	return items, err
 }
 
+// ContentReferenceCounts returns the current number of active content rows
+// referencing each term in a taxonomy. Unlike Taxonomy.Count (the published
+// front-end count), this admin-facing aggregate includes drafts and archived
+// content while excluding soft-deleted and trashed content.
+func (r *Repository) ContentReferenceCounts(taxonomyType string) (map[uint]int64, error) {
+	tax := dbprefix.Table("taxonomies")
+	tr := dbprefix.Table("term_relationships")
+	ct := dbprefix.Table("contents")
+
+	type referenceCountRow struct {
+		TaxonomyID     uint
+		ReferenceCount int64
+	}
+	var rows []referenceCountRow
+	err := r.db.Raw(fmt.Sprintf(`
+		SELECT t.id AS taxonomy_id, COUNT(c.id) AS reference_count
+		FROM %s t
+		LEFT JOIN %s tr ON tr.taxonomy_id = t.id
+		LEFT JOIN %s c ON c.id = tr.content_id
+			AND c.deleted_at IS NULL
+			AND c.status <> 'trash'
+		WHERE t.taxonomy = ?
+		GROUP BY t.id`, tax, tr, ct), taxonomyType).Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	counts := make(map[uint]int64, len(rows))
+	for _, row := range rows {
+		counts[row.TaxonomyID] = row.ReferenceCount
+	}
+	return counts, nil
+}
+
 // ListByTaxonomyTree returns a hierarchical tree for a taxonomy type.
 func (r *Repository) ListByTaxonomyTree(taxonomyType string) ([]Taxonomy, error) {
 	all, err := r.ListByTaxonomy(taxonomyType)

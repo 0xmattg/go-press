@@ -1,0 +1,3 @@
+{{define "content"}}
+<article class="ss-article"><div class="ss-reading"><nav class="ss-breadcrumb"><a href="{{langPrefixURL .Ctx "/"}}">{{T .Ctx "nav.home"}}</a><span>/</span><span>{{.Item.Title}}</span></nav><header><span class="ss-eyebrow">{{T .Ctx "article.eyebrow"}}</span><h1>{{.Item.Title}}</h1>{{if .Item.Excerpt}}<p>{{.Item.Excerpt}}</p>{{end}}</header>{{if .Item.ImageURL}}<div class="ss-article-cover">{{responsiveImagePriority .Item.ImageURL .Item.Title "" "(max-width:900px) 100vw, 900px"}}</div>{{end}}<div class="ss-richtext">{{safeHTML .Item.Content}}</div></div></article>
+{{end}}

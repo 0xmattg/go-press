@@ -1,0 +1,28 @@
+{{define "footer"}}
+{{$x := themeURL (index .Settings "social_x") ""}}
+{{$github := themeURL (index .Settings "social_github") ""}}
+<footer class="ss-footer">
+  <div class="ss-shell ss-footer-grid">
+    <div>
+      <a class="ss-brand ss-footer-brand" href="{{langPrefixURL .Ctx "/"}}"><span class="ss-brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M8 10.5 16 6l8 4.5v11L16 26l-8-4.5z"/><path d="m8.5 10.8 7.5 4.3 7.5-4.3M16 15v10.5"/></svg></span><span>{{settingOr .Ctx .Settings "site_name" "Starter Shop"}}</span></a>
+      <p>{{settingOr .Ctx .Settings "footer_tagline" "A compact storefront with everything needed to sell online."}}</p>
+    </div>
+    <div class="ss-footer-links">
+      <strong>{{T .Ctx "footer.shop"}}</strong>
+      <a href="{{langPrefixURL .Ctx (archiveURL "product")}}">{{T .Ctx "nav.shop"}}</a>
+      <a href="{{langPrefixURL .Ctx "/cart"}}">{{T .Ctx "footer.cart"}}</a>
+      <a href="{{langPrefixURL .Ctx "/order-tracking"}}">{{T .Ctx "nav.track_order"}}</a>
+      {{with menuByLocation "footer"}}{{range .Items}}<a href="{{.URL}}"{{if eq .Target "_blank"}} target="_blank" rel="noopener"{{end}}>{{.Title}}</a>{{end}}{{end}}
+    </div>
+    <div class="ss-footer-contact">
+      <strong>{{T .Ctx "footer.help"}}</strong>
+      <a href="mailto:{{settingOr .Ctx .Settings "company_email" "hello@example.com"}}">{{settingOr .Ctx .Settings "company_email" "hello@example.com"}}</a>
+      {{if or $x $github}}<div class="ss-socials" aria-label="{{T .Ctx "footer.social"}}">
+        {{if $x}}<a href="{{$x}}" target="_blank" rel="noopener" aria-label="X">X</a>{{end}}
+        {{if $github}}<a href="{{$github}}" target="_blank" rel="noopener" aria-label="GitHub">GH</a>{{end}}
+      </div>{{end}}
+    </div>
+  </div>
+  <div class="ss-shell ss-footer-bottom"><span>© {{settingOr .Ctx .Settings "site_name" "Starter Shop"}}</span><span>{{T .Ctx "footer.powered"}}</span></div>
+</footer>
+{{end}}

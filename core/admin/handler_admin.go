@@ -29,10 +29,26 @@ func (h *Handler) SettingList(c *gin.Context) {
 	adminLang := h.svc.AdminLanguage()
 	items := h.svc.GetAllSettings(adminLang)
 	h.render(c, "settings", gin.H{
-		"Title":  adminT(adminLang, "settings.system_settings"),
-		"Active": "settings",
-		"Items":  items,
+		"Title":   adminT(adminLang, "settings.system_settings"),
+		"Active":  "settings",
+		"Items":   items,
+		"Modules": h.optInModules(),
 	})
+}
+
+// optInModules returns the opt-in (default-inactive) plugins for the settings
+// Modules panel, where the operator toggles them on/off.
+func (h *Handler) optInModules() []PluginInfo {
+	if h.pluginCallbacks == nil {
+		return nil
+	}
+	var mods []PluginInfo
+	for _, p := range h.pluginCallbacks.All() {
+		if p.DefaultInactive {
+			mods = append(mods, p)
+		}
+	}
+	return mods
 }
 
 func (h *Handler) SettingUpdate(c *gin.Context) {
@@ -172,18 +188,84 @@ func (h *Handler) SitemapGenerate(c *gin.Context) {
 
 // ==================== Media ====================
 
+const adminMediaPerPage = 20
+
 func (h *Handler) MediaList(c *gin.Context) {
 	if !h.checkPermission(c, "media", "read") {
 		return
 	}
-	items, _, _ := h.svc.mediaRepo.List("", 1, 1000)
+	page := parseAdminPage(c)
+	items, total, err := h.svc.mediaRepo.List("", page, adminMediaPerPage)
+	if err != nil {
+		c.String(http.StatusServiceUnavailable, err.Error())
+		return
+	}
+	totalPages := mediaTotalPages(total, adminMediaPerPage)
+	if totalPages > 0 && page > totalPages {
+		c.Redirect(http.StatusFound, mediaListPageURL(c, totalPages, totalPages))
+		return
+	}
 	lang := h.svc.AdminLanguage()
 	h.render(c, "media", gin.H{
-		"Title":           adminT(lang, "nav.media"),
-		"Active":          "media",
-		"Items":           items,
+		"Title":      adminT(lang, "nav.media"),
+		"Active":     "media",
+		"Items":      items,
+		"Pagination": buildMediaPagination(c, total, page, adminMediaPerPage, len(items)),
+		"PageHiddenInputs": hiddenInputsFromQueryExcept(c.Request.URL.Query(), map[string]bool{
+			"page": true, "success": true, "error": true,
+		}),
 		"MediaVariantJob": h.svc.MediaVariantJobStatus(),
 	})
+}
+
+func mediaTotalPages(total int64, perPage int) int {
+	if total <= 0 || perPage <= 0 {
+		return 0
+	}
+	return int((total + int64(perPage) - 1) / int64(perPage))
+}
+
+func mediaListPageURL(c *gin.Context, targetPage, totalPages int) string {
+	if targetPage < 1 {
+		targetPage = 1
+	}
+	if totalPages > 0 && targetPage > totalPages {
+		targetPage = totalPages
+	}
+	q := c.Request.URL.Query()
+	q.Del("success")
+	q.Del("error")
+	q.Set("page", strconv.Itoa(targetPage))
+	target := c.Request.URL.Path
+	if encoded := q.Encode(); encoded != "" {
+		target += "?" + encoded
+	}
+	return target
+}
+
+func buildMediaPagination(c *gin.Context, total int64, page, perPage, itemCount int) AdminPaginationView {
+	totalPages := mediaTotalPages(total, perPage)
+	if totalPages < 1 {
+		totalPages = 1
+	}
+	if page < 1 {
+		page = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+
+	var from, to int64
+	if total > 0 && itemCount > 0 {
+		from = int64((page-1)*perPage) + 1
+		to = from + int64(itemCount) - 1
+	}
+	return AdminPaginationView{
+		Total: total, Page: page, PerPage: perPage, TotalPages: totalPages,
+		From: from, To: to, Offset: (page - 1) * perPage,
+		FirstURL: mediaListPageURL(c, 1, totalPages), PrevURL: mediaListPageURL(c, page-1, totalPages),
+		NextURL: mediaListPageURL(c, page+1, totalPages), LastURL: mediaListPageURL(c, totalPages, totalPages),
+	}
 }
 
 func (h *Handler) MediaUpload(c *gin.Context) {
@@ -262,12 +344,13 @@ func (h *Handler) MediaJSON(c *gin.Context) {
 	if !h.checkPermission(c, "media", "read") {
 		return
 	}
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	if page < 1 {
-		page = 1
+	page := parseAdminPage(c)
+	perPage := adminMediaPerPage
+	items, total, err := h.svc.mediaRepo.List("image", page, perPage)
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": err.Error()})
+		return
 	}
-	perPage := 20
-	items, total, _ := h.svc.mediaRepo.List("image", page, perPage)
 	type mediaItem struct {
 		ID      uint   `json:"id"`
 		URL     string `json:"url"`
@@ -291,7 +374,7 @@ func (h *Handler) MediaJSON(c *gin.Context) {
 		"items": result,
 		"total": total,
 		"page":  page,
-		"pages": (total + int64(perPage) - 1) / int64(perPage),
+		"pages": mediaTotalPages(total, perPage),
 	})
 }
 
@@ -596,7 +679,7 @@ func (h *Handler) ThemeSettings(c *gin.Context) {
 	data["AdminLanguage"] = adminLang
 	data["CurrentUser"] = c.GetString("admin_username")
 	data["CurrentRole"] = c.GetString("admin_role")
-	data["MenuItems"] = h.buildMenuItems(adminLang)
+	data["MenuItems"] = h.buildMenuItems(adminLang, c.GetString("admin_role"))
 	data["SiteName"] = h.svc.SiteName()
 	data["PublicBaseURL"] = requestBaseURL(c)
 
@@ -846,6 +929,9 @@ func (h *Handler) PluginList(c *gin.Context) {
 func (h *Handler) localizePlugins(plugins []PluginInfo, lang string) {
 	for i := range plugins {
 		catalog := h.pluginCatalog(plugins[i].Slug)
+		if msg := catalogMessage(catalog, lang, "plugin.name"); msg != "" {
+			plugins[i].DisplayName = msg
+		}
 		if msg := catalogMessage(catalog, lang, "plugin.description"); msg != "" {
 			plugins[i].Description = msg
 		}
@@ -898,10 +984,10 @@ func (h *Handler) PluginDeactivate(c *gin.Context) {
 
 // PluginSettings displays the settings page for a specific plugin.
 func (h *Handler) PluginSettings(c *gin.Context) {
-	if !h.checkPermission(c, "plugin", "read") {
+	slug := c.Param("slug")
+	if !h.checkPermission(c, h.pluginSettingsResource(slug), "read") {
 		return
 	}
-	slug := c.Param("slug")
 
 	// Find plugin display info
 	var pluginName string
@@ -916,6 +1002,9 @@ func (h *Handler) PluginSettings(c *gin.Context) {
 	if pluginName == "" {
 		c.Redirect(http.StatusFound, "/admin/plugins?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.plugin_settings_missing")))
 		return
+	}
+	if msg := catalogMessage(h.pluginCatalog(slug), h.svc.AdminLanguage(), "plugin.name"); msg != "" {
+		pluginName = msg
 	}
 
 	// Get plugin settings template path
@@ -954,7 +1043,7 @@ func (h *Handler) PluginSettings(c *gin.Context) {
 	data["AdminLanguage"] = adminLang
 	data["CurrentUser"] = c.GetString("admin_username")
 	data["CurrentRole"] = c.GetString("admin_role")
-	data["MenuItems"] = h.buildMenuItems(adminLang)
+	data["MenuItems"] = h.buildMenuItems(adminLang, c.GetString("admin_role"))
 	data["SiteName"] = h.svc.SiteName()
 	data["PublicBaseURL"] = requestBaseURL(c)
 
@@ -974,10 +1063,10 @@ func (h *Handler) PluginSettings(c *gin.Context) {
 
 // PluginSettingsSave saves plugin-specific settings.
 func (h *Handler) PluginSettingsSave(c *gin.Context) {
-	if !h.checkPermission(c, "plugin", "update") {
+	slug := c.Param("slug")
+	if !h.checkPermission(c, h.pluginSettingsResource(slug), "update") {
 		return
 	}
-	slug := c.Param("slug")
 
 	// Save all plugin_<slug>_* settings from form
 	prefix := "plugin_" + slug + "_"

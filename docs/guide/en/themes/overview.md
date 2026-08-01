@@ -29,6 +29,7 @@ GoPress themes are Go packages that register themselves with the engine. A theme
 | `terra-trail` | Terra Trail | Outdoor travel. |
 | `go-press-landing` | GoPress Landing | SaaS landing page. |
 | `mono-journal` | Mono Journal | Monochrome personal journal and blog. |
+| `shop-starter` | Shop Starter | Lightweight single-page reference storefront for Commerce. |
 
 ## Dynamic Content Routing
 
@@ -90,9 +91,9 @@ semantics and remove their filter handles when deactivated.
 
 ## Public Account UI
 
-Themes can render provider-neutral account UI with the core helpers `currentUser`, `isLoggedIn`, `loginURL`, `logoutURL`, and `loginProviders`. A theme may choose where and how account controls appear, but it must not import or special-case identity plugins such as Google Identity or MetaMask Identity.
+Themes can render provider-neutral account UI with the core helpers `currentUser`, `isLoggedIn`, `loginURL`, `loginProviderURL`, `logoutURL`, and `loginProviders`. A theme may choose where and how account controls appear, but it must not import or special-case identity plugins such as Google Identity or MetaMask Identity.
 
-Use `loginProviders` to discover enabled sign-in choices and link through each provider's core-published begin URL. See [Public Accounts and External Identity](../architecture/public-authentication.md#theme-integration) for template examples and cache/security notes.
+Use `loginProviders` to discover enabled sign-in choices and `loginProviderURL` to attach a validated same-site return path to each provider's core-published begin URL. See [Public Accounts and External Identity](../architecture/public-authentication.md#theme-integration) for template examples and cache/security notes.
 
 ## Theme and Plugin Boundary
 

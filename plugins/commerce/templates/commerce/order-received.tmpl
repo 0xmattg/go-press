@@ -1,0 +1,41 @@
+{{define "content"}}
+<section class="section">
+  <div class="container" style="max-width:760px;margin:0 auto;padding:2rem 1rem;">
+    <h1>{{.Heading}}</h1>
+    <p style="color:#475569;">{{T .Ctx "commerce.common.order_number"}} <strong>{{.Order.Number}}</strong> · {{T .Ctx "commerce.common.status"}}: <strong>{{.StatusLabel}}</strong></p>
+
+    {{with .PayAction}}
+      <div class="commerce-pay-instructions" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:1.2rem;margin:1.2rem 0;">
+        <h2 style="font-size:1.05rem;margin-bottom:.6rem;">{{if .Title}}{{.Title}}{{else}}{{T $.Ctx "commerce.order.complete_payment"}}{{end}}</h2>
+        {{if .QR}}<div class="commerce-payment-qr" data-qr="{{.QR}}" style="overflow-wrap:anywhere;margin:.6rem 0;">{{.QR}}</div>{{end}}
+        {{if .Rows}}
+        <table style="width:100%;border-collapse:collapse;">
+          {{range .Rows}}
+            <tr><td style="padding:.35rem .5rem;color:#64748b;white-space:nowrap;">{{.Label}}</td><td style="padding:.35rem .5rem;"><strong>{{.Value}}</strong></td></tr>
+          {{end}}
+        </table>
+        {{end}}
+        {{if .ExpiresAt}}<p style="color:#b45309;font-size:.9rem;margin-top:.6rem;">{{T $.Ctx "commerce.order.payment_deadline_prefix"}} {{.ExpiresAt.Format "2006-01-02 15:04 MST"}}{{T $.Ctx "commerce.order.payment_deadline_suffix"}}</p>{{end}}
+        <p style="color:#64748b;font-size:.9rem;margin-top:.6rem;">{{T $.Ctx "commerce.order.payment_confirmation_note"}}</p>
+      </div>
+    {{end}}
+
+    <h2 style="font-size:1.05rem;margin:1.5rem 0 .6rem;">{{T .Ctx "commerce.order.details"}}</h2>
+    <table style="width:100%;border-collapse:collapse;">
+      <tbody>
+      {{range .Items}}
+        <tr style="border-bottom:1px solid #eef2f7;">
+          <td style="padding:.5rem;">{{.NameSnapshot}} × {{.Qty}}</td>
+          <td style="padding:.5rem;text-align:right;">{{.LineTotalStr}} {{$.Order.Currency}}</td>
+        </tr>
+      {{end}}
+      </tbody>
+    </table>
+    <div style="text-align:right;margin-top:1rem;font-size:1.15rem;">
+      <strong>{{T .Ctx "commerce.common.total"}}: {{.Order.GrandTotalStr}} {{.Order.Currency}}</strong>
+    </div>
+
+    <p style="margin-top:1.5rem;"><a href="/store" class="btn">{{T .Ctx "commerce.order.continue_shopping"}}</a> <a href="/order-tracking" class="btn" style="margin-left:.5rem;">{{T .Ctx "commerce.tracking.title"}}</a></p>
+  </div>
+</section>
+{{end}}

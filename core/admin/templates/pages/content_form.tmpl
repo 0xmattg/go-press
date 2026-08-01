@@ -7,6 +7,8 @@
 </div>
 <div class="card">
     <form method="POST" action="/admin/{{.Slug}}/{{if .Item}}{{.Item.ID}}/edit{{else}}new{{end}}{{if .BackQuery}}?{{.BackQuery}}{{end}}" id="contentForm">
+        <div class="content-edit-layout">
+        <div class="content-edit-main">
         <div class="form-group">
             <label for="title">{{T . "content.title"}} *</label>
             <input type="text" id="title" name="title" value="{{if .Item}}{{.Item.Title}}{{end}}" required>
@@ -58,6 +60,15 @@
             </div>
         </div>
         {{end}}
+
+        </div>
+        <aside class="content-edit-sidebar">
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{{T . "action.save"}}</button>
+            <a href="{{.BackURL}}" class="btn">{{T . "action.cancel"}}</a>
+        </div>
+
+        <div class="content-edit-panel content-edit-options-panel">
 
         {{if hasSupport .TypeDef.Supports "sort_order"}}
         <div class="form-group">
@@ -147,9 +158,13 @@
         </div>
         {{end}}
 
-        {{/* Plugin extension slot — meta boxes contributed by plugins (e.g. seo-extras). */}}
-        {{renderHook "admin.content_form.fields" .Ctx .HookItem .TypeDef}}
+        </div>
 
+        {{/* Plugin extension slot — meta boxes contributed by plugins (e.g. seo-extras). */}}
+        <div class="content-edit-extensions">{{renderHook "admin.content_form.fields" .Ctx .HookItem .TypeDef}}</div>
+
+        {{if .TaxForms}}
+        <div class="content-edit-panel content-edit-taxonomies-panel">
         {{range $tf := .TaxForms}}
         <div class="form-group">
             <label>{{$tf.TaxDef.Label}}</label>
@@ -172,10 +187,10 @@
             {{end}}
         </div>
         {{end}}
+        </div>
+        {{end}}
 
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">{{T . "action.save"}}</button>
-            <a href="{{.BackURL}}" class="btn">{{T . "action.cancel"}}</a>
+        </aside>
         </div>
     </form>
 </div>

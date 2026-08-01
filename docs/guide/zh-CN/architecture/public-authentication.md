@@ -128,6 +128,7 @@ result, err := p.auth.LoginVerifiedIdentityWithOptions(
 | `isLoggedIn .Ctx` | 当前请求是否具有有效前台 Session。 |
 | `currentUser .Ctx` | 安全的 `PublicUserView`：ID、用户名、邮箱、显示名、头像和角色。 |
 | `loginURL .Ctx` | 带安全站内回跳路径的 `/login` URL。 |
+| `loginProviderURL .BeginURL $.Ctx` | 经校验的 Provider 起始 URL，并携带当前请求作为 `return_to`。 |
 | `logoutURL` | Core 的 `POST /logout` 地址。 |
 | `loginProviders` | 当前可用 Provider 的只读描述列表。 |
 
@@ -146,7 +147,7 @@ Header 中的典型用法：
 {{end}}
 ```
 
-主题应优先链接 `loginURL`，让 core 统一处理 Provider 选择、错误提示和回跳校验。主题不能 import `plugins/google-identity`、读取该插件的激活 Option，或根据 Provider ID 写业务分支。
+普通登录链接应使用 `loginURL` 作为渐进增强的后备入口。若主题在蒙版弹窗中自行展示 Provider，必须通过 `loginProviders` 枚举，并用 `loginProviderURL` 构造每个入口；该 helper 会拒绝外部或非法起始 URL，并附加安全的站内回跳路径。`shop-starter` 演示了这种模式，同时在 JavaScript 不可用时仍能退回统一登录页。主题不能 import `plugins/google-identity`、读取该插件的激活 Option，或根据 Provider ID 写业务分支。
 
 ## Google Identity 插件
 

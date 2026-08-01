@@ -1,0 +1,8 @@
+{{define "content"}}
+<section class="ss-page-head"><div class="ss-shell"><nav class="ss-breadcrumb"><a href="{{langPrefixURL .Ctx "/"}}">{{T .Ctx "nav.home"}}</a><span>/</span><span>{{T .Ctx "nav.shop"}}</span></nav><div class="ss-page-title"><div><span class="ss-eyebrow">{{T .Ctx "archive.eyebrow"}}</span><h1>{{if .SearchQuery}}{{T .Ctx "archive.search"}} “{{.SearchQuery}}”{{else if .Title}}{{.Title}}{{else}}{{T .Ctx "nav.shop"}}{{end}}</h1></div><span>{{.Pagination.Total}} {{T .Ctx "archive.products"}}</span></div></div></section>
+<section class="ss-section"><div class="ss-shell">
+  {{if .Items}}<div class="ss-product-grid">{{range .Items}}<article class="ss-product-card"><a class="ss-product-media" href="{{.URL}}">{{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width:720px) 100vw, (max-width:1100px) 50vw, 25vw" "lazy"}}{{else}}<span class="ss-product-placeholder"></span>{{end}}</a><div class="ss-product-body"><h3><a href="{{.URL}}">{{.Title}}</a></h3>{{if .Excerpt}}<p>{{.Excerpt}}</p>{{end}}{{renderHook "commerce.product.add_to_cart" . $.Ctx}}</div></article>{{end}}</div>
+  {{if gt .Pagination.TotalPages 1}}<nav class="ss-pagination" aria-label="{{T .Ctx "archive.pagination"}}">{{range archivePageWindow .Pagination.Page .Pagination.TotalPages}}<a href="{{archivePageURL $.Ctx .}}"{{if eq $.Pagination.Page .}} class="is-active" aria-current="page"{{end}}>{{.}}</a>{{end}}</nav>{{end}}
+  {{else}}<div class="ss-empty"><strong>{{T .Ctx "products.empty_title"}}</strong><p>{{T .Ctx "products.empty_text"}}</p></div>{{end}}
+</div></section>
+{{end}}

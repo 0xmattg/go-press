@@ -368,7 +368,7 @@ The admin **Themes** page shows an icon next to each theme name. The convention 
 
 For comments, account pages, bookmarks, or other authenticated theme workflows:
 
-- Use core's provider-neutral `currentUser`, `loginURL`, `CommentApp`, and `PublicAuthorizationApp` contracts.
+- Use core's provider-neutral `currentUser`, `loginURL`, `loginProviders`, `loginProviderURL`, `CommentApp`, and `PublicAuthorizationApp` contracts.
 - Declare a required identity plugin only in `theme.toml`; never import it or inspect its private options/provider ID at runtime.
 - Protect every state-changing route with same-origin validation and a concrete `resource.action` capability.
 - Validate submitted content/comment IDs against their type, target, ownership, and parent relationship.

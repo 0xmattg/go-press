@@ -12,7 +12,7 @@
             {{if .LogoSVG}}<span class="extension-logo" aria-hidden="true">{{.LogoSVG}}</span>{{end}}
             <div class="extension-card-content">
                 <div class="extension-card-heading">
-                    <h3 title="{{.Name}}">{{.Name}}</h3>
+                    <h3 title="{{.Name}}">{{if .DisplayName}}{{.DisplayName}}{{else}}{{.Name}}{{end}}</h3>
                     <div class="extension-card-badges">
                         <span class="extension-version">v{{.Version}}</span>
                         {{if .Active}}<span class="badge badge-active">{{T $ "plugin.active"}}</span>{{else}}<span class="badge badge-inactive">{{T $ "plugin.inactive"}}</span>{{end}}

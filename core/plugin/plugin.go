@@ -19,6 +19,9 @@ type Meta struct {
 	Version     string `toml:"version"`
 	Description string `toml:"description"`
 	Author      string `toml:"author"`
+	// DefaultInactive marks an opt-in "module" that ships disabled by default
+	// and is enabled explicitly by the operator (see DefaultInactiveProvider).
+	DefaultInactive bool `toml:"default_inactive"`
 }
 
 // ParseMetaString parses the [plugin] table from embedded plugin.toml content.
@@ -65,12 +68,33 @@ type Plugin interface {
 	Deactivate(app App)
 }
 
+// DefaultInactiveProvider is an optional interface a plugin implements to
+// declare that it ships disabled by default — an opt-in "module" the operator
+// enables explicitly (e.g. the commerce engine). On first run (no persisted
+// activation state) Engine.LoadPlugin leaves such a plugin registered but
+// inactive, and the admin surfaces it as a togglable module. Plugins without
+// this interface default to active, preserving existing behavior.
+type DefaultInactiveProvider interface {
+	DefaultInactive() bool
+}
+
 // SettingsProvider is an optional interface that plugins can implement
 // to supply a custom admin settings page for plugin-specific configuration.
 type SettingsProvider interface {
 	// SettingsTemplatePath returns the absolute path to the plugin's admin
 	// settings template file. Return "" if no settings page is available.
 	SettingsTemplatePath() string
+}
+
+// SettingsAuthorizationProvider lets a plugin declare the RBAC resource used
+// by its generic settings page. Core supplies the actions ("read" for the GET
+// page and "update" for the POST save handler) and falls back to the existing
+// "plugin" resource when this optional interface is not implemented.
+//
+// Keeping this declarative avoids core branching on a concrete plugin slug
+// while allowing domain modules to grant narrowly scoped settings access.
+type SettingsAuthorizationProvider interface {
+	SettingsPermissionResource() string
 }
 
 // SettingsDataProvider is an optional interface that plugins can implement
@@ -173,6 +197,21 @@ func (m *Manager) ActivePlugins() []Plugin {
 // RegisteredPlugins returns all registered plugins.
 func (m *Manager) RegisteredPlugins() []Plugin {
 	return m.registered
+}
+
+// IsDefaultInactive reports whether the registered plugin with the given slug
+// declares itself default-inactive (an opt-in module). False when the plugin is
+// absent or does not implement DefaultInactiveProvider.
+func (m *Manager) IsDefaultInactive(slug string) bool {
+	for _, p := range m.registered {
+		if Slug(p) == slug {
+			if dp, ok := p.(DefaultInactiveProvider); ok {
+				return dp.DefaultInactive()
+			}
+			return false
+		}
+	}
+	return false
 }
 
 // FindBySlug returns the registered plugin whose identity (Name/Slug) matches,

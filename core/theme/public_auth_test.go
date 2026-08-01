@@ -25,3 +25,15 @@ func TestCurrentUserTemplateHelperReturnsSafeView(t *testing.T) {
 		t.Fatal("template user view exposes PasswordHash")
 	}
 }
+
+func TestPublicAuthTemplateHelpersIncludeProviderReturnURL(t *testing.T) {
+	fn, ok := CommonFuncMap()["loginProviderURL"].(func(string, *gin.Context) string)
+	if !ok {
+		t.Fatal("loginProviderURL template helper is missing")
+	}
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c.Request = httptest.NewRequest("GET", "/store?page=2", nil)
+	if got := fn("/auth/example/start", c); got != "/auth/example/start?return_to=%2Fstore%3Fpage%3D2" {
+		t.Fatalf("loginProviderURL() = %q", got)
+	}
+}

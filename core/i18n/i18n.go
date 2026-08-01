@@ -16,8 +16,10 @@ package i18n
 
 import (
 	"encoding/json"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 
@@ -117,6 +119,33 @@ func (m *Manager) LoadThemeLocales(themeDir string) {
 	}
 }
 
+// LoadLocalesFS adds flat locale files from an extension-owned filesystem to
+// the shared storefront bundle. Plugins use namespaced message IDs so their
+// translations can coexist with theme messages without either implementation
+// knowing about the other.
+func (m *Manager) LoadLocalesFS(localeFS fs.FS, dir string) {
+	flatByLang := LoadFlatMessages(localeFS, dir)
+	langs := make([]string, 0, len(flatByLang))
+	for langCode := range flatByLang {
+		langs = append(langs, langCode)
+	}
+	sort.Strings(langs)
+	for _, langCode := range langs {
+		flat := flatByLang[langCode]
+		keys := make([]string, 0, len(flat))
+		for key := range flat {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		msgs := make([]*goi18n.Message, 0, len(keys))
+		for _, key := range keys {
+			msgs = append(msgs, &goi18n.Message{ID: key, Other: flat[key]})
+		}
+		m.AddMessages(langCode, msgs)
+		logger.Info("i18n: loaded extension locale", "lang", langCode, "keys", len(msgs))
+	}
+}
+
 // AddMessages adds (or overrides) messages for a given language.
 // Used by plugins to layer DB overrides on top of file defaults.
 func (m *Manager) AddMessages(langCode string, msgs []*goi18n.Message) {
@@ -134,12 +163,14 @@ func (m *Manager) AddMessages(langCode string, msgs []*goi18n.Message) {
 // Translate looks up a message for the current request language.
 // Falls back to returning msgID if no translation is found.
 func (m *Manager) Translate(c *gin.Context, msgID string) string {
-	loc, exists := c.Get(CtxKeyLocalizer)
-	if exists {
-		localizer := loc.(*goi18n.Localizer)
-		msg, err := localizer.Localize(&goi18n.LocalizeConfig{MessageID: msgID})
-		if err == nil {
-			return msg
+	if c != nil {
+		if loc, exists := c.Get(CtxKeyLocalizer); exists {
+			if localizer, ok := loc.(*goi18n.Localizer); ok {
+				msg, err := localizer.Localize(&goi18n.LocalizeConfig{MessageID: msgID})
+				if err == nil {
+					return msg
+				}
+			}
 		}
 	}
 

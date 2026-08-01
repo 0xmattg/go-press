@@ -173,6 +173,7 @@ The documentation lives under [`docs/guide/`](docs/guide/) and is organized as a
 | [Admin](docs/guide/en/admin/overview.md) | Admin CMS, standalone pages, extension points, and menu management |
 | [Themes](docs/guide/en/themes/overview.md) | Creating themes, SEO integration, image pipeline, and media variants |
 | [Plugins](docs/guide/en/plugins/overview.md) | Creating plugins, hook contracts, and bundled plugins |
+| [Commerce](docs/guide/en/commerce/overview.md) | E-commerce module: core contracts, catalog, cart, checkout, orders, inventory, payments, and shop-theme integration |
 | [Reference](docs/guide/en/reference/project-structure.md) | Project structure, table prefixes, REST API, tech stack, and roadmap |
 
 OpenAPI files are generated from code annotations:
@@ -270,7 +271,7 @@ See [Comments and Moderation](docs/guide/en/architecture/comments.md) for the da
 
 ### Public Themes
 
-`atelier-slate` / `axis-form` (Axis Form, architecture and design) / `florafi` (FloraFi, stablecoin and fintech) / `civic-estate` / `financial-news` / `go-press-landing` / `modern-company` / `mono-journal` / `terra-trail`
+`atelier-slate` / `axis-form` (Axis Form, architecture and design) / `florafi` (FloraFi, stablecoin and fintech) / `civic-estate` / `financial-news` / `go-press-landing` / `modern-company` / `mono-journal` / `terra-trail` / `shop-starter` (Shop Starter, the lightweight single-page reference theme for Commerce)
 
 See [docs/guide/en/themes/overview.md](docs/guide/en/themes/overview.md).
 
@@ -282,8 +283,10 @@ See [docs/guide/en/themes/overview.md](docs/guide/en/themes/overview.md).
 - **gopress-analytics** — First-party self-hosted PV, UV, new-visitor, traffic-trend, and top-page analytics.
 - **google-identity** — Google OIDC login and registration for Gmail and Google Workspace accounts, built on the provider-neutral public-auth core.
 - **metamask-identity** — MetaMask browser-extension login and registration through EIP-4361 Sign-In with Ethereum and one-time server challenges.
+- **commerce** — Opt-in e-commerce module (WooCommerce-like): `product` catalog, guest/account cart, single-transaction checkout, order state machine, inventory reservation with row locks, a medium-agnostic payment-gateway contract, and a built-in offline bank-transfer gateway. Disabled by default. See [docs/guide/en/commerce/overview.md](docs/guide/en/commerce/overview.md).
+- **commerce-paypal** — PayPal (Orders v2) satellite gateway: sandbox/live, buyer-return capture, webhook signature verification, and refunds. Depends only on the `core/commerce` contracts (no plugin→plugin dependency).
 
-See [docs/guide/en/plugins/overview.md](docs/guide/en/plugins/overview.md).
+See [docs/guide/en/plugins/overview.md](docs/guide/en/plugins/overview.md) and the [Commerce guide](docs/guide/en/commerce/overview.md).
 
 ---
 

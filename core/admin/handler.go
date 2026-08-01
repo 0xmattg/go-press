@@ -60,6 +60,17 @@ type ThemeManager struct {
 	// templates for the page editor's template dropdown. Nil/empty when the
 	// theme declares none.
 	PageTemplatesFn func() []PageTemplateOption
+	// NeedsEnableFn returns opt-in modules the active theme requires but that
+	// are disabled — for a prominent "enable module" prompt. Nil/empty when the
+	// active theme's module requirements are all satisfied.
+	NeedsEnableFn func() []ModuleInfo
+}
+
+// ModuleInfo identifies an opt-in module (a default-inactive plugin) for the
+// admin's Modules panel and the theme-requires enable prompt.
+type ModuleInfo struct {
+	Slug string
+	Name string
 }
 
 // PageTemplateOption is one selectable page template offered by the active
@@ -115,6 +126,10 @@ type PluginInfo struct {
 	// RequiredByActiveTheme is true when the active theme declares a hard
 	// dependency on this plugin; the admin then disables its deactivate button.
 	RequiredByActiveTheme bool
+
+	// DefaultInactive is true for opt-in "module" plugins that ship disabled by
+	// default; the settings Modules panel surfaces these as togglable modules.
+	DefaultInactive bool
 }
 
 // PluginCallbacks provides plugin management callbacks to the admin handler.
@@ -125,6 +140,7 @@ type PluginCallbacks struct {
 	SettingsTemplateFn func(slug string) string                      // returns settings template path
 	SettingsDataFn     func(slug string) map[string]interface{}      // extra template data for plugin settings page
 	SettingsSaveFn     func(slug string, settings map[string]string) // hook called after plugin settings are saved
+	SettingsResourceFn func(slug string) string                      // RBAC resource for GET(read)/POST(update)
 	LocaleCatalogFn    func(slug string) *coreI18n.Catalog
 }
 
@@ -564,6 +580,24 @@ func (h *Handler) pluginCatalog(slug string) *coreI18n.Catalog {
 	return h.pluginCallbacks.LocaleCatalog(slug)
 }
 
+// activePluginMessage resolves an admin label from active plugin catalogs.
+// This keeps plugin-owned content types and taxonomies localizable without
+// teaching core which plugin registered a particular domain object.
+func (h *Handler) activePluginMessage(lang, key string) string {
+	if h.pluginCallbacks == nil {
+		return ""
+	}
+	for _, info := range h.pluginCallbacks.All() {
+		if !info.Active {
+			continue
+		}
+		if msg := catalogMessage(h.pluginCatalog(info.Slug), lang, key); msg != "" {
+			return msg
+		}
+	}
+	return ""
+}
+
 func catalogMessage(catalog *coreI18n.Catalog, lang, key string) string {
 	if catalog == nil {
 		return ""
@@ -576,6 +610,9 @@ func (h *Handler) contentTypeLabel(lang, name, fallback string) string {
 	if msg := catalogMessage(h.activeThemeCatalog(), lang, "admin.content_type."+name); msg != "" {
 		return msg
 	}
+	if msg := h.activePluginMessage(lang, "admin.content_type."+name); msg != "" {
+		return msg
+	}
 	return adminContentTypeLabel(lang, name, fallback)
 }
 
@@ -584,12 +621,18 @@ func (h *Handler) taxonomyLabel(lang, name, fallback string) string {
 	if msg := catalogMessage(h.activeThemeCatalog(), lang, "admin.taxonomy."+name); msg != "" {
 		return msg
 	}
+	if msg := h.activePluginMessage(lang, "admin.taxonomy."+name); msg != "" {
+		return msg
+	}
 	return adminTaxonomyLabel(lang, name, fallback)
 }
 
 func (h *Handler) metaFieldLabel(lang, typeName, key, fallback string) string {
 	lang = normalizeAdminLanguage(lang)
 	if msg := catalogMessage(h.activeThemeCatalog(), lang, "admin.meta."+typeName+"."+key); msg != "" {
+		return msg
+	}
+	if msg := h.activePluginMessage(lang, "admin.meta."+typeName+"."+key); msg != "" {
 		return msg
 	}
 	if msg := adminMessage(lang, "admin.meta."+typeName+"."+key); msg != "" {
@@ -672,7 +715,7 @@ func resolveMenuIcon(custom, fallbackKey string) string {
 }
 
 // buildMenuItems creates the dynamic sidebar menu from the registry.
-func (h *Handler) buildMenuItems(lang string) []AdminMenuItem {
+func (h *Handler) buildMenuItems(lang, role string) []AdminMenuItem {
 	lang = normalizeAdminLanguage(lang)
 	var items []AdminMenuItem
 
@@ -719,6 +762,19 @@ func (h *Handler) buildMenuItems(lang string) []AdminMenuItem {
 		}
 	}
 
+	// Plugin-contributed nav sections/items (e.g. a Commerce module) appear
+	// between the content/taxonomy area and the System section. Active plugins
+	// append to this list via the admin.nav.items filter; deactivating a plugin
+	// removes its filter and its nav entries.
+	if h.hooks != nil {
+		if v := h.hooks.ApplyFilter(hook.AdminNavItems, items, role, lang); v != nil {
+			if filtered, ok := v.([]AdminMenuItem); ok {
+				items = filtered
+			}
+		}
+	}
+	items = h.filterPermittedMenuItems(items, role)
+
 	// System
 	items = append(items, AdminMenuItem{Section: adminT(lang, "nav.system")})
 	items = append(items, AdminMenuItem{Label: adminT(lang, "nav.menus"), URL: "/admin/menus", Active: "menus", Icon: menuIcon("menus")})
@@ -735,6 +791,43 @@ func (h *Handler) buildMenuItems(lang string) []AdminMenuItem {
 	return items
 }
 
+// filterPermittedMenuItems removes plugin-contributed entries whose declared
+// capability is not held by role. Section headers are buffered until the first
+// visible item beneath them, so a role never sees an empty extension section.
+// Entries without a Resource/Action declaration retain their existing
+// visibility; their handlers remain responsible for authorization.
+func (h *Handler) filterPermittedMenuItems(items []AdminMenuItem, role string) []AdminMenuItem {
+	out := make([]AdminMenuItem, 0, len(items))
+	var pendingSection *AdminMenuItem
+	for i := range items {
+		item := items[i]
+		if item.Section != "" {
+			copy := item
+			pendingSection = &copy
+			continue
+		}
+		if item.Resource != "" && item.Action != "" {
+			if h == nil || h.svc == nil || h.svc.rbac == nil ||
+				!h.svc.rbac.Can(role, h.mapResource(item.Resource), item.Action) {
+				continue
+			}
+		}
+		if pendingSection != nil {
+			out = append(out, *pendingSection)
+			pendingSection = nil
+		}
+		out = append(out, item)
+	}
+	return out
+}
+
+func (h *Handler) pluginSettingsResource(slug string) string {
+	if h == nil || h.pluginCallbacks == nil {
+		return "plugin"
+	}
+	return h.pluginCallbacks.SettingsResource(slug)
+}
+
 func (h *Handler) render(c *gin.Context, name string, data gin.H) {
 	tmpl, ok := h.templates[name]
 	if !ok {
@@ -747,13 +840,16 @@ func (h *Handler) render(c *gin.Context, name string, data gin.H) {
 	data["Ctx"] = c
 	data["CurrentRole"] = c.GetString("admin_role")
 	data["CurrentUser"] = c.GetString("admin_username")
-	data["MenuItems"] = h.buildMenuItems(adminLang)
+	data["MenuItems"] = h.buildMenuItems(adminLang, c.GetString("admin_role"))
 	data["SiteName"] = h.svc.SiteName()
 	data["PublicBaseURL"] = requestBaseURL(c)
 	data["GoPressVersion"] = version.String()
 	if h.themeManager != nil {
 		if w := h.themeManager.ActiveDepWarning(); w != "" {
 			data["ActiveDepWarning"] = w
+		}
+		if mods := h.themeManager.NeedsEnable(); len(mods) > 0 {
+			data["NeedsEnableModules"] = mods
 		}
 	}
 
@@ -798,6 +894,51 @@ func requestBaseURL(c *gin.Context) string {
 	}
 
 	return scheme + "://" + host
+}
+
+// RenderExtensionPage renders a plugin-owned admin page inside the standard
+// admin chrome (layout, left nav, user/site context), so extensions get
+// first-class admin screens without duplicating the shell — the admin
+// counterpart to Engine.RenderInActiveTheme for the storefront. It is generic:
+// any plugin that registers admin routes (via routes.register + RequirePermission)
+// can render with it.
+//
+// fragmentPath is an absolute path to a .tmpl file that defines the "content"
+// block (the admin layout executes {{template "content" .}}). title is the page
+// title; active is the nav highlight key (matches an AdminMenuItem.Active).
+// extra is page-specific data merged over the chrome data. ?success / ?error
+// query params surface as banners, matching core admin pages.
+func (h *Handler) RenderExtensionPage(c *gin.Context, fragmentPath, title, active string, extra map[string]interface{}) error {
+	layout := filepath.Join(h.tmplDir, "layouts", "admin.tmpl")
+	tmpl, err := template.New("").Funcs(h.funcMap).ParseFiles(layout, fragmentPath)
+	if err != nil {
+		return err
+	}
+
+	adminLang := h.svc.AdminLanguage()
+	data := gin.H{
+		"Title":         title,
+		"Active":        active,
+		"Settings":      h.svc.GetAllOptions(),
+		"AdminLanguage": adminLang,
+		"CurrentUser":   c.GetString("admin_username"),
+		"CurrentRole":   c.GetString("admin_role"),
+		"MenuItems":     h.buildMenuItems(adminLang, c.GetString("admin_role")),
+		"SiteName":      h.svc.SiteName(),
+		"PublicBaseURL": requestBaseURL(c),
+	}
+	for k, v := range extra {
+		data[k] = v
+	}
+	if success := c.Query("success"); success != "" {
+		data["Success"] = success
+	}
+	if errMsg := c.Query("error"); errMsg != "" {
+		data["Error"] = errMsg
+	}
+
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	return tmpl.ExecuteTemplate(c.Writer, "admin", data)
 }
 
 // ==================== Helpers ====================

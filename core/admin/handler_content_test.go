@@ -2,6 +2,8 @@ package admin
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
@@ -130,11 +132,44 @@ func TestContentFormHookReceivesStableCoreArgs(t *testing.T) {
 	if err := tmpl.ExecuteTemplate(&out, "content", data); err != nil {
 		t.Fatalf("execute content form template: %v", err)
 	}
-	if !strings.Contains(out.String(), `id="hook-output"`) {
+	rendered := out.String()
+	if !strings.Contains(rendered, `id="hook-output"`) {
 		t.Fatal("expected hook output to render")
+	}
+	sidebarAt := strings.Index(rendered, `class="content-edit-sidebar"`)
+	if sidebarAt < 0 {
+		t.Fatal("content edit sidebar was not rendered")
+	}
+	if titleAt := strings.Index(rendered, `id="title"`); titleAt < 0 || titleAt > sidebarAt {
+		t.Fatal("title field should remain in the main edit column")
+	}
+	for _, marker := range []string{`id="status"`, `id="hook-output"`, `class="form-actions"`} {
+		if markerAt := strings.Index(rendered, marker); markerAt < sidebarAt {
+			t.Fatalf("secondary control %q should render in the edit sidebar", marker)
+		}
+	}
+	actionsAt := strings.Index(rendered, `class="form-actions"`)
+	statusAt := strings.Index(rendered, `id="status"`)
+	if actionsAt < 0 || statusAt < 0 || actionsAt > statusAt {
+		t.Fatal("save actions should render above publishing controls")
 	}
 	if len(captured) != 3 || captured[0] != ctx || captured[1] != item || captured[2] != typeDef {
 		t.Fatalf("unexpected hook args: %#v", captured)
+	}
+}
+
+func TestAdminContentSavedPropagatesExtensionError(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	ctx, _ := gin.CreateTestContext(httptest.NewRecorder())
+	want := errors.New("extension save failed")
+	bus := hook.New()
+	bus.AddAction(hook.AdminContentSaved, func(_ context.Context, args ...interface{}) {
+		args[0].(*gin.Context).Error(want).SetType(gin.ErrorTypePrivate)
+	}, 10)
+
+	err := runAdminContentSaved(bus, ctx, &content.Content{ID: 42, Type: "product"})
+	if !errors.Is(err, want) {
+		t.Fatalf("runAdminContentSaved error = %v, want %v", err, want)
 	}
 }
 

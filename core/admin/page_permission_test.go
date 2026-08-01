@@ -30,8 +30,8 @@ func TestPageCRUDPermission(t *testing.T) {
 		role string
 		want int
 	}{
-		{role: user.RoleSubscriber, want: http.StatusFound},    // no content caps -> redirect
-		{role: user.RoleEditor, want: http.StatusNoContent},    // full content caps -> allowed
+		{role: user.RoleSubscriber, want: http.StatusFound},     // no content caps -> redirect
+		{role: user.RoleEditor, want: http.StatusNoContent},     // full content caps -> allowed
 		{role: user.RoleSuperAdmin, want: http.StatusNoContent}, // wildcard -> allowed
 	}
 

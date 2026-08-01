@@ -21,6 +21,17 @@ func TestSafeReturnToRejectsExternalAndAuthPaths(t *testing.T) {
 	}
 }
 
+func TestLoginProviderURLPreservesCurrentRequestAndRejectsExternalProvider(t *testing.T) {
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c.Request = httptest.NewRequest(http.MethodGet, "/en/store?q=headphones", nil)
+	if got := LoginProviderURL("/auth/test/start", c); got != "/auth/test/start?return_to=%2Fen%2Fstore%3Fq%3Dheadphones" {
+		t.Fatalf("provider URL = %q", got)
+	}
+	if got := LoginProviderURL("https://evil.example/login", c); got != "/login?return_to=%2Fen%2Fstore%3Fq%3Dheadphones" {
+		t.Fatalf("unsafe provider fallback = %q", got)
+	}
+}
+
 func TestPublicLoginPageListsRegisteredProviders(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	registry := NewProviderRegistry()

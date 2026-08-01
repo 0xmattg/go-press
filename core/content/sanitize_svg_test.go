@@ -48,7 +48,7 @@ func TestBundledLogosSurviveSanitization(t *testing.T) {
 		"themes/modern-company", "themes/atelier-slate", "themes/atelier-slate-gp",
 		"themes/axis-form", "themes/bitcuz-mag", "themes/civic-estate",
 		"themes/financial-news", "themes/florafi", "themes/go-press-landing",
-		"themes/terra-trail",
+		"themes/shop-starter", "themes/terra-trail",
 		"plugins/code-snippets", "plugins/gopress-analytics", "plugins/multilang",
 		"plugins/seo-extras", "plugins/google-identity", "plugins/metamask-identity",
 	}
@@ -62,5 +62,20 @@ func TestBundledLogosSurviveSanitization(t *testing.T) {
 		if !strings.Contains(out, "<svg") || !strings.Contains(out, "viewBox=") {
 			t.Errorf("%s: logo did not survive sanitization: %s", d, out)
 		}
+	}
+}
+
+func TestShopStarterLogoKeepsVisibleBackgroundAfterSanitization(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("..", "..", "themes", "shop-starter", "static", "logo.svg"))
+	if err != nil {
+		t.Fatalf("read Shop Starter logo: %v", err)
+	}
+
+	out := SanitizeSVG(string(raw))
+	if !strings.Contains(out, `fill="#6657e8"`) {
+		t.Fatalf("Shop Starter logo lost its visible background during sanitization: %s", out)
+	}
+	if strings.Contains(out, "url(#") {
+		t.Fatalf("Shop Starter logo must not depend on sanitizer-stripped paint servers: %s", out)
 	}
 }
