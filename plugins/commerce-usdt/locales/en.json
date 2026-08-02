@@ -1,0 +1,11 @@
+{
+  "commerce-usdt.title": "USDT (crypto)",
+  "commerce-usdt.pay.title": "Pay with USDT",
+  "commerce-usdt.pay.network": "Network",
+  "commerce-usdt.pay.asset": "Asset",
+  "commerce-usdt.pay.address": "Deposit address",
+  "commerce-usdt.pay.amount": "Exact amount",
+  "commerce-usdt.chain.ethereum": "Ethereum (ERC-20)",
+  "commerce-usdt.chain.bsc": "BNB Smart Chain (BEP-20)",
+  "commerce-usdt.chain.polygon": "Polygon (ERC-20)"
+}

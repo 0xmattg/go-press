@@ -68,6 +68,64 @@ func TestPluginCardsUseLocalizedDisplayMetadata(t *testing.T) {
 	}
 }
 
+func TestOptInModulesUseLocalizedDisplayMetadata(t *testing.T) {
+	h := &Handler{pluginCallbacks: &PluginCallbacks{
+		AllFn: func() []PluginInfo {
+			return []PluginInfo{
+				{Name: "commerce", DisplayName: "commerce", Slug: "commerce", Description: "fallback", DefaultInactive: true},
+				{Name: "always-on", DisplayName: "always-on", Slug: "always-on"},
+			}
+		},
+		LocaleCatalogFn: func(slug string) *coreI18n.Catalog {
+			if slug == "commerce" {
+				return testPluginAdminCatalog()
+			}
+			return nil
+		},
+	}}
+
+	modules := h.optInModules("en")
+	if len(modules) != 1 {
+		t.Fatalf("optInModules() returned %d modules, want 1", len(modules))
+	}
+	if modules[0].DisplayName != "Commerce" || modules[0].Description != "Localized commerce description" {
+		t.Fatalf("localized module metadata = %#v", modules[0])
+	}
+}
+
+func TestModulePanelCoreLocales(t *testing.T) {
+	tests := []struct {
+		lang string
+		key  string
+		want string
+	}{
+		{lang: "en", key: "modules.panel_title", want: "Modules"},
+		{lang: "en", key: "modules.on", want: "Enabled"},
+		{lang: "en", key: "modules.off", want: "Disabled"},
+		{lang: "en", key: "modules.enable", want: "Enable"},
+		{lang: "en", key: "modules.disable", want: "Disable"},
+		{lang: "en", key: "modules.enable_now", want: "Enable now"},
+		{lang: "en", key: "modules.panel_help", want: "Optional feature modules are disabled by default. Once enabled, their management entries appear in the sidebar."},
+		{lang: "en", key: "modules.required_title", want: "The current theme requires these modules to be enabled:"},
+		{lang: "zh-CN", key: "modules.panel_title", want: "模块"},
+		{lang: "zh-CN", key: "modules.on", want: "已启用"},
+		{lang: "zh-CN", key: "modules.off", want: "未启用"},
+		{lang: "zh-CN", key: "modules.enable", want: "启用"},
+		{lang: "zh-CN", key: "modules.disable", want: "停用"},
+		{lang: "zh-CN", key: "modules.enable_now", want: "去启用"},
+		{lang: "zh-CN", key: "modules.panel_help", want: "可选功能模块默认关闭，启用后其管理入口会出现在左侧导航。"},
+		{lang: "zh-CN", key: "modules.required_title", want: "当前主题需要启用以下模块才能正常工作："},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.lang+"/"+tt.key, func(t *testing.T) {
+			if got := adminT(tt.lang, tt.key); got != tt.want {
+				t.Fatalf("adminT(%q, %q) = %q, want %q", tt.lang, tt.key, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestAdminNavFilterReceivesRoleAndLanguage(t *testing.T) {
 	bus := hook.New()
 	var gotRole, gotLang string

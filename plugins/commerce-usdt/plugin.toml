@@ -1,0 +1,7 @@
+[plugin]
+slug = "commerce-usdt"
+name = "Commerce USDT"
+version = "0.1.0"
+description = "USDT (ERC-20) crypto payment gateway for GoPress Commerce. Pull-based confirmation: shows a per-order deposit address (HD-derived) and watches the chain for a confirmed transfer, then settles idempotently. EVM-abstracted (Ethereum first; BSC/Polygon ready). Satellite plugin that depends only on the core commerce contracts. Opt-in module, disabled by default."
+author = "GoPress Team"
+default_inactive = true

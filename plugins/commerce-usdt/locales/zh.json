@@ -1,0 +1,11 @@
+{
+  "commerce-usdt.title": "USDT（加密货币）",
+  "commerce-usdt.pay.title": "使用 USDT 付款",
+  "commerce-usdt.pay.network": "网络",
+  "commerce-usdt.pay.asset": "币种",
+  "commerce-usdt.pay.address": "收款地址",
+  "commerce-usdt.pay.amount": "精确金额",
+  "commerce-usdt.chain.ethereum": "以太坊 (ERC-20)",
+  "commerce-usdt.chain.bsc": "BNB 智能链 (BEP-20)",
+  "commerce-usdt.chain.polygon": "Polygon (ERC-20)"
+}

@@ -874,6 +874,26 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .settings-grid .settings-item small {
     min-height: 1.1em;
 }
+.module-settings-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .75rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+.module-settings-copy {
+    min-width: 0;
+}
+.module-settings-action {
+    flex: 0 0 auto;
+    margin: 0;
+}
+.module-settings-button {
+    min-width: 4.5rem;
+    white-space: nowrap;
+}
 .settings-checkbox-label {
     min-height: 34px;
     padding: .5rem .75rem;

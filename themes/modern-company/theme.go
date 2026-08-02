@@ -74,6 +74,7 @@ func New(engine *core.Engine, themeDir string) *ModernCompanyTheme {
 			return svc.ContentMegaMenuForURL(c, menuURL)
 		},
 	})
+	t.SetArchivePageSize("post", 18)
 
 	// Register custom static-page routes (these take priority over rewrite engine)
 	t.AddRoute("GET", "/", t.handler.Home)
@@ -125,6 +126,7 @@ func NewWithDB(db *gorm.DB, themeDir string) *ModernCompanyTheme {
 			return svc.ContentMegaMenuForURL(c, menuURL)
 		},
 	})
+	t.SetArchivePageSize("post", 18)
 	t.AddRoute("GET", "/", t.handler.Home)
 	t.AddRoute("GET", "/about", t.handler.About)
 	t.AddRoute("GET", "/contact", t.handler.Contact)

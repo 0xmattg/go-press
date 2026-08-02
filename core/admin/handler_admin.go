@@ -32,13 +32,13 @@ func (h *Handler) SettingList(c *gin.Context) {
 		"Title":   adminT(adminLang, "settings.system_settings"),
 		"Active":  "settings",
 		"Items":   items,
-		"Modules": h.optInModules(),
+		"Modules": h.optInModules(adminLang),
 	})
 }
 
 // optInModules returns the opt-in (default-inactive) plugins for the settings
 // Modules panel, where the operator toggles them on/off.
-func (h *Handler) optInModules() []PluginInfo {
+func (h *Handler) optInModules(lang string) []PluginInfo {
 	if h.pluginCallbacks == nil {
 		return nil
 	}
@@ -48,6 +48,7 @@ func (h *Handler) optInModules() []PluginInfo {
 			mods = append(mods, p)
 		}
 	}
+	h.localizePlugins(mods, lang)
 	return mods
 }
 

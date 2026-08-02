@@ -281,6 +281,7 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 - **metamask-identity** — 基于 EIP-4361 Sign-In with Ethereum 和服务端一次性 Challenge，为 MetaMask 浏览器扩展提供钱包登录与注册
 - **commerce** — 可选电商模块（对标 WooCommerce）：`product` 目录、游客/账号购物车、单事务结算、订单状态机、行锁库存预留、媒介无关的支付网关契约，以及内置离线银行转账网关。默认停用。详见 [docs/guide/zh-CN/commerce/overview.md](docs/guide/zh-CN/commerce/overview.md)。
 - **commerce-paypal** — PayPal（Orders v2）卫星网关：沙盒/生产、买家回跳 capture、webhook 验签与退款。只依赖 `core/commerce` 契约（无 plugin→plugin 依赖）。
+- **commerce-usdt** — USDT（ERC-20）加密货币卫星网关：为每个订单派生唯一收款地址（HD），后台扫链拉取式确认、幂等结算；EVM 抽象（首发以太坊，BSC/Polygon 就绪）。watch-only xpub，服务器无花费权限。只依赖 `core/commerce` 契约。
 
 详见 [docs/guide/zh-CN/plugins/overview.md](docs/guide/zh-CN/plugins/overview.md) 与 [电商模块指南](docs/guide/zh-CN/commerce/overview.md)。
 

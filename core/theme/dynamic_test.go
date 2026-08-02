@@ -191,6 +191,30 @@ func TestArchivePageWindowIsBoundedAroundCurrentPage(t *testing.T) {
 	}
 }
 
+func TestBaseThemeArchivePageSizeUsesContentTypeOverride(t *testing.T) {
+	theme := &BaseTheme{}
+	if got := theme.ArchivePageSize("post"); got != defaultArchivePageSize {
+		t.Fatalf("default archive page size = %d, want %d", got, defaultArchivePageSize)
+	}
+
+	theme.SetArchivePageSize("post", 18)
+	if got := theme.ArchivePageSize("post"); got != 18 {
+		t.Fatalf("post archive page size = %d, want 18", got)
+	}
+	if got := theme.ArchivePageSize("product"); got != defaultArchivePageSize {
+		t.Fatalf("unconfigured product archive page size = %d, want %d", got, defaultArchivePageSize)
+	}
+
+	theme.SetArchivePageSize("post", maxArchivePageSize+1)
+	if got := theme.ArchivePageSize("post"); got != maxArchivePageSize {
+		t.Fatalf("bounded post archive page size = %d, want %d", got, maxArchivePageSize)
+	}
+	theme.SetArchivePageSize("post", 0)
+	if got := theme.ArchivePageSize("post"); got != maxArchivePageSize {
+		t.Fatalf("invalid override changed archive page size to %d", got)
+	}
+}
+
 func containsString(items []string, want string) bool {
 	for _, item := range items {
 		if item == want {
