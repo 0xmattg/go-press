@@ -50,15 +50,16 @@ type RouteHandler struct {
 //  2. Provide templates following the naming convention
 //  3. Optionally register custom static-page routes (e.g. /about, /contact)
 type BaseTheme struct {
-	App           App
-	ThemeDir      string
-	Templates     *TemplateEngine
-	PageTemplates map[string]*template.Template
-	CustomRoutes  map[string]map[string]gin.HandlerFunc // path → method → handler
-	customFuncMap template.FuncMap
-	fileConfig    *FileConfig    // full theme.toml parsed from the embedded copy
-	meta          Config         // [theme] metadata (single source of truth, baked in)
-	requires      RequiresConfig // [requires] dependency block
+	App              App
+	ThemeDir         string
+	Templates        *TemplateEngine
+	PageTemplates    map[string]*template.Template
+	CustomRoutes     map[string]map[string]gin.HandlerFunc // path → method → handler
+	archivePageSizes map[string]int
+	customFuncMap    template.FuncMap
+	fileConfig       *FileConfig    // full theme.toml parsed from the embedded copy
+	meta             Config         // [theme] metadata (single source of truth, baked in)
+	requires         RequiresConfig // [requires] dependency block
 }
 
 // InitBase initializes the BaseTheme. Call this from the theme constructor.
@@ -73,6 +74,7 @@ func (b *BaseTheme) InitBase(app App, themeDir, themeTOML string, extraFuncs tem
 	b.ThemeDir = themeDir
 	b.PageTemplates = make(map[string]*template.Template)
 	b.CustomRoutes = make(map[string]map[string]gin.HandlerFunc)
+	b.archivePageSizes = make(map[string]int)
 	b.customFuncMap = extraFuncs
 	// Parse the embedded theme.toml once. It is the single source of truth for
 	// theme metadata (so Name/Version/... don't drift against hardcoded Go) and
@@ -82,6 +84,39 @@ func (b *BaseTheme) InitBase(app App, themeDir, themeTOML string, extraFuncs tem
 		b.meta = cfg.Theme
 		b.requires = cfg.Requires
 	}
+}
+
+const (
+	defaultArchivePageSize = 20
+	maxArchivePageSize     = 100
+)
+
+// SetArchivePageSize configures the number of items shown on one archive page
+// for a content type. Themes use this presentation-level setting when their
+// grid layout benefits from a page size other than the Core default.
+func (b *BaseTheme) SetArchivePageSize(contentType string, perPage int) {
+	contentType = strings.TrimSpace(contentType)
+	if b == nil || contentType == "" || perPage < 1 {
+		return
+	}
+	if perPage > maxArchivePageSize {
+		perPage = maxArchivePageSize
+	}
+	if b.archivePageSizes == nil {
+		b.archivePageSizes = make(map[string]int)
+	}
+	b.archivePageSizes[contentType] = perPage
+}
+
+// ArchivePageSize returns the configured page size for a content type, falling
+// back to the stable Core default when the theme did not provide an override.
+func (b *BaseTheme) ArchivePageSize(contentType string) int {
+	if b != nil {
+		if perPage := b.archivePageSizes[strings.TrimSpace(contentType)]; perPage > 0 {
+			return perPage
+		}
+	}
+	return defaultArchivePageSize
 }
 
 // FileConfig implements FileConfigProvider: the full theme.toml parsed from the
@@ -502,7 +537,7 @@ func (b *BaseTheme) renderArchive(c *gin.Context, route *rewrite.ResolvedRoute) 
 	if page < 1 {
 		page = 1
 	}
-	perPage := 20
+	perPage := b.ArchivePageSize(route.ContentType)
 
 	q := content.NewQuery(content.ScopedDB(c, b.App.Database())).
 		Type(route.ContentType).Published()

@@ -74,13 +74,16 @@ type ppLink struct {
 
 func (o ppOrderResponse) firstCapture() (ppCapture, bool) {
 	for _, pu := range o.PurchaseUnits {
-		for _, cp := range pu.Payments.Captures {
-			custom := cp.CustomID
-			if custom == "" {
-				custom = pu.CustomID
-			}
-			return ppCapture{ID: cp.ID, CustomID: custom, Status: cp.Status, Amount: cp.Amount}, true
+		if len(pu.Payments.Captures) == 0 {
+			continue
 		}
+
+		cp := pu.Payments.Captures[0]
+		custom := cp.CustomID
+		if custom == "" {
+			custom = pu.CustomID
+		}
+		return ppCapture{ID: cp.ID, CustomID: custom, Status: cp.Status, Amount: cp.Amount}, true
 	}
 	return ppCapture{}, false
 }

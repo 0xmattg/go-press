@@ -285,6 +285,7 @@ See [docs/guide/en/themes/overview.md](docs/guide/en/themes/overview.md).
 - **metamask-identity** — MetaMask browser-extension login and registration through EIP-4361 Sign-In with Ethereum and one-time server challenges.
 - **commerce** — Opt-in e-commerce module (WooCommerce-like): `product` catalog, guest/account cart, single-transaction checkout, order state machine, inventory reservation with row locks, a medium-agnostic payment-gateway contract, and a built-in offline bank-transfer gateway. Disabled by default. See [docs/guide/en/commerce/overview.md](docs/guide/en/commerce/overview.md).
 - **commerce-paypal** — PayPal (Orders v2) satellite gateway: sandbox/live, buyer-return capture, webhook signature verification, and refunds. Depends only on the `core/commerce` contracts (no plugin→plugin dependency).
+- **commerce-usdt** — USDT (ERC-20) crypto satellite gateway: pull-based confirmation via a per-order HD-derived deposit address watched on-chain, idempotent settlement, EVM-abstracted (Ethereum first; BSC/Polygon ready). Watch-only xpub — the server holds no spend authority. Depends only on the `core/commerce` contracts.
 
 See [docs/guide/en/plugins/overview.md](docs/guide/en/plugins/overview.md) and the [Commerce guide](docs/guide/en/commerce/overview.md).
 

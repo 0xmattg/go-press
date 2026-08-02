@@ -1,0 +1,84 @@
+{{define "content"}}
+<div class="content-header">
+    <div style="display:flex; align-items:center; gap:1rem;">
+        <a href="/admin/plugins" class="btn btn-secondary" style="text-decoration:none;">← {{X $ "plugin.settings.back" "返回插件管理"}}</a>
+        <h2>{{X $ "plugin.settings.title" "%s - 插件设置" .PluginName}}</h2>
+    </div>
+</div>
+
+<div class="card settings-shell">
+    <form method="POST" action="/admin/plugins/{{.PluginSlug}}/settings" class="settings-form">
+        <section class="settings-section">
+            <h3 class="settings-section-title">{{X $ "plugin.usdt.settings.configuration" "USDT 配置"}}</h3>
+            <div class="settings-grid">
+                <div class="form-group settings-item">
+                    <label for="uEnabled">{{X $ "plugin.usdt.settings.payment" "USDT 支付"}}</label>
+                    <select id="uEnabled" name="plugin_commerce-usdt_enabled">
+                        <option value="1" {{if .Enabled}}selected{{end}}>{{X $ "plugin.usdt.settings.enabled" "启用"}}</option>
+                        <option value="0" {{if not .Enabled}}selected{{end}}>{{X $ "plugin.usdt.settings.disabled" "停用"}}</option>
+                    </select>
+                    <small>{{X $ "plugin.usdt.settings.payment_help" "启用并配置完整后，USDT 会出现在结算页的支付方式中。"}}</small>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="uChain">{{X $ "plugin.usdt.settings.chain" "链"}}</label>
+                    <select id="uChain" name="plugin_commerce-usdt_chain">
+                        {{range .Chains}}<option value="{{.}}" {{if eq . $.Chain}}selected{{end}}>{{X $ (printf "commerce-usdt.chain.%s" .) .}}</option>{{end}}
+                    </select>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="uNetwork">{{X $ "plugin.usdt.settings.network" "网络"}}</label>
+                    <select id="uNetwork" name="plugin_commerce-usdt_network">
+                        <option value="mainnet" {{if eq .Network "mainnet"}}selected{{end}}>{{X $ "plugin.usdt.settings.mainnet" "主网 (mainnet)"}}</option>
+                        <option value="testnet" {{if eq .Network "testnet"}}selected{{end}}>{{X $ "plugin.usdt.settings.testnet" "测试网 (testnet)"}}</option>
+                    </select>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="uRPC">{{X $ "plugin.usdt.settings.rpc" "RPC 节点 URL"}}</label>
+                    <input type="text" id="uRPC" name="plugin_commerce-usdt_rpc_url" value="{{.RPCURL}}" autocomplete="off" spellcheck="false" placeholder="https://…">
+                    <small>{{X $ "plugin.usdt.settings.rpc_help" "只读 JSON-RPC 端点（自托管或可信服务商）。仅用于查询区块与转账事件。"}}</small>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="uContract">{{X $ "plugin.usdt.settings.contract" "USDT 合约地址"}}</label>
+                    <input type="text" id="uContract" name="plugin_commerce-usdt_token_contract" value="{{.TokenContract}}" autocomplete="off" spellcheck="false" placeholder="0x…">
+                    <small>{{X $ "plugin.usdt.settings.contract_help" "留空则使用所选链主网的默认 USDT 合约；测试网请填入测试代币合约。"}}</small>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="uXpub">{{X $ "plugin.usdt.settings.xpub" "收款扩展公钥 (xpub)"}}</label>
+                    <input type="text" id="uXpub" name="plugin_commerce-usdt_receive_xpub" value="{{.Xpub}}" autocomplete="off" spellcheck="false" placeholder="xpub…">
+                    <small>{{X $ "plugin.usdt.settings.xpub_help" "watch-only 扩展公钥（如 m/44'/60'/0'/0），用于为每个订单派生唯一收款地址。服务器只持公钥、无花费权限。"}}</small>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="uConfs">{{X $ "plugin.usdt.settings.confirmations" "确认数"}}</label>
+                    <input type="number" id="uConfs" name="plugin_commerce-usdt_confirmations" value="{{.Confirmations}}" min="1">
+                    <small>{{X $ "plugin.usdt.settings.confirmations_help" "达到该确认数才视为已支付（以太坊主网建议 24）。"}}</small>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="uWindow">{{X $ "plugin.usdt.settings.window" "收款有效期（分钟）"}}</label>
+                    <input type="number" id="uWindow" name="plugin_commerce-usdt_window_minutes" value="{{.WindowMinutes}}" min="5">
+                </div>
+                <div class="form-group settings-item">
+                    <label for="uRate">{{X $ "plugin.usdt.settings.rate" "USD → USDT 汇率"}}</label>
+                    <input type="text" id="uRate" name="plugin_commerce-usdt_usd_rate" value="{{.USDRate}}" inputmode="decimal" placeholder="1.00">
+                    <small>{{X $ "plugin.usdt.settings.rate_help" "订单金额（USD）换算为应付 USDT 的比率，默认 1.00。"}}</small>
+                </div>
+            </div>
+        </section>
+
+        <section class="settings-section settings-section-admin">
+            <p class="usdt-status {{if .Ready}}ready{{end}}">
+                {{if .Ready}}{{X $ "plugin.usdt.settings.ready" "配置完整，USDT 会显示在结算页。"}}{{else}}{{X $ "plugin.usdt.settings.not_ready" "启用 USDT 并填写 RPC、合约地址与收款 xpub 后，结算页才会出现 USDT。"}}{{end}}
+            </p>
+        </section>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{{X $ "plugin.settings.save" "保存设置"}}</button>
+        </div>
+    </form>
+</div>
+
+<style>
+.settings-item input[type="text"] { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.usdt-status { margin: 1rem 0 0; padding: .75rem 1rem; border-left: 3px solid #94a3b8; background: #f8fafc; color: #475569; }
+.usdt-status.ready { border-left-color: #16844b; color: #166534; }
+</style>
+{{end}}

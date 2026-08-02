@@ -49,6 +49,16 @@
             {{end}}
         </div>
 
+        {{with .Pagination}}
+        {{if gt .TotalPages 1}}
+        <nav class="blog-pagination" aria-label="{{T $.Ctx "page_title_blog"}}">
+            {{range archivePageWindow .Page .TotalPages}}
+            <a href="{{archivePageURL $.Ctx .}}" {{if eq $.Pagination.Page .}}class="active" aria-current="page"{{end}}>{{.}}</a>
+            {{end}}
+        </nav>
+        {{end}}
+        {{end}}
+
         {{if eq (len .Posts) 0}}
         <div class="text-center" style="padding: 3rem 0;">
             <p>{{T $.Ctx "empty_no_posts_category"}}</p>

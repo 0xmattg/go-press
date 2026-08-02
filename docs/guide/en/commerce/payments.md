@@ -75,6 +75,21 @@ Credentials (client id/secret, sandbox toggle, webhook id) live in the plugin se
 
 > Because it is webhook-driven for production confirmation, a full sandbox test needs PayPal sandbox credentials and a publicly reachable webhook URL (e.g. a tunnel). The code path is complete; that live test is the one manual step still outstanding.
 
+## USDT crypto satellite (`plugins/commerce-usdt`)
+
+The bundled USDT (ERC-20) gateway is the reference **pull-based / display-type** satellite — the crypto counterpart to PayPal's redirect flow. It also depends only on `core/commerce` (plus the narrow host slice), and adds no route: confirmation is a plugin-owned chain watcher, not a webhook.
+
+**Flow:**
+
+1. `StartPayment` derives a **unique per-order deposit address** from a watch-only `xpub` (BIP-32 non-hardened; the server holds no spend authority), records an invoice with the exact expected token amount, and returns a `DisplayAction` (network, asset, deposit address, exact amount, QR, expiry). Commerce moves the order to `on_hold`.
+2. A **watcher goroutine** (started on Activate, like commerce's reservation sweeper — not core's Scheduler) incrementally scans the chain via `eth_getLogs` for ERC-20 `Transfer` events to the watched addresses, only up to `head − confirmations` so every observed deposit is already confirmed. Deposits are deduped by `(chain, tx_hash, log_index)`.
+3. When an invoice's confirmed total meets the expected amount (within a dust tolerance) it settles once with `IdempotencyKey = "usdt:<chain>:paid:<order_ref>"`; expiry with nothing received settles `expired` (commerce cancels + releases stock); a partial amount settles `underpaid` (kept on hold for manual handling — never silently pocketed).
+4. Refunds are `Refund: false` — on-chain refunds need spend authority and are recorded manually.
+
+It is **EVM-abstracted**: a generic `evmChain` implements the chain interface for every preset, so **Ethereum** ships first and BSC/Polygon are one-line preset additions (only the USDT contract, decimals, and default confirmations differ). Amounts stay single-currency: the order total is USD, the on-chain USDT amount is derived via a configurable `usd_rate` (default 1.00), and the settlement reports USD back to commerce. Deposit-instruction labels are localized to the request language (`commerce-usdt.*` storefront catalog); the settings page is localized to the admin language.
+
+See `docs/design/commerce-usdt-spec.md` for the full design (HD address model, security, multi-chain roadmap).
+
 ## Writing your own satellite gateway
 
 A minimal gateway is a few files. The essential shape:

@@ -29,7 +29,7 @@
     if (!items.length) return;
 
     const nav = document.getElementById('primary-nav');
-    const closeDelay = 260;
+    const closeDelay = 120;
     let activeItem = null;
     let closeTimer;
     let switchTimer;

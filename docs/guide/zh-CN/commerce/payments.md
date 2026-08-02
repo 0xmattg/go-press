@@ -75,6 +75,21 @@ Commerce 先提交本地订单、库存预留、订单行/地址快照和 pendin
 
 > 由于生产确认是 webhook 驱动，完整沙盒测试需要 PayPal 沙盒凭据 + 一个公网可达的 webhook URL（如内网穿透）。代码路径已完整；这项线上实测是唯一尚未跑过的手工步骤。
 
+## USDT 加密货币卫星（`plugins/commerce-usdt`）
+
+内置的 USDT（ERC-20）网关是参考的**拉取式 / 展示型**卫星 —— 对应 PayPal 重定向流的加密货币版本。它同样只依赖 `core/commerce`（外加一小片宿主），且**不注册任何路由**：确认靠插件自有的链上 watcher，而非 webhook。
+
+**流程：**
+
+1. `StartPayment` 从一个 watch-only `xpub` **为每个订单派生唯一收款地址**（BIP-32 非硬化，服务器无花费权限），记录含精确应付 token 金额的 invoice，返回 `DisplayAction`（网络、币种、收款地址、精确金额、二维码、到期）。commerce 将订单置 `on_hold`。
+2. **watcher goroutine**（Activate 时启动，仿 commerce 的库存清理器，非 core Scheduler）经 `eth_getLogs` 增量扫描 ERC-20 `Transfer` 事件到被监视地址，且只扫到 `head − confirmations`，因此凡是看到的入账都已足够确认。入账按 `(chain, tx_hash, log_index)` 去重。
+3. 当某 invoice 的已确认累计达到应付额（含 dust 容差）即幂等结算一次，`IdempotencyKey = "usdt:<chain>:paid:<订单号>"`；到期零入账结算 `expired`（commerce 取消并释放库存）；部分入账结算 `underpaid`（保持 on_hold 人工处理，绝不静默吞币）。
+4. 退款 `Refund: false` —— 链上退款需花费权限，改为手工记录。
+
+它是 **EVM 抽象**的：一个泛化 `evmChain` 为所有 preset 实现链接口，故 **以太坊** 首发，BSC/Polygon 只是新增一行 preset（仅 USDT 合约、小数位、默认确认数不同）。金额保持单币种：订单总额为 USD，链上 USDT 金额按可配 `usd_rate`（默认 1.00）换算，结算回报 commerce 的仍是 USD。收款说明标签按请求语言本地化（`commerce-usdt.*` 店面 catalog）；设置页按后台语言本地化。
+
+完整设计（HD 地址模型、安全、多链路线）见 `docs/design/commerce-usdt-spec.md`。
+
 ## 编写你自己的卫星网关
 
 一个最小网关只需几个文件。核心骨架：

@@ -123,33 +123,70 @@ func TestPayPalUnconfiguredStartFailureIsDefinitive(t *testing.T) {
 	}
 }
 
-func TestFirstCapturePrefersCustomID(t *testing.T) {
-	o := ppOrderResponse{}
-	o.PurchaseUnits = append(o.PurchaseUnits, struct {
-		CustomID    string `json:"custom_id"`
-		ReferenceID string `json:"reference_id"`
-		Payments    struct {
-			Captures []struct {
-				ID       string  `json:"id"`
-				Status   string  `json:"status"`
-				CustomID string  `json:"custom_id"`
-				Amount   ppMoney `json:"amount"`
-			} `json:"captures"`
-		} `json:"payments"`
-	}{CustomID: "ORDER-1"})
-	o.PurchaseUnits[0].Payments.Captures = append(o.PurchaseUnits[0].Payments.Captures, struct {
-		ID       string  `json:"id"`
-		Status   string  `json:"status"`
-		CustomID string  `json:"custom_id"`
-		Amount   ppMoney `json:"amount"`
-	}{ID: "CAP-1", Status: "COMPLETED", Amount: ppMoney{CurrencyCode: "USD", Value: "10.00"}})
-
-	cap, ok := o.firstCapture()
-	if !ok || cap.ID != "CAP-1" || cap.CustomID != "ORDER-1" {
-		t.Fatalf("firstCapture() = %+v, ok=%v", cap, ok)
+func TestFirstCapture(t *testing.T) {
+	tests := []struct {
+		name       string
+		response   string
+		wantOK     bool
+		wantID     string
+		wantCustom string
+		wantAmount int64
+	}{
+		{
+			name: "falls back to purchase unit custom id",
+			response: `{"purchase_units":[{"custom_id":"ORDER-1","payments":{"captures":[` +
+				`{"id":"CAP-1","status":"COMPLETED","amount":{"currency_code":"USD","value":"10.00"}}]}}]}`,
+			wantOK:     true,
+			wantID:     "CAP-1",
+			wantCustom: "ORDER-1",
+			wantAmount: 1000,
+		},
+		{
+			name: "prefers capture custom id",
+			response: `{"purchase_units":[{"custom_id":"ORDER-1","payments":{"captures":[` +
+				`{"id":"CAP-1","custom_id":"CAPTURE-ORDER-1","status":"COMPLETED"}]}}]}`,
+			wantOK:     true,
+			wantID:     "CAP-1",
+			wantCustom: "CAPTURE-ORDER-1",
+		},
+		{
+			name: "skips purchase units without captures",
+			response: `{"purchase_units":[{"custom_id":"EMPTY","payments":{"captures":[]}},` +
+				`{"custom_id":"ORDER-2","payments":{"captures":[{"id":"CAP-2"}]}}]}`,
+			wantOK:     true,
+			wantID:     "CAP-2",
+			wantCustom: "ORDER-2",
+		},
+		{
+			name: "returns first capture",
+			response: `{"purchase_units":[{"custom_id":"ORDER-1","payments":{"captures":[` +
+				`{"id":"CAP-1"},{"id":"CAP-2"}]}}]}`,
+			wantOK:     true,
+			wantID:     "CAP-1",
+			wantCustom: "ORDER-1",
+		},
+		{
+			name:     "reports missing captures",
+			response: `{"purchase_units":[{"payments":{"captures":[]}}]}`,
+		},
 	}
-	if parseMoney(cap.Amount).Amount != 1000 {
-		t.Errorf("capture amount = %d", parseMoney(cap.Amount).Amount)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var o ppOrderResponse
+			if err := json.Unmarshal([]byte(tt.response), &o); err != nil {
+				t.Fatalf("unmarshal response: %v", err)
+			}
+
+			capture, ok := o.firstCapture()
+			if ok != tt.wantOK || capture.ID != tt.wantID || capture.CustomID != tt.wantCustom {
+				t.Fatalf("firstCapture() = %+v, ok=%v; want id=%q, custom_id=%q, ok=%v",
+					capture, ok, tt.wantID, tt.wantCustom, tt.wantOK)
+			}
+			if amount := parseMoney(capture.Amount).Amount; amount != tt.wantAmount {
+				t.Errorf("capture amount = %d, want %d", amount, tt.wantAmount)
+			}
+		})
 	}
 }
 

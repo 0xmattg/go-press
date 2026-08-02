@@ -50,10 +50,10 @@
         {{end}}
         {{if .NeedsEnableModules}}
         <div class="alert alert-error dep-warning" style="display:flex;align-items:center;gap:1rem;">
-            <span class="dep-warning-text"><strong>{{X . "modules.required_title" "当前主题需要启用以下模块才能正常工作："}}</strong>
+            <span class="dep-warning-text"><strong>{{T . "modules.required_title"}}</strong>
             {{range .NeedsEnableModules}}<span style="margin-left:.35rem;font-weight:600;">{{.Name}}</span>{{end}}
             </span>
-            <a href="/admin/settings#modules" class="btn btn-sm btn-primary" style="margin-left:auto;text-decoration:none;white-space:nowrap;">{{X . "modules.enable_now" "去启用"}}</a>
+            <a href="/admin/settings#modules" class="btn btn-sm btn-primary" style="margin-left:auto;text-decoration:none;white-space:nowrap;">{{T . "modules.enable_now"}}</a>
         </div>
         {{end}}
         {{if .Success}}

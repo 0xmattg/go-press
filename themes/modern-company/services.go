@@ -178,6 +178,7 @@ type BlogData struct {
 	Tags       []TagView
 	ActiveCat  string
 	ActiveTag  string
+	Pagination *content.PaginatedResult
 }
 
 type ContactData struct {

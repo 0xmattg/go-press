@@ -144,6 +144,26 @@ func TestTemplatesDoNotGenerateLegacyTaxonomyQueryLinks(t *testing.T) {
 	}
 }
 
+func TestBlogArchiveUsesEighteenItemsPerPage(t *testing.T) {
+	theme := NewWithDB(nil, ".")
+	if got := theme.ArchivePageSize("post"); got != 18 {
+		t.Fatalf("post archive page size = %d, want 18", got)
+	}
+}
+
+func TestBlogTemplateRendersCorePagination(t *testing.T) {
+	body, err := os.ReadFile("templates/pages/blog.tmpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	templateBody := string(body)
+	for _, want := range []string{"{{with .Pagination}}", ".TotalPages", "archivePageWindow", "archivePageURL", `aria-current="page"`} {
+		if !strings.Contains(templateBody, want) {
+			t.Fatalf("blog template is missing pagination marker %q", want)
+		}
+	}
+}
+
 func newArchiveURLTestEngine() *core.Engine {
 	registry := content.NewRegistry()
 	registry.RegisterType(content.ContentTypeDef{
