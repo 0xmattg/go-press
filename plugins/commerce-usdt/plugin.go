@@ -3,13 +3,14 @@
 // and confirms payment by watching the chain (pull-based), settling idempotently
 // through the core/commerce contracts. It never imports the commerce engine, so
 // there is no plugin→plugin dependency. EVM-abstracted: Ethereum ships first,
-// BSC/Polygon are preset additions.
+// additional EVM networks require reviewed presets and network-specific tests.
 package commerceusdt
 
 import (
 	"embed"
 	"net/http"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -54,7 +55,9 @@ type Plugin struct {
 	siteURL    string
 	httpClient *http.Client
 	filters    []hook.Handle
+	watchMu    sync.Mutex
 	watchStop  chan struct{}
+	watchDone  chan struct{}
 }
 
 // New constructs the plugin with a bounded HTTP client for chain RPC calls.
@@ -83,6 +86,11 @@ func (p *Plugin) Activate(app plugin.App) {
 
 	if err := p.autoMigrate(); err != nil {
 		logger.Error("commerce-usdt: migration failed", "error", err)
+		return
+	}
+	if err := p.backfillLegacyRows(p.loadConfig()); err != nil {
+		logger.Error("commerce-usdt: legacy data backfill failed", "error", err)
+		return
 	}
 	for _, name := range tableBaseNames() {
 		core.RegisterPluginTable(tableSlug, name)
@@ -128,9 +136,18 @@ func (p *Plugin) SettingsTemplatePath() string {
 	return filepath.Join("plugins", pluginSlug, "templates", "admin", "settings.tmpl")
 }
 
+// SettingsPermissionResource keeps payment-settlement configuration behind a
+// dedicated capability instead of inheriting any broad plugin-management grant.
+// Super admins retain access through the core wildcard policy.
+func (p *Plugin) SettingsPermissionResource() string { return "commerce_usdt_settings" }
+
 // SettingsData implements plugin.SettingsDataProvider.
 func (p *Plugin) SettingsData() map[string]interface{} {
 	c := p.loadConfig()
+	dustTolerance := ""
+	if c.DustTolerance != nil {
+		dustTolerance = c.DustTolerance.String()
+	}
 	return map[string]interface{}{
 		"Enabled":       c.Enabled,
 		"Chain":         c.ChainID,
@@ -141,6 +158,7 @@ func (p *Plugin) SettingsData() map[string]interface{} {
 		"Confirmations": c.Confirmations,
 		"WindowMinutes": c.WindowMinutes,
 		"USDRate":       formatRate(c.RateScaled),
+		"DustTolerance": dustTolerance,
 		"Chains":        presetIDs(),
 		"Ready":         c.ready(),
 	}
@@ -148,9 +166,11 @@ func (p *Plugin) SettingsData() map[string]interface{} {
 
 // Compile-time contract checks.
 var (
-	_ plugin.Plugin                  = (*Plugin)(nil)
-	_ plugin.DefaultInactiveProvider = (*Plugin)(nil)
-	_ plugin.SettingsProvider        = (*Plugin)(nil)
-	_ plugin.SettingsDataProvider    = (*Plugin)(nil)
-	_ plugin.LogoProvider            = (*Plugin)(nil)
+	_ plugin.Plugin                        = (*Plugin)(nil)
+	_ plugin.DefaultInactiveProvider       = (*Plugin)(nil)
+	_ plugin.SettingsProvider              = (*Plugin)(nil)
+	_ plugin.SettingsDataProvider          = (*Plugin)(nil)
+	_ plugin.SettingsValidateProvider      = (*Plugin)(nil)
+	_ plugin.SettingsAuthorizationProvider = (*Plugin)(nil)
+	_ plugin.LogoProvider                  = (*Plugin)(nil)
 )

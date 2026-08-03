@@ -11,7 +11,7 @@ It ships **disabled by default**. Nothing about Commerce touches a site until an
 - **Checkout** — a single-transaction order placement that snapshots prices, reserves stock under row locks, and hands off to a payment gateway.
 - **Orders** — a controlled state machine (`pending → processing → completed`, plus `cancelled/failed/on_hold/refunded/partially_refunded`), an order admin (list, detail, mark-paid, ship, cancel, refund, notes), and confirmation email.
 - **Inventory** — reserve / commit / release with `SELECT … FOR UPDATE` locking and a TTL sweeper that releases abandoned orders.
-- **Payments** — a medium-agnostic `PaymentGateway` contract, a built-in offline bank-transfer gateway, and a **PayPal** satellite plugin (Orders v2, sandbox/live, webhook verification, refunds).
+- **Payments** — a medium-agnostic `PaymentGateway` contract, a built-in offline bank-transfer gateway, a **PayPal** redirect/webhook satellite, and an opt-in **USDT on Ethereum** display/pull satellite with verified RPC scanning and idempotent settlement.
 - **Customer accounts** — guest order tracking (order number + email), a logged-in "my orders" area, and a high-entropy access key that closes order-number enumeration.
 - **Storefront theming** — render-hook slots and a theme-shell renderer so any theme can present the shop without importing the plugin, demonstrated by the bundled `shop-starter` theme.
 

@@ -116,6 +116,12 @@ func (p *MyPlugin) OnSettingsSave(settings map[string]string) {
     // 同步设置到插件自有表...
 }
 
+// SettingsValidateProvider — Core 落库任何选项之前校验完整提交值
+// 此方法必须无副作用；返回错误会拒绝整次保存，避免部分更新。
+func (p *MyPlugin) ValidateSettings(settings map[string]string) error {
+    return nil
+}
+
 // LogoProvider — 在后台「插件管理」卡片上显示插件图标
 //
 //go:embed static/logo.svg
@@ -123,6 +129,8 @@ var logoSVG string
 
 func (p *MyPlugin) LogoSVG() string { return logoSVG }
 ```
+
+后台会先检查该插件设置资源的 `update` RBAC 权限，再执行校验和持久化。若插件需要更细的设置权限，应实现 `SettingsAuthorizationProvider` 复用 core 的路由与权限检查，不要自行注册只验证登录状态的降级路由。
 
 `LogoProvider` 与主题一致：把一个 `viewBox="0 0 48 48"` 的方形 SVG 嵌入插件（`//go:embed`），`LogoSVG()` 返回其内容即可。core 会先用 `content.SanitizeSVG` 清洗再内联进后台，所以第三方插件的 logo 也安全；返回 `""` 则卡片不显示图标。
 

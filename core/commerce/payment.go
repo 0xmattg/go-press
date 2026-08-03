@@ -44,6 +44,14 @@ type GatewayAvailability interface {
 	Available(c *gin.Context) bool
 }
 
+// GatewayCurrencySupport is an OPTIONAL capability for gateways that support
+// only a subset of store currencies. Commerce evaluates it both while rendering
+// checkout choices and again on submission. Gateways that do not implement it
+// remain currency-agnostic for backwards compatibility.
+type GatewayCurrencySupport interface {
+	SupportsCurrency(currency string) bool
+}
+
 // DefinitiveStartFailure marks a StartPayment error that is known to have
 // happened before the gateway could create or settle anything remotely (for
 // example, missing local configuration). Unmarked errors are intentionally

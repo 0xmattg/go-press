@@ -59,6 +59,15 @@ type conditionalGW struct {
 
 func (g conditionalGW) Available(*gin.Context) bool { return g.available }
 
+type currencyGW struct {
+	stubGW
+	currency string
+}
+
+func (g currencyGW) SupportsCurrency(currency string) bool {
+	return g.currency == currency
+}
+
 func TestGatewayRegistry(t *testing.T) {
 	bus := hook.New()
 	if got := PaymentGateways(bus); len(got) != 0 {
@@ -83,6 +92,21 @@ func TestAvailablePaymentGatewaysFiltersRuntimeUnavailable(t *testing.T) {
 	got := AvailablePaymentGateways(nil, bus)
 	if len(got) != 2 || got[0].ID() != "always" || got[1].ID() != "ready" {
 		t.Fatalf("available gateways = %v, want always + ready", got)
+	}
+}
+
+func TestAvailablePaymentGatewaysFiltersCurrency(t *testing.T) {
+	bus := hook.New()
+	RegisterPaymentGateway(bus, stubGW{id: "agnostic"})
+	RegisterPaymentGateway(bus, currencyGW{stubGW: stubGW{id: "usd"}, currency: "USD"})
+
+	got := AvailablePaymentGatewaysForCurrency(nil, bus, "USD")
+	if len(got) != 2 {
+		t.Fatalf("USD gateways = %d, want 2", len(got))
+	}
+	got = AvailablePaymentGatewaysForCurrency(nil, bus, "CNY")
+	if len(got) != 1 || got[0].ID() != "agnostic" {
+		t.Fatalf("CNY gateways = %v, want agnostic only", got)
 	}
 }
 

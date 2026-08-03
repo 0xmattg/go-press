@@ -3,6 +3,7 @@ package commerceusdt
 import (
 	"context"
 	"math/big"
+	"time"
 )
 
 // TokenSpec identifies the ERC-20 stablecoin being collected on a chain.
@@ -20,6 +21,7 @@ type Deposit struct {
 	To          string   // the watched deposit address
 	TokenAmount *big.Int // raw minor units (per TokenSpec.Decimals)
 	BlockNumber uint64
+	BlockTime   time.Time
 }
 
 // Chain abstracts a settlement network. The generic evmChain implements it for
@@ -32,6 +34,8 @@ type Chain interface {
 	Confirmations() uint64
 	// LatestBlock returns the current head height.
 	LatestBlock(ctx context.Context) (uint64, error)
+	// BlockTimestamp returns the chain timestamp of a block.
+	BlockTimestamp(ctx context.Context, block uint64) (time.Time, error)
 	// ScanTransfers returns token transfers to any of addrs within [from,to].
 	ScanTransfers(ctx context.Context, addrs []string, from, to uint64) ([]Deposit, error)
 	// DeriveAddress derives the index-th receiving address from the configured
@@ -47,9 +51,10 @@ type evmNetwork struct {
 	Contract string // default USDT contract (operator may override)
 }
 
-// chainPreset describes a supported network family. Adding BSC/Polygon (or any
-// EVM chain) is a matter of adding an entry here — the generic evmChain provides
-// the behavior. TRC-20 chains would add a non-EVM Kind + a separate Chain impl.
+// chainPreset describes a supported network family. The generic evmChain keeps
+// the implementation reusable, but every new network still needs independently
+// reviewed constants, confirmation policy, fixtures, and live acceptance tests.
+// TRC-20 chains would add a non-EVM Kind + a separate Chain implementation.
 type chainPreset struct {
 	ID           string
 	Kind         string // "evm"
@@ -60,8 +65,8 @@ type chainPreset struct {
 	Networks     map[string]evmNetwork // "mainnet" | "testnet"
 }
 
-// chainPresets is the registry of supported chains. v1 ships Ethereum only;
-// the commented entries show how BSC/Polygon slot in without touching evmChain.
+// chainPresets is the registry of supported chains. This release enables only
+// Ethereum; commented examples are not supported presets.
 var chainPresets = map[string]chainPreset{
 	"ethereum": {
 		ID: "ethereum", Kind: "evm", NameKey: "commerce-usdt.chain.ethereum",

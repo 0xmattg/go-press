@@ -33,7 +33,7 @@ Commerce 对支付媒介保持无关。网关在结算时描述「下一步该�
 
 ### 运行时可用性与安全启动支付
 
-就绪状态取决于设置的网关实现可选的 `GatewayAvailability.Available` 契约。结算页通过 `AvailablePaymentGateways` 同时生成可见选项并校验提交方式；因此已激活但被禁用、或配置不完整的网关既不会显示，也无法用伪造/过期表单值选中。未实现该可选接口的旧网关为兼容仍视为可用。
+就绪状态取决于设置的网关实现可选的 `GatewayAvailability.Available` 契约；只接受特定订单币种的网关还实现 `GatewayCurrencySupport.SupportsCurrency`。结算页在生成可见选项和校验提交方式时都会计算这两项能力，因此已激活但被禁用、配置不完整或币种不兼容的网关既不会显示，也无法用伪造/过期表单值选中。未实现这些可选接口的旧网关为兼容仍视为可用且不限制币种。
 
 Commerce 先提交本地订单、库存预留、订单行/地址快照和 pending 支付，再用稳定的 `PaymentRequest.IdempotencyKey`（`start:<订单号>`）调用 `StartPayment`。网关必须把此键传给支付服务商，保证重试不会重复创建远端支付。
 
@@ -82,13 +82,15 @@ Commerce 先提交本地订单、库存预留、订单行/地址快照和 pendin
 **流程：**
 
 1. `StartPayment` 从一个 watch-only `xpub` **为每个订单派生唯一收款地址**（BIP-32 非硬化，服务器无花费权限），记录含精确应付 token 金额的 invoice，返回 `DisplayAction`（网络、币种、收款地址、精确金额、二维码、到期）。commerce 将订单置 `on_hold`。
-2. **watcher goroutine**（Activate 时启动，仿 commerce 的库存清理器，非 core Scheduler）经 `eth_getLogs` 增量扫描 ERC-20 `Transfer` 事件到被监视地址，且只扫到 `head − confirmations`，因此凡是看到的入账都已足够确认。入账按 `(chain, tx_hash, log_index)` 去重。
-3. 当某 invoice 的已确认累计达到应付额（含 dust 容差）即幂等结算一次，`IdempotencyKey = "usdt:<chain>:paid:<订单号>"`；到期零入账结算 `expired`（commerce 取消并释放库存）；部分入账结算 `underpaid`（保持 on_hold 人工处理，绝不静默吞币）。
-4. 退款 `Refund: false` —— 链上退款需花费权限，改为手工记录。
+2. **watcher goroutine**（Activate 时启动，非 core Scheduler）增量扫描已确认的 ERC-20 `Transfer` 日志。保存设置时及每轮扫描前都会验证 RPC 的 chain id、代币合约字节码和 `decimals()`；返回日志还会逐项复核合约、事件签名、目标地址集合、区块范围、哈希、topic 与金额。
+3. 入账与扫描游标在同一数据库事务中提交，并按 `(EVM chain id + 代币合约, tx_hash, log_index)` 去重。即便没有新区块范围，也会从持久化入账重试结算，因此“扫描已提交、结算前崩溃”不会永久漏款。每张 invoice 快照网络、合约、币种、汇率、dust 容差和确认阈值；只要仍处于正常或迟到账观察窗口，设置页就禁止停用或切换结算身份。
+4. 到期判断使用“最后安全扫描区块”的链上时间，而不是应用服务器时钟；每笔转账也按其确认区块时间判定是否按时。按时全额结算为 `paid`/`overpaid`，按时部分金额为 `underpaid`，没有按时资金为 `expired`。迟到资金继续观察七天，并进入 Commerce 的明确 reconciliation 路径，不会静默接受或丢失。结算键按 invoice 与结果保持稳定。
+5. 网关只声明支持 USD。其他币种在结算页被过滤，伪造的非 USD `StartPayment` 请求也会被拒绝。代币换算全程使用定点整数和 invoice 的不可变汇率快照。
+6. 退款 `Refund: false` —— 链上退款需花费权限，改为手工记录。
 
-它是 **EVM 抽象**的：一个泛化 `evmChain` 为所有 preset 实现链接口，故 **以太坊** 首发，BSC/Polygon 只是新增一行 preset（仅 USDT 合约、小数位、默认确认数不同）。金额保持单币种：订单总额为 USD，链上 USDT 金额按可配 `usd_rate`（默认 1.00）换算，结算回报 commerce 的仍是 USD。收款说明标签按请求语言本地化（`commerce-usdt.*` 店面 catalog）；设置页按后台语言本地化。
+它是 **EVM 可扩展**的：泛化 `evmChain` 提供可复用实现，但**当前唯一受支持的 preset 是以太坊**。新增网络仍必须独立评审链常量、代币语义、确认策略、测试 fixture 并完成真实网络验收，不能只改一个名称就启用。金额保持单币种：订单总额为 USD，链上 USDT 金额按可配定点 `usd_rate`（默认 1.00）换算，结算回报 Commerce 的仍是 USD。收款说明标签按请求语言本地化（`commerce-usdt.*` 店面 catalog）；设置页按后台语言本地化。
 
-完整设计（HD 地址模型、安全、多链路线）见 `docs/design/commerce-usdt-spec.md`。
+投入生产前，应使用专用 watch-only xpub、带监控的可信或自托管以太坊 RPC 及独立备用节点，审核 USD/USDT 汇率来源，配置 watcher/RPC/数据库错误告警与数据库备份，并建立归集、退款和 reconciliation 操作流程；还必须完成一笔真实小额主网验收付款，以及一次数据库恢复/重放演练。插件刻意不保存花费私钥，因此不会自动执行链上退款或归集。
 
 ## 编写你自己的卫星网关
 
@@ -143,6 +145,7 @@ settler.Settle(ctx, corecommerce.SettleRequest{
 - 只依赖 `core/commerce`；**不要** import `plugins/commerce`。
 - 把 Commerce 的 `OrderRef` 透传给你的 PSP（metadata / `custom_id`），确认时才能找回订单。
 - 就绪状态依赖运行时配置时实现 `GatewayAvailability`；不要只依赖前端隐藏。
+- 网关只接受特定订单币种时实现 `GatewayCurrencySupport`，并仍在 `StartPayment` 内再次校验币种。
 - 把稳定的支付/退款请求键传给服务商；每个结算事件的 `IdempotencyKey` 也要稳定且唯一。
 - 如声明支持自动退款，实现 `IdempotentRefunder` 并返回持久、非空的服务商退款 id。
 - 验 webhook 签名；绝不存 PAN/CVV —— 只走托管重定向、展示型或 tokenization。

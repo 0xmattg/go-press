@@ -35,12 +35,12 @@
                 <div class="form-group settings-item">
                     <label for="uRPC">{{X $ "plugin.usdt.settings.rpc" "RPC 节点 URL"}}</label>
                     <input type="text" id="uRPC" name="plugin_commerce-usdt_rpc_url" value="{{.RPCURL}}" autocomplete="off" spellcheck="false" placeholder="https://…">
-                    <small>{{X $ "plugin.usdt.settings.rpc_help" "只读 JSON-RPC 端点（自托管或可信服务商）。仅用于查询区块与转账事件。"}}</small>
+                    <small>{{X $ "plugin.usdt.settings.rpc_help" "只读 JSON-RPC 端点（自托管或可信服务商）。保存时及每轮扫链前都会核对 chain ID、合约代码和代币精度。"}}</small>
                 </div>
                 <div class="form-group settings-item">
                     <label for="uContract">{{X $ "plugin.usdt.settings.contract" "USDT 合约地址"}}</label>
                     <input type="text" id="uContract" name="plugin_commerce-usdt_token_contract" value="{{.TokenContract}}" autocomplete="off" spellcheck="false" placeholder="0x…">
-                    <small>{{X $ "plugin.usdt.settings.contract_help" "留空则使用所选链主网的默认 USDT 合约；测试网请填入测试代币合约。"}}</small>
+                    <small>{{X $ "plugin.usdt.settings.contract_help" "主网只接受内置的官方 USDT 合约；测试网请填入测试代币合约。"}}</small>
                 </div>
                 <div class="form-group settings-item">
                     <label for="uXpub">{{X $ "plugin.usdt.settings.xpub" "收款扩展公钥 (xpub)"}}</label>
@@ -49,17 +49,22 @@
                 </div>
                 <div class="form-group settings-item">
                     <label for="uConfs">{{X $ "plugin.usdt.settings.confirmations" "确认数"}}</label>
-                    <input type="number" id="uConfs" name="plugin_commerce-usdt_confirmations" value="{{.Confirmations}}" min="1">
+                    <input type="number" id="uConfs" name="plugin_commerce-usdt_confirmations" value="{{.Confirmations}}" min="1" max="10000">
                     <small>{{X $ "plugin.usdt.settings.confirmations_help" "达到该确认数才视为已支付（以太坊主网建议 24）。"}}</small>
                 </div>
                 <div class="form-group settings-item">
                     <label for="uWindow">{{X $ "plugin.usdt.settings.window" "收款有效期（分钟）"}}</label>
-                    <input type="number" id="uWindow" name="plugin_commerce-usdt_window_minutes" value="{{.WindowMinutes}}" min="5">
+                    <input type="number" id="uWindow" name="plugin_commerce-usdt_window_minutes" value="{{.WindowMinutes}}" min="5" max="1440">
                 </div>
                 <div class="form-group settings-item">
                     <label for="uRate">{{X $ "plugin.usdt.settings.rate" "USD → USDT 汇率"}}</label>
-                    <input type="text" id="uRate" name="plugin_commerce-usdt_usd_rate" value="{{.USDRate}}" inputmode="decimal" placeholder="1.00">
+                    <input type="number" id="uRate" name="plugin_commerce-usdt_usd_rate" value="{{.USDRate}}" inputmode="decimal" min="0.1" max="10" step="0.000001" placeholder="1.00">
                     <small>{{X $ "plugin.usdt.settings.rate_help" "订单金额（USD）换算为应付 USDT 的比率，默认 1.00。"}}</small>
+                </div>
+                <div class="form-group settings-item">
+                    <label for="uDust">{{X $ "plugin.usdt.settings.dust" "少付容差（代币最小单位）"}}</label>
+                    <input type="number" id="uDust" name="plugin_commerce-usdt_dust_tolerance" value="{{.DustTolerance}}" inputmode="numeric" min="0" step="1" placeholder="0">
+                    <small>{{X $ "plugin.usdt.settings.dust_help" "允许少付的 USDT 最小单位数量；USDT 为 6 位精度，建议保持 0。容差必须小于每张订单的应付数量。"}}</small>
                 </div>
             </div>
         </section>

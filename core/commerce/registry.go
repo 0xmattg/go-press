@@ -1,6 +1,8 @@
 package commerce
 
 import (
+	"strings"
+
 	"go-press/core/hook"
 
 	"github.com/gin-gonic/gin"
@@ -42,14 +44,35 @@ func GatewayAvailable(c *gin.Context, g PaymentGateway) bool {
 	return !ok || available.Available(c)
 }
 
+// GatewaySupportsCurrency evaluates the optional currency capability. An empty
+// currency means the caller has no order context yet, so it preserves the
+// historical availability-only behavior.
+func GatewaySupportsCurrency(g PaymentGateway, currency string) bool {
+	if g == nil {
+		return false
+	}
+	currency = strings.TrimSpace(currency)
+	if currency == "" {
+		return true
+	}
+	support, ok := g.(GatewayCurrencySupport)
+	return !ok || support.SupportsCurrency(currency)
+}
+
 // AvailablePaymentGateways returns only gateways that can currently start a
 // checkout payment. Callers must still re-evaluate availability on submission,
 // because configuration may change after the checkout page was rendered.
 func AvailablePaymentGateways(c *gin.Context, bus *hook.Bus) []PaymentGateway {
+	return AvailablePaymentGatewaysForCurrency(c, bus, "")
+}
+
+// AvailablePaymentGatewaysForCurrency returns gateways that are both runtime
+// available and compatible with the order currency.
+func AvailablePaymentGatewaysForCurrency(c *gin.Context, bus *hook.Bus, currency string) []PaymentGateway {
 	registered := PaymentGateways(bus)
 	out := make([]PaymentGateway, 0, len(registered))
 	for _, g := range registered {
-		if GatewayAvailable(c, g) {
+		if GatewayAvailable(c, g) && GatewaySupportsCurrency(g, currency) {
 			out = append(out, g)
 		}
 	}

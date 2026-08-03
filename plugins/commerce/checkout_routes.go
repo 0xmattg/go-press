@@ -27,9 +27,9 @@ func (p *Plugin) registerCheckoutRoutes(r *gin.Engine) {
 // gatewayView is a payment method rendered as a checkout radio option.
 type gatewayView struct{ ID, Title, Icon string }
 
-func (p *Plugin) gatewayViews(c *gin.Context) []gatewayView {
+func (p *Plugin) gatewayViews(c *gin.Context, currency string) []gatewayView {
 	var out []gatewayView
-	for _, g := range corecommerce.AvailablePaymentGateways(c, p.engine.Hooks) {
+	for _, g := range corecommerce.AvailablePaymentGatewaysForCurrency(c, p.engine.Hooks, currency) {
 		out = append(out, gatewayView{ID: g.ID(), Title: g.Title(c), Icon: g.Icon()})
 	}
 	return out
@@ -55,7 +55,7 @@ func (p *Plugin) renderCheckout(c *gin.Context, cart CartView, errMsg string) {
 	if pricingErr == nil {
 		grand, pricingErr = addMoneyChecked(cart.Subtotal, shipping)
 	}
-	gateways := p.gatewayViews(c)
+	gateways := p.gatewayViews(c, cart.Currency)
 	if pricingErr != nil {
 		shipping = 0
 		grand = cart.Subtotal

@@ -1131,6 +1131,17 @@ func (e *Engine) SetupAdmin() {
 			}
 			return nil
 		},
+		SettingsValidateFn: func(slug string, settings map[string]string) error {
+			for _, p := range e.PluginManager.ActivePlugins() {
+				if plugin.Slug(p) == slug {
+					if vp, ok := p.(plugin.SettingsValidateProvider); ok {
+						return vp.ValidateSettings(settings)
+					}
+					return nil
+				}
+			}
+			return nil
+		},
 		SettingsSaveFn: func(slug string, settings map[string]string) {
 			for _, p := range e.PluginManager.ActivePlugins() {
 				if plugin.Slug(p) == slug {

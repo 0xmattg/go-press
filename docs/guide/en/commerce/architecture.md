@@ -38,7 +38,7 @@ Display formatting happens in the render layer per request locale; `Money.String
 | File | Contents |
 |---|---|
 | `money.go` | `Money` value type |
-| `payment.go` | `PaymentGateway`, optional `GatewayAvailability` / `IdempotentRefunder`, `PaymentAction` (sealed sum), `PaymentSettler`, `Reconciler`, request/settle/refund types |
+| `payment.go` | `PaymentGateway`, optional `GatewayAvailability` / `GatewayCurrencySupport` / `IdempotentRefunder`, `PaymentAction` (sealed sum), `PaymentSettler`, `Reconciler`, request/settle/refund types |
 | `shipping.go` | `ShippingZone`, `ShippingMethod`, `ShippingRate` |
 | `tax.go` | `TaxCalculator` |
 | `promotion.go` | `PromotionRule`, `Adjustment` |
@@ -64,12 +64,15 @@ type PaymentGateway interface {
 type GatewayAvailability interface {
     Available(c *gin.Context) bool
 }
+type GatewayCurrencySupport interface {
+    SupportsCurrency(currency string) bool
+}
 type IdempotentRefunder interface {
     RefundWithResult(c *gin.Context, req RefundRequest) (RefundResult, error)
 }
 ```
 
-Gateways without `GatewayAvailability` remain available for compatibility. Commerce requires `IdempotentRefunder` for an automatic provider refund and persists `RefundResult.TransactionID`; a gateway that advertises `Refund: false` continues to use the explicit manual/offline refund workflow.
+Gateways without `GatewayAvailability` remain available for compatibility; gateways without `GatewayCurrencySupport` remain currency-agnostic. Commerce requires `IdempotentRefunder` for an automatic provider refund and persists `RefundResult.TransactionID`; a gateway that advertises `Refund: false` continues to use the explicit manual/offline refund workflow.
 
 `PaymentAction` is a **sealed sum** (an unexported marker method keeps the set closed) so the storefront can render it exhaustively:
 
@@ -106,9 +109,10 @@ The engine implements `PaymentSettler` and publishes it via `SetSettler`. Gatewa
 handle := commerce.RegisterPaymentGateway(bus, myGateway)   // remove in Deactivate
 // Engine, at checkout:
 gateways := commerce.AvailablePaymentGateways(c, bus)        // lazy + runtime-ready
+usdGateways := commerce.AvailablePaymentGatewaysForCurrency(c, bus, "USD")
 ```
 
-`RegisterPaymentGateway` adds the gateway to a `commerce.payment.gateways` **filter**; `PaymentGateways` applies that filter, while `AvailablePaymentGateways` also evaluates the optional runtime availability contract. Because the read is lazy, activation order never matters. Checkout filters the displayed choices and rechecks availability on submission, so a stale or forged method value cannot select a disabled or unconfigured gateway.
+`RegisterPaymentGateway` adds the gateway to a `commerce.payment.gateways` **filter**; `PaymentGateways` applies that filter, while `AvailablePaymentGatewaysForCurrency` evaluates both optional runtime availability and currency support. Because the read is lazy, activation order never matters. Checkout filters the displayed choices and rechecks both capabilities on submission, so a stale or forged method value cannot select a disabled, unconfigured, or currency-incompatible gateway.
 
 ## Data model
 

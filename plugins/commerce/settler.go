@@ -186,8 +186,11 @@ func validateSettlement(order *Order, req corecommerce.SettleRequest) error {
 			return errors.New("commerce: overpaid settlement is not over order total")
 		}
 	case corecommerce.SettleUnderpaid:
-		if err := requireMoney(); err != nil {
-			return err
+		// A positive token transfer can be worth less than one order-currency
+		// minor unit. Preserve that fact as a zero-minor underpayment; the exact
+		// provider amount remains in Raw and the order stays on hold.
+		if req.Amount.Amount < 0 || !strings.EqualFold(strings.TrimSpace(req.Amount.Currency), strings.TrimSpace(order.Currency)) {
+			return errors.New("commerce: underpaid settlement money does not match order currency")
 		}
 		if req.Amount.Amount >= order.GrandTotal {
 			return errors.New("commerce: underpaid settlement is not below order total")

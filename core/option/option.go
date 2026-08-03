@@ -6,6 +6,7 @@ import (
 	"go-press/pkg/dbprefix"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // Option represents one persisted key-value configuration row.
@@ -28,9 +29,10 @@ func (Option) TableName() string { return dbprefix.Table("options") }
 // non-autoload values. Writes update both storage layers so callers can read
 // their changes immediately without another LoadAll.
 type Store struct {
-	mu   sync.RWMutex
-	db   *gorm.DB
-	data map[string]string
+	mu      sync.RWMutex
+	writeMu sync.Mutex
+	db      *gorm.DB
+	data    map[string]string
 }
 
 // NewStore creates a new option Store.
@@ -59,6 +61,8 @@ func NewMemoryStore(values map[string]string) *Store {
 // lets seed/import flows load new values without discarding programmatically
 // inserted defaults.
 func (s *Store) LoadAll() {
+	s.writeMu.Lock()
+	defer s.writeMu.Unlock()
 	if s.db == nil {
 		return
 	}
@@ -84,6 +88,15 @@ func (s *Store) Get(name string) string {
 	if s.db == nil {
 		return ""
 	}
+	s.writeMu.Lock()
+	defer s.writeMu.Unlock()
+	// A writer may have populated the cache while this reader was waiting.
+	s.mu.RLock()
+	if v, ok := s.data[name]; ok {
+		s.mu.RUnlock()
+		return v
+	}
+	s.mu.RUnlock()
 	var opt Option
 	if err := s.db.Where("name = ?", name).First(&opt).Error; err != nil {
 		return ""
@@ -106,6 +119,8 @@ func (s *Store) GetDefault(name, defaultValue string) string {
 
 // Set updates or creates an option both in memory and in DB.
 func (s *Store) Set(name, value string) error {
+	s.writeMu.Lock()
+	defer s.writeMu.Unlock()
 	if s.db == nil {
 		s.mu.Lock()
 		s.data[name] = value
@@ -131,8 +146,49 @@ func (s *Store) Set(name, value string) error {
 	return nil
 }
 
+// SetMany atomically updates a related option set and publishes the new values
+// to the in-memory cache only after the database transaction commits. Plugin
+// settings use this to avoid a mixed old/new configuration after a write error.
+func (s *Store) SetMany(values map[string]string) error {
+	if len(values) == 0 {
+		return nil
+	}
+	s.writeMu.Lock()
+	defer s.writeMu.Unlock()
+	if s.db == nil {
+		s.mu.Lock()
+		for name, value := range values {
+			s.data[name] = value
+		}
+		s.mu.Unlock()
+		return nil
+	}
+	if err := s.db.Transaction(func(tx *gorm.DB) error {
+		for name, value := range values {
+			row := Option{Name: name, Value: value, Autoload: true}
+			if err := tx.Clauses(clause.OnConflict{
+				Columns:   []clause.Column{{Name: "name"}},
+				DoUpdates: clause.AssignmentColumns([]string{"value"}),
+			}).Create(&row).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+	s.mu.Lock()
+	for name, value := range values {
+		s.data[name] = value
+	}
+	s.mu.Unlock()
+	return nil
+}
+
 // Delete removes an option from both memory and DB.
 func (s *Store) Delete(name string) error {
+	s.writeMu.Lock()
+	defer s.writeMu.Unlock()
 	s.mu.Lock()
 	delete(s.data, name)
 	s.mu.Unlock()

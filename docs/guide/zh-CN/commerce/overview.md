@@ -11,7 +11,7 @@ Commerce 是 GoPress 的可选电商模块 —— 面向生产的店面底座（
 - **结算** —— 单事务下单：快照价格、行锁预留库存，再交给支付网关。
 - **订单** —— 受控状态机（`pending → processing → completed`，旁支 `cancelled/failed/on_hold/refunded/partially_refunded`）、订单后台（列表、详情、标记已付、发货、取消、退款、备注）、确认邮件。
 - **库存** —— 预留 / 提交 / 释放，`SELECT … FOR UPDATE` 行锁，加上释放弃单的 TTL 清理任务。
-- **支付** —— 媒介无关的 `PaymentGateway` 契约、内置离线银行转账网关，以及 **PayPal** 卫星插件（Orders v2、沙盒/生产、webhook 验签、退款）。
+- **支付** —— 媒介无关的 `PaymentGateway` 契约、内置离线银行转账网关、**PayPal** 重定向/webhook 卫星，以及可选的**以太坊 USDT** 展示/拉取式卫星（RPC 验证扫链与幂等结算）。
 - **客户账户** —— 游客订单查询（订单号 + 邮箱）、登录用户的「我的订单」，以及一把高熵访问密钥堵住订单号枚举。
 - **主题接入** —— 渲染槽位与主题外壳渲染器，让任意主题无需 import 插件即可呈现店面，示例主题为 `shop-starter`。
 

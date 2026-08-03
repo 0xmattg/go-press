@@ -3,6 +3,8 @@ package admin
 import (
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strings"
 	"testing"
 
 	"go-press/core/user"
@@ -25,6 +27,45 @@ func TestPluginSettingsResourceUsesProviderAndFallback(t *testing.T) {
 	}
 	if got := (*PluginCallbacks)(nil).SettingsResource("plain"); got != "plugin" {
 		t.Fatalf("nil callbacks resource = %q, want plugin fallback", got)
+	}
+}
+
+func TestPluginSettingsSaveChecksPermissionBeforeValidation(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	for _, tc := range []struct {
+		name          string
+		role          string
+		wantValidated bool
+	}{
+		{name: "subscriber denied", role: user.RoleSubscriber, wantValidated: false},
+		{name: "super admin reaches validation", role: user.RoleSuperAdmin, wantValidated: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			validated := false
+			h := &Handler{
+				svc: &Service{rbac: user.NewRBAC()},
+				pluginCallbacks: &PluginCallbacks{SettingsValidateFn: func(string, map[string]string) error {
+					validated = true
+					return errAdminCapabilityUnavailable
+				}},
+			}
+			r := gin.New()
+			r.POST("/admin/plugins/shop/settings", func(c *gin.Context) {
+				c.Set("admin_role", tc.role)
+				h.PluginSettingsSave(c)
+			})
+			form := url.Values{"plugin_shop_enabled": {"1"}}
+			req := httptest.NewRequest(http.MethodPost, "/admin/plugins/shop/settings", strings.NewReader(form.Encode()))
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			rec := httptest.NewRecorder()
+			r.ServeHTTP(rec, req)
+			if rec.Code != http.StatusFound {
+				t.Fatalf("status = %d, want redirect", rec.Code)
+			}
+			if validated != tc.wantValidated {
+				t.Fatalf("validated = %v, want %v", validated, tc.wantValidated)
+			}
+		})
 	}
 }
 

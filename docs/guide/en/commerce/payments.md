@@ -33,7 +33,7 @@ All confirmation paths — push (webhook), manual (admin "mark paid"), and pull 
 
 ### Runtime availability and safe payment start
 
-A gateway whose readiness depends on settings implements the optional `GatewayAvailability.Available` contract. Checkout uses `AvailablePaymentGateways` both to build the visible choices and to validate the submitted method. An active but disabled or incompletely configured gateway is therefore neither displayed nor selectable through a forged/stale form value. Gateways without this optional interface remain available for compatibility.
+A gateway whose readiness depends on settings implements the optional `GatewayAvailability.Available` contract. A gateway limited to particular order currencies also implements `GatewayCurrencySupport.SupportsCurrency`. Checkout evaluates both contracts while building the visible choices and again when validating the submitted method. An active but disabled, incompletely configured, or currency-incompatible gateway is therefore neither displayed nor selectable through a forged/stale form value. Gateways without these optional interfaces remain available and currency-agnostic for compatibility.
 
 Commerce commits the local order, stock reservations, line/address snapshots, and pending payment first, then calls `StartPayment` with a stable `PaymentRequest.IdempotencyKey` (`start:<order-number>`). A gateway must forward this key to its provider so a retry cannot create a second remote payment.
 
@@ -82,13 +82,15 @@ The bundled USDT (ERC-20) gateway is the reference **pull-based / display-type**
 **Flow:**
 
 1. `StartPayment` derives a **unique per-order deposit address** from a watch-only `xpub` (BIP-32 non-hardened; the server holds no spend authority), records an invoice with the exact expected token amount, and returns a `DisplayAction` (network, asset, deposit address, exact amount, QR, expiry). Commerce moves the order to `on_hold`.
-2. A **watcher goroutine** (started on Activate, like commerce's reservation sweeper — not core's Scheduler) incrementally scans the chain via `eth_getLogs` for ERC-20 `Transfer` events to the watched addresses, only up to `head − confirmations` so every observed deposit is already confirmed. Deposits are deduped by `(chain, tx_hash, log_index)`.
-3. When an invoice's confirmed total meets the expected amount (within a dust tolerance) it settles once with `IdempotencyKey = "usdt:<chain>:paid:<order_ref>"`; expiry with nothing received settles `expired` (commerce cancels + releases stock); a partial amount settles `underpaid` (kept on hold for manual handling — never silently pocketed).
-4. Refunds are `Refund: false` — on-chain refunds need spend authority and are recorded manually.
+2. A **watcher goroutine** (started on Activate, not core's Scheduler) incrementally scans confirmed ERC-20 `Transfer` logs. The RPC's chain id, token bytecode, and `decimals()` are verified when settings are saved and before every scan. Each returned log is revalidated against the requested contract, event signature, address set, block range, hashes, topics, and amount.
+3. Deposits and the cursor are committed in one transaction and deduped by `(EVM chain id + token contract, tx_hash, log_index)`. Settlement is retried from durable deposit rows even when no new block range exists, so a crash after scanning cannot permanently skip money. Every invoice snapshots its network, contract, currency, rate, dust tolerance, and confirmation threshold; settings cannot disable or switch the settlement identity while any invoice remains in its normal or late-payment watch window.
+4. Expiry uses the timestamp of the latest safely scanned block, not the application server clock. Transfers are classified by their own confirmed block timestamps. A full on-time total settles `paid`/`overpaid`; an on-time partial total settles `underpaid`; no on-time funds settles `expired`. Confirmed late funds are retained for seven days and sent through Commerce's explicit reconciliation path rather than being silently accepted or lost. Settlement keys are stable per invoice and outcome.
+5. The gateway advertises USD support only. Checkout filters it out for other currencies, and `StartPayment` rejects a forged non-USD request. Token conversion uses fixed-point integers and the invoice's immutable rate snapshot.
+6. Refunds are `Refund: false` — on-chain refunds need spend authority and are recorded manually.
 
-It is **EVM-abstracted**: a generic `evmChain` implements the chain interface for every preset, so **Ethereum** ships first and BSC/Polygon are one-line preset additions (only the USDT contract, decimals, and default confirmations differ). Amounts stay single-currency: the order total is USD, the on-chain USDT amount is derived via a configurable `usd_rate` (default 1.00), and the settlement reports USD back to commerce. Deposit-instruction labels are localized to the request language (`commerce-usdt.*` storefront catalog); the settings page is localized to the admin language.
+It is **EVM-extensible**: a generic `evmChain` provides the reusable implementation, but **Ethereum is the only currently supported preset**. Adding a network still requires its own reviewed constants, token semantics, confirmation policy, fixtures, and live acceptance testing; it is not enabled merely by editing a label. Amounts stay single-currency: the order total is USD, the on-chain USDT amount is derived through a configurable fixed-point `usd_rate` (default 1.00), and settlement reports USD back to Commerce. Deposit-instruction labels are localized to the request language (`commerce-usdt.*` storefront catalog); the settings page is localized to the admin language.
 
-See `docs/design/commerce-usdt-spec.md` for the full design (HD address model, security, multi-chain roadmap).
+Before production, use a dedicated watch-only xpub, a trusted or self-hosted Ethereum RPC with monitoring and an independent fallback, an operationally reviewed USD/USDT rate, alerts for watcher/RPC/database errors, database backups, and a written sweep/refund/reconciliation procedure. Run a real low-value mainnet acceptance payment and a restore/replay drill. The plugin intentionally never stores a spending key and cannot automate on-chain refunds or sweeping.
 
 ## Writing your own satellite gateway
 
@@ -144,6 +146,7 @@ Checklist:
 - Depend on `core/commerce` only; do **not** import `plugins/commerce`.
 - Carry the Commerce `OrderRef` through your PSP (metadata / `custom_id`) so confirmation can find the order.
 - Implement `GatewayAvailability` when readiness depends on runtime configuration; never rely on UI hiding alone.
+- Implement `GatewayCurrencySupport` when the gateway accepts only particular order currencies; still validate the currency inside `StartPayment`.
 - Forward the stable payment/refund request key to the provider, and make each settlement-event `IdempotencyKey` stable and unique.
 - If you advertise automatic refunds, implement `IdempotentRefunder` and return a durable, non-empty provider refund id.
 - Verify webhook signatures; never store PAN/CVV — use hosted redirect, display, or tokenization only.

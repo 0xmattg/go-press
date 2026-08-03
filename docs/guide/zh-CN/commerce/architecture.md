@@ -38,7 +38,7 @@ func (m Money) MulQty(qty int) Money
 | 文件 | 内容 |
 |---|---|
 | `money.go` | `Money` 值类型 |
-| `payment.go` | `PaymentGateway`、可选的 `GatewayAvailability` / `IdempotentRefunder`、`PaymentAction`（密封和类型）、`PaymentSettler`、`Reconciler`、请求/结算/退款类型 |
+| `payment.go` | `PaymentGateway`、可选的 `GatewayAvailability` / `GatewayCurrencySupport` / `IdempotentRefunder`、`PaymentAction`（密封和类型）、`PaymentSettler`、`Reconciler`、请求/结算/退款类型 |
 | `shipping.go` | `ShippingZone`、`ShippingMethod`、`ShippingRate` |
 | `tax.go` | `TaxCalculator` |
 | `promotion.go` | `PromotionRule`、`Adjustment` |
@@ -64,12 +64,15 @@ type PaymentGateway interface {
 type GatewayAvailability interface {
     Available(c *gin.Context) bool
 }
+type GatewayCurrencySupport interface {
+    SupportsCurrency(currency string) bool
+}
 type IdempotentRefunder interface {
     RefundWithResult(c *gin.Context, req RefundRequest) (RefundResult, error)
 }
 ```
 
-未实现 `GatewayAvailability` 的网关为兼容旧实现仍视为可用。Commerce 执行服务商自动退款时要求 `IdempotentRefunder`，并持久化 `RefundResult.TransactionID`；声明 `Refund: false` 的网关继续走明确的手工/离线退款流程。
+未实现 `GatewayAvailability` 的网关为兼容旧实现仍视为可用；未实现 `GatewayCurrencySupport` 的网关仍视为不限制币种。Commerce 执行服务商自动退款时要求 `IdempotentRefunder`，并持久化 `RefundResult.TransactionID`；声明 `Refund: false` 的网关继续走明确的手工/离线退款流程。
 
 `PaymentAction` 是**密封和类型**（未导出 marker 方法把集合封闭），使店面能穷举渲染：
 
@@ -106,9 +109,10 @@ type SettleRequest struct {
 handle := commerce.RegisterPaymentGateway(bus, myGateway)   // Deactivate 时移除
 // 引擎，在结算时：
 gateways := commerce.AvailablePaymentGateways(c, bus)        // 惰性读取 + 运行时就绪
+usdGateways := commerce.AvailablePaymentGatewaysForCurrency(c, bus, "USD")
 ```
 
-`RegisterPaymentGateway` 把网关 append 进 `commerce.payment.gateways` **filter**；`PaymentGateways` 应用该 filter，`AvailablePaymentGateways` 还会计算可选的运行时可用性契约。因为是惰性读取，激活顺序无所谓。结算页会过滤展示选项，并在提交时重新检查，所以过期或伪造的支付方式值无法选中已禁用或未配置的网关。
+`RegisterPaymentGateway` 把网关 append 进 `commerce.payment.gateways` **filter**；`PaymentGateways` 应用该 filter，`AvailablePaymentGatewaysForCurrency` 还会计算可选的运行时可用性与币种支持契约。因为是惰性读取，激活顺序无所谓。结算页会过滤展示选项，并在提交时重新检查两项能力，所以过期或伪造的支付方式值无法选中已禁用、未配置或币种不兼容的网关。
 
 ## 数据模型
 

@@ -2,7 +2,9 @@ package commerceusdt
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -31,11 +33,18 @@ func (g usdtGateway) Available(*gin.Context) bool {
 	return g.p != nil && g.p.loadConfig().ready()
 }
 
+func (usdtGateway) SupportsCurrency(currency string) bool {
+	return strings.EqualFold(strings.TrimSpace(currency), "USD")
+}
+
 // StartPayment derives (or reuses) a per-order deposit address, records an
 // invoice with the exact expected token amount, and returns a DisplayAction the
 // storefront renders. The order is moved to on_hold by commerce; the background
 // watcher confirms the on-chain payment and settles.
 func (g usdtGateway) StartPayment(c *gin.Context, req corecommerce.PaymentRequest) (corecommerce.PaymentAction, error) {
+	if !g.SupportsCurrency(req.Amount.Currency) || req.Amount.Amount <= 0 {
+		return nil, corecommerce.DefinitiveStartFailure(errors.New("commerce-usdt: only positive USD orders are supported"))
+	}
 	cfg := g.p.loadConfig()
 	if !cfg.ready() {
 		return nil, corecommerce.DefinitiveStartFailure(errors.New("commerce-usdt: gateway not configured"))
@@ -85,17 +94,20 @@ func (p *Plugin) invoiceFor(cfg config, chain *evmChain, req corecommerce.Paymen
 	if inv, err := p.findInvoiceByStartKey(key); err != nil {
 		return nil, err
 	} else if inv != nil {
-		return inv, nil
+		return inv, validateInvoiceReuse(inv, cfg, req)
 	}
 
 	expected := usdToToken(req.Amount.Amount, cfg.RateScaled, cfg.decimals)
+	if err := validateExpectedAmount(expected, cfg.DustTolerance); err != nil {
+		return nil, err
+	}
 	var inv *Invoice
 	err := p.db.Transaction(func(tx *gorm.DB) error {
 		var existing Invoice
 		e := tx.Where("start_key = ?", key).First(&existing).Error
 		if e == nil {
 			inv = &existing
-			return nil
+			return validateInvoiceReuse(inv, cfg, req)
 		}
 		if !errors.Is(e, gorm.ErrRecordNotFound) {
 			return e
@@ -109,24 +121,44 @@ func (p *Plugin) invoiceFor(cfg config, chain *evmChain, req corecommerce.Paymen
 			return err
 		}
 		now := time.Now().UTC()
+		expires := now.Add(time.Duration(cfg.WindowMinutes) * time.Minute)
 		inv = &Invoice{
 			OrderRef: req.OrderRef, StartKey: key, Chain: chain.ID(),
+			NetworkKey: cfg.networkKey(), EVMChainID: cfg.net.ChainID,
 			HDIndex: idx, Address: addr,
 			TokenContract: chain.Token().Contract, TokenDecimals: chain.Token().Decimals,
+			Confirmations: cfg.Confirmations,
 			ExpectedToken: expected.String(), ReceivedToken: "0",
-			USDMinor: req.Amount.Amount, RateScaled: cfg.RateScaled,
+			USDMinor: req.Amount.Amount, Currency: strings.ToUpper(strings.TrimSpace(req.Amount.Currency)),
+			RateScaled: cfg.RateScaled, DustTolerance: cfg.DustTolerance.String(),
 			Status: invPending, CreatedAt: now,
-			ExpiresAt: now.Add(time.Duration(cfg.WindowMinutes) * time.Minute),
+			ExpiresAt: expires, WatchUntil: expires.Add(lateWatchRetention),
 		}
 		return tx.Create(inv).Error
 	})
 	if err != nil {
+		// A concurrent request may have won the unique start-key race after our
+		// initial lookup. Re-read and validate its immutable payload rather than
+		// surfacing a retryable checkout failure or deriving a second address.
+		if existing, lookupErr := p.findInvoiceByStartKey(key); lookupErr == nil && existing != nil {
+			return existing, validateInvoiceReuse(existing, cfg, req)
+		}
 		return nil, err
 	}
 	return inv, nil
 }
 
+func validateInvoiceReuse(inv *Invoice, cfg config, req corecommerce.PaymentRequest) error {
+	if inv == nil || inv.OrderRef != req.OrderRef || inv.USDMinor != req.Amount.Amount ||
+		!strings.EqualFold(inv.Currency, req.Amount.Currency) || inv.NetworkKey != cfg.networkKey() ||
+		!strings.EqualFold(inv.TokenContract, cfg.TokenContract) {
+		return fmt.Errorf("commerce-usdt: idempotency key payload conflict")
+	}
+	return nil
+}
+
 var (
-	_ corecommerce.PaymentGateway      = usdtGateway{}
-	_ corecommerce.GatewayAvailability = usdtGateway{}
+	_ corecommerce.PaymentGateway         = usdtGateway{}
+	_ corecommerce.GatewayAvailability    = usdtGateway{}
+	_ corecommerce.GatewayCurrencySupport = usdtGateway{}
 )

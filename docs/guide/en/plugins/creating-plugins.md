@@ -106,6 +106,21 @@ Plugins that need admin configuration should implement the settings provider int
 
 Keep settings templates translated through locale files instead of hard-coded strings.
 
+Use `SettingsValidateProvider` for validation that must run against the complete submitted option set before Core persists anything. It must be side-effect free; use `SettingsSaveProvider` only for post-persistence work:
+
+```go
+func (p *MyPlugin) ValidateSettings(settings map[string]string) error {
+    // Reject malformed, unsafe, or internally inconsistent values.
+    return nil
+}
+
+func (p *MyPlugin) OnSettingsSave(settings map[string]string) {
+    // Optional post-save synchronization.
+}
+```
+
+The admin route performs the plugin settings resource's `update` RBAC check before validation or persistence. A plugin with a narrower settings capability should also implement `SettingsAuthorizationProvider` rather than registering a weaker custom route.
+
 ## Admin Card Logo
 
 Implement the optional `LogoProvider` to show an icon on the admin **Plugins** card. Embed a square `static/logo.svg` (`viewBox="0 0 48 48"`) and return it:
