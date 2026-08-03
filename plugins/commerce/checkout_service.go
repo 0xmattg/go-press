@@ -94,7 +94,7 @@ func (s *CheckoutService) PlaceOrder(c *gin.Context, in CheckoutInput) (*Order, 
 		return nil, nil, fmt.Errorf("commerce: checkout validation failed: %s", strings.Join(verrs, "; "))
 	}
 
-	gateway := s.gatewayByID(c, in.PaymentMethod)
+	gateway := s.gatewayByID(c, in.PaymentMethod, cartView.Currency)
 	if gateway == nil {
 		return nil, nil, ErrNoGateway
 	}
@@ -599,8 +599,8 @@ func (s *CheckoutService) validate(cart CartView, in CheckoutInput) []string {
 }
 
 // gatewayByID finds a registered gateway by its ID (empty picks the first).
-func (s *CheckoutService) gatewayByID(c *gin.Context, id string) corecommerce.PaymentGateway {
-	gateways := corecommerce.AvailablePaymentGateways(c, s.p.engine.Hooks)
+func (s *CheckoutService) gatewayByID(c *gin.Context, id, currency string) corecommerce.PaymentGateway {
+	gateways := corecommerce.AvailablePaymentGatewaysForCurrency(c, s.p.engine.Hooks, currency)
 	if len(gateways) == 0 {
 		return nil
 	}

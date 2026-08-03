@@ -1080,6 +1080,10 @@ func (s *Service) UpdateSetting(key, value string) {
 	s.options.Set(key, value)
 }
 
+func (s *Service) UpdateSettings(values map[string]string) error {
+	return s.options.SetMany(values)
+}
+
 func (s *Service) CreateSetting(key, value string) {
 	s.options.Set(key, value)
 }

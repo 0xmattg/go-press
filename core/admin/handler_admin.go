@@ -1069,15 +1069,27 @@ func (h *Handler) PluginSettingsSave(c *gin.Context) {
 		return
 	}
 
-	// Save all plugin_<slug>_* settings from form
+	// Collect all plugin_<slug>_* settings, validate the complete submission,
+	// then persist. A rejected payload must not partially update plugin options.
 	prefix := "plugin_" + slug + "_"
 	if c.Request.Form == nil {
 		c.Request.ParseForm()
 	}
+	saved := make(map[string]string)
 	for key, values := range c.Request.PostForm {
 		if strings.HasPrefix(key, prefix) && len(values) > 0 {
-			h.svc.UpdateSetting(key, values[0])
+			saved[key] = values[0]
 		}
+	}
+	if h.pluginCallbacks != nil {
+		if err := h.pluginCallbacks.ValidateSettings(slug, saved); err != nil {
+			c.Redirect(http.StatusFound, "/admin/plugins/"+slug+"/settings?error="+url.QueryEscape(err.Error()))
+			return
+		}
+	}
+	if err := h.svc.UpdateSettings(saved); err != nil {
+		c.Redirect(http.StatusFound, "/admin/plugins/"+slug+"/settings?error="+url.QueryEscape(err.Error()))
+		return
 	}
 
 	h.invalidatePageCache()
@@ -1086,12 +1098,6 @@ func (h *Handler) PluginSettingsSave(c *gin.Context) {
 
 	// Notify the plugin that settings were saved
 	if h.pluginCallbacks != nil {
-		saved := make(map[string]string)
-		for key, values := range c.Request.PostForm {
-			if strings.HasPrefix(key, prefix) && len(values) > 0 {
-				saved[key] = values[0]
-			}
-		}
 		h.pluginCallbacks.SettingsSave(slug, saved)
 	}
 

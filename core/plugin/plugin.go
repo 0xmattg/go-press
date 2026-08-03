@@ -111,6 +111,13 @@ type SettingsSaveProvider interface {
 	OnSettingsSave(settings map[string]string)
 }
 
+// SettingsValidateProvider lets a plugin reject invalid settings before Core
+// persists any option. Validation must be side-effect free; OnSettingsSave is
+// still the post-persistence notification hook.
+type SettingsValidateProvider interface {
+	ValidateSettings(settings map[string]string) error
+}
+
 // LogoProvider is an optional interface that plugins can implement to supply an
 // inline SVG logo shown on the admin plugin card. Return "" for no logo. Core
 // sanitizes the markup before rendering it into admin pages.

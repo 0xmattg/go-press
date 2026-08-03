@@ -60,6 +60,20 @@ func TestValidateSettlementBindsGatewayCurrencyAndAmount(t *testing.T) {
 	}
 }
 
+func TestValidateSettlementAllowsSubMinorUnderpayment(t *testing.T) {
+	order := &Order{PaymentMethod: "usdt", Currency: "USD", GrandTotal: 1}
+	req := corecommerce.SettleRequest{
+		Gateway: "usdt", Status: corecommerce.SettleUnderpaid, Amount: corecommerce.New(0, "USD"),
+	}
+	if err := validateSettlement(order, req); err != nil {
+		t.Fatalf("zero-minor underpayment rejected: %v", err)
+	}
+	req.Amount.Currency = "EUR"
+	if err := validateSettlement(order, req); err == nil {
+		t.Fatal("wrong-currency underpayment accepted")
+	}
+}
+
 func TestLatePaidSettlementMovesClosedOrderToReconciliation(t *testing.T) {
 	db := commerceTestDB(t)
 	p := &Plugin{engine: &core.Engine{DB: db, Hooks: hook.New()}}

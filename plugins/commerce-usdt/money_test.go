@@ -25,6 +25,15 @@ func TestUsdToToken(t *testing.T) {
 	}
 }
 
+func TestTokenToUSDRoundsDown(t *testing.T) {
+	if got := tokenToUSD(big.NewInt(5_000_000), rateScale, 6); got != 500 {
+		t.Fatalf("5 USDT = %d cents, want 500", got)
+	}
+	if got := tokenToUSD(big.NewInt(9_999), rateScale, 6); got != 0 {
+		t.Fatalf("sub-cent token amount = %d, want floor 0", got)
+	}
+}
+
 func TestFormatToken(t *testing.T) {
 	cases := map[string]struct {
 		amt string
@@ -58,6 +67,14 @@ func TestParseRateScaled(t *testing.T) {
 	}
 }
 
+func TestParseRateScaledStrictRejectsOverflowAndTruncation(t *testing.T) {
+	for _, input := range []string{"", "-1", "1.0000001", "999999999999999999999999"} {
+		if _, err := parseRateScaledStrict(input); err == nil {
+			t.Fatalf("strict rate %q accepted", input)
+		}
+	}
+}
+
 func TestWithinTolerance(t *testing.T) {
 	exp := big.NewInt(1000)
 	if !withinTolerance(big.NewInt(1000), exp, big.NewInt(0)) {
@@ -71,6 +88,9 @@ func TestWithinTolerance(t *testing.T) {
 	}
 	if !withinTolerance(big.NewInt(998), exp, big.NewInt(2)) {
 		t.Error("underpay within dust tolerance should pass")
+	}
+	if withinTolerance(big.NewInt(0), exp, exp) {
+		t.Error("tolerance equal to expected must never make a zero payment valid")
 	}
 }
 

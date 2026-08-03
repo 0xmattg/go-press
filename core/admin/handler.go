@@ -137,10 +137,11 @@ type PluginCallbacks struct {
 	AllFn              func() []PluginInfo
 	ActivateFn         func(name string) error
 	DeactivateFn       func(name string) error
-	SettingsTemplateFn func(slug string) string                      // returns settings template path
-	SettingsDataFn     func(slug string) map[string]interface{}      // extra template data for plugin settings page
-	SettingsSaveFn     func(slug string, settings map[string]string) // hook called after plugin settings are saved
-	SettingsResourceFn func(slug string) string                      // RBAC resource for GET(read)/POST(update)
+	SettingsTemplateFn func(slug string) string                            // returns settings template path
+	SettingsDataFn     func(slug string) map[string]interface{}            // extra template data for plugin settings page
+	SettingsValidateFn func(slug string, settings map[string]string) error // pre-persistence validation
+	SettingsSaveFn     func(slug string, settings map[string]string)       // hook called after plugin settings are saved
+	SettingsResourceFn func(slug string) string                            // RBAC resource for GET(read)/POST(update)
 	LocaleCatalogFn    func(slug string) *coreI18n.Catalog
 }
 

@@ -182,6 +182,7 @@ type PluginController interface {
 	Deactivate(name string) error
 	SettingsTemplate(slug string) string
 	SettingsData(slug string) map[string]interface{}
+	ValidateSettings(slug string, settings map[string]string) error
 	SettingsSave(slug string, settings map[string]string)
 	SettingsResource(slug string) string
 	LocaleCatalog(slug string) *coreI18n.Catalog
@@ -220,6 +221,13 @@ func (c *PluginCallbacks) SettingsData(slug string) map[string]interface{} {
 		return nil
 	}
 	return c.SettingsDataFn(slug)
+}
+
+func (c *PluginCallbacks) ValidateSettings(slug string, settings map[string]string) error {
+	if c == nil || c.SettingsValidateFn == nil {
+		return nil
+	}
+	return c.SettingsValidateFn(slug, settings)
 }
 
 func (c *PluginCallbacks) SettingsSave(slug string, settings map[string]string) {

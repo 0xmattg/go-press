@@ -25,15 +25,19 @@ func TestEVMLatestBlockAndScan(t *testing.T) {
 			// value = 10 USDT (6dp) = 10_000000 = 0x989680, left-padded to 32 bytes.
 			data := "0x" + strings.Repeat("0", 64-6) + "989680"
 			logObj := map[string]interface{}{
+				"address":         "0xdAC17F958D2ee523a2206206994597C13D831ec7",
 				"topics":          []string{transferTopic, addressTopic(fromAddr), addressTopic(toAddr)},
 				"data":            data,
 				"blockNumber":     "0xf0",
-				"transactionHash": "0xabc",
+				"transactionHash": "0x" + strings.Repeat("a", 64),
 				"logIndex":        "0x2",
+				"blockHash":       "0x" + strings.Repeat("b", 64),
 				"removed":         false,
 			}
 			resp, _ := json.Marshal(map[string]interface{}{"jsonrpc": "2.0", "id": 1, "result": []interface{}{logObj}})
 			_, _ = w.Write(resp)
+		case "eth_getBlockByNumber":
+			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":{"timestamp":"0x64"}}`))
 		default:
 			http.Error(w, "unexpected method", http.StatusBadRequest)
 		}
@@ -74,6 +78,118 @@ func TestEVMLatestBlockAndScan(t *testing.T) {
 	if !strings.EqualFold(d.From, fromAddr) {
 		t.Errorf("from = %s, want %s", d.From, fromAddr)
 	}
+	if ts, err := c.BlockTimestamp(ctx, 0xf0); err != nil || ts.Unix() != 100 {
+		t.Fatalf("BlockTimestamp = %v, err = %v", ts, err)
+	}
+}
+
+func TestVerifyConfiguration(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req rpcRequest
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		result := `"0x1"`
+		switch req.Method {
+		case "eth_getCode":
+			result = `"0x6000"`
+		case "eth_call":
+			result = `"0x6"`
+		}
+		_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":` + result + `}`))
+	}))
+	defer srv.Close()
+	c := &evmChain{
+		chainID: 1, token: TokenSpec{Contract: "0xdAC17F958D2ee523a2206206994597C13D831ec7", Decimals: 6},
+		rpcURL: srv.URL, http: srv.Client(),
+	}
+	if err := c.VerifyConfiguration(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	c.chainID = 56
+	if err := c.VerifyConfiguration(context.Background()); err == nil {
+		t.Fatal("mismatched chain id accepted")
+	}
+}
+
+func TestScanTransfersRejectsFilterViolation(t *testing.T) {
+	toAddr := canonicalAddr0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		data := "0x" + strings.Repeat("0", 63) + "1"
+		logObj := map[string]interface{}{
+			"address": "0x1111111111111111111111111111111111111111",
+			"topics":  []string{transferTopic, addressTopic("0x2222222222222222222222222222222222222222"), addressTopic(toAddr)},
+			"data":    data, "blockNumber": "0x10", "transactionHash": "0x" + strings.Repeat("a", 64),
+			"logIndex": "0x0", "blockHash": "0x" + strings.Repeat("b", 64),
+		}
+		resp, _ := json.Marshal(map[string]interface{}{"jsonrpc": "2.0", "id": 1, "result": []interface{}{logObj}})
+		_, _ = w.Write(resp)
+	}))
+	defer srv.Close()
+	c := &evmChain{
+		token:  TokenSpec{Contract: "0xdAC17F958D2ee523a2206206994597C13D831ec7", Decimals: 6},
+		rpcURL: srv.URL, http: srv.Client(),
+	}
+	if _, err := c.ScanTransfers(context.Background(), []string{toAddr}, 0x10, 0x20); err == nil {
+		t.Fatal("off-contract log accepted")
+	}
+}
+
+func TestScanTransfersRejectsMalformedAddressTopic(t *testing.T) {
+	toAddr := canonicalAddr0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		data := "0x" + strings.Repeat("0", 63) + "1"
+		logObj := map[string]interface{}{
+			"address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+			"topics":  []string{transferTopic, "0x1", addressTopic(toAddr)},
+			"data":    data, "blockNumber": "0x10", "transactionHash": "0x" + strings.Repeat("a", 64),
+			"logIndex": "0x0", "blockHash": "0x" + strings.Repeat("b", 64),
+		}
+		resp, _ := json.Marshal(map[string]interface{}{"jsonrpc": "2.0", "id": 1, "result": []interface{}{logObj}})
+		_, _ = w.Write(resp)
+	}))
+	defer srv.Close()
+	c := &evmChain{
+		token:  TokenSpec{Contract: "0xdAC17F958D2ee523a2206206994597C13D831ec7", Decimals: 6},
+		rpcURL: srv.URL, http: srv.Client(),
+	}
+	if _, err := c.ScanTransfers(context.Background(), []string{toAddr}, 0x10, 0x20); err == nil {
+		t.Fatal("malformed indexed address topic accepted")
+	}
+}
+
+func TestScanTransfersIgnoresValidZeroValueTransfer(t *testing.T) {
+	toAddr := canonicalAddr0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logObj := map[string]interface{}{
+			"address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+			"topics":  []string{transferTopic, addressTopic("0x2222222222222222222222222222222222222222"), addressTopic(toAddr)},
+			"data":    "0x" + strings.Repeat("0", 64), "blockNumber": "0x10",
+			"transactionHash": "0x" + strings.Repeat("a", 64), "logIndex": "0x0",
+			"blockHash": "0x" + strings.Repeat("b", 64),
+		}
+		resp, _ := json.Marshal(map[string]interface{}{"jsonrpc": "2.0", "id": 1, "result": []interface{}{logObj}})
+		_, _ = w.Write(resp)
+	}))
+	defer srv.Close()
+	c := &evmChain{
+		token:  TokenSpec{Contract: "0xdAC17F958D2ee523a2206206994597C13D831ec7", Decimals: 6},
+		rpcURL: srv.URL, http: srv.Client(),
+	}
+	deposits, err := c.ScanTransfers(context.Background(), []string{toAddr}, 0x10, 0x20)
+	if err != nil || len(deposits) != 0 {
+		t.Fatalf("zero-value transfer = %#v, err=%v; want ignored", deposits, err)
+	}
+}
+
+func TestRPCRejectsMismatchedResponseEnvelope(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":2,"result":"0x1"}`))
+	}))
+	defer srv.Close()
+	c := &evmChain{rpcURL: srv.URL, http: srv.Client()}
+	if _, err := c.LatestBlock(context.Background()); err == nil {
+		t.Fatal("mismatched JSON-RPC response id accepted")
+	}
 }
 
 func TestPaymentURI(t *testing.T) {
@@ -88,7 +204,7 @@ func TestPaymentURI(t *testing.T) {
 func TestScanRange(t *testing.T) {
 	// First-ever scan with a deep head: bounded lookback window.
 	from, to, ok := scanRange(0, 100000)
-	if !ok || from != 100000-initialLookback || to != 100000 {
+	if !ok || from != 100000-initialLookback || to != 100000-initialLookback+maxScanSpan-1 {
 		t.Errorf("scanRange(0,100000) = %d,%d,%v", from, to, ok)
 	}
 	// First-ever scan with a shallow head: start at 1.
@@ -102,7 +218,7 @@ func TestScanRange(t *testing.T) {
 	}
 	// Large gap clamped to maxScanSpan.
 	from, to, ok = scanRange(1000, 10000)
-	if !ok || from != 1001 || to != 1001+maxScanSpan {
+	if !ok || from != 1001 || to != 1001+maxScanSpan-1 {
 		t.Errorf("scanRange(1000,10000) = %d,%d,%v", from, to, ok)
 	}
 }
