@@ -27,6 +27,12 @@ time, taxonomy, thumbnail, comments, and sorting controls only when the content
 type declares those capabilities. Types supporting `sort_order` receive a
 drag-and-drop list handle backed by a protected reorder endpoint.
 
+The editorial status selector supports `published`, `pending`, `draft`, and
+`archived`. Status input is allow-listed on the server; forged values are
+ignored and do not become stored workflow states, and the normal editor cannot
+move an item directly to `trash`. The `pending` state is available for front-end submissions
+and other review queues without introducing a business-specific content type.
+
 Content list pages include WordPress-style **Screen Options**. The column checkboxes are generated from the current page's actual columns, including core fields, content meta fields, and taxonomies attached to that content type. The selected columns and items-per-page value are stored per list key and are applied to server-side pagination.
 
 List search is server-side and searches titles only, matching the admin placeholder. Date and taxonomy filters are also generated from the current content type: available months come from existing rows, and the taxonomy dropdown uses the first hierarchical taxonomy attached to the type, falling back to the first taxonomy when no hierarchical taxonomy exists. Search, tabs, date filters, taxonomy filters, and pagination compose into one query so totals and page counts stay accurate.
@@ -41,6 +47,9 @@ List search is server-side and searches titles only, matching the admin placehol
 - **Cache and redirects** — inspect/clear cache and maintain `301`/`302` rules.
 - **Media** — upload, search, delete, and rebuild responsive variants.
 - **Users and comments** — manage roles/accounts and moderate comment status.
+  Clearing **Active account** is persisted explicitly; existing admin tokens
+  and public sessions are rejected on their next request rather than remaining
+  usable until expiry.
 - **System settings** — maintain site identity, language, timezone, favicon, and
   admin preferences.
 

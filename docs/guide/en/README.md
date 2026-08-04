@@ -12,6 +12,8 @@ It is not a line-by-line rewrite of WordPress, and it is not a claim that PHP-ba
 - A plugin system based on Go interfaces, actions, filters, and optional settings providers.
 - Core services for caching, workers, URL rewriting, sitemap generation, redirects, REST APIs, i18n, and table-prefix isolation.
 - Provider-neutral public accounts, external identity bindings, revocable sessions, registration policy, Google OIDC login, and MetaMask EIP-4361 wallet login.
+- Policy-driven public content submission with active-account checks,
+  owner-scoped RBAC, review states, validation, and rate limits.
 - Core comments with authenticated posting, one-level replies, moderation, admin
   pagination, cache invalidation, and theme-owned account/profile presentation.
 
@@ -60,6 +62,7 @@ teams that want CMS workflows inside a Go architecture.
 - [Configuration](getting-started/configuration.md)
 - [Architecture Overview](architecture/overview.md)
 - [Public Authentication](architecture/public-authentication.md)
+- [Public Content Submission](architecture/public-content-submission.md)
 - [Comments and Replies](architecture/comments.md)
 - [Theme Development](themes/overview.md)
 - [Plugin Development](plugins/overview.md)

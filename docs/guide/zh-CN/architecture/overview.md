@@ -94,7 +94,7 @@ main.go
 ## 引擎职责
 
 - 统一拥有内容、分类、用户、Session、权限、媒体、菜单、选项、缓存、
-  Rewrite、SEO、邮件、评论和 Worker 等稳定服务。
+  Rewrite、SEO、邮件、评论、前台内容提交和 Worker 等稳定服务。
 - 注册核心内容类型和配置驱动的主题内容类型。
 - 暴露通用仓储、模板 helper、Hook、Filter、Provider、中间件扩展点及受保护
   路由 helper。
@@ -110,5 +110,6 @@ main.go
 - **前台插槽契约** — 主题在基础布局声明 `theme.head.end` / `theme.body.open` / `theme.footer.end` / `header.nav.after`，插件只对这些稳定语义位置输出 HTML
 - **零主题/插件交叉耦合** — 主题只依赖 core funcmap 字符串 key，插件只向 core 注册 hook/ctx key，**主题和插件之间不存在任何直接调用或类型依赖**，core 是唯一交汇点
 - **Provider-neutral 前台认证** — core 负责用户、Identity、注册策略和可撤销 Session；Google OIDC、钱包签名等协议由独立插件验证，主题只读取统一登录上下文
+- **策略驱动前台创作** — 主题声明哪些角色能够创建或维护某种内容，Core 统一执行账号状态、RBAC、所有权、编辑状态、输入校验与滥用限制，而不接管主题 UI
 
-前台账号、身份插件和主题接入详见 [前台用户注册与身份登录](public-authentication.md)。其他主题见左侧导航中的架构章节。
+前台账号、身份插件和主题接入详见[前台用户注册与身份登录](public-authentication.md)，登录用户创作流程详见[前台用户内容提交](public-content-submission.md)。其他主题见左侧导航中的架构章节。

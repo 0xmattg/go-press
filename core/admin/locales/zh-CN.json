@@ -123,6 +123,7 @@
   "content.set_featured_image": "设为主图",
   "content.status": "状态",
   "content.status.archived": "已归档",
+  "content.status.pending": "待审核",
   "content.status.draft": "草稿",
   "content.status.published": "已发布",
   "content.title": "标题",

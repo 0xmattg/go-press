@@ -169,7 +169,7 @@ gopress serve     # 装完之后任意目录都能跑
 |---|---|
 | [介绍](docs/guide/zh-CN/README.md) | 项目定位、设计原则 |
 | [快速开始](docs/guide/zh-CN/getting-started/installation.md) | 安装、配置、Web 安装器 |
-| [架构](docs/guide/zh-CN/architecture/overview.md) | 引擎启动流程、内容模型、前台身份登录、登录用户评论、URL/SEO、缓存、i18n、Content Scope、Hook 系统 |
+| [架构](docs/guide/zh-CN/architecture/overview.md) | 引擎启动流程、内容模型、前台身份登录、前台用户内容提交、登录用户评论、URL/SEO、缓存、i18n、Content Scope、Hook 系统 |
 | [后台管理](docs/guide/zh-CN/admin/overview.md) | 后台 CMS、独立页面、扩展点、菜单管理 |
 | [主题开发](docs/guide/zh-CN/themes/overview.md) | 创建主题、SEO 接入规范、图片管线、媒体变体 |
 | [插件开发](docs/guide/zh-CN/plugins/overview.md) | 创建插件、Hook 列表、内置 multilang / seo-extras / code-snippets / gopress-analytics |
@@ -211,14 +211,24 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 - **后台注册策略** — 分别控制开放用户注册、外部身份登录、外部身份自动注册、账号关联和受权限上限保护的新用户默认角色。
 - **插件协议边界** — 身份插件负责验证 OIDC、钱包签名或未来协议，core 只接收验证完成的 `VerifiedIdentity`。
 - **主题统一 helper** — `currentUser` / `isLoggedIn` / `loginURL` / `logoutURL` / `loginProviders` 让主题在不知道具体身份插件的情况下渲染账号 UI。
+- **账号即时停用** — 后台停用账号后，已有后台 Token 与前台 Session 都会在下一次请求被拒绝，不需要等待自然过期。
 
 完整核心模型、Google/MetaMask 配置、插件契约与主题接入见 [前台用户注册与身份登录](docs/guide/zh-CN/architecture/public-authentication.md)。
+
+### 前台用户内容提交
+
+- **声明式策略** — 主题内容类型可在 `theme.toml` 配置允许角色、默认审核状态，以及是否允许所有者更新或删除。
+- **Core 强制写安全** — 账号状态、类型级 RBAC、所有权、输入长度、全局 Slug 唯一性、内容清理和用户限流都由 Core 执行，主题只负责路由与呈现。
+- **安全生命周期** — 当前主题所需能力通过授权 Handle 临时授予，切换主题时精确撤销，不影响已有 RBAC 规则。
+
+策略、服务契约、审核状态和路由安全清单详见[前台用户内容提交](docs/guide/zh-CN/architecture/public-content-submission.md)。
 
 ### 登录用户评论
 
 - **Core 独立评论模型** — 评论数据不随主题切换丢失，并可关联任何声明支持 `comments` 的注册内容类型。
 - **仅注册用户参与** — 已登录且具备 `comment.create` 权限的活跃用户可以发表评论和一级直接回复，不接受匿名提交。
-- **审核可见性与安全控制** — 新评论默认待审核，已批准评论公开可见，作者可看到自己的待审核评论；Core 同时校验正文长度、用户频率、目标发布状态和内容级评论开关。
+- **审核可见性与安全控制** — 新评论默认待审核，可信服务端策略可选择立即批准；已批准评论公开可见，作者可看到自己的待审核评论；Core 同时校验正文长度、用户频率、目标发布状态和内容级评论开关。
+- **所有者范围审核** — 内容所有者只能在服务端通过所有权与 `update_own` 检查后审核自己内容下的回复；全局审核继续由 `comment.moderate` 保护。
 - **主题无关的账号接入** — 主题通过 Core 契约获取安全评论投影、当前用户权限和本人评论活动，无需导入或识别具体身份插件。
 
 数据模型、主题契约、审核流程、安全规则和扩展点详见[评论与审核](docs/guide/zh-CN/architecture/comments.md)。
@@ -226,6 +236,7 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 ### 引擎核心
 
 - **统一内容模型** — `Content` + `ContentMeta` + `ContentType` 注册表；核心保留 `post` / `page` / `contact_message`，主题通过 `theme.toml` 声明自定义类型
+- **待审核编辑流程** — 通用内容模型和后台编辑器正式支持受保护的 `pending` 状态，并与 draft、published、archived、trash 生命周期状态协作
 - **独立页面** — 内置 `page` 类型，用于 About/条款/隐私等独立页：根级永久链接（`/about`）、层级父页面、按页选主题模板、以及 iframe 白名单的嵌入代码字段。详见[独立页面](docs/guide/zh-CN/admin/pages.md)
 - **配置驱动内容路由** — `theme.toml` 的 `rewrite_slug` 和可选 `templates = { archive = "...", single = "..." }` 统一驱动归档 URL、详情 URL、Sitemap、后台永久链接和动态模板解析。`product` / `service` / `showcase` 只是示例类型，不是框架内置假设。
 - **链式查询构建器** — 下面以主题声明的 `product` 内容类型为例：`ContentQuery.Type("product").Published().Taxonomy("category", "hepa").Paginate(1, 20)`
@@ -259,7 +270,7 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 ### 主题与插件
 
 - **BaseTheme 运行时引擎** — 嵌入即获得配置驱动 URL 解析、动态归档/详情渲染、模板层级回退（WordPress 风格）和 SEO 自动注入
-- **统一 FuncMap** — `BaseFuncMap()` 单一来源下发：`buildURL` / `archiveURL` / `contentURL` / `pageTitleFor` / `seoHeadFor` / `menuByLocation` / `isMenuURLActive` / `T` / `currentLang` / `langPrefixURL` / `renderHook` / `responsiveImage*`
+- **统一 FuncMap** — `BaseFuncMap()` 单一来源下发：`buildURL` / `archiveURL` / `contentURL` / `pageTitleFor` / `seoHeadFor` / `menuByLocation` / `isMenuURLActive` / `goPressVersion` / `T` / `currentLang` / `langPrefixURL` / `renderHook` / `responsiveImage*`
 - **主题模板插槽** — `theme.head.end` / `theme.body.open` / `theme.footer.end` / `header.nav.after` 组成前台插件接入契约，主题只声明语义位置，插件按需输出 HTML
 - **响应式图片管线** — 上传时生成 WebP + JPG/PNG 变体（thumb/480w/768w/1024w/1440w/full），模板用 `responsiveImage` 输出 `<picture>`
 - **插件热拔插** — `Bus.AddAction/AddFilter` 返回 `Handle`，`Deactivate` 中 `Remove*` 干净下线，运行时即时切换无需重启

@@ -83,6 +83,13 @@ type CommentApp interface {
 	CommentService() *comment.Service
 }
 
+// PublicSubmissionApp is optional. Themes that declare front-end authorable
+// content types use this generic service instead of reaching into core user or
+// RBAC internals.
+type PublicSubmissionApp interface {
+	PublicSubmissionService() *content.PublicSubmissionService
+}
+
 // PublicAuthorizationApp exposes provider-neutral RBAC checks for front-end
 // workflows. Themes must use this instead of inspecting concrete identity
 // providers or core RBAC internals.
@@ -209,21 +216,32 @@ type RequirementsProvider interface {
 // intentionally mirror the content registry shape while keeping TOML-specific
 // naming such as rewrite_slug.
 type ContentTypeConfig struct {
-	Name            string                 `toml:"name"`
-	Label           string                 `toml:"label"`
-	LabelPlural     string                 `toml:"label_plural"`
-	ArchiveTitleKey string                 `toml:"archive_title_key"`
-	Supports        []string               `toml:"supports"`
-	MetaFields      []content.MetaFieldDef `toml:"meta_fields"`
-	Taxonomies      []string               `toml:"taxonomies"`
-	HasArchive      bool                   `toml:"has_archive"`
-	Hierarchical    bool                   `toml:"hierarchical"`
-	ReadOnly        bool                   `toml:"read_only"`
-	RewriteSlug     string                 `toml:"rewrite_slug"`
-	Rootless        bool                   `toml:"rootless"`
-	Templates       TemplateConfig         `toml:"templates"`
-	MenuIcon        string                 `toml:"menu_icon"`
-	MenuOrder       int                    `toml:"menu_order"`
+	Name             string                 `toml:"name"`
+	Label            string                 `toml:"label"`
+	LabelPlural      string                 `toml:"label_plural"`
+	ArchiveTitleKey  string                 `toml:"archive_title_key"`
+	Supports         []string               `toml:"supports"`
+	MetaFields       []content.MetaFieldDef `toml:"meta_fields"`
+	Taxonomies       []string               `toml:"taxonomies"`
+	HasArchive       bool                   `toml:"has_archive"`
+	Hierarchical     bool                   `toml:"hierarchical"`
+	ReadOnly         bool                   `toml:"read_only"`
+	RewriteSlug      string                 `toml:"rewrite_slug"`
+	Rootless         bool                   `toml:"rootless"`
+	Templates        TemplateConfig         `toml:"templates"`
+	MenuIcon         string                 `toml:"menu_icon"`
+	MenuOrder        int                    `toml:"menu_order"`
+	PublicSubmission PublicSubmissionConfig `toml:"public_submission"`
+}
+
+// PublicSubmissionConfig maps [content_types.public_submission] from
+// theme.toml into core's runtime policy.
+type PublicSubmissionConfig struct {
+	Enabled        bool     `toml:"enabled"`
+	Roles          []string `toml:"roles"`
+	DefaultStatus  string   `toml:"default_status"`
+	AllowUpdateOwn bool     `toml:"allow_update_own"`
+	AllowDeleteOwn bool     `toml:"allow_delete_own"`
 }
 
 // TemplateConfig optionally maps a content type to existing page templates.
@@ -319,6 +337,13 @@ func RegisterContentTypesFromConfig(registry *content.Registry, cfg *FileConfig)
 			},
 			MenuIcon:  ct.MenuIcon,
 			MenuOrder: menuOrder,
+			PublicSubmission: content.PublicSubmissionPolicy{
+				Enabled:        ct.PublicSubmission.Enabled,
+				Roles:          append([]string(nil), ct.PublicSubmission.Roles...),
+				DefaultStatus:  ct.PublicSubmission.DefaultStatus,
+				AllowUpdateOwn: ct.PublicSubmission.AllowUpdateOwn,
+				AllowDeleteOwn: ct.PublicSubmission.AllowDeleteOwn,
+			},
 		})
 
 		for _, taxName := range ct.Taxonomies {

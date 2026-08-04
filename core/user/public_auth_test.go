@@ -101,3 +101,44 @@ func TestPublicLoginPageOnlyDisplaysKnownErrorCodes(t *testing.T) {
 		}
 	}
 }
+
+func TestPublicLoginPageReturnsOptInDialogErrorsToSameSitePage(t *testing.T) {
+	auth := NewPublicAuth(nil, nil, NewProviderRegistry(), NewRegistrationPolicy(optionMap{}, NewRBAC()), false, nil)
+	router := gin.New()
+	auth.RegisterRoutes(router)
+
+	recorder := httptest.NewRecorder()
+	target := "/docs?q=api&auth_dialog=1"
+	requestURL := "/login?error=authentication_failed&return_to=" + url.QueryEscape(target)
+	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, requestURL, nil))
+
+	if recorder.Code != http.StatusSeeOther {
+		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusSeeOther)
+	}
+	if location := recorder.Header().Get("Location"); location != "/docs?auth_error=authentication_failed&q=api" {
+		t.Fatalf("redirect = %q", location)
+	}
+}
+
+func TestPublicLoginPageDoesNotReturnDialogErrorsToUnsafeOrUnmarkedTargets(t *testing.T) {
+	auth := NewPublicAuth(nil, nil, NewProviderRegistry(), NewRegistrationPolicy(optionMap{}, NewRBAC()), false, nil)
+	router := gin.New()
+	auth.RegisterRoutes(router)
+
+	for _, returnTo := range []string{
+		"https://evil.example/?auth_dialog=1",
+		"/docs",
+		"/docs?auth_dialog=1",
+	} {
+		errorCode := "authentication_failed"
+		if strings.Contains(returnTo, "/docs?") {
+			errorCode = "unknown_error"
+		}
+		recorder := httptest.NewRecorder()
+		requestURL := "/login?error=" + url.QueryEscape(errorCode) + "&return_to=" + url.QueryEscape(returnTo)
+		router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, requestURL, nil))
+		if recorder.Code != http.StatusOK {
+			t.Fatalf("return_to=%q status = %d, want standalone login page", returnTo, recorder.Code)
+		}
+	}
+}

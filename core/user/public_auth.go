@@ -15,6 +15,11 @@ import (
 const (
 	CtxKeyPublicUser    = "gopress_public_user"
 	CtxKeyPublicSession = "gopress_public_session"
+	// authDialogReturnParam is an opt-in marker used by theme-owned login
+	// dialogs. Core keeps rendering its standalone login page unless a theme
+	// explicitly includes this marker in the provider return URL.
+	authDialogReturnParam = "auth_dialog"
+	authDialogErrorParam  = "auth_error"
 )
 
 //go:embed templates/login.tmpl
@@ -142,6 +147,11 @@ func (a *PublicAuth) RegisterRoutes(r *gin.Engine) {
 func (a *PublicAuth) loginPage(c *gin.Context) {
 	c.Header("Cache-Control", "no-store")
 	returnTo := SafeReturnTo(c.Query("return_to"), "/")
+	errorCode := strings.TrimSpace(c.Query("error"))
+	if target, ok := authDialogErrorReturnTo(returnTo, errorCode); ok {
+		c.Redirect(http.StatusSeeOther, target)
+		return
+	}
 	providers := []providerView{}
 	if a.policy != nil && a.policy.ExternalLoginEnabled() && a.providers != nil {
 		for _, provider := range a.providers.All() {
@@ -162,7 +172,7 @@ func (a *PublicAuth) loginPage(c *gin.Context) {
 		Providers []providerView
 		User      *PublicUserView
 		Error     string
-	}{SiteName: name, ReturnTo: returnTo, Providers: providers, User: CurrentUserView(c), Error: publicLoginError(c.Query("error"))}
+	}{SiteName: name, ReturnTo: returnTo, Providers: providers, User: CurrentUserView(c), Error: publicLoginError(errorCode)}
 	c.Status(http.StatusOK)
 	c.Header("Content-Type", "text/html; charset=utf-8")
 	_ = a.template.ExecuteTemplate(c.Writer, "login", data)
@@ -275,6 +285,29 @@ func publicLoginError(code string) string {
 	default:
 		return ""
 	}
+}
+
+// authDialogErrorReturnTo safely carries a known login error back to a
+// theme-owned dialog. The behavior is deliberately opt-in so themes that do
+// not implement an account dialog retain Core's standalone login page. The
+// target has already passed SafeReturnTo, and the marker is removed to avoid
+// redirect loops before the allow-listed error code is appended.
+func authDialogErrorReturnTo(returnTo, errorCode string) (string, bool) {
+	if publicLoginError(errorCode) == "" {
+		return "", false
+	}
+	parsed, err := url.Parse(SafeReturnTo(returnTo, "/"))
+	if err != nil {
+		return "", false
+	}
+	query := parsed.Query()
+	if query.Get(authDialogReturnParam) != "1" {
+		return "", false
+	}
+	query.Del(authDialogReturnParam)
+	query.Set(authDialogErrorParam, errorCode)
+	parsed.RawQuery = query.Encode()
+	return parsed.String(), true
 }
 
 // SafeReturnTo accepts only same-site absolute paths and rejects scheme-relative

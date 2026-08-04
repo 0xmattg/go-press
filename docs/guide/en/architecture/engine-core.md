@@ -24,6 +24,11 @@ admin and API routes, installer routes, and the active frontend theme.
   registered by the engine and survive theme switches.
 - **Theme types** — themes declare custom types in `theme.toml` under
   `[[content_types]]`; core registers them when the theme is activated.
+- **Public submissions** — a theme-defined type can declare a
+  `public_submission` policy. Core then exposes a generic owner-scoped write
+  service and temporary type-specific RBAC grants while the theme is active;
+  routes and UI remain theme-owned. See
+  [Public Content Submission](public-content-submission.md).
 - **Registry-driven behavior** — one `ContentTypeDef` controls admin navigation,
   CRUD forms, REST exposure, rewrites, sitemap entries, taxonomy archives, and
   BaseTheme archive/detail rendering. `rewrite_slug` defines public URLs, while
@@ -75,6 +80,10 @@ Core owns users, JWT and public sessions, roles, capabilities, and audit logs.
 Protected handlers must check a concrete `resource.action` permission, not only
 whether a session exists. Themes and identity plugins use core's provider-neutral
 public-auth contracts instead of creating their own user or session stores.
+Disabling an account is effective on the next request for both admin tokens and
+public sessions. Theme-derived public-submission grants are tracked by handle
+and revoked on theme changes without removing capabilities that existed before
+the theme was activated.
 
 ## Media
 

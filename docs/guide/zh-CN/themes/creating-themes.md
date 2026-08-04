@@ -139,6 +139,21 @@ menu_order = 1
 
 这样数据模型是 `module`，前台 URL 是 `/modules` / `/modules/{slug}`，视觉层复用 `products` / `product-detail` 页面模板。内容模型、URL slug 和模板名互相独立，统一由 core 注册表驱动。`archive_title_key` 指向主题 locales 里的标题 key，用于归档页 `<title>` / Open Graph 标题，避免多语言站点直接使用静态 `label_plural`。
 
+### 允许前台用户创作的内容类型
+
+需要已登录用户在前台创作内容时，可以为主题内容类型声明 Core 通用提交策略：
+
+```toml
+[content_types.public_submission]
+enabled = true
+roles = ["subscriber", "contributor"]
+default_status = "pending"
+allow_update_own = true
+allow_delete_own = true
+```
+
+主题激活期间，这项声明会产生内容类型级别的临时 RBAC 能力。路由和 UI 仍归主题负责，但写操作必须通过 `theme.PublicSubmissionApp.PublicSubmissionService()`，由 Core 统一执行账号状态、允许角色、能力、所有权、状态、输入校验、Slug 和限流检查。服务中的可信 `PublishImmediately` 字段绝不能直接绑定浏览器输入。详见[前台用户内容提交](../architecture/public-content-submission.md)。
+
 ## 模板命名约定
 
 将模板放在 `themes/my-theme/templates/`。推荐使用 `layouts/` + `partials/` + `pages/` 的页面 bundle 结构：
@@ -203,6 +218,12 @@ archive
 ```
 
 不要在通用主题里写 `.ActivePage == "products"` 这类判断。菜单名称、内容类型名和 `rewrite_slug` 都是配置，不应成为模板代码里的固定契约。
+
+`goPressVersion` 会从唯一版本源 `version/version.go` 返回当前运行中的 Core 版本。主题渲染文档版本或诊断信息时应使用该 helper，不要把版本号复制到主题设置或模板里：
+
+```gotemplate
+<span>GoPress Core v{{goPressVersion}}</span>
+```
 
 ## 基础布局契约
 
@@ -406,13 +427,13 @@ data := gin.H{
 
 ## 登录评论与 Profile 路由
 
-主题实现评论、账号页、收藏等登录态工作流时：
+主题实现前台内容提交、评论、账号页、收藏等登录态工作流时：
 
-- 只使用 core 提供的 `currentUser`、`loginURL`、`loginProviders`、`loginProviderURL`、`CommentApp`、`PublicAuthorizationApp` 通用契约。
+- 只使用 core 提供的 `currentUser`、`loginURL`、`loginProviders`、`loginProviderURL`、`PublicSubmissionApp`、`CommentApp`、`PublicAuthorizationApp` 通用契约。
 - 所需身份插件只能在 `theme.toml` 声明；运行时不得 import 插件、读取私有配置或判断 Provider ID。
 - 每个写路由都必须执行同源校验和明确的 `resource.action` 权限检查。
 - 表单中的内容 ID、评论 ID 必须校验类型、目标、所有权和父子归属。
 - 当前用户资料页使用固定路径，并设置 `Cache-Control: private, no-store`，不能泄露其他用户邮箱。
 - 测试必须证明匿名或无权限角色被拒绝，并覆盖有权限角色成功执行。
 
-详见[评论与回复](../architecture/comments.md)。
+详见[前台用户内容提交](../architecture/public-content-submission.md)和[评论与回复](../architecture/comments.md)。

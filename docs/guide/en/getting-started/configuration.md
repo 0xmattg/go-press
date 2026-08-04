@@ -121,6 +121,9 @@ Core also enables these protections without extra configuration:
   `Origin`/`Referer` checks.
 - Failed admin logins are rate-limited per source IP and recorded in the audit
   log.
+- Public user sessions are database-backed and revalidate the active account on
+  every request. Disabling the account revokes the stored session and clears
+  its cookie on the next request.
 - Uploaded SVG, HTML, and XML documents are served as attachments with a
   sandbox CSP to prevent script execution in the site origin.
 

@@ -69,6 +69,19 @@ func (f *fakeStore) ListVisibleForContent(contentID, viewerID uint) ([]Comment, 
 	return out, nil
 }
 
+func (f *fakeStore) ListVisibleForContentReview(contentID uint) ([]Comment, error) {
+	var out []Comment
+	for _, item := range f.comments {
+		if item.ContentID != contentID || (item.Status != StatusApproved && item.Status != StatusPending) {
+			continue
+		}
+		item.Author = f.user
+		item.Target = f.post
+		out = append(out, item)
+	}
+	return out, nil
+}
+
 func (f *fakeStore) CountApprovedForContent(contentID uint) (int64, error) {
 	var count int64
 	for _, item := range f.comments {
@@ -159,6 +172,38 @@ func TestCreateAndListCommentVisibility(t *testing.T) {
 	public, err = service.ListVisible(store.post.ID, 0)
 	if err != nil || len(public) != 1 {
 		t.Fatalf("approved list = %+v, err=%v", public, err)
+	}
+}
+
+func TestCreateSupportsTrustedInitialApprovalAndReviewerVisibility(t *testing.T) {
+	service, store := newTestService()
+	approved, err := service.Create(context.Background(), CreateInput{
+		ContentID: store.post.ID, UserID: store.user.ID, Body: "Published by policy.", InitialStatus: StatusApproved,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pending, err := service.Create(context.Background(), CreateInput{
+		ContentID: store.post.ID, UserID: store.user.ID, Body: "Waiting for review.",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if approved.Status != StatusApproved || pending.Status != StatusPending {
+		t.Fatalf("statuses = approved:%q pending:%q", approved.Status, pending.Status)
+	}
+	public, err := service.ListVisible(store.post.ID, 0)
+	if err != nil || len(public) != 1 {
+		t.Fatalf("public comments = %+v, err=%v", public, err)
+	}
+	review, err := service.ListVisibleForReview(store.post.ID, 99)
+	if err != nil || len(review) != 2 {
+		t.Fatalf("review comments = %+v, err=%v", review, err)
+	}
+	if _, err := service.Create(context.Background(), CreateInput{
+		ContentID: store.post.ID, UserID: store.user.ID, Body: "Invalid status.", InitialStatus: StatusSpam,
+	}); !errors.Is(err, ErrInvalidStatus) {
+		t.Fatalf("invalid initial status error = %v", err)
 	}
 }
 

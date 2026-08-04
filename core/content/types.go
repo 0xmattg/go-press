@@ -34,6 +34,29 @@ type MetaFieldDef struct {
 	Required bool     `json:"required"`
 }
 
+// PublicSubmissionPolicy declares whether authenticated public users may
+// create and maintain content of this type through a theme-owned workflow.
+// Core enforces the policy and ownership; themes remain responsible only for
+// presentation and content-type-specific validation.
+type PublicSubmissionPolicy struct {
+	Enabled        bool     `json:"enabled"`
+	Roles          []string `json:"roles,omitempty"`
+	DefaultStatus  string   `json:"default_status"`
+	AllowUpdateOwn bool     `json:"allow_update_own"`
+	AllowDeleteOwn bool     `json:"allow_delete_own"`
+}
+
+// AllowsRole reports whether a role is explicitly allowed to submit this
+// content type. An empty role list is deliberately deny-by-default.
+func (p PublicSubmissionPolicy) AllowsRole(role string) bool {
+	for _, allowed := range p.Roles {
+		if allowed == role {
+			return true
+		}
+	}
+	return false
+}
+
 // ContentTypeDef declares a content model known to GoPress at runtime.
 //
 // Core and themes register these definitions into Registry. The same definition
@@ -61,6 +84,10 @@ type ContentTypeDef struct {
 	Templates TemplateDef `json:"templates"`
 	MenuIcon  string      `json:"menu_icon"` // optional: built-in icon key or raw SVG
 	MenuOrder int         `json:"menu_order"`
+	// PublicSubmission is an optional framework policy for front-end authoring.
+	// It does not create routes or UI; active themes opt in and consume the
+	// generic PublicSubmissionService exposed by core.
+	PublicSubmission PublicSubmissionPolicy `json:"public_submission"`
 }
 
 // HasPublicRoute reports whether the type is reachable on the public site,

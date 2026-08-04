@@ -12,6 +12,7 @@
   - [Content Scope API](architecture/content-scope.md)
   - [Hook System](architecture/hooks.md)
   - [Public Authentication](architecture/public-authentication.md)
+  - [Public Content Submission](architecture/public-content-submission.md)
   - [Comments and Replies](architecture/comments.md)
 - [Admin](admin/overview.md)
   - [Admin Overview](admin/overview.md)

@@ -3,6 +3,7 @@ package content
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go-press/core/hook"
 
@@ -196,6 +197,17 @@ func (r *Repository) CountByType(contentType, status string) (int64, error) {
 	}
 	var count int64
 	err := q.Count(&count).Error
+	return count, err
+}
+
+// CountRecentByAuthorAndType counts rows created by one author since the
+// supplied time. Public authoring services use it for per-type rate limiting;
+// trashed rows still count so deleting a submission cannot bypass the limit.
+func (r *Repository) CountRecentByAuthorAndType(authorID uint, contentType string, since time.Time) (int64, error) {
+	var count int64
+	err := r.db.Model(&Content{}).
+		Where("author_id = ? AND type = ? AND created_at >= ?", authorID, contentType, since).
+		Count(&count).Error
 	return count, err
 }
 

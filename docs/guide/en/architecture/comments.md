@@ -12,9 +12,12 @@ top-level comments plus one direct reply level; a reply to a reply is rejected
 by the service. The schema can support a deeper policy later without a data
 migration.
 
-Statuses are `pending`, `approved`, `spam`, and `trash`. New comments are
-`pending`. Anonymous visitors see approved comments only; an authenticated
-author also sees their own pending comments.
+Statuses are `pending`, `approved`, `spam`, and `trash`. New comments default to
+`pending`. A trusted server-side moderation policy may set `CreateInput.InitialStatus`
+to `approved`; core rejects every initial value except `pending` and `approved`.
+Never bind this field directly from browser input. Anonymous visitors see
+approved comments only; an authenticated author also sees their own pending
+comments.
 
 ## Enabling Comments For A Content Type
 
@@ -52,6 +55,28 @@ Every comment POST must enforce same-origin checks, validate the target content
 and its registry capability, ensure a parent belongs to the same content row,
 enforce reply depth, validate body length, and apply server-side rate limits.
 Never authorize from hidden buttons alone.
+
+## Moderation Policies And Owner Review
+
+Core keeps the safe default of pending review while allowing a theme to apply a
+server-owned setting for immediate approval. The theme must translate that
+setting into `InitialStatus`; a form field or JSON property supplied by the
+comment author is never authoritative.
+
+`CommentService.ListVisibleForReview(contentID, viewerID)` returns the approved
+thread together with its pending queue. The method deliberately does not decide
+who may review the target. Before calling it—or changing any returned
+comment—the route must prove one of these conditions:
+
+- the account owns the target content and has the content type's `update_own`
+  capability; or
+- the account has global `comment.moderate` permission.
+
+Every comment ID must also be checked against the expected content ID and
+parent relationship. Owner moderation should be limited to replies on that
+owner's content; global moderators retain spam, trash, takedown, and exceptional
+review authority. Unauthorized and cross-content IDs must be rejected on the
+server, regardless of which buttons the page renders.
 
 ## Profile Pages
 

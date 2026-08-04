@@ -106,3 +106,48 @@ func TestAuthMiddlewareRejectsCrossOriginPost(t *testing.T) {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusForbidden)
 	}
 }
+
+func TestAuthMiddlewareRejectsExistingTokenAfterAccountDisabled(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	repository := adminUserTestRepository(t)
+	auth := user.NewAuth("test-secret", 1, repository)
+	account, err := repository.FindByID(1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	account.Role = user.RoleSuperAdmin
+	if err := repository.Update(account); err != nil {
+		t.Fatal(err)
+	}
+	token, err := auth.GenerateToken(account)
+	if err != nil {
+		t.Fatalf("GenerateToken() error = %v", err)
+	}
+
+	account.IsActive = false
+	if err := repository.Update(account); err != nil {
+		t.Fatal(err)
+	}
+
+	router := gin.New()
+	router.GET("/admin/x", AuthMiddleware(auth), func(c *gin.Context) {
+		c.Status(http.StatusNoContent)
+	})
+	req := httptest.NewRequest(http.MethodGet, "/admin/x", nil)
+	req.AddCookie(&http.Cookie{Name: adminCookieName, Value: token})
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusFound {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusFound)
+	}
+	if location := rec.Header().Get("Location"); location != "/admin/login" {
+		t.Fatalf("redirect = %q, want /admin/login", location)
+	}
+	for _, cookie := range rec.Result().Cookies() {
+		if cookie.Name == adminCookieName && cookie.MaxAge < 0 && cookie.Value == "" {
+			return
+		}
+	}
+	t.Fatal("disabled account response did not clear the admin token cookie")
+}

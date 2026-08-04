@@ -23,6 +23,7 @@ import (
 	"go-press/core/taxonomy"
 	"go-press/core/user"
 	"go-press/pkg/logger"
+	"go-press/version"
 
 	"github.com/gin-gonic/gin"
 )
@@ -378,6 +379,9 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 		}
 	}
 	funcs := MergeFuncMap(CommonFuncMap(), engineFuncs, b.customFuncMap)
+	// The runtime version has one authoritative source. Themes may consume this
+	// helper, but cannot replace it with a stale theme-local version string.
+	funcs["goPressVersion"] = version.String
 	// safeHTML is a framework trust boundary. Themes may add helpers, but they
 	// must not replace rich-text sanitization with an unchecked conversion.
 	funcs["safeHTML"] = func(s string) template.HTML {

@@ -16,6 +16,7 @@
 * [Content Scope API](architecture/content-scope.md)
 * [Hook 系统](architecture/hooks.md)
 * [前台用户注册与身份登录](architecture/public-authentication.md)
+* [前台用户内容提交](architecture/public-content-submission.md)
 * [评论与回复](architecture/comments.md)
 
 ## 后台管理

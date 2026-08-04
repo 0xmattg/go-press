@@ -71,7 +71,7 @@ restart.
 ## Engine Responsibilities
 
 - Own stable content, taxonomy, user, session, permission, media, menu, option,
-  cache, rewrite, SEO, mail, comment, and worker services.
+  cache, rewrite, SEO, mail, comment, public-submission, and worker services.
 - Register core content types and config-driven theme types.
 - Expose generic repositories, template helpers, hooks, filters, providers,
   middleware points, and protected route helpers.
@@ -95,6 +95,11 @@ restart.
 - **Provider-neutral public authentication** — core owns users, identities,
   registration policy, and revocable sessions; identity plugins verify external
   protocols, and themes consume one normalized account context.
+- **Policy-driven public authoring** — themes can declare which roles may create
+  or maintain a content type; core enforces active-account, RBAC, ownership,
+  editorial state, validation, and abuse limits without owning the UI.
 
 See [Public Authentication](public-authentication.md) for the account and
-identity-provider contract.
+identity-provider contract, and
+[Public Content Submission](public-content-submission.md) for authenticated
+frontend authoring.

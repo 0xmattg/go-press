@@ -10,6 +10,8 @@ GoPress 旨在把传统 CMS 中经过验证的内容模型、主题系统、插�
 
 框架同时提供 Provider-neutral 的前台用户、外部身份绑定、可撤销 Session 和注册策略；当前可通过独立 Google OIDC 插件或 MetaMask EIP-4361 SIWE 插件登录，两者复用同一套 core 账号与 Session 边界。
 
+登录用户创作也使用通用 Core 边界：主题声明允许提交的内容类型与角色，Core 统一执行账号状态、所有者范围 RBAC、审核状态、输入校验和限流，主题继续负责路由与视觉呈现。
+
 评论也是 core 的稳定领域：支持仅登录用户发表评论、一级直接回复、审核状态、
 后台分页与 RBAC，并允许主题使用统一前台账号上下文呈现评论和 Profile。
 
@@ -52,6 +54,7 @@ GoPress 当前处于 **beta** 阶段。核心内容模型、后台管理、主�
 - **[快速开始](getting-started/installation.md)** — 安装、配置、第一次启动
 - **[架构](architecture/overview.md)** — 引擎结构、Hook 系统、URL/SEO、内容过滤
 - **[前台用户注册与身份登录](architecture/public-authentication.md)** — 用户/Identity/Session、注册策略、Google 插件、主题接入与钱包扩展
+- **[前台用户内容提交](architecture/public-content-submission.md)** — 声明式策略、所有者范围 RBAC、审核状态、限流和主题路由安全
 - **[评论与回复](architecture/comments.md)** — 评论模型、一级回复、登录/RBAC 与缓存契约
 - **[后台管理](admin/overview.md)** — 后台 CMS 功能、扩展点、菜单管理
 - **[主题开发](themes/overview.md)** — 主题接入、SEO 规范、图片管线、媒体变体
