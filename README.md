@@ -169,7 +169,7 @@ The documentation lives under [`docs/guide/`](docs/guide/) and is organized as a
 |---|---|
 | [Introduction](docs/guide/en/README.md) | Positioning and design principles |
 | [Getting Started](docs/guide/en/getting-started/installation.md) | Installation, configuration, and the web installer |
-| [Architecture](docs/guide/en/architecture/overview.md) | Engine boot flow, content model, public authentication, authenticated comments, URL/SEO, cache, i18n, content scope, and hooks |
+| [Architecture](docs/guide/en/architecture/overview.md) | Engine boot flow, content model, public authentication, public content submission, authenticated comments, URL/SEO, cache, i18n, content scope, and hooks |
 | [Admin](docs/guide/en/admin/overview.md) | Admin CMS, standalone pages, extension points, and menu management |
 | [Themes](docs/guide/en/themes/overview.md) | Creating themes, SEO integration, image pipeline, and media variants |
 | [Plugins](docs/guide/en/plugins/overview.md) | Creating plugins, hook contracts, and bundled plugins |
@@ -215,14 +215,31 @@ go run ./cmd/gendoc/
 - **Admin-controlled registration policy** — independent switches for public registration, external login, external auto-registration, account linking, and a privilege-limited default role.
 - **Plugin protocol boundary** — identity plugins verify OIDC, wallet signatures, or future protocols, then pass only `VerifiedIdentity` assertions to core.
 - **Theme-ready helpers** — `currentUser`, `isLoggedIn`, `loginURL`, `logoutURL`, and `loginProviders` let themes render account UI without knowing which provider plugin is active.
+- **Immediate account shutdown** — disabling an account rejects existing admin
+  tokens and public sessions on their next request instead of waiting for token
+  expiry.
 
 See [Public Authentication](docs/guide/en/architecture/public-authentication.md) for the core model, Google and MetaMask setup, plugin contracts, and theme integration.
+
+### Public Content Submission
+
+- **Declarative policy** — theme-defined content types may opt into frontend
+  authoring with allowed roles, default review status, and owner update/delete
+  controls in `theme.toml`.
+- **Core-enforced writes** — active-account checks, type-scoped RBAC, ownership,
+  input limits, global slug uniqueness, sanitization, and per-user rate limits
+  remain in Core while themes own routes and presentation.
+- **Safe lifecycle** — active-theme capabilities are granted by handle and
+  withdrawn on theme changes without disturbing pre-existing RBAC rules.
+
+See [Public Content Submission](docs/guide/en/architecture/public-content-submission.md) for the policy, service contract, moderation states, and route security checklist.
 
 ### Authenticated Comments
 
 - **Core-owned comment domain** — comments remain available across theme switches and can target any registered content type that declares `comments` support.
 - **Registered-user participation** — active signed-in users with `comment.create` can post top-level comments and one level of direct replies; anonymous submissions are not accepted.
-- **Moderated visibility and safety** — new comments start as pending, approved comments are public, authors can see their own pending comments, and core enforces body limits, per-user rate limits, published-target checks, and per-content open/closed status.
+- **Moderated visibility and safety** — new comments default to pending, trusted server policy may approve immediately, approved comments are public, authors can see their own pending comments, and core enforces body limits, per-user rate limits, published-target checks, and per-content open/closed status.
+- **Owner-scoped review** — content owners may review replies on their own content only after server-side ownership and `update_own` checks; global moderation remains protected by `comment.moderate`.
 - **Theme-neutral account integration** — themes consume safe comment projections, current-user authorization, and own comment activity through core contracts without importing a specific identity plugin.
 
 See [Comments and Moderation](docs/guide/en/architecture/comments.md) for the data model, theme contract, moderation flow, security rules, and extension points.
@@ -230,6 +247,7 @@ See [Comments and Moderation](docs/guide/en/architecture/comments.md) for the da
 ### Engine Core
 
 - **Unified content model** — `Content` + `ContentMeta` + `ContentType` registry; core keeps `post`, `page`, and `contact_message`, while themes declare custom types in `theme.toml`.
+- **Pending editorial workflow** — the shared content model and admin editor recognize a protected `pending` review state in addition to draft, published, archived, and trash lifecycle states.
 - **Standalone pages** — a built-in `page` type for About/Terms/Privacy-style pages: root-level permalinks (`/about`), hierarchical parents, per-page theme templates, and an iframe-allowlisted embed field. See [Standalone Pages](docs/guide/en/admin/pages.md).
 - **Config-driven content routing** — `theme.toml` `rewrite_slug` and optional `templates = { archive = "...", single = "..." }` drive archive URLs, detail URLs, sitemap entries, admin permalinks, and dynamic template resolution. `product`, `service`, and `showcase` are examples, not framework assumptions.
 - **Chainable content queries** — for example: `ContentQuery.Type("product").Published().Taxonomy("category", "hepa").Paginate(1, 20)`.
@@ -263,7 +281,7 @@ See [Comments and Moderation](docs/guide/en/architecture/comments.md) for the da
 ### Themes and Plugins
 
 - **BaseTheme runtime** — embed it to get config-driven URL resolution, dynamic archive/detail rendering, WordPress-style fallback hierarchy, and automatic SEO integration.
-- **Unified FuncMap** — `BaseFuncMap()` provides `buildURL`, `archiveURL`, `contentURL`, `pageTitleFor`, `seoHeadFor`, `menuByLocation`, `isMenuURLActive`, `T`, `currentLang`, `langPrefixURL`, `renderHook`, and `responsiveImage*`.
+- **Unified FuncMap** — `BaseFuncMap()` provides `buildURL`, `archiveURL`, `contentURL`, `pageTitleFor`, `seoHeadFor`, `menuByLocation`, `isMenuURLActive`, `goPressVersion`, `T`, `currentLang`, `langPrefixURL`, `renderHook`, and `responsiveImage*`.
 - **Theme template slots** — `theme.head.end`, `theme.body.open`, `theme.footer.end`, and `header.nav.after` define semantic insertion points for plugins.
 - **Responsive image pipeline** — uploads generate WebP and JPG/PNG variants (`thumb`, `480w`, `768w`, `1024w`, `1440w`, `full`), and templates output `<picture>` through `responsiveImage`.
 - **Hot-pluggable plugins** — `Bus.AddAction/AddFilter` return handles; `Deactivate` removes hooks cleanly without restarting the process.

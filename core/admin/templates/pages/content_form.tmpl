@@ -81,6 +81,7 @@
             <label for="status">{{T . "content.archive_status"}}</label>
             <select id="status" name="status" style="padding:0.4rem 0.8rem; border:1px solid #d1d5db; border-radius:6px;">
                 <option value="published" {{if .Item}}{{if eq .Item.Status "published"}}selected{{end}}{{else}}selected{{end}}>{{T . "content.status.published"}}</option>
+                <option value="pending" {{if .Item}}{{if eq .Item.Status "pending"}}selected{{end}}{{end}}>{{T . "content.status.pending"}}</option>
                 <option value="draft" {{if .Item}}{{if eq .Item.Status "draft"}}selected{{end}}{{end}}>{{T . "content.status.draft"}}</option>
                 <option value="archived" {{if .Item}}{{if eq .Item.Status "archived"}}selected{{end}}{{end}}>{{T . "content.status.archived"}}</option>
             </select>

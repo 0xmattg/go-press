@@ -777,6 +777,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 /* ==================== Badges ==================== */
 .badge { font-size: .7rem; padding: .15rem .5rem; border-radius: 10px; font-weight: 600; white-space: nowrap; }
 .badge-draft { background: #fef3c7; color: #92400e; }
+.badge-pending { background: #dbeafe; color: #1d4ed8; }
 .badge-published { background: #dcfce7; color: #166534; }
 .badge-archived { background: #f1f5f9; color: #64748b; }
 .badge-read { background: #e0f2fe; color: #075985; }

@@ -242,3 +242,15 @@ func TestBulkUnpublishUpdatesPreservePublishedAt(t *testing.T) {
 		t.Fatal("bulk unpublish must not change published_at")
 	}
 }
+
+func TestNormalizeContentStatusAcceptsPendingAndRejectsForgedValues(t *testing.T) {
+	if got := normalizeContentStatus(content.StatusPending, content.StatusDraft); got != content.StatusPending {
+		t.Fatalf("pending status = %q, want %q", got, content.StatusPending)
+	}
+	if got := normalizeContentStatus("owner_approved", content.StatusDraft); got != content.StatusDraft {
+		t.Fatalf("forged status = %q, want fallback %q", got, content.StatusDraft)
+	}
+	if got := normalizeContentStatus(content.StatusTrash, content.StatusPending); got != content.StatusPending {
+		t.Fatalf("trash must not be accepted through the editor, got %q", got)
+	}
+}

@@ -44,6 +44,8 @@ Core 将 `subject` 视为不透明值。OIDC 插件应使用验证过的 ID Toke
 
 Cookie 使用 `HttpOnly`、`SameSite=Lax`；站点 URL 为 HTTPS 时自动启用 `Secure`。已登录请求和认证端点不会进入共享页面缓存。
 
+Session 认证会实时复核数据库账号状态。因此后台停用账号后，已有前台 Session 在下一次请求即失效：Core 会拒绝该 Session、把数据库记录标记为已撤销，并让浏览器 Cookie 过期。同样的账号状态规则也适用于后台 JWT/API 认证，运营人员无需等待任一 Token 自然过期。
+
 ## 注册策略设置
 
 后台 **系统设置 > 账号设置** 提供以下 core 策略：
@@ -149,6 +151,26 @@ Header 中的典型用法：
 
 普通登录链接应使用 `loginURL` 作为渐进增强的后备入口。若主题在蒙版弹窗中自行展示 Provider，必须通过 `loginProviders` 枚举，并用 `loginProviderURL` 构造每个入口；该 helper 会拒绝外部或非法起始 URL，并附加安全的站内回跳路径。`shop-starter` 演示了这种模式，同时在 JavaScript 不可用时仍能退回统一登录页。主题不能 import `plugins/google-identity`、读取该插件的激活 Option，或根据 Provider ID 写业务分支。
 
+### 把登录错误交回主题弹窗
+
+使用当前页面登录弹窗的主题可以选择启用 Core 的安全错误回传。在作为 Provider `return_to` 的站内页面地址中加入 `auth_dialog=1`，然后照常使用 `loginProviderURL` 构造 Provider 链接。认证失败回到 `/login` 且错误码已知时，Core 会删除这个标记，再携带 `auth_error=<code>` 跳回原页面；主题据此重新打开弹窗，并使用自身 UI 展示提示。
+
+例如回跳目标：
+
+```text
+/docs?q=api&auth_dialog=1
+```
+
+会变成：
+
+```text
+/docs?auth_error=authentication_failed&q=api
+```
+
+允许的错误码包括 `authentication_failed`、`registration_disabled`、`identity_conflict` 和 `provider_unavailable`。主题应通过 locale 把错误码翻译成纯文本，不能当作 HTML 输出；打开弹窗后再用 `history.replaceState` 从可见 URL 移除 `auth_error`。
+
+该机制必须显式选择启用。未知错误、外站或非法回跳地址、缺少标记，以及未实现弹窗的主题，仍然使用 Core 独立登录页。这既保留渐进增强，也避免开放重定向和重定向循环。
+
 ## Google Identity 插件
 
 内置 `google-identity` 插件实现服务端 Google OpenID Connect：Authorization Code Flow、PKCE、签名 state Cookie、nonce、Discovery/JWKS、audience/expiry、access-token hash、已验证邮箱和可选 Google Workspace `hd` 限制。
@@ -206,4 +228,5 @@ Redirect URI 的 scheme、host、port、path 和末尾斜线必须完全一致�
 - 不按邮箱或钱包地址静默自动关联账号。
 - 关联操作从 Session 获取所有者，不接受 URL/表单里的用户 ID。
 - Provider 后台设置继续使用 `plugin.read` / `plugin.update` RBAC。
-- 账号停用或凭据泄露时撤销相关 Session。
+- 停用账号会立即拒绝已有后台 Token 和前台 Session；下一次前台请求还会撤销数据库 Session 并清除 Cookie。
+- 凭据疑似泄露时主动撤销相关 Session。

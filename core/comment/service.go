@@ -27,10 +27,11 @@ var (
 )
 
 type CreateInput struct {
-	ContentID uint
-	UserID    uint
-	ParentID  *uint
-	Body      string
+	ContentID     uint
+	UserID        uint
+	ParentID      *uint
+	Body          string
+	InitialStatus string
 }
 
 type serviceStore interface {
@@ -39,6 +40,7 @@ type serviceStore interface {
 	FindPublishedTarget(uint, time.Time) (*content.Content, error)
 	FindActiveUser(uint) (*user.User, error)
 	ListVisibleForContent(uint, uint) ([]Comment, error)
+	ListVisibleForContentReview(uint) ([]Comment, error)
 	CountApprovedForContent(uint) (int64, error)
 	CountRecentByUser(uint, time.Time) (int64, error)
 	CountByUser(uint) (int64, error)
@@ -78,6 +80,13 @@ func (s *Service) Create(ctx context.Context, input CreateInput) (*Comment, erro
 	}
 	if input.ContentID == 0 || input.UserID == 0 {
 		return nil, ErrTargetUnavailable
+	}
+	status := StatusPending
+	if input.InitialStatus != "" {
+		if input.InitialStatus != StatusPending && input.InitialStatus != StatusApproved {
+			return nil, ErrInvalidStatus
+		}
+		status = input.InitialStatus
 	}
 
 	now := s.now().UTC()
@@ -121,7 +130,7 @@ func (s *Service) Create(ctx context.Context, input CreateInput) (*Comment, erro
 		UserID:    input.UserID,
 		ParentID:  input.ParentID,
 		Body:      body,
-		Status:    StatusPending,
+		Status:    status,
 	}
 	if err := s.store.Create(item); err != nil {
 		return nil, err
@@ -169,6 +178,21 @@ func (s *Service) ListVisible(contentID, viewerID uint) ([]View, error) {
 	if err != nil {
 		return nil, err
 	}
+	return commentThreadViews(items, viewerID), nil
+}
+
+// ListVisibleForReview returns approved and pending comments for a single
+// content item. The caller must first authorize the current account as that
+// content item's owner or as a global comment moderator.
+func (s *Service) ListVisibleForReview(contentID, viewerID uint) ([]View, error) {
+	items, err := s.store.ListVisibleForContentReview(contentID)
+	if err != nil {
+		return nil, err
+	}
+	return commentThreadViews(items, viewerID), nil
+}
+
+func commentThreadViews(items []Comment, viewerID uint) []View {
 	top := make([]View, 0, len(items))
 	topIndex := make(map[uint]int)
 	for _, item := range items {
@@ -186,7 +210,7 @@ func (s *Service) ListVisible(contentID, viewerID uint) ([]View, error) {
 			top[idx].Replies = append(top[idx].Replies, toView(item, viewerID))
 		}
 	}
-	return top, nil
+	return top
 }
 
 func (s *Service) CountApproved(contentID uint) (int64, error) {

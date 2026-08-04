@@ -656,7 +656,7 @@ func (h *Handler) ContentCreate(c *gin.Context) {
 
 	// Set status from form
 	if st := c.PostForm("status"); st != "" {
-		item.Status = st
+		item.Status = normalizeContentStatus(st, item.Status)
 	}
 	if hasSupport(typeDef.Supports, "comments") {
 		item.CommentStatus = commentStatusFromForm(c.PostForm("comment_status"))
@@ -950,7 +950,7 @@ func (h *Handler) ContentUpdate(c *gin.Context) {
 
 	// Set status from form
 	if st := c.PostForm("status"); st != "" {
-		item.Status = st
+		item.Status = normalizeContentStatus(st, item.Status)
 	}
 	if hasSupport(typeDef.Supports, "comments") {
 		item.CommentStatus = commentStatusFromForm(c.PostForm("comment_status"))
@@ -1115,6 +1115,15 @@ func (h *Handler) ContentDelete(c *gin.Context) {
 
 func contentMatchesType(item *content.Content, contentType string) bool {
 	return item != nil && contentType != "" && item.Type == contentType
+}
+
+func normalizeContentStatus(value, fallback string) string {
+	switch strings.TrimSpace(value) {
+	case content.StatusPublished, content.StatusPending, content.StatusDraft, content.StatusArchived:
+		return strings.TrimSpace(value)
+	default:
+		return fallback
+	}
 }
 
 // ==================== Content Reorder (drag & drop) ====================

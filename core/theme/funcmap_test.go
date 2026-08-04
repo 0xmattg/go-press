@@ -10,6 +10,7 @@ import (
 	"go-press/core/content"
 	coreI18n "go-press/core/i18n"
 	"go-press/core/rewrite"
+	"go-press/version"
 
 	"github.com/gin-gonic/gin"
 	goi18n "github.com/nicksnyder/go-i18n/v2/i18n"
@@ -64,6 +65,21 @@ func TestBaseFuncMapDoesNotAllowUnsafeSafeHTMLOverride(t *testing.T) {
 	}
 	if !strings.Contains(got, "<p>Safe</p>") {
 		t.Fatalf("safe markup was not preserved: %s", got)
+	}
+}
+
+func TestBaseFuncMapExposesCurrentCoreVersion(t *testing.T) {
+	var base BaseTheme
+	base.InitBase(nil, "", "", template.FuncMap{
+		"goPressVersion": func() string { return "stale-theme-version" },
+	})
+
+	fn, ok := base.BaseFuncMap()["goPressVersion"].(func() string)
+	if !ok {
+		t.Fatal("goPressVersion helper is missing or has the wrong signature")
+	}
+	if got := fn(); got != version.String() {
+		t.Fatalf("goPressVersion() = %q, want %q", got, version.String())
 	}
 }
 

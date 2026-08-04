@@ -36,7 +36,7 @@
         {{if .Item}}
         <div class="form-group">
             <label class="checkbox-label">
-                <input type="checkbox" name="is_active" {{if .Item.IsActive}}checked{{end}}>
+                <input type="checkbox" name="is_active" value="1" {{if .Item.IsActive}}checked{{end}}>
                 {{T . "user.active"}}
             </label>
         </div>

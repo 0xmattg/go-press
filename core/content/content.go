@@ -15,6 +15,7 @@ import (
 // to admin workflows but are excluded by Published queries.
 const (
 	StatusDraft     = "draft"
+	StatusPending   = "pending"
 	StatusPublished = "published"
 	StatusArchived  = "archived"
 	StatusTrash     = "trash"

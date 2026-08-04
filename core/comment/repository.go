@@ -55,6 +55,17 @@ func (r *Repository) ListVisibleForContent(contentID, viewerID uint) ([]Comment,
 	return items, err
 }
 
+// ListVisibleForContentReview returns the public thread plus its pending
+// moderation queue. Authorization is intentionally handled by the service
+// caller because ownership and moderator capabilities are request concerns.
+func (r *Repository) ListVisibleForContentReview(contentID uint) ([]Comment, error) {
+	var items []Comment
+	err := r.db.Preload("Author").Where(
+		"content_id = ? AND status IN ?", contentID, []string{StatusApproved, StatusPending},
+	).Order("created_at ASC, id ASC").Find(&items).Error
+	return items, err
+}
+
 func (r *Repository) CountApprovedForContent(contentID uint) (int64, error) {
 	var count int64
 	err := r.db.Model(&Comment{}).

@@ -116,6 +116,28 @@ menu_order = 1
 
 This keeps the content model (`module`), public URLs (`/modules`), and presentation templates (`products`, `product-detail`) independently configurable. It is useful when a theme reuses an existing layout for a differently named business concept. `archive_title_key` points to a theme locale key used for archive `<title>` and Open Graph title, so multilingual pages do not fall back to the static `label_plural` text.
 
+### Frontend-authorable Content Types
+
+An authenticated frontend workflow can opt a theme-defined type into Core's
+generic submission policy:
+
+```toml
+[content_types.public_submission]
+enabled = true
+roles = ["subscriber", "contributor"]
+default_status = "pending"
+allow_update_own = true
+allow_delete_own = true
+```
+
+The declaration supplies temporary type-scoped RBAC capabilities while the
+theme is active. Routes and UI remain theme-owned; writes must go through
+`theme.PublicSubmissionApp.PublicSubmissionService()` so Core can enforce the
+active account, allowed role, capability, ownership, status, validation, slug,
+and rate-limit rules. Never bind the service's trusted `PublishImmediately`
+field to browser input. See
+[Public Content Submission](../architecture/public-content-submission.md).
+
 ## Template Hierarchy
 
 ```text
@@ -220,6 +242,12 @@ The navigation slot belongs to the Header contract. Put it at the end of the pri
 ```
 
 Use `pageTitleFor`, `seoHeadFor`, `settingOr`, `archiveURL`, `contentURL`, `taxonomyURL`, `isMenuURLActive`, `currentLang`, `langPrefixURL`, `menuByLocation`, and the responsive image helpers from the core funcmap instead of implementing theme-local equivalents.
+
+`goPressVersion` returns the running Core version from the single source of truth in `version/version.go`. Use it for version labels in theme-rendered documentation or diagnostic UI instead of copying a version string into theme settings or templates:
+
+```gotemplate
+<span>GoPress Core v{{goPressVersion}}</span>
+```
 
 ### Navigation Extension Styling And Interaction
 
@@ -366,13 +394,17 @@ The admin **Themes** page shows an icon next to each theme name. The convention 
 
 ## Authenticated Comments And Profile Routes
 
-For comments, account pages, bookmarks, or other authenticated theme workflows:
+For public submissions, comments, account pages, bookmarks, or other
+authenticated theme workflows:
 
-- Use core's provider-neutral `currentUser`, `loginURL`, `loginProviders`, `loginProviderURL`, `CommentApp`, and `PublicAuthorizationApp` contracts.
+- Use core's provider-neutral `currentUser`, `loginURL`, `loginProviders`,
+  `loginProviderURL`, `PublicSubmissionApp`, `CommentApp`, and
+  `PublicAuthorizationApp` contracts.
 - Declare a required identity plugin only in `theme.toml`; never import it or inspect its private options/provider ID at runtime.
 - Protect every state-changing route with same-origin validation and a concrete `resource.action` capability.
 - Validate submitted content/comment IDs against their type, target, ownership, and parent relationship.
 - Keep own-account pages on a fixed route, set `Cache-Control: private, no-store`, and never expose another user's email.
 - Add tests proving an unauthenticated or permissionless role is rejected and an authorized role succeeds.
 
-See [Comments and Replies](../architecture/comments.md).
+See [Public Content Submission](../architecture/public-content-submission.md)
+and [Comments and Replies](../architecture/comments.md).

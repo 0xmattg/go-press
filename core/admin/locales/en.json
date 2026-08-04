@@ -123,6 +123,7 @@
   "content.set_featured_image": "Set Featured",
   "content.status": "Status",
   "content.status.archived": "Archived",
+  "content.status.pending": "Pending review",
   "content.status.draft": "Draft",
   "content.status.published": "Published",
   "content.title": "Title",

@@ -514,6 +514,10 @@ func (h *Handler) UserUpdate(c *gin.Context) {
 	item.Email = user.EmailPointer(c.PostForm("email"))
 	item.DisplayName = c.PostForm("display_name")
 	item.Role = c.PostForm("role")
+	// Unchecked checkboxes are omitted from form submissions. Persist the
+	// resulting false value explicitly so administrators can disable an
+	// account, and accept any submitted value as the checked state.
+	item.IsActive = c.PostForm("is_active") != ""
 
 	if password := c.PostForm("password"); password != "" {
 		hash, err := user.HashPassword(password)

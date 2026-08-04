@@ -24,6 +24,7 @@ GoPress 引擎是 CMS 的运行时容器，负责装配存储、内容仓储、R
   由引擎注册，切换主题时仍然保留。
 - **主题类型** — 主题在 `theme.toml` 的 `[[content_types]]` 中声明自定义
   类型，core 在主题激活时统一注册。
+- **前台用户提交** — 主题内容类型可以声明 `public_submission` 策略。主题激活期间，Core 提供通用的所有者范围写服务和临时的内容类型 RBAC 授权，路由与 UI 仍由主题负责。详见[前台用户内容提交](public-content-submission.md)。
 - **注册表驱动行为** — 同一个 `ContentTypeDef` 同时驱动后台导航、CRUD
   表单、REST API、Rewrite、Sitemap、分类归档和 BaseTheme 归档/详情渲染。
   `rewrite_slug` 控制公开 URL，`templates = { archive = "...", single = "..." }`
@@ -70,6 +71,8 @@ Core 统一管理用户、JWT 与前台 Session、角色、Capability 和审计�
 保护 Handler 必须检查明确的 `resource.action` 权限，不能只判断是否存在
 登录会话。主题和身份插件通过 Provider-neutral 的前台认证契约协作，不能
 自行建立另一套用户或 Session 存储。
+
+停用账号后，后台 Token 和前台 Session 都会在下一次请求立即失效。主题声明产生的前台提交能力通过授权 Handle 单独跟踪，切换主题时只撤销这些临时能力，不会移除主题激活前已经存在的 RBAC 配置。
 
 ## 媒体
 

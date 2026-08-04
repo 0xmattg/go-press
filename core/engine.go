@@ -98,13 +98,14 @@ type Engine struct {
 
 	// Repositories are thin data access layers. Higher-level workflows should
 	// still go through services where those exist, especially in admin code.
-	Content      *content.Repository
-	Comments     *comment.Service
-	Taxonomy     *taxonomy.Repository
-	Users        *user.Repository
-	Identities   *user.IdentityRepository
-	UserSessions *user.SessionRepository
-	Media        *media.Repository
+	Content           *content.Repository
+	Comments          *comment.Service
+	Taxonomy          *taxonomy.Repository
+	Users             *user.Repository
+	Identities        *user.IdentityRepository
+	UserSessions      *user.SessionRepository
+	Media             *media.Repository
+	PublicSubmissions *content.PublicSubmissionService
 
 	// Auth handles admin/session JWT concerns.
 	Auth *user.Auth
@@ -122,10 +123,11 @@ type Engine struct {
 
 	// Theme and plugin runtime state. Themes are initialized once, while the
 	// active theme slug can change at runtime through the admin panel.
-	mu              sync.RWMutex
-	themes          map[string]coreTheme.Theme // all initialized theme instances
-	activeThemeName string                     // slug of the currently active theme
-	PluginManager   *plugin.Manager
+	mu                    sync.RWMutex
+	themes                map[string]coreTheme.Theme // all initialized theme instances
+	activeThemeName       string                     // slug of the currently active theme
+	PluginManager         *plugin.Manager
+	themeSubmissionGrants []user.CapabilityGrant
 
 	// Admin is created after repositories and the registry are ready.
 	Admin *admin.Handler
@@ -213,6 +215,7 @@ func New(cfg *config.Config, db *gorm.DB) *Engine {
 		PluginManager: plugin.NewManager(),
 	}
 	e.Comments = comment.NewService(db, hookBus, e.Registry)
+	e.PublicSubmissions = content.NewPublicSubmissionService(e.Content, e.Users, e.Registry, e.RBAC)
 
 	// URL / SEO (depends on Registry, created after it)
 	e.Rewrite = rewrite.NewEngine(e.Registry)
@@ -306,6 +309,7 @@ func (e *Engine) activateTheme(name string) error {
 	// theme's embedded theme.toml (baked into the binary) so runtime behavior
 	// matches the compiled version; fall back to disk only if the theme predates
 	// FileConfigProvider.
+	e.revokePublicSubmissionCapabilities()
 	e.Registry.Clear()
 	e.registerCoreTypes()
 	var themeConfig *coreTheme.FileConfig
@@ -323,6 +327,7 @@ func (e *Engine) activateTheme(name string) error {
 	// switches (the registry was just cleared and rebuilt). Fires on every
 	// activation, including the initial one and later switches.
 	e.Hooks.DoAction(context.Background(), hook.ContentRegisterTypes, e.Registry)
+	e.registerPublicSubmissionCapabilities()
 	theme.Setup(e)
 
 	e.mu.Lock()
@@ -336,6 +341,42 @@ func (e *Engine) activateTheme(name string) error {
 
 	logger.Info("Theme activated", "theme", theme.Name(), "slug", name)
 	return nil
+}
+
+// registerPublicSubmissionCapabilities converts declarative content-type
+// policies into ordinary RBAC capabilities for the duration of the active
+// theme. Previous activation grants are revoked before the registry rebuild.
+func (e *Engine) registerPublicSubmissionCapabilities() {
+	if e == nil || e.RBAC == nil || e.Registry == nil {
+		return
+	}
+	for _, def := range e.Registry.AllTypes() {
+		if def == nil || !def.PublicSubmission.Enabled {
+			continue
+		}
+		for _, role := range def.PublicSubmission.Roles {
+			e.themeSubmissionGrants = append(e.themeSubmissionGrants,
+				e.RBAC.GrantCapability(role, def.Name, "create"),
+				e.RBAC.GrantCapability(role, def.Name, "read_own"),
+			)
+			if def.PublicSubmission.AllowUpdateOwn {
+				e.themeSubmissionGrants = append(e.themeSubmissionGrants, e.RBAC.GrantCapability(role, def.Name, "update_own"))
+			}
+			if def.PublicSubmission.AllowDeleteOwn {
+				e.themeSubmissionGrants = append(e.themeSubmissionGrants, e.RBAC.GrantCapability(role, def.Name, "delete_own"))
+			}
+		}
+	}
+}
+
+func (e *Engine) revokePublicSubmissionCapabilities() {
+	if e == nil || e.RBAC == nil {
+		return
+	}
+	for _, grant := range e.themeSubmissionGrants {
+		e.RBAC.RevokeCapabilityGrant(grant)
+	}
+	e.themeSubmissionGrants = nil
 }
 
 // RefreshActiveTheme re-activates the current theme (rebuilding the content
@@ -1356,9 +1397,12 @@ func (e *Engine) Shutdown(ctx context.Context) error {
 // --- App interface implementation ---
 // These methods expose engine capabilities to themes via the theme.App interface.
 
-func (e *Engine) Database() *gorm.DB                    { return e.DB }
-func (e *Engine) ContentRepo() *content.Repository      { return e.Content }
-func (e *Engine) CommentService() *comment.Service      { return e.Comments }
+func (e *Engine) Database() *gorm.DB               { return e.DB }
+func (e *Engine) ContentRepo() *content.Repository { return e.Content }
+func (e *Engine) CommentService() *comment.Service { return e.Comments }
+func (e *Engine) PublicSubmissionService() *content.PublicSubmissionService {
+	return e.PublicSubmissions
+}
 func (e *Engine) TaxonomyRepo() *taxonomy.Repository    { return e.Taxonomy }
 func (e *Engine) ContentRegistry() *content.Registry    { return e.Registry }
 func (e *Engine) OptionsStore() *option.Store           { return e.Options }

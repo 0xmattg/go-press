@@ -44,6 +44,12 @@ Core treats `subject` as opaque. An OIDC plugin should use the verified ID Token
 
 The cookie is `HttpOnly`, `SameSite=Lax`, and `Secure` when the configured site URL uses HTTPS. Public-authenticated pages bypass the shared page cache.
 
+Session authentication revalidates the account against the database. Disabling
+an account therefore invalidates existing public sessions on the next request:
+core rejects the session, records it as revoked, and expires the browser cookie.
+The same account-state rule applies to admin JWT/API authentication, so an
+operator does not have to wait for either token type to expire naturally.
+
 ## Registration Policy
 
 The **Admin > Settings > Account Settings** section controls core policy:
@@ -149,6 +155,37 @@ Typical header rendering:
 
 Use `loginURL` as the progressive fallback for a regular sign-in link. A theme that presents provider selection in a dialog may enumerate `loginProviders` and must build every provider link with `loginProviderURL`; the helper rejects external/invalid start URLs and attaches a safe same-site return path. `shop-starter` demonstrates this overlay pattern while keeping the original link usable without JavaScript. A theme must not import `plugins/google-identity`, check plugin activation options, or branch on provider IDs.
 
+### Returning Errors To A Theme-owned Dialog
+
+Themes with an in-page login dialog may opt into Core's safe error handoff. Add
+`auth_dialog=1` to the same-site page used as the provider `return_to`, then
+build the provider link with `loginProviderURL` as usual. If authentication
+returns through `/login` with a known error, Core removes the marker and
+redirects back with `auth_error=<code>` so the theme can reopen the dialog and
+render the message in its own visual system.
+
+For example, this return target:
+
+```text
+/docs?q=api&auth_dialog=1
+```
+
+becomes:
+
+```text
+/docs?auth_error=authentication_failed&q=api
+```
+
+The allow-listed codes are `authentication_failed`, `registration_disabled`,
+`identity_conflict`, and `provider_unavailable`. Themes should translate these
+codes locally, display them as text rather than HTML, and remove `auth_error`
+from the visible URL with `history.replaceState` after opening the dialog.
+
+The behavior is opt-in. Unknown errors, unsafe/external return targets, missing
+markers, and themes without dialog support continue to use Core's standalone
+login page. This preserves progressive enhancement and prevents open redirects
+or redirect loops.
+
 ## Google Identity Plugin
 
 The bundled `google-identity` plugin implements server-side Google OpenID Connect with Authorization Code Flow, PKCE, signed state cookie, nonce, Discovery/JWKS verification, audience and expiry validation, access-token hash verification, verified email enforcement, and optional Google Workspace `hd` restriction.
@@ -206,4 +243,7 @@ When several EVM wallet extensions are installed, code must not rely directly on
 - Never auto-link by email or wallet address without an authenticated linking flow.
 - Derive linking ownership from the current session, not a form or URL user ID.
 - Keep admin provider settings behind `plugin.read` and `plugin.update` RBAC checks.
-- Revoke sessions when an account is disabled or credentials are suspected to be compromised.
+- Disabling an account immediately rejects existing admin tokens and public
+  sessions; the next public request also revokes the stored session and clears
+  its cookie.
+- Revoke sessions when credentials are suspected to be compromised.
