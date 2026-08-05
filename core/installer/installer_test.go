@@ -34,8 +34,33 @@ func TestInstallerWelcomePageRenders(t *testing.T) {
 	if !strings.Contains(rec.Body.String(), "English") || !strings.Contains(rec.Body.String(), "简体中文") {
 		t.Fatalf("body does not contain language choices: %s", rec.Body.String())
 	}
+	if !strings.Contains(rec.Body.String(), "Beta Software and Data Notice") || !strings.Contains(rec.Body.String(), `name="beta_notice_accepted"`) {
+		t.Fatalf("welcome page does not contain the required beta notice: %s", rec.Body.String())
+	}
 	if strings.Contains(rec.Body.String(), "WordPress") {
 		t.Fatalf("welcome page should not contain WordPress copy: %s", rec.Body.String())
+	}
+}
+
+func TestInstallerWelcomePageIncludesInstantLocalizedBetaCopy(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	inst := New(filepath.Join(t.TempDir(), "config.toml"), nil, nil, nil)
+	rec := httptest.NewRecorder()
+	inst.Router().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/install", nil))
+
+	body := rec.Body.String()
+	for _, expected := range []string{
+		`data-copy-en="Beta Software and Data Notice"`,
+		`data-copy-zh-cn="Beta 版本与数据说明"`,
+		`data-copy-en="Agree and Continue"`,
+		`data-copy-zh-cn="同意并继续安装"`,
+		`radio.addEventListener("change"`,
+	} {
+		if !strings.Contains(body, expected) {
+			t.Fatalf("welcome page does not include instant localized copy %q", expected)
+		}
 	}
 }
 
@@ -45,7 +70,7 @@ func TestInstallerLanguageSubmitSetsCookieAndRedirects(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	inst := New(filepath.Join(t.TempDir(), "config.toml"), nil, nil, nil)
-	req := httptest.NewRequest(http.MethodPost, "/install/language", strings.NewReader("language=zh-CN"))
+	req := httptest.NewRequest(http.MethodPost, "/install/language", strings.NewReader("language=zh-CN&beta_notice_accepted=1"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec := httptest.NewRecorder()
 
@@ -58,8 +83,30 @@ func TestInstallerLanguageSubmitSetsCookieAndRedirects(t *testing.T) {
 		t.Fatalf("Location = %q, want /install/database", location)
 	}
 	cookies := rec.Result().Cookies()
-	if len(cookies) == 0 || cookies[0].Name != installerLanguageCookie || cookies[0].Value != "zh-CN" {
+	if cookieValue(cookies, installerLanguageCookie) != "zh-CN" {
 		t.Fatalf("language cookie not set correctly: %#v", cookies)
+	}
+	if cookieValue(cookies, installerPolicyCookie) == "" {
+		t.Fatalf("policy cookie not set correctly: %#v", cookies)
+	}
+}
+
+func TestInstallerRejectsMissingBetaNoticeAcceptance(t *testing.T) {
+	t.Parallel()
+	gin.SetMode(gin.TestMode)
+	inst := New(filepath.Join(t.TempDir(), "config.toml"), nil, nil, nil)
+	req := httptest.NewRequest(http.MethodPost, "/install/language", strings.NewReader("language=en"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+	inst.Router().ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "Read and accept the Beta Software and Data Notice") {
+		t.Fatalf("missing consent response: status=%d body=%s", rec.Code, rec.Body.String())
+	}
+
+	direct := httptest.NewRecorder()
+	inst.Router().ServeHTTP(direct, httptest.NewRequest(http.MethodGet, "/install/database", nil))
+	if direct.Code != http.StatusFound || direct.Header().Get("Location") != "/install" {
+		t.Fatalf("direct database access was not gated: status=%d location=%q", direct.Code, direct.Header().Get("Location"))
 	}
 }
 
@@ -70,6 +117,7 @@ func TestInstallerSitePageRedirectsWithoutDatabaseStep(t *testing.T) {
 
 	inst := New(filepath.Join(t.TempDir(), "config.toml"), nil, nil, nil)
 	req := httptest.NewRequest(http.MethodGet, "/install/site", nil)
+	addPolicyCookie(req, inst)
 	rec := httptest.NewRecorder()
 
 	inst.Router().ServeHTTP(rec, req)
@@ -91,6 +139,7 @@ func TestInstallerDatabaseSubmitValidatesRequiredFields(t *testing.T) {
 	inst := New(filepath.Join(t.TempDir(), "config.toml"), initial, nil, nil)
 	req := httptest.NewRequest(http.MethodPost, "/install/database", strings.NewReader("database=&user="))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	addPolicyCookie(req, inst)
 	rec := httptest.NewRecorder()
 
 	inst.Router().ServeHTTP(rec, req)
@@ -110,6 +159,7 @@ func TestInstallerDatabasePageShowsSeparateTestAndContinueButtons(t *testing.T) 
 
 	inst := New(filepath.Join(t.TempDir(), "config.toml"), &config.Config{}, nil, nil)
 	req := httptest.NewRequest(http.MethodGet, "/install/database", nil)
+	addPolicyCookie(req, inst)
 	rec := httptest.NewRecorder()
 
 	inst.Router().ServeHTTP(rec, req)
@@ -131,6 +181,7 @@ func TestInstallerDatabasePageUsesSelectedChineseLanguage(t *testing.T) {
 	inst := New(filepath.Join(t.TempDir(), "config.toml"), &config.Config{}, nil, nil)
 	req := httptest.NewRequest(http.MethodGet, "/install/database", nil)
 	req.AddCookie(&http.Cookie{Name: installerLanguageCookie, Value: "zh-CN"})
+	addPolicyCookie(req, inst)
 	rec := httptest.NewRecorder()
 
 	inst.Router().ServeHTTP(rec, req)
@@ -158,6 +209,7 @@ func TestInstallerSitePageCarriesSelectedAdminLanguage(t *testing.T) {
 	inst := New(configPath, cfg, nil, nil)
 	req := httptest.NewRequest(http.MethodGet, "/install/site", nil)
 	req.AddCookie(&http.Cookie{Name: installerLanguageCookie, Value: "zh-CN"})
+	addPolicyCookie(req, inst)
 	rec := httptest.NewRecorder()
 
 	inst.Router().ServeHTTP(rec, req)
@@ -185,6 +237,7 @@ func TestInstallerDatabaseTestValidatesRequiredFields(t *testing.T) {
 	inst := New(filepath.Join(t.TempDir(), "config.toml"), &config.Config{}, nil, nil)
 	req := httptest.NewRequest(http.MethodPost, "/install/database/test", strings.NewReader("database=&user="))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	addPolicyCookie(req, inst)
 	rec := httptest.NewRecorder()
 
 	inst.Router().ServeHTTP(rec, req)
@@ -203,6 +256,19 @@ func TestInstallerDatabaseTestValidatesRequiredFields(t *testing.T) {
 	if payload["error"] != "Fill in the PostgreSQL connection details." {
 		t.Fatalf("payload error = %v", payload["error"])
 	}
+}
+
+func addPolicyCookie(req *http.Request, inst *Installer) {
+	req.AddCookie(&http.Cookie{Name: installerPolicyCookie, Value: inst.signedPolicyValue()})
+}
+
+func cookieValue(cookies []*http.Cookie, name string) string {
+	for _, cookie := range cookies {
+		if cookie.Name == name {
+			return cookie.Value
+		}
+	}
+	return ""
 }
 
 func TestSiteDirNameFromURL(t *testing.T) {

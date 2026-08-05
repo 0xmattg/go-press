@@ -67,8 +67,11 @@ func TestSaveWritesConfigWithSecurePermissions(t *testing.T) {
 			FromEmail:  "no-reply@example.com",
 		},
 		Install: InstallConfig{
-			Completed:   true,
-			InstalledAt: "2026-04-09T00:00:00Z",
+			Completed:              true,
+			InstalledAt:            "2026-04-09T00:00:00Z",
+			InstanceID:             "22db13d0-d73b-43cb-942f-f9e187bf8de3",
+			UpdatePolicyVersion:    "beta-1",
+			UpdatePolicyAcceptedAt: "2026-04-09T00:00:00Z",
 		},
 	}
 
@@ -93,6 +96,9 @@ func TestSaveWritesConfigWithSecurePermissions(t *testing.T) {
 	}
 	if !loaded.Install.Completed {
 		t.Fatalf("loaded install completion = false, want true")
+	}
+	if loaded.Install.InstanceID != cfg.Install.InstanceID || loaded.Install.UpdatePolicyVersion != "beta-1" {
+		t.Fatalf("loaded install update consent = %#v, want %#v", loaded.Install, cfg.Install)
 	}
 	if loaded.Site.Timezone != cfg.Site.Timezone {
 		t.Fatalf("loaded timezone = %q, want %q", loaded.Site.Timezone, cfg.Site.Timezone)

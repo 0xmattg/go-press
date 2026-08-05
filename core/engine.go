@@ -32,11 +32,13 @@ import (
 	"go-press/core/rewrite"
 	"go-press/core/taxonomy"
 	coreTheme "go-press/core/theme"
+	"go-press/core/updatecheck"
 	"go-press/core/user"
 	"go-press/core/worker"
 	"go-press/pkg/logger"
 	"go-press/pkg/middleware"
 	"go-press/pkg/semver"
+	"go-press/version"
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -88,6 +90,7 @@ type Engine struct {
 	Workers  *worker.Pool
 	Sched    *worker.Scheduler
 	Mail     *coreMail.Service
+	Updates  *updatecheck.Service
 
 	// URL / SEO services derive public routes, metadata, redirects, and sitemap
 	// entries from the content registry and repositories.
@@ -214,6 +217,22 @@ func New(cfg *config.Config, db *gorm.DB) *Engine {
 		themes:        make(map[string]coreTheme.Theme),
 		PluginManager: plugin.NewManager(),
 	}
+	updateRegistry := updatecheck.NewRegistry()
+	e.Updates = updatecheck.NewService(
+		e.Options,
+		updateRegistry,
+		updatecheck.NewClient("GoPress/"+version.String()),
+	)
+	if err := updateRegistry.Register(updatecheck.Target{
+		Kind:               updatecheck.KindCore,
+		Slug:               "gopress",
+		CurrentVersion:     version.String(),
+		Channel:            "beta",
+		Endpoint:           updatecheck.DefaultCoreEndpoint,
+		ReportInstallation: true,
+	}); err != nil {
+		logger.Error("Failed to register core update target", "error", err)
+	}
 	e.Comments = comment.NewService(db, hookBus, e.Registry)
 	e.PublicSubmissions = content.NewPublicSubmissionService(e.Content, e.Users, e.Registry, e.RBAC)
 
@@ -268,6 +287,15 @@ func New(cfg *config.Config, db *gorm.DB) *Engine {
 	e.I18n = coreI18n.NewManager(cfg.Site.Language)
 
 	return e
+}
+
+// RegisterUpdateTarget exposes the generic update registry to independently
+// versioned themes and plugins without coupling core to a concrete extension.
+func (e *Engine) RegisterUpdateTarget(target updatecheck.Target) error {
+	if e == nil || e.Updates == nil || e.Updates.Registry() == nil {
+		return fmt.Errorf("update service is unavailable")
+	}
+	return e.Updates.Registry().Register(target)
 }
 
 // LoadAllThemes initializes every registered theme factory and activates the
@@ -711,6 +739,10 @@ func (e *Engine) Bootstrap() error {
 	e.Sched.AddJob("expired-public-sessions", time.Hour, func(ctx context.Context) error {
 		return e.UserSessions.DeleteExpired(ctx, time.Now().UTC())
 	})
+	if e.Updates != nil {
+		e.Updates.Prepare()
+		e.Sched.AddJob("update-check", 5*time.Minute, e.Updates.RunDue)
+	}
 	e.Sched.Start()
 
 	// 5. Fire init hook
@@ -966,6 +998,7 @@ func (e *Engine) SetupAdmin() {
 	)
 	svc.SetCommentService(e.Comments)
 	h := admin.NewHandler(svc, e.Registry, "core/admin/templates")
+	h.SetUpdateStatusProvider(e.Updates)
 
 	// Inject engine hook bus so handlers can invoke plugin-provided filters
 	h.SetHookBus(e.Hooks)

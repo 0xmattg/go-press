@@ -185,6 +185,46 @@ const layoutTemplate = `
 			line-height: 1.8;
 			margin-bottom: .35rem;
 		}
+		.beta-notice {
+			margin-top: 1.25rem;
+			padding: 1rem;
+			border: 1px solid var(--border);
+			border-radius: var(--radius);
+			background: #f8fafc;
+			color: var(--text-muted);
+			font-size: .75rem;
+			line-height: 1.65;
+		}
+		.beta-notice-title {
+			margin: 0 0 .5rem;
+			color: var(--text);
+			font-size: .84rem;
+			font-weight: 650;
+		}
+		.beta-notice p { margin: 0 0 .65rem; }
+		.beta-notice p:last-of-type { margin-bottom: 0; }
+		.beta-consent {
+			display: flex;
+			align-items: flex-start;
+			gap: .6rem;
+			margin-top: .9rem;
+			padding-top: .8rem;
+			border-top: 1px solid var(--border);
+			color: var(--text);
+			font-weight: 600;
+			cursor: pointer;
+		}
+		.beta-consent input {
+			width: 16px;
+			height: 16px;
+			margin-top: .18rem;
+			accent-color: var(--primary);
+			flex: 0 0 auto;
+		}
+		.beta-consent input:focus-visible {
+			outline: 3px solid rgba(37, 99, 235, .2);
+			outline-offset: 2px;
+		}
 		.form-grid {
 			display: grid;
 			grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -561,10 +601,49 @@ const welcomeTemplate = `
 		</div>
 		<small class="form-help">{{T .Lang "welcome.language_help"}}</small>
 	</div>
+	<section class="beta-notice" id="beta-notice" lang="{{.Lang}}" aria-labelledby="beta-notice-title">
+		<h3 class="beta-notice-title" id="beta-notice-title" data-copy-en="{{T "en" "welcome.beta_notice_title"}}" data-copy-zh-cn="{{T "zh-CN" "welcome.beta_notice_title"}}">{{T .Lang "welcome.beta_notice_title"}}</h3>
+		<p data-copy-en="{{T "en" "welcome.beta_notice_risk"}}" data-copy-zh-cn="{{T "zh-CN" "welcome.beta_notice_risk"}}">{{T .Lang "welcome.beta_notice_risk"}}</p>
+		<p data-copy-en="{{T "en" "welcome.beta_notice_liability"}}" data-copy-zh-cn="{{T "zh-CN" "welcome.beta_notice_liability"}}">{{T .Lang "welcome.beta_notice_liability"}}</p>
+		<p data-copy-en="{{T "en" "welcome.beta_notice_data"}}" data-copy-zh-cn="{{T "zh-CN" "welcome.beta_notice_data"}}">{{T .Lang "welcome.beta_notice_data"}}</p>
+		<label class="beta-consent" for="beta_notice_accepted">
+			<input id="beta_notice_accepted" type="checkbox" name="beta_notice_accepted" value="1" required>
+			<span data-copy-en="{{T "en" "welcome.beta_notice_consent"}}" data-copy-zh-cn="{{T "zh-CN" "welcome.beta_notice_consent"}}">{{T .Lang "welcome.beta_notice_consent"}}</span>
+		</label>
+	</section>
 	<div class="form-actions center">
-		<button class="btn btn-primary" type="submit">{{T .Lang "welcome.start"}}</button>
+		<button class="btn btn-primary" type="submit" data-copy-en="{{T "en" "welcome.agree_continue"}}" data-copy-zh-cn="{{T "zh-CN" "welcome.agree_continue"}}">{{T .Lang "welcome.agree_continue"}}</button>
 	</div>
 </form>
+	<script>
+	(function () {
+		const form = document.querySelector('form[action="/install/language"]');
+		if (!form) return;
+
+		const languageRadios = form.querySelectorAll('input[name="language"]');
+		const localizedCopy = form.querySelectorAll('[data-copy-en][data-copy-zh-cn]');
+		const notice = document.getElementById("beta-notice");
+
+		const applyLanguage = (language) => {
+			const selectedLanguage = language === "zh-CN" ? "zh-CN" : "en";
+			const copyAttribute = selectedLanguage === "zh-CN" ? "data-copy-zh-cn" : "data-copy-en";
+			localizedCopy.forEach((element) => {
+				element.textContent = element.getAttribute(copyAttribute) || "";
+				element.lang = selectedLanguage;
+			});
+			if (notice) notice.lang = selectedLanguage;
+		};
+
+		languageRadios.forEach((radio) => {
+			radio.addEventListener("change", () => {
+				if (radio.checked) applyLanguage(radio.value);
+			});
+		});
+
+		const selectedRadio = form.querySelector('input[name="language"]:checked');
+		if (selectedRadio) applyLanguage(selectedRadio.value);
+	})();
+	</script>
 {{end}}
 `
 

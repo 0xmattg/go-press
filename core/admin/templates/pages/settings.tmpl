@@ -128,6 +128,24 @@
         </div>
         </section>
 
+        <section class="settings-section settings-section-updates">
+        <h3 class="settings-section-title">{{T . "settings.update_settings"}}</h3>
+        <div class="settings-grid">
+        {{range .Items}}
+        {{if eq .Group "updates"}}
+        <div class="form-group settings-item">
+            <label>{{.Label}}</label>
+            <label class="checkbox-label settings-checkbox-label">
+                <input type="checkbox" name="{{.Key}}" value="1" {{if eq .Value "1"}}checked{{end}}>
+                <span>{{T $ "settings.enabled"}}</span>
+            </label>
+            {{if .Description}}<small>{{.Description}}</small>{{end}}
+        </div>
+        {{end}}
+        {{end}}
+        </div>
+        </section>
+
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">{{T . "action.save_settings"}}</button>
             <button type="button" class="btn btn-secondary" id="btn-generate-sitemap" onclick="generateSitemap()" style="margin-left:12px">

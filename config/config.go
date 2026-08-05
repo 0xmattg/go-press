@@ -91,8 +91,11 @@ type MailConfig struct {
 }
 
 type InstallConfig struct {
-	Completed   bool   `mapstructure:"completed" toml:"completed"`
-	InstalledAt string `mapstructure:"installed_at" toml:"installed_at"`
+	Completed              bool   `mapstructure:"completed" toml:"completed"`
+	InstalledAt            string `mapstructure:"installed_at" toml:"installed_at"`
+	InstanceID             string `mapstructure:"instance_id" toml:"instance_id"`
+	UpdatePolicyVersion    string `mapstructure:"update_policy_version" toml:"update_policy_version"`
+	UpdatePolicyAcceptedAt string `mapstructure:"update_policy_accepted_at" toml:"update_policy_accepted_at"`
 }
 
 func Load(path string) (*Config, error) {

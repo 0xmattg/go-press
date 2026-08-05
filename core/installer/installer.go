@@ -1,7 +1,9 @@
 package installer
 
 import (
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -22,6 +24,7 @@ import (
 	"go-press/config"
 	"go-press/core"
 	"go-press/core/option"
+	"go-press/core/updatecheck"
 	"go-press/core/user"
 	"go-press/pkg/dbprefix"
 	"go-press/pkg/logger"
@@ -31,6 +34,8 @@ import (
 
 const (
 	installerLanguageCookie = "gopress_install_lang"
+	installerPolicyCookie   = "gopress_install_policy"
+	installerPolicyMaxAge   = 2 * 60 * 60
 )
 
 func installerLanguage(c *gin.Context) string {
@@ -50,6 +55,7 @@ type Installer struct {
 	initialConfig *config.Config
 	bootError     string
 	activate      ActivationFunc
+	policySecret  []byte
 	themeOptions  []ThemeOption
 	templates     *template.Template
 	router        *gin.Engine
@@ -107,10 +113,16 @@ type themeFile struct {
 }
 
 func New(configPath string, initialConfig *config.Config, bootErr error, activate ActivationFunc) *Installer {
+	policySecret := make([]byte, 32)
+	if _, err := rand.Read(policySecret); err != nil {
+		fallback := sha256.Sum256([]byte(configPath + time.Now().UTC().String()))
+		policySecret = fallback[:]
+	}
 	i := &Installer{
 		configPath:    configPath,
 		initialConfig: cloneConfig(initialConfig),
 		activate:      activate,
+		policySecret:  policySecret,
 		themeOptions:  discoverThemes(),
 	}
 	if bootErr != nil {
@@ -138,11 +150,11 @@ func New(configPath string, initialConfig *config.Config, bootErr error, activat
 	})
 	r.GET("/install", i.Welcome)
 	r.POST("/install/language", i.LanguageSubmit)
-	r.GET("/install/database", i.DatabasePage)
-	r.POST("/install/database/test", i.DatabaseTest)
-	r.POST("/install/database", i.DatabaseSubmit)
-	r.GET("/install/site", i.SitePage)
-	r.POST("/install/site", i.SiteSubmit)
+	r.GET("/install/database", i.requirePolicy(), i.DatabasePage)
+	r.POST("/install/database/test", i.requirePolicy(), i.DatabaseTest)
+	r.POST("/install/database", i.requirePolicy(), i.DatabaseSubmit)
+	r.GET("/install/site", i.requirePolicy(), i.SitePage)
+	r.POST("/install/site", i.requirePolicy(), i.SiteSubmit)
 
 	i.router = r
 	return i
@@ -167,6 +179,19 @@ func (i *Installer) Welcome(c *gin.Context) {
 
 func (i *Installer) LanguageSubmit(c *gin.Context) {
 	lang := normalizeInstallerLanguage(c.PostForm("language"))
+	if c.PostForm("beta_notice_accepted") != "1" {
+		i.render(c, http.StatusBadRequest, pageData{
+			Title:      installerT(lang, "title.welcome"),
+			Heading:    installerT(lang, "welcome.heading"),
+			Lead:       installerT(lang, "welcome.lead"),
+			Page:       "welcome",
+			Lang:       lang,
+			ConfigPath: i.configPath,
+			BootError:  i.bootError,
+			Error:      installerT(lang, "error.beta_notice_required"),
+		})
+		return
+	}
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     installerLanguageCookie,
 		Value:    lang,
@@ -174,7 +199,34 @@ func (i *Installer) LanguageSubmit(c *gin.Context) {
 		MaxAge:   3600,
 		SameSite: http.SameSiteLaxMode,
 	})
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     installerPolicyCookie,
+		Value:    i.signedPolicyValue(),
+		Path:     "/install",
+		MaxAge:   installerPolicyMaxAge,
+		HttpOnly: true,
+		Secure:   c.Request.TLS != nil,
+		SameSite: http.SameSiteLaxMode,
+	})
 	c.Redirect(http.StatusSeeOther, "/install/database")
+}
+
+func (i *Installer) requirePolicy() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		cookie, err := c.Cookie(installerPolicyCookie)
+		if err != nil || !hmac.Equal([]byte(cookie), []byte(i.signedPolicyValue())) {
+			c.Redirect(http.StatusFound, "/install")
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
+func (i *Installer) signedPolicyValue() string {
+	mac := hmac.New(sha256.New, i.policySecret)
+	mac.Write([]byte(updatecheck.CurrentPolicyVersion))
+	return updatecheck.CurrentPolicyVersion + "." + hex.EncodeToString(mac.Sum(nil))
 }
 
 func (i *Installer) DatabasePage(c *gin.Context) {
@@ -286,6 +338,20 @@ func (i *Installer) DatabaseSubmit(c *gin.Context) {
 
 	cfg.Install.Completed = false
 	cfg.Install.InstalledAt = ""
+	if cfg.Install.InstanceID == "" {
+		instanceID, err := updatecheck.NewInstallationID()
+		if err != nil {
+			i.render(c, http.StatusInternalServerError, pageData{
+				Title: installerT(lang, "title.database"), Heading: installerT(lang, "database.heading"),
+				Lead: installerT(lang, "database.lead"), Page: "database", Step: 1, Lang: lang,
+				ConfigPath: i.configPath, BootError: i.bootError, Error: err.Error(), Database: values,
+			})
+			return
+		}
+		cfg.Install.InstanceID = instanceID
+	}
+	cfg.Install.UpdatePolicyVersion = updatecheck.CurrentPolicyVersion
+	cfg.Install.UpdatePolicyAcceptedAt = time.Now().UTC().Format(time.RFC3339)
 
 	if err := config.Save(i.configPath, cfg); err != nil {
 		i.render(c, http.StatusInternalServerError, pageData{
@@ -564,13 +630,17 @@ func (i *Installer) initializeSite(cfg *config.Config, values siteValues, adminP
 
 	store := option.NewStore(db)
 	optionsToSet := map[string]string{
-		"active_theme":     cfg.Site.Theme,
-		"site_name":        values.SiteName,
-		"site_description": values.Tagline,
-		"site_language":    cfg.Site.Language,
-		"site_timezone":    cfg.Site.Timezone,
-		"admin_language":   normalizeInstallerLanguage(values.AdminLanguage),
-		"admin_email":      values.AdminEmail,
+		"active_theme":                  cfg.Site.Theme,
+		"site_name":                     values.SiteName,
+		"site_description":              values.Tagline,
+		"site_language":                 cfg.Site.Language,
+		"site_timezone":                 cfg.Site.Timezone,
+		"admin_language":                normalizeInstallerLanguage(values.AdminLanguage),
+		"admin_email":                   values.AdminEmail,
+		option.KeyUpdateCheckEnabled:    "1",
+		updatecheck.KeyInstallationID:   cfg.Install.InstanceID,
+		updatecheck.KeyPolicyVersion:    cfg.Install.UpdatePolicyVersion,
+		updatecheck.KeyPolicyAcceptedAt: cfg.Install.UpdatePolicyAcceptedAt,
 	}
 	if cfg.Site.Theme == "modern-company" {
 		optionsToSet["company_name"] = values.SiteName
