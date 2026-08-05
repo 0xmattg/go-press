@@ -20,6 +20,7 @@ const (
 	SystemOptionSectionSite     = "site"
 	SystemOptionSectionAdmin    = "admin"
 	SystemOptionSectionAccounts = "accounts"
+	SystemOptionSectionUpdates  = "updates"
 
 	SystemOptionInputText     = "text"
 	SystemOptionInputSelect   = "select"
@@ -146,6 +147,15 @@ var systemOptionDefinitions = []Definition{
 		LabelKey:  "field.admin_email",
 		Label:     "Admin Email",
 		InputType: SystemOptionInputText,
+	},
+	{
+		Key:            KeyUpdateCheckEnabled,
+		Section:        SystemOptionSectionUpdates,
+		LabelKey:       "field.update_check_enabled",
+		Label:          "Official Updates and Anonymous Installation Statistics",
+		DescriptionKey: "help.update_check_enabled",
+		InputType:      SystemOptionInputCheckbox,
+		DefaultValue:   "0",
 	},
 }
 

@@ -16,6 +16,7 @@ import (
 	"go-press/core/content"
 	"go-press/core/hook"
 	coreI18n "go-press/core/i18n"
+	"go-press/core/updatecheck"
 	"go-press/pkg/middleware"
 	"go-press/version"
 
@@ -188,6 +189,13 @@ type MenuCallbacks struct {
 	ReloadFn    func()
 }
 
+// UpdateStatusProvider exposes cached update state to the admin chrome. Admin
+// rendering never performs network I/O.
+type UpdateStatusProvider interface {
+	Enabled() bool
+	Snapshot(kind updatecheck.Kind, slug string) updatecheck.Status
+}
+
 // Handler manages all admin HTTP endpoints.
 type Handler struct {
 	svc               *Service
@@ -202,6 +210,7 @@ type Handler struct {
 	pluginCallbacks   PluginController
 	sitemapCallbacks  SitemapController
 	menuCallbacks     MenuController
+	updateStatus      UpdateStatusProvider
 	loginThrottle     *loginThrottle
 }
 
@@ -238,6 +247,10 @@ func (h *Handler) SetSitemapCallbacks(sc *SitemapCallbacks) {
 // SetMenuCallbacks injects menu management callbacks.
 func (h *Handler) SetMenuCallbacks(mc *MenuCallbacks) {
 	h.menuCallbacks = mc
+}
+
+func (h *Handler) SetUpdateStatusProvider(provider UpdateStatusProvider) {
+	h.updateStatus = provider
 }
 
 // invalidatePageCache flushes page cache after data mutations.
@@ -844,7 +857,7 @@ func (h *Handler) render(c *gin.Context, name string, data gin.H) {
 	data["MenuItems"] = h.buildMenuItems(adminLang, c.GetString("admin_role"))
 	data["SiteName"] = h.svc.SiteName()
 	data["PublicBaseURL"] = requestBaseURL(c)
-	data["GoPressVersion"] = version.String()
+	h.injectVersionStatus(data)
 	if h.themeManager != nil {
 		if w := h.themeManager.ActiveDepWarning(); w != "" {
 			data["ActiveDepWarning"] = w
@@ -870,6 +883,17 @@ func (h *Handler) render(c *gin.Context, name string, data gin.H) {
 	if err := tmpl.ExecuteTemplate(c.Writer, execName, data); err != nil {
 		log.Printf("Template render error (%s): %v", name, err)
 		c.String(http.StatusInternalServerError, "Template error")
+	}
+}
+
+func (h *Handler) injectVersionStatus(data gin.H) {
+	data["GoPressVersion"] = version.String()
+	if h == nil || h.updateStatus == nil || !h.updateStatus.Enabled() {
+		return
+	}
+	status := h.updateStatus.Snapshot(updatecheck.KindCore, "gopress")
+	if status.HasUpdate {
+		data["CoreUpdate"] = status
 	}
 }
 
@@ -928,6 +952,7 @@ func (h *Handler) RenderExtensionPage(c *gin.Context, fragmentPath, title, activ
 		"SiteName":      h.svc.SiteName(),
 		"PublicBaseURL": requestBaseURL(c),
 	}
+	h.injectVersionStatus(data)
 	for k, v := range extra {
 		data[k] = v
 	}

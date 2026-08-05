@@ -152,6 +152,43 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
     line-height: 1.2;
     letter-spacing: .01em;
 }
+.sidebar-version-current { display: block; }
+.sidebar-update-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-top: .48rem;
+    padding: .28rem .5rem;
+    border: 1px solid rgba(79, 141, 255, .42);
+    border-radius: 999px;
+    background: rgba(79, 141, 255, .12);
+    color: #8ab4ff;
+    font-size: .7rem;
+    font-weight: 650;
+    line-height: 1.15;
+    text-decoration: none;
+    transition: background-color .14s ease, border-color .14s ease, color .14s ease;
+}
+.sidebar-update-badge:hover {
+    border-color: rgba(79, 141, 255, .72);
+    background: rgba(79, 141, 255, .2);
+    color: #b7d0ff;
+}
+.sidebar-update-badge:focus-visible {
+    outline: 2px solid #93c5fd;
+    outline-offset: 2px;
+}
+.sidebar-update-security,
+.sidebar-update-unsupported {
+    border-color: rgba(248, 113, 113, .5);
+    background: rgba(220, 38, 38, .15);
+    color: #fca5a5;
+}
+.sidebar-update-security:hover,
+.sidebar-update-unsupported:hover {
+    border-color: rgba(248, 113, 113, .78);
+    background: rgba(220, 38, 38, .24);
+    color: #fecaca;
+}
 
 .admin-main { margin-left: var(--sidebar-w); min-height: 100vh; }
 .admin-topbar {

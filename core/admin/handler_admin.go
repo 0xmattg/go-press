@@ -687,6 +687,7 @@ func (h *Handler) ThemeSettings(c *gin.Context) {
 	data["MenuItems"] = h.buildMenuItems(adminLang, c.GetString("admin_role"))
 	data["SiteName"] = h.svc.SiteName()
 	data["PublicBaseURL"] = requestBaseURL(c)
+	h.injectVersionStatus(data)
 
 	if success := c.Query("success"); success != "" {
 		data["Success"] = success
@@ -1051,6 +1052,7 @@ func (h *Handler) PluginSettings(c *gin.Context) {
 	data["MenuItems"] = h.buildMenuItems(adminLang, c.GetString("admin_role"))
 	data["SiteName"] = h.svc.SiteName()
 	data["PublicBaseURL"] = requestBaseURL(c)
+	h.injectVersionStatus(data)
 
 	if success := c.Query("success"); success != "" {
 		data["Success"] = success
