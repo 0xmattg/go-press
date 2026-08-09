@@ -1,6 +1,6 @@
 package metamaskidentity
 
-import "go-press/core"
+import "github.com/0xmattg/go-press/core"
 
 func init() {
 	core.RegisterPlugin(PluginName, func(engine *core.Engine) {

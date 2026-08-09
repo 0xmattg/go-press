@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"go-press/pkg/middleware"
+	"github.com/0xmattg/go-press/pkg/middleware"
 
 	"github.com/gin-gonic/gin"
 )

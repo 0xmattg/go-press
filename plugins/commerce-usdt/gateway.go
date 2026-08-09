@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	corecommerce "go-press/core/commerce"
+	corecommerce "github.com/0xmattg/go-press/core/commerce"
 )
 
 // usdtGateway implements corecommerce.PaymentGateway (display-type / pull

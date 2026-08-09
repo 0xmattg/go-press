@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"go-press/core/content"
-	"go-press/core/updatecheck"
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/updatecheck"
+	"github.com/0xmattg/go-press/core/user"
 )
 
 func TestAdminSidebarUpdateBadgeUsesOfficialGitHubReleases(t *testing.T) {

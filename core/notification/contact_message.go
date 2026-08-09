@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"strings"
 
-	"go-press/core/content"
-	"go-press/core/hook"
-	"go-press/core/mail"
-	"go-press/core/option"
-	"go-press/core/worker"
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/hook"
+	"github.com/0xmattg/go-press/core/mail"
+	"github.com/0xmattg/go-press/core/option"
+	"github.com/0xmattg/go-press/core/worker"
+	"github.com/0xmattg/go-press/pkg/logger"
 )
 
 const (

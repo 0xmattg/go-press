@@ -14,11 +14,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	corecommerce "go-press/core/commerce"
-	"go-press/core/hook"
-	"go-press/core/option"
-	"go-press/core/plugin"
-	"go-press/pkg/logger"
+	corecommerce "github.com/0xmattg/go-press/core/commerce"
+	"github.com/0xmattg/go-press/core/hook"
+	"github.com/0xmattg/go-press/core/option"
+	"github.com/0xmattg/go-press/core/plugin"
+	"github.com/0xmattg/go-press/pkg/logger"
 )
 
 // appHost is the narrow slice of the engine this satellite needs: the hook bus

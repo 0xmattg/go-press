@@ -7,7 +7,7 @@
 </p>
 
 > GoPress is a content management framework and CMS engine written in Go for self-hosted websites and content applications that need themes, plugins, APIs, SEO, media handling, and a practical admin experience.
-> It brings content modeling, admin CRUD, theme rendering, plugin extension points, REST APIs, SEO infrastructure, multi-level caching, responsive media variants, and multi-site configuration into one composable Go codebase.
+> It brings content modeling, admin CRUD, theme rendering, plugin extension points, REST APIs, protocol-neutral Agent capabilities, an optional remote MCP adapter, SEO infrastructure, multi-level caching, responsive media variants, and multi-site configuration into one composable Go codebase.
 > It is suitable for company websites, editorial sites, product showcases, documentation hubs, and custom systems that want to keep a CMS authoring workflow inside a Go deployment model.
 
 [![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go)](https://go.dev)
@@ -17,7 +17,7 @@
 
 ## What Is GoPress?
 
-GoPress reorganizes the proven building blocks of a traditional CMS — content models, themes, plugins, and admin workflows — around the Go runtime and Go engineering ecosystem. It provides a unified content model, data-driven admin CRUD, a theme template engine, hook/filter extension points, REST APIs, SEO primitives, multi-level caching, media variants, and site-level configuration.
+GoPress reorganizes the proven building blocks of a traditional CMS — content models, themes, plugins, and admin workflows — around the Go runtime and Go engineering ecosystem. It provides a unified content model, data-driven admin CRUD, a theme template engine, hook/filter extension points, REST APIs, a protocol-neutral Agent execution layer, an optional remote MCP server, SEO primitives, multi-level caching, media variants, and site-level configuration.
 
 GoPress is not a line-by-line rewrite of WordPress, and it is not a statement against PHP. It focuses on a narrower engineering need: keeping the editorial experience and extension model of a CMS while gaining the deployment, concurrency, observability, and long-term maintenance advantages of Go.
 
@@ -56,6 +56,7 @@ GoPress brings public delivery, admin workflows, REST / OpenAPI, content service
 5. **SEO is built in** — URL rewriting, permalinks, canonical tags, sitemap generation, meta output, and redirects are handled at the core layer.
 6. **API first** — registered content types can expose REST endpoints and Swagger / OpenAPI documentation.
 7. **Instance isolation** — table prefixes and site-level configuration allow multiple instances to share infrastructure while keeping data boundaries clear.
+8. **Agent access is governed, not bypassed** — Agent tools reuse Core domain services and require credential scopes, current RBAC, ownership checks, risk policy, idempotency, and audit.
 
 ## Theme And Admin UI Preview
 
@@ -156,6 +157,7 @@ After startup:
 | `http://localhost:8080/admin` | Admin CMS |
 | `http://localhost:8080/swagger/index.html` | API documentation |
 | `http://localhost:8080/api/v1/content` | REST API |
+| `http://localhost:8080/mcp` | Remote MCP endpoint, only while the optional `gopress-mcp` plugin is active |
 
 See the full installation guide: [docs/guide/en/getting-started/installation.md](docs/guide/en/getting-started/installation.md).
 
@@ -172,7 +174,8 @@ The documentation lives under [`docs/guide/`](docs/guide/) and is organized as a
 | [Architecture](docs/guide/en/architecture/overview.md) | Engine boot flow, content model, public authentication, public content submission, authenticated comments, URL/SEO, cache, i18n, content scope, and hooks |
 | [Admin](docs/guide/en/admin/overview.md) | Admin CMS, standalone pages, extension points, and menu management |
 | [Themes](docs/guide/en/themes/overview.md) | Creating themes, SEO integration, image pipeline, and media variants |
-| [Plugins](docs/guide/en/plugins/overview.md) | Creating plugins, hook contracts, and bundled plugins |
+| [Plugins](docs/guide/en/plugins/overview.md) | Creating plugins, hook contracts, bundled plugins, and plugin-specific setup |
+| [Agent and MCP](docs/guide/en/agent/overview.md) | Core Agent design, layered architecture, Tool execution, authorization, extension development, operations, testing, and the optional [MCP adapter](docs/guide/en/plugins/gopress-mcp.md) |
 | [Commerce](docs/guide/en/commerce/overview.md) | E-commerce module: core contracts, catalog, cart, checkout, orders, inventory, payments, and shop-theme integration |
 | [Reference](docs/guide/en/reference/project-structure.md) | Project structure, table prefixes, REST API, tech stack, and roadmap |
 
@@ -244,6 +247,20 @@ See [Public Content Submission](docs/guide/en/architecture/public-content-submis
 
 See [Comments and Moderation](docs/guide/en/architecture/comments.md) for the data model, theme contract, moderation flow, security rules, and extension points.
 
+### Agent and MCP (Safe Write Beta)
+
+- **Protocol-neutral Core** — `core/agent` owns the Tool Registry, Principal refresh, credential scopes, RBAC and ownership authorization, risk policy, schema validation, bounded execution, idempotency, and mandatory audit without importing MCP.
+- **Optional official adapter** — the disabled-by-default `gopress-mcp` plugin exposes a stateless Streamable HTTP endpoint at `/mcp` through the official Go SDK, supporting protocol `2026-07-28` and a `2025-11-25` compatibility path.
+- **Read-only by default** — six read tools cover safe site metadata, content types, content, taxonomy, and media metadata. Tool discovery is filtered per credential and privately cached for 30 seconds.
+- **Explicit Safe Write** — six content/media write tools require `safe_write`, an individual Tool switch, a matching token scope, current Core RBAC, and ownership where applicable. Every write has an idempotency key; updates use optimistic timestamps; publish and trash require explicit confirmation.
+- **Short-lived credentials and audit** — administrator-issued Bearer tokens are audience-bound, valid for at most 90 days, stored only as digests, displayed once, and immediately revocable. Audit stores metadata and digests rather than tokens or argument values.
+- **Accurate Beta boundary** — OAuth 2.1 browser authorization, Resources, Prompts, Tasks, and MCP Apps are later phases and are not part of the current server.
+
+See the independent [Agent and MCP guide](docs/guide/en/agent/overview.md) for
+design and implementation details. For endpoint setup, scopes, Tool inputs,
+curl checks, and troubleshooting, use the
+[GoPress MCP plugin guide](docs/guide/en/plugins/gopress-mcp.md).
+
 ### Engine Core
 
 - **Unified content model** — `Content` + `ContentMeta` + `ContentType` registry; core keeps `post`, `page`, and `contact_message`, while themes declare custom types in `theme.toml`.
@@ -299,6 +316,7 @@ See [docs/guide/en/themes/overview.md](docs/guide/en/themes/overview.md).
 - **seo-extras** — Yoast-style per-content SEO overrides for title, description, Open Graph image, and robots.
 - **code-snippets** — WPCode-style site-level injection for end of `<head>`, start of `<body>`, and before `</body>`.
 - **gopress-analytics** — First-party self-hosted PV, UV, new-visitor, traffic-trend, and top-page analytics.
+- **gopress-mcp** — Read-only-by-default remote MCP adapter for Core Agent tools, with controlled Safe Write, short-lived credentials, diagnostics, and audit. Disabled by default. See [GoPress MCP](docs/guide/en/plugins/gopress-mcp.md).
 - **google-identity** — Google OIDC login and registration for Gmail and Google Workspace accounts, built on the provider-neutral public-auth core.
 - **metamask-identity** — MetaMask browser-extension login and registration through EIP-4361 Sign-In with Ethereum and one-time server challenges.
 - **commerce** — Opt-in e-commerce module (WooCommerce-like): `product` catalog, guest/account cart, single-transaction checkout, order state machine, inventory reservation with row locks, a medium-agnostic payment-gateway contract, and a built-in offline bank-transfer gateway. Disabled by default. See [docs/guide/en/commerce/overview.md](docs/guide/en/commerce/overview.md).
@@ -326,7 +344,7 @@ These are current architecture targets. Reproducible benchmark scripts, test env
 
 ## Tech Stack
 
-Gin / GORM / PostgreSQL / Redis / golang-jwt / Viper + TOML / log/slog / go-i18n / Quill 2.0 / swaggo/swag
+Gin / GORM / PostgreSQL / Redis / official MCP Go SDK / golang-jwt / Viper + TOML / log/slog / go-i18n / Quill 2.0 / swaggo/swag
 
 See [docs/guide/en/reference/tech-stack.md](docs/guide/en/reference/tech-stack.md).
 

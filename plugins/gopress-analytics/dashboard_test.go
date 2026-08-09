@@ -13,9 +13,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"go-press/core"
-	"go-press/core/admin"
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core"
+	"github.com/0xmattg/go-press/core/admin"
+	"github.com/0xmattg/go-press/core/user"
 )
 
 type fakeSummaryStore struct {

@@ -5,9 +5,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"go-press/core/admin"
-	"go-press/core/menu"
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core/admin"
+	"github.com/0xmattg/go-press/core/menu"
+	"github.com/0xmattg/go-press/core/user"
 
 	"github.com/gin-gonic/gin"
 )

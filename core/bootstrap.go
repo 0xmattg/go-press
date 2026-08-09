@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"go-press/config"
-	"go-press/pkg/dbprefix"
-	"go-press/pkg/logger"
-	pg "go-press/pkg/postgresql"
+	"github.com/0xmattg/go-press/config"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/pkg/logger"
+	pg "github.com/0xmattg/go-press/pkg/postgresql"
 )
 
 // BuildAndBootstrap creates a fully initialized Engine by connecting to the

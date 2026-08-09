@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 
-	corecommerce "go-press/core/commerce"
+	corecommerce "github.com/0xmattg/go-press/core/commerce"
 )
 
 // maxRespBody caps how much of a PayPal response we read, guarding against a

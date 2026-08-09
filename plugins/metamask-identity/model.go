@@ -3,7 +3,7 @@ package metamaskidentity
 import (
 	"time"
 
-	"go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
 )
 
 type walletChallenge struct {

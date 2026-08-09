@@ -19,7 +19,7 @@ import (
 	"github.com/gin-gonic/gin"
 	siwe "github.com/signinwithethereum/siwe-go"
 
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core/user"
 )
 
 type memoryOptions map[string]string

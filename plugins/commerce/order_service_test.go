@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"go-press/core"
-	corecommerce "go-press/core/commerce"
-	"go-press/core/hook"
+	"github.com/0xmattg/go-press/core"
+	corecommerce "github.com/0xmattg/go-press/core/commerce"
+	"github.com/0xmattg/go-press/core/hook"
 
 	"gorm.io/gorm"
 )

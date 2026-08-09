@@ -19,7 +19,7 @@
 //
 // Usage in main.go:
 //
-//	import _ "go-press/plugins/code-snippets"
+//	import _ "github.com/0xmattg/go-press/plugins/code-snippets"
 package codesnippets
 
 import (
@@ -27,10 +27,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"go-press/core"
-	"go-press/core/hook"
-	"go-press/core/plugin"
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/core"
+	"github.com/0xmattg/go-press/core/hook"
+	"github.com/0xmattg/go-press/core/plugin"
+	"github.com/0xmattg/go-press/pkg/logger"
 )
 
 const (

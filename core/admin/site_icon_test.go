@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"go-press/config"
+	"github.com/0xmattg/go-press/config"
 )
 
 func TestSyncSiteIconGeneratesAndRemovesPublicFavicon(t *testing.T) {

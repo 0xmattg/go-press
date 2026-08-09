@@ -22,8 +22,11 @@ go-press/
 │   │   ├── types.go            #   ContentType 注册表（ContentTypeDef + Registry + AddContentTypeToTaxonomy）
 │   │   ├── query.go            #   链式查询构建器（WP_Query 风格）
 │   │   ├── scope.go            #   请求级内容过滤 API（AddContentScope / ScopedDB）
-│   │   └── repository.go       #   通用 CRUD（Create/Update/Delete/Find/FindBySlug）
+│   │   ├── repository.go       #   通用 CRUD（Create/Update/Delete/Find/FindBySlug）
+│   │   └── command.go          #   后台与 Agent 共用的内容写 Command Service
 │   │
+│   ├── agent/                  # 协议无关 Agent 核心（Tool/Principal/Scope/RBAC/执行/凭证/幂等/审计）
+│   ├── audit/                  # 跨后台与其他传输复用的通用审计模型
 │   ├── taxonomy/               # 分类法（Term + Taxonomy + TermRelationship）
 │   ├── comment/                # 评论、一级回复、审核状态与查询仓储
 │   ├── user/                   # 用户 + JWT 认证 + RBAC（角色/能力）
@@ -78,6 +81,7 @@ go-press/
 │   │   └── register.go         #     init() 自注册
 │   ├── code-snippets/          #   WPCode-like 站点级代码注入
 │   ├── gopress-analytics/      #   自托管 PV/UV/访客与归属地统计
+│   ├── gopress-mcp/            #   默认停用的 MCP Streamable HTTP 适配器与管理页
 │   ├── google-identity/        #   Google OIDC 前台身份 Provider
 │   └── metamask-identity/      #   EIP-4361 SIWE 钱包身份 Provider
 │
@@ -118,9 +122,9 @@ go-press/
 
 `core/` 是框架运行时。`engine.go`、`bootstrap.go`、`migrate.go` 和
 `seeder.go` 负责启动、迁移和数据导入；`content/`、`taxonomy/`、`comment/`
-和 `user/` 提供稳定领域模型；`theme/`、`plugin/` 与 `hook/` 定义公开扩展
-契约；其余目录提供 Rewrite、缓存、媒体、菜单、邮件、API 和安装器等共享
-服务。
+和 `user/` 提供稳定领域模型；`agent/` 提供协议无关的 Tool Registry、Principal、
+Credential、Executor、幂等与审计；`theme/`、`plugin/` 与 `hook/` 定义公开扩展
+契约；其余目录提供 Rewrite、缓存、媒体、菜单、邮件、API 和安装器等共享服务。
 
 ## 主题
 

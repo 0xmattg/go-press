@@ -21,6 +21,10 @@ GoPress 为具有公开归档页的 ContentType 自动生成 REST 端点：
 
 ## 认证
 
+> REST 与 MCP 是两条独立边界。下面的后台 JWT 与 `X-API-Key` 仅用于 REST；
+> `/mcp` 不接受它们，而是使用独立的 Agent Bearer Token、Scope、当前 RBAC 与
+> Tool Policy。MCP 接入见 [GoPress MCP（Agent 接入）](../plugins/gopress-mcp.md)。
+
 ### JWT Bearer Token
 
 ```bash

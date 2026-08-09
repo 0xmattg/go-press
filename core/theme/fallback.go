@@ -3,7 +3,7 @@ package theme
 import (
 	"html/template"
 
-	"go-press/core/content"
+	"github.com/0xmattg/go-press/core/content"
 )
 
 // Fallback templates provide minimal but functional rendering when the

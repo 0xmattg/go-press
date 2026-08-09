@@ -16,10 +16,10 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/gin-gonic/gin"
 
-	"go-press/core"
-	"go-press/core/comment"
-	coreTheme "go-press/core/theme"
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core"
+	"github.com/0xmattg/go-press/core/comment"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
+	"github.com/0xmattg/go-press/core/user"
 )
 
 func TestThemeConfigAndInterfaces(t *testing.T) {

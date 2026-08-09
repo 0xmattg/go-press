@@ -22,12 +22,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"go-press/core"
-	"go-press/core/content"
-	"go-press/core/hook"
-	"go-press/core/plugin"
-	"go-press/core/rewrite"
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/core"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/hook"
+	"github.com/0xmattg/go-press/core/plugin"
+	"github.com/0xmattg/go-press/core/rewrite"
+	"github.com/0xmattg/go-press/pkg/logger"
 )
 
 const (

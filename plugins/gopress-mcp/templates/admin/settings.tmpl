@@ -1,0 +1,296 @@
+{{define "content"}}
+<div class="content-header">
+    <div class="gpmcp-heading-row">
+        <a href="/admin/plugins" class="btn btn-secondary gpmcp-back-link">← {{X $ "plugin.settings.back" "返回插件管理"}}</a>
+        <div>
+            <h2>{{X $ "plugin.settings.title" "%s - 插件设置" .PluginName}}</h2>
+            <p>{{X $ "plugin.mcp.subtitle" "管理 MCP Endpoint、Tool 策略、短期访问凭证和调用审计。"}}</p>
+        </div>
+    </div>
+</div>
+
+<div class="gpmcp-tabs" role="tablist" aria-label="{{X $ "plugin.mcp.tabs.label" "MCP 设置"}}">
+    <button type="button" class="gpmcp-tab active" role="tab" id="gpmcp-tab-overview" aria-selected="true" aria-controls="gpmcp-panel-overview" data-tab="overview">{{X $ "plugin.mcp.tab.overview" "连接概览"}}</button>
+    <button type="button" class="gpmcp-tab" role="tab" id="gpmcp-tab-policy" aria-selected="false" aria-controls="gpmcp-panel-policy" data-tab="policy" tabindex="-1">{{X $ "plugin.mcp.tab.policy" "写入策略"}}</button>
+    <button type="button" class="gpmcp-tab" role="tab" id="gpmcp-tab-credentials" aria-selected="false" aria-controls="gpmcp-panel-credentials" data-tab="credentials" tabindex="-1">{{X $ "plugin.mcp.tab.credentials" "访问凭证"}}</button>
+    <button type="button" class="gpmcp-tab" role="tab" id="gpmcp-tab-audit" aria-selected="false" aria-controls="gpmcp-panel-audit" data-tab="audit" tabindex="-1">{{X $ "plugin.mcp.tab.audit" "调用审计"}}</button>
+</div>
+
+<section class="card gpmcp-panel" id="gpmcp-panel-overview" role="tabpanel" aria-labelledby="gpmcp-tab-overview">
+    <div class="gpmcp-panel-header">
+        <div>
+            <h3>{{X $ "plugin.mcp.overview.title" "MCP Safe Write Beta"}}</h3>
+            <p>{{X $ "plugin.mcp.overview.help" "插件激活期间 Endpoint 才存在；停用插件会移除 MCP 路由。所有 Tool 调用仍经过 Scope、RBAC 和审计。"}}</p>
+        </div>
+        <button type="button" class="btn btn-secondary" id="gpmcpDiagnosticsReload">{{X $ "plugin.mcp.action.diagnose" "运行诊断"}}</button>
+    </div>
+    <div class="gpmcp-summary-grid" aria-live="polite">
+        <div class="gpmcp-summary-card"><span>{{X $ "plugin.mcp.metric.endpoint" "Endpoint"}}</span><strong class="gpmcp-endpoint">{{.EndpointURL}}</strong></div>
+        <div class="gpmcp-summary-card"><span>{{X $ "plugin.mcp.metric.tools" "已注册 Tool"}}</span><strong id="gpmcpToolCount">{{.ToolCount}}</strong></div>
+        <div class="gpmcp-summary-card"><span>{{X $ "plugin.mcp.metric.revision" "能力 Revision"}}</span><strong id="gpmcpRevision">{{.Revision}}</strong></div>
+        <div class="gpmcp-summary-card"><span>{{X $ "plugin.mcp.metric.sdk" "官方 Go SDK"}}</span><strong>{{.SDKVersion}}</strong></div>
+    </div>
+    <div class="gpmcp-overview-grid">
+        <div class="gpmcp-block">
+            <div class="gpmcp-block-title">
+                <h3>{{X $ "plugin.mcp.connection.title" "客户端连接参数"}}</h3>
+                <button type="button" class="btn btn-secondary" id="gpmcpCopyConfig">{{X $ "plugin.mcp.action.copy" "复制配置"}}</button>
+            </div>
+            <p>{{X $ "plugin.mcp.connection.help" "先在“访问凭证”中签发 Token，再替换下方占位符。不同客户端的配置外层格式可能略有不同。"}}</p>
+            <pre id="gpmcpConfig" tabindex="0"></pre>
+        </div>
+        <div class="gpmcp-block">
+            <h3>{{X $ "plugin.mcp.protocol.title" "协议与安全状态"}}</h3>
+            <dl class="gpmcp-details">
+                <div><dt>{{X $ "plugin.mcp.protocol.transport" "传输"}}</dt><dd>Streamable HTTP (stateless)</dd></div>
+                <div><dt>{{X $ "plugin.mcp.protocol.auth" "认证"}}</dt><dd>Bearer Token</dd></div>
+                <div><dt>{{X $ "plugin.mcp.protocol.versions" "协议版本"}}</dt><dd>{{range $index, $version := .Protocols}}{{if $index}}, {{end}}{{$version}}{{end}}</dd></div>
+                <div><dt>{{X $ "plugin.mcp.protocol.cache" "Tool 列表缓存"}}</dt><dd>private / 30s</dd></div>
+            </dl>
+            <p class="gpmcp-status" id="gpmcpDiagnosticsStatus" role="status">{{X $ "plugin.mcp.diagnostics.initial" "点击“运行诊断”检查当前运行状态。"}}</p>
+        </div>
+    </div>
+</section>
+
+<section class="card gpmcp-panel" id="gpmcp-panel-policy" role="tabpanel" aria-labelledby="gpmcp-tab-policy" hidden>
+    <div class="gpmcp-panel-header">
+        <div>
+            <h3>{{X $ "plugin.mcp.policy.title" "Tool Profile 与写入开关"}}</h3>
+            <p>{{X $ "plugin.mcp.policy.help" "默认 Profile 为只读。启用安全写入后仍需逐个开放 Tool，并为客户端签发对应写 Scope；每次调用继续校验 RBAC、所有权、乐观锁、确认与幂等键。"}}</p>
+        </div>
+        <span class="gpmcp-policy-revision">Revision {{.PolicyRevision}}</span>
+    </div>
+    <form id="gpmcpPolicyForm" class="gpmcp-policy-form">
+        <fieldset class="gpmcp-profile-options">
+            <legend>{{X $ "plugin.mcp.policy.profile" "站点 Tool Profile"}}</legend>
+            <label class="gpmcp-profile-option"><input type="radio" name="profile" value="read_only" {{if eq .PolicyProfile "read_only"}}checked{{end}}><span><strong>{{X $ "plugin.mcp.policy.read_only" "只读（推荐默认）"}}</strong><small>{{X $ "plugin.mcp.policy.read_only_help" "所有写 Tool 从列表隐藏，直接调用也会被 Core 拒绝。"}}</small></span></label>
+            <label class="gpmcp-profile-option"><input type="radio" name="profile" value="safe_write" {{if eq .PolicyProfile "safe_write"}}checked{{end}}><span><strong>{{X $ "plugin.mcp.policy.safe_write" "安全写入 Beta"}}</strong><small>{{X $ "plugin.mcp.policy.safe_write_help" "只开放下方明确勾选的内容与媒体写入工具。"}}</small></span></label>
+        </fieldset>
+        <fieldset class="gpmcp-tool-options" id="gpmcpWriteTools">
+            <legend>{{X $ "plugin.mcp.policy.tools" "逐工具开关"}}</legend>
+            {{range .WriteTools}}
+            <label class="gpmcp-tool-option"><input type="checkbox" name="write_tool" value="{{.Name}}" data-recommended="{{.Recommended}}" {{if .Enabled}}checked{{end}}><span class="gpmcp-tool-copy"><strong>{{X $ (printf "plugin.mcp.tool.%s" .Key) .Name}}</strong><small class="gpmcp-mono">{{.Name}}</small><small>{{.Scope}}</small></span><span class="gpmcp-risk {{.Risk}}">{{.Risk}}</span></label>
+            {{end}}
+        </fieldset>
+        <div class="gpmcp-policy-warning" role="note"><strong>{{X $ "plugin.mcp.policy.warning_title" "重要安全边界"}}</strong><p>{{X $ "plugin.mcp.policy.warning" "发布与移入回收站不会随安全写入自动开启；它们需要独立开关，其中发布还要求 content.publish 权限，危险操作必须显式 confirm=true。"}}</p></div>
+        <div class="gpmcp-form-actions"><button type="submit" class="btn btn-primary" id="gpmcpPolicySubmit">{{X $ "plugin.mcp.policy.save" "保存写入策略"}}</button><span class="gpmcp-status" id="gpmcpPolicyStatus" role="status"></span></div>
+    </form>
+</section>
+
+<section class="card gpmcp-panel" id="gpmcp-panel-credentials" role="tabpanel" aria-labelledby="gpmcp-tab-credentials" hidden>
+    <div class="gpmcp-panel-header">
+        <div>
+            <h3>{{X $ "plugin.mcp.credentials.title" "签发访问凭证"}}</h3>
+            <p>{{X $ "plugin.mcp.credentials.help" "Token 只显示一次，并绑定当前管理员、MCP Endpoint 与有效期。请只授予 Agent 实际需要的 Scope。"}}</p>
+        </div>
+        <button type="button" class="btn btn-secondary" id="gpmcpCredentialsReload">{{X $ "plugin.mcp.action.reload" "刷新列表"}}</button>
+    </div>
+    <form id="gpmcpCredentialForm" class="gpmcp-form">
+        <div class="form-group">
+            <label for="gpmcpCredentialName">{{X $ "plugin.mcp.credentials.name" "凭证名称"}}</label>
+            <input id="gpmcpCredentialName" name="name" type="text" maxlength="100" required autocomplete="off" placeholder="Codex / Claude / CI Agent">
+        </div>
+        <div class="form-group">
+            <label for="gpmcpCredentialExpiry">{{X $ "plugin.mcp.credentials.expiry" "有效期"}}</label>
+            <select id="gpmcpCredentialExpiry" name="expires_in_days">
+                <option value="1">1 {{X $ "plugin.mcp.credentials.days" "天"}}</option>
+                <option value="7">7 {{X $ "plugin.mcp.credentials.days" "天"}}</option>
+                <option value="30" selected>30 {{X $ "plugin.mcp.credentials.days" "天"}}</option>
+                <option value="90">90 {{X $ "plugin.mcp.credentials.days" "天"}}</option>
+            </select>
+        </div>
+        <fieldset class="gpmcp-scopes">
+            <legend>{{X $ "plugin.mcp.credentials.scopes" "当前可签发 Scope"}}</legend>
+            {{range .Scopes}}
+            <label class="gpmcp-scope-option {{if .Write}}is-write{{end}}"><input type="checkbox" name="scope" value="{{.Name}}" {{if .Checked}}checked{{end}}><span><strong>{{.Name}}</strong><small>{{X $ (printf "plugin.mcp.scope.%s" .Key) .Name}}</small></span></label>
+            {{end}}
+        </fieldset>
+        <div class="gpmcp-form-actions">
+            <button type="submit" class="btn btn-primary" id="gpmcpCredentialSubmit">{{X $ "plugin.mcp.credentials.issue" "签发新 Token"}}</button>
+            <span class="gpmcp-status" id="gpmcpCredentialStatus" role="status"></span>
+        </div>
+    </form>
+    <div class="gpmcp-token-once" id="gpmcpTokenOnce" hidden>
+        <div>
+            <h3>{{X $ "plugin.mcp.token.title" "请立即保存 Token"}}</h3>
+            <p>{{X $ "plugin.mcp.token.help" "关闭或刷新页面后无法再次查看；遗失时请撤销并重新签发。"}}</p>
+        </div>
+        <textarea id="gpmcpIssuedToken" rows="3" readonly spellcheck="false" aria-label="Bearer Token"></textarea>
+        <button type="button" class="btn btn-primary" id="gpmcpCopyToken">{{X $ "plugin.mcp.token.copy" "复制 Token"}}</button>
+    </div>
+    <div class="gpmcp-table-wrap">
+        <table class="data-table gpmcp-table">
+            <thead><tr><th>{{X $ "plugin.mcp.column.name" "名称"}}</th><th>{{X $ "plugin.mcp.column.prefix" "Token 前缀"}}</th><th>{{X $ "plugin.mcp.column.scopes" "Scope"}}</th><th>{{X $ "plugin.mcp.column.expires" "到期时间"}}</th><th>{{X $ "plugin.mcp.column.last_used" "最近使用"}}</th><th>{{X $ "plugin.mcp.column.status" "状态"}}</th><th>{{X $ "plugin.mcp.column.action" "操作"}}</th></tr></thead>
+            <tbody id="gpmcpCredentialRows"><tr><td colspan="7" class="empty-msg">{{X $ "plugin.mcp.status.loading" "正在加载..."}}</td></tr></tbody>
+        </table>
+    </div>
+</section>
+
+<section class="card gpmcp-panel" id="gpmcp-panel-audit" role="tabpanel" aria-labelledby="gpmcp-tab-audit" hidden>
+    <div class="gpmcp-panel-header">
+        <div><h3>{{X $ "plugin.mcp.audit.title" "Agent 调用审计"}}</h3><p>{{X $ "plugin.mcp.audit.help" "仅记录参数大小、摘要与顶层字段名，不保存参数值或 Bearer Token。"}}</p></div>
+        <button type="button" class="btn btn-secondary" id="gpmcpAuditReload">{{X $ "plugin.mcp.action.reload" "刷新列表"}}</button>
+    </div>
+    <div class="gpmcp-audit-toolbar">
+        <div class="form-group"><label for="gpmcpAuditTool">{{X $ "plugin.mcp.audit.tool" "Tool"}}</label><input id="gpmcpAuditTool" type="text" maxlength="150" placeholder="gopress.content.list"></div>
+        <div class="form-group"><label for="gpmcpAuditStatus">{{X $ "plugin.mcp.audit.status" "状态"}}</label><select id="gpmcpAuditStatus"><option value="">{{X $ "plugin.mcp.audit.all" "全部"}}</option><option value="succeeded">succeeded</option><option value="denied">denied</option><option value="failed">failed</option><option value="replayed">replayed</option></select></div>
+        <div class="form-group"><label for="gpmcpAuditLimit">{{X $ "plugin.mcp.audit.limit" "每页"}}</label><select id="gpmcpAuditLimit"><option>25</option><option selected>50</option><option>100</option></select></div>
+    </div>
+    <div class="gpmcp-table-wrap">
+        <table class="data-table gpmcp-table gpmcp-audit-table">
+            <thead><tr><th>{{X $ "plugin.mcp.column.time" "时间"}}</th><th>Tool</th><th>{{X $ "plugin.mcp.column.principal" "主体"}}</th><th>{{X $ "plugin.mcp.column.client" "客户端"}}</th><th>{{X $ "plugin.mcp.column.status" "状态"}}</th><th>{{X $ "plugin.mcp.column.duration" "耗时"}}</th><th>{{X $ "plugin.mcp.column.summary" "参数摘要"}}</th></tr></thead>
+            <tbody id="gpmcpAuditRows"><tr><td colspan="7" class="empty-msg">{{X $ "plugin.mcp.audit.initial" "切换到此页后加载审计数据。"}}</td></tr></tbody>
+        </table>
+    </div>
+    <div class="gpmcp-pager"><button class="btn btn-secondary" type="button" id="gpmcpAuditPrev">{{X $ "plugin.mcp.audit.prev" "上一页"}}</button><span id="gpmcpAuditPage">1</span><button class="btn btn-secondary" type="button" id="gpmcpAuditNext">{{X $ "plugin.mcp.audit.next" "下一页"}}</button></div>
+</section>
+
+<style>
+.gpmcp-heading-row { display:flex; align-items:flex-start; gap:1rem; }
+.gpmcp-heading-row h2 { margin:0; }
+.gpmcp-heading-row p { margin:.35rem 0 0; color:var(--text-muted); font-size:.85rem; }
+.gpmcp-back-link { flex:0 0 auto; text-decoration:none; }
+.gpmcp-tabs { display:flex; gap:.5rem; margin:0 0 .75rem; border-bottom:1px solid var(--border); }
+.gpmcp-tab { padding:.65rem 1rem; border:0; border-bottom:2px solid transparent; background:transparent; color:var(--text-muted); cursor:pointer; font-size:.95rem; font-weight:650; }
+.gpmcp-tab:hover, .gpmcp-tab.active { color:var(--primary); }
+.gpmcp-tab.active { border-bottom-color:var(--primary); }
+.gpmcp-tab:focus-visible { outline:2px solid var(--primary); outline-offset:2px; border-radius:4px; }
+.gpmcp-panel[hidden] { display:none; }
+.gpmcp-panel-header { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; padding:1.25rem; border-bottom:1px solid var(--border); }
+.gpmcp-panel-header h3, .gpmcp-block h3, .gpmcp-token-once h3 { margin:0; font-size:1rem; }
+.gpmcp-panel-header p, .gpmcp-block p, .gpmcp-token-once p { margin:.4rem 0 0; color:var(--text-muted); font-size:.85rem; line-height:1.6; }
+.gpmcp-summary-grid { display:grid; grid-template-columns:2fr repeat(3,1fr); gap:1rem; padding:1.25rem; }
+.gpmcp-summary-card { min-width:0; padding:1rem; border:1px solid var(--border); border-radius:6px; background:#f8fafc; }
+.gpmcp-summary-card span { display:block; color:var(--text-muted); font-size:.78rem; }
+.gpmcp-summary-card strong { display:block; margin-top:.4rem; color:#0f172a; font-size:1.35rem; line-height:1.25; }
+.gpmcp-summary-card .gpmcp-endpoint { overflow-wrap:anywhere; font-size:.86rem; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+.gpmcp-overview-grid { display:grid; grid-template-columns:1.2fr .8fr; gap:1rem; padding:0 1.25rem 1.25rem; }
+.gpmcp-block { min-width:0; padding:1rem; border:1px solid var(--border); border-radius:6px; }
+.gpmcp-block-title { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+.gpmcp-block pre { margin:.85rem 0 0; padding:1rem; overflow:auto; border-radius:6px; background:#172033; color:#e2e8f0; font-size:.78rem; line-height:1.55; }
+.gpmcp-details { margin:.75rem 0 0; }
+.gpmcp-details div { display:grid; grid-template-columns:130px 1fr; gap:.75rem; padding:.55rem 0; border-bottom:1px solid var(--border); }
+.gpmcp-details dt { color:var(--text-muted); font-size:.8rem; }
+.gpmcp-details dd { margin:0; font-size:.82rem; overflow-wrap:anywhere; }
+.gpmcp-form { display:grid; grid-template-columns:2fr 1fr; gap:1rem; padding:1.25rem; border-bottom:1px solid var(--border); }
+.gpmcp-form .form-group { margin:0; }
+.gpmcp-scopes { grid-column:1 / -1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.75rem; margin:0; padding:0; border:0; }
+.gpmcp-scopes legend { margin-bottom:.65rem; font-size:.85rem; font-weight:650; }
+.gpmcp-scope-option { display:flex; align-items:flex-start; gap:.65rem; padding:.8rem; border:1px solid var(--border); border-radius:6px; cursor:pointer; }
+.gpmcp-scope-option:focus-within { outline:2px solid var(--primary); outline-offset:2px; }
+.gpmcp-scope-option input { margin-top:.2rem; }
+.gpmcp-scope-option strong, .gpmcp-scope-option small { display:block; }
+.gpmcp-scope-option strong { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.78rem; }
+.gpmcp-scope-option small { margin-top:.25rem; color:var(--text-muted); font-size:.76rem; }
+.gpmcp-form-actions { grid-column:1 / -1; display:flex; align-items:center; gap:1rem; }
+.gpmcp-policy-form { padding:1.25rem; }
+.gpmcp-profile-options, .gpmcp-tool-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.75rem; margin:0 0 1.25rem; padding:0; border:0; }
+.gpmcp-profile-options legend, .gpmcp-tool-options legend { grid-column:1 / -1; margin-bottom:.1rem; font-size:.85rem; font-weight:650; }
+.gpmcp-profile-option, .gpmcp-tool-option { display:flex; align-items:flex-start; gap:.7rem; padding:.9rem; border:1px solid var(--border); border-radius:6px; cursor:pointer; background:#fff; }
+.gpmcp-profile-option:focus-within, .gpmcp-tool-option:focus-within { outline:2px solid var(--primary); outline-offset:2px; }
+.gpmcp-profile-option input, .gpmcp-tool-option input { flex:0 0 auto; margin-top:.2rem; }
+.gpmcp-profile-option span, .gpmcp-tool-copy { min-width:0; flex:1; }
+.gpmcp-profile-option strong, .gpmcp-profile-option small, .gpmcp-tool-copy strong, .gpmcp-tool-copy small { display:block; }
+.gpmcp-profile-option small, .gpmcp-tool-copy small { margin-top:.25rem; color:var(--text-muted); font-size:.76rem; line-height:1.45; overflow-wrap:anywhere; }
+.gpmcp-tool-option.is-disabled { opacity:.55; cursor:not-allowed; background:#f8fafc; }
+.gpmcp-risk { flex:0 0 auto; padding:.18rem .45rem; border-radius:999px; background:#eef2ff; color:#3730a3; font-size:.68rem; text-transform:uppercase; }
+.gpmcp-risk.publish, .gpmcp-risk.destructive { background:#fff1f2; color:#b42318; }
+.gpmcp-policy-warning { margin:0 0 1.25rem; padding:.9rem 1rem; border-left:3px solid #f0b429; border-radius:4px; background:#fffbeb; }
+.gpmcp-policy-warning strong { font-size:.82rem; }
+.gpmcp-policy-warning p { margin:.35rem 0 0; color:#7a4b00; font-size:.78rem; line-height:1.55; }
+.gpmcp-policy-revision { flex:0 0 auto; color:var(--text-muted); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.75rem; }
+.gpmcp-scope-option.is-write { border-color:#c7d7fe; background:#f5f8ff; }
+.gpmcp-status { min-height:1.2rem; color:var(--text-muted); font-size:.8rem; }
+.gpmcp-status.is-error { color:var(--danger); }
+.gpmcp-status.is-success { color:#16844b; }
+.gpmcp-token-once { display:grid; grid-template-columns:1fr auto; gap:1rem; align-items:end; margin:1.25rem; padding:1rem; border:1px solid #f0b429; border-radius:6px; background:#fffbeb; }
+.gpmcp-token-once[hidden] { display:none; }
+.gpmcp-token-once > div, .gpmcp-token-once textarea { grid-column:1 / -1; }
+.gpmcp-token-once textarea { width:100%; resize:vertical; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.78rem; }
+.gpmcp-table-wrap { margin:1.25rem; overflow-x:auto; border:1px solid var(--border); border-radius:6px; }
+.gpmcp-table { min-width:980px; }
+.gpmcp-table th, .gpmcp-table td { vertical-align:top; }
+.gpmcp-table code { white-space:normal; overflow-wrap:anywhere; font-size:.75rem; }
+.gpmcp-badge { display:inline-flex; padding:.2rem .5rem; border-radius:999px; background:#eef2ff; color:#3730a3; font-size:.72rem; }
+.gpmcp-badge.revoked, .gpmcp-badge.failed, .gpmcp-badge.denied { background:#fef2f2; color:#b42318; }
+.gpmcp-badge.expired { background:#fffaeb; color:#b54708; }
+.gpmcp-badge.active, .gpmcp-badge.succeeded { background:#ecfdf3; color:#067647; }
+.gpmcp-audit-toolbar { display:grid; grid-template-columns:2fr 1fr 140px; gap:1rem; padding:1rem 1.25rem 0; }
+.gpmcp-audit-toolbar .form-group { margin:0; }
+.gpmcp-audit-table { min-width:1120px; }
+.gpmcp-pager { display:flex; align-items:center; gap:.75rem; padding:0 1.25rem 1.25rem; }
+@media (max-width:960px) { .gpmcp-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .gpmcp-overview-grid { grid-template-columns:1fr; } }
+@media (max-width:700px) { .gpmcp-heading-row, .gpmcp-panel-header { flex-direction:column; align-items:stretch; } .gpmcp-tabs { overflow-x:auto; } .gpmcp-tab { white-space:nowrap; } .gpmcp-summary-grid, .gpmcp-form, .gpmcp-audit-toolbar, .gpmcp-scopes, .gpmcp-profile-options, .gpmcp-tool-options { grid-template-columns:1fr; } .gpmcp-scopes, .gpmcp-form-actions { grid-column:1; } .gpmcp-profile-options legend, .gpmcp-tool-options legend { grid-column:1; } .gpmcp-summary-card:first-child { grid-column:auto; } .gpmcp-panel-header .btn, .gpmcp-form-actions .btn { width:100%; } }
+</style>
+
+<script>
+(function () {
+    "use strict";
+    var base = "/admin/plugins/{{.PluginSlug}}";
+    var endpoint = {{printf "%q" .EndpointURL}};
+    var tabs = Array.prototype.slice.call(document.querySelectorAll(".gpmcp-tab"));
+    var panels = Array.prototype.slice.call(document.querySelectorAll(".gpmcp-panel"));
+    var auditPage = 1;
+    var auditTotalPages = 0;
+    var credentialsLoaded = false;
+    var auditLoaded = false;
+
+    function configText(token) { return JSON.stringify({mcpServers:{gopress:{type:"http",url:endpoint,headers:{Authorization:"Bearer " + (token || "<TOKEN>")}}}}, null, 2); }
+    document.getElementById("gpmcpConfig").textContent = configText("");
+    function setStatus(element, text, kind) { element.textContent = text || ""; element.className = "gpmcp-status" + (kind ? " is-" + kind : ""); }
+    function copyText(text, status) {
+        if (!navigator.clipboard) { setStatus(status, '{{X $ "plugin.mcp.copy.unsupported" "当前浏览器不支持自动复制，请手动复制。"}}', "error"); return; }
+        navigator.clipboard.writeText(text).then(function () { setStatus(status, '{{X $ "plugin.mcp.copy.success" "已复制。"}}', "success"); }, function () { setStatus(status, '{{X $ "plugin.mcp.copy.failed" "复制失败，请手动复制。"}}', "error"); });
+    }
+    function localDate(value) { if (!value) return "—"; var date = new Date(value); return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString(); }
+    function cell(value) { var td=document.createElement("td"); td.textContent=value==null||value===""?"—":String(value); return td; }
+    function badge(value, label) { var span=document.createElement("span"); span.className="gpmcp-badge " + String(value||"").toLowerCase(); span.textContent=label||value||"—"; return span; }
+    function statusLabel(value) { var labels={active:'{{X $ "plugin.mcp.state.active" "有效"}}',expired:'{{X $ "plugin.mcp.state.expired" "已过期"}}',revoked:'{{X $ "plugin.mcp.state.revoked" "已撤销"}}',started:'{{X $ "plugin.mcp.state.started" "已开始"}}',succeeded:'{{X $ "plugin.mcp.state.succeeded" "成功"}}',denied:'{{X $ "plugin.mcp.state.denied" "已拒绝"}}',failed:'{{X $ "plugin.mcp.state.failed" "失败"}}',replayed:'{{X $ "plugin.mcp.state.replayed" "已重放"}}'}; return labels[String(value||"").toLowerCase()]||value||"—"; }
+    function requestJSON(url, options) { options=options||{}; options.credentials="same-origin"; options.headers=Object.assign({"Accept":"application/json"},options.headers||{}); return fetch(url,options).then(function(response){ if(!response.ok) return response.json().catch(function(){return {};}).then(function(body){throw new Error(body.error||"HTTP "+response.status);}); if(response.status===204)return null; return response.json(); }); }
+
+    function activateTab(name, focus) {
+        tabs.forEach(function(tab){ var active=tab.dataset.tab===name; tab.classList.toggle("active",active); tab.setAttribute("aria-selected",active?"true":"false"); tab.tabIndex=active?0:-1; if(active&&focus)tab.focus(); });
+        panels.forEach(function(panel){ panel.hidden=panel.id!=="gpmcp-panel-"+name; });
+        try { sessionStorage.setItem("gpmcpSettingsTab", name); } catch (error) {}
+        if(name==="credentials"&&!credentialsLoaded) loadCredentials();
+        if(name==="audit"&&!auditLoaded) loadAudit();
+    }
+    tabs.forEach(function(tab,index){ tab.addEventListener("click",function(){activateTab(tab.dataset.tab,false);}); tab.addEventListener("keydown",function(event){var next=index;if(event.key==="ArrowRight")next=(index+1)%tabs.length;else if(event.key==="ArrowLeft")next=(index-1+tabs.length)%tabs.length;else if(event.key==="Home")next=0;else if(event.key==="End")next=tabs.length-1;else return;event.preventDefault();activateTab(tabs[next].dataset.tab,true);}); });
+
+    function updatePolicyAvailability() {
+        var selected=document.querySelector('input[name="profile"]:checked');
+        var safe=selected&&selected.value==="safe_write";
+        Array.prototype.forEach.call(document.querySelectorAll('input[name="write_tool"]'),function(input){input.disabled=!safe;input.closest("label").classList.toggle("is-disabled",!safe);});
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="profile"]'),function(input){input.addEventListener("change",function(){if(input.checked&&input.value==="safe_write"&&!document.querySelector('input[name="write_tool"]:checked')){Array.prototype.forEach.call(document.querySelectorAll('input[name="write_tool"][data-recommended="true"]'),function(tool){tool.checked=true;});}updatePolicyAvailability();});});
+    updatePolicyAvailability();
+    document.getElementById("gpmcpPolicyForm").addEventListener("submit",function(event){event.preventDefault();var button=document.getElementById("gpmcpPolicySubmit");var status=document.getElementById("gpmcpPolicyStatus");var profile=document.querySelector('input[name="profile"]:checked').value;var tools=Array.prototype.slice.call(document.querySelectorAll('input[name="write_tool"]:checked')).map(function(input){return input.value;});button.disabled=true;setStatus(status,'{{X $ "plugin.mcp.policy.saving" "正在保存..."}}');requestJSON(base+"/policy",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({profile:profile,enabled_write_tools:tools})}).then(function(){setStatus(status,'{{X $ "plugin.mcp.policy.saved" "策略已保存，正在刷新可签发 Scope。"}}',"success");window.setTimeout(function(){window.location.reload();},500);}).catch(function(error){setStatus(status,error.message,"error");button.disabled=false;});});
+
+    function loadDiagnostics() {
+        var status=document.getElementById("gpmcpDiagnosticsStatus"); setStatus(status,'{{X $ "plugin.mcp.status.loading" "正在加载..."}}');
+        requestJSON(base+"/diagnostics").then(function(data){ document.getElementById("gpmcpToolCount").textContent=String(data.registered_tools||0);document.getElementById("gpmcpRevision").textContent=String(data.registry_revision||0);setStatus(status,data.secure_transport?'{{X $ "plugin.mcp.diagnostics.ready" "运行正常，Endpoint、认证和 Agent Registry 已就绪。"}}':'{{X $ "plugin.mcp.diagnostics.http_warning" "运行正常，但非本机 Endpoint 应使用 HTTPS。"}}',data.secure_transport?"success":"error"); }).catch(function(error){setStatus(status,error.message,"error");});
+    }
+
+    function loadCredentials() {
+        var body=document.getElementById("gpmcpCredentialRows");body.innerHTML='<tr><td colspan="7" class="empty-msg">{{X $ "plugin.mcp.status.loading" "正在加载..."}}</td></tr>';
+        requestJSON(base+"/credentials").then(function(data){credentialsLoaded=true;body.textContent="";var rows=Array.isArray(data.credentials)?data.credentials:[];if(!rows.length){body.innerHTML='<tr><td colspan="7" class="empty-msg">{{X $ "plugin.mcp.status.empty" "暂无数据。"}}</td></tr>';return;}rows.forEach(function(row){var tr=document.createElement("tr");tr.appendChild(cell(row.name));var prefix=cell(row.token_prefix);prefix.className="gpmcp-mono";tr.appendChild(prefix);var scopes=cell((row.scopes||[]).join("\n"));scopes.style.whiteSpace="pre-line";tr.appendChild(scopes);tr.appendChild(cell(localDate(row.expires_at)));tr.appendChild(cell(localDate(row.last_used_at)));var state=document.createElement("td");var expired=new Date(row.expires_at).getTime()<=Date.now();var stateValue=row.revoked_at?"revoked":expired?"expired":"active";state.appendChild(badge(stateValue,statusLabel(stateValue)));tr.appendChild(state);var action=document.createElement("td");if(!row.revoked_at&&!expired){var button=document.createElement("button");button.type="button";button.className="btn btn-secondary";button.textContent='{{X $ "plugin.mcp.credentials.revoke" "撤销"}}';button.addEventListener("click",function(){revokeCredential(row.id,button);});action.appendChild(button);}else action.textContent="—";tr.appendChild(action);body.appendChild(tr);});}).catch(function(error){body.innerHTML='<tr><td colspan="7" class="empty-msg"></td></tr>';body.querySelector("td").textContent=error.message;});
+    }
+    function revokeCredential(id,button){if(!window.confirm('{{X $ "plugin.mcp.credentials.revoke_confirm" "确认立即撤销此 Token？正在使用它的客户端会立即失去访问权限。"}}'))return;button.disabled=true;requestJSON(base+"/credentials/"+encodeURIComponent(id)+"/revoke",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"}).then(loadCredentials).catch(function(error){button.disabled=false;window.alert(error.message);});}
+    document.getElementById("gpmcpCredentialForm").addEventListener("submit",function(event){event.preventDefault();var button=document.getElementById("gpmcpCredentialSubmit");var status=document.getElementById("gpmcpCredentialStatus");var scopes=Array.prototype.slice.call(document.querySelectorAll('input[name="scope"]:checked')).map(function(input){return input.value;});button.disabled=true;setStatus(status,'{{X $ "plugin.mcp.credentials.issuing" "正在签发..."}}');requestJSON(base+"/credentials",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:document.getElementById("gpmcpCredentialName").value,expires_in_days:Number(document.getElementById("gpmcpCredentialExpiry").value),scopes:scopes})}).then(function(data){var panel=document.getElementById("gpmcpTokenOnce");var token=document.getElementById("gpmcpIssuedToken");token.value=data.token;panel.hidden=false;document.getElementById("gpmcpConfig").textContent=configText(data.token);setStatus(status,'{{X $ "plugin.mcp.credentials.issued" "Token 已签发，请立即保存。"}}',"success");credentialsLoaded=false;loadCredentials();token.focus();}).catch(function(error){setStatus(status,error.message,"error");}).finally(function(){button.disabled=false;});});
+
+    function loadAudit(){var body=document.getElementById("gpmcpAuditRows");var limit=document.getElementById("gpmcpAuditLimit").value;var query="?page="+auditPage+"&limit="+encodeURIComponent(limit)+"&tool="+encodeURIComponent(document.getElementById("gpmcpAuditTool").value)+"&status="+encodeURIComponent(document.getElementById("gpmcpAuditStatus").value);body.innerHTML='<tr><td colspan="7" class="empty-msg">{{X $ "plugin.mcp.status.loading" "正在加载..."}}</td></tr>';requestJSON(base+"/audit"+query).then(function(data){auditLoaded=true;auditTotalPages=Number(data.total_pages||0);body.textContent="";var rows=Array.isArray(data.events)?data.events:[];if(!rows.length){body.innerHTML='<tr><td colspan="7" class="empty-msg">{{X $ "plugin.mcp.status.empty" "暂无数据。"}}</td></tr>';}else rows.forEach(function(row){var tr=document.createElement("tr");tr.appendChild(cell(localDate(row.created_at)));tr.appendChild(cell(row.tool_name));tr.appendChild(cell((row.username||row.principal_kind||"—")+(row.subject_id?" #"+row.subject_id:"")));tr.appendChild(cell((row.adapter||"—")+(row.client_version?" "+row.client_version:"")));var state=document.createElement("td");state.appendChild(badge(row.status,statusLabel(row.status)));tr.appendChild(state);tr.appendChild(cell(String(row.duration_ms||0)+" ms"));var summary=cell(row.arguments_summary);summary.style.maxWidth="320px";summary.style.whiteSpace="normal";summary.style.overflowWrap="anywhere";tr.appendChild(summary);body.appendChild(tr);});document.getElementById("gpmcpAuditPage").textContent=String(auditPage);document.getElementById("gpmcpAuditPrev").disabled=auditPage<=1;document.getElementById("gpmcpAuditNext").disabled=auditTotalPages===0||auditPage>=auditTotalPages;}).catch(function(error){body.innerHTML='<tr><td colspan="7" class="empty-msg"></td></tr>';body.querySelector("td").textContent=error.message;});}
+
+    document.getElementById("gpmcpDiagnosticsReload").addEventListener("click",loadDiagnostics);
+    document.getElementById("gpmcpCopyConfig").addEventListener("click",function(){copyText(document.getElementById("gpmcpConfig").textContent,document.getElementById("gpmcpDiagnosticsStatus"));});
+    document.getElementById("gpmcpCopyToken").addEventListener("click",function(){copyText(document.getElementById("gpmcpIssuedToken").value,document.getElementById("gpmcpCredentialStatus"));});
+    document.getElementById("gpmcpCredentialsReload").addEventListener("click",loadCredentials);
+    document.getElementById("gpmcpAuditReload").addEventListener("click",function(){auditPage=1;loadAudit();});
+    document.getElementById("gpmcpAuditStatus").addEventListener("change",function(){auditPage=1;loadAudit();});
+    document.getElementById("gpmcpAuditLimit").addEventListener("change",function(){auditPage=1;loadAudit();});
+    document.getElementById("gpmcpAuditPrev").addEventListener("click",function(){if(auditPage>1){auditPage--;loadAudit();}});
+    document.getElementById("gpmcpAuditNext").addEventListener("click",function(){if(auditPage<auditTotalPages){auditPage++;loadAudit();}});
+    document.getElementById("gpmcpAuditPrev").disabled=true;document.getElementById("gpmcpAuditNext").disabled=true;
+    try { var saved=sessionStorage.getItem("gpmcpSettingsTab");if(saved==="policy"||saved==="credentials"||saved==="audit")activateTab(saved,false); } catch(error) {}
+}());
+</script>
+{{end}}

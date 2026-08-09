@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"go-press/core/plugin"
-	coreTheme "go-press/core/theme"
+	"github.com/0xmattg/go-press/core/plugin"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
 )
 
 type fakeTheme struct {

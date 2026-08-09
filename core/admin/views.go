@@ -3,8 +3,8 @@ package admin
 import (
 	"time"
 
-	"go-press/core/content"
-	"go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/core/audit"
+	"github.com/0xmattg/go-press/core/content"
 )
 
 // DynamicContentView is a generic view model for any registered content type.
@@ -104,20 +104,9 @@ type DashboardStats struct {
 	UserCount    int64
 }
 
-// AuditLog represents an admin audit entry.
-type AuditLog struct {
-	ID         uint      `gorm:"primaryKey" json:"id"`
-	UserID     uint      `json:"user_id"`
-	Username   string    `gorm:"size:50" json:"username"`
-	Action     string    `gorm:"size:50;not null" json:"action"`
-	Resource   string    `gorm:"size:50" json:"resource"`
-	ResourceID uint      `json:"resource_id"`
-	Details    string    `gorm:"type:text" json:"details"`
-	IPAddress  string    `gorm:"size:45" json:"ip_address"`
-	CreatedAt  time.Time `json:"created_at"`
-}
-
-func (AuditLog) TableName() string { return dbprefix.Table("audit_logs") }
+// AuditLog remains an alias for template and extension compatibility. The
+// persistence model is owned by the framework-neutral audit package.
+type AuditLog = audit.Event
 
 // SettingItemView maps option.Option to template fields.
 type SettingItemView struct {

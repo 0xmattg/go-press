@@ -15,6 +15,11 @@ GoPress 旨在把传统 CMS 中经过验证的内容模型、主题系统、插�
 评论也是 core 的稳定领域：支持仅登录用户发表评论、一级直接回复、审核状态、
 后台分页与 RBAC，并允许主题使用统一前台账号上下文呈现评论和 Profile。
 
+Agent 能力同样采用协议无关的 Core 边界：`core/agent` 统一负责 Tool Registry、
+Principal、Scope、RBAC、所有权、执行、幂等和审计；默认停用的官方
+`gopress-mcp` 插件只把这些能力适配为远程 MCP。当前 Safe Write Beta 提供 6 个
+只读 Tool 和 6 个逐项启用的受控写 Tool，站点默认保持只读。
+
 这个项目不是 WordPress 的逐行重写，也不是对 PHP 生态的替代宣言。GoPress 更关注一类具体场景：开发者希望保留 CMS 的编辑体验和扩展模型，同时获得 Go 在部署、并发、可观测性和长期维护上的工程优势。
 
 ## 项目状态
@@ -59,6 +64,9 @@ GoPress 当前处于 **beta** 阶段。核心内容模型、后台管理、主�
 - **[后台管理](admin/overview.md)** — 后台 CMS 功能、扩展点、菜单管理
 - **[主题开发](themes/overview.md)** — 主题接入、SEO 规范、图片管线、媒体变体
 - **[插件开发](plugins/overview.md)** — 创建插件、内置插件参考（multilang / seo-extras / code-snippets / gopress-analytics / google-identity / metamask-identity）
+- **[Agent 与 MCP](agent/overview.md)** — 设计原则、分层架构、Tool 执行、身份与授权、扩展开发、运维和测试
+- **[GoPress MCP 插件](plugins/gopress-mcp.md)** — Endpoint 启用、凭证、客户端连接、Safe Write 与排障
+- **[Agent 与 MCP Phase 规划](architecture/mcp-agent-capability-plan.md)** — Phase 0–5 决策记录与后续 OAuth 路线
 - **[参考资料](reference/project-structure.md)** — 项目结构、表前缀、REST API、技术栈、路线图
 
 API 接口规范见独立的 [Swagger 文档](http://localhost:8080/swagger/index.html)（运行中的实例）或 `docs/swagger.yaml`。

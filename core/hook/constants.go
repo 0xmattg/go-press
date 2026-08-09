@@ -81,7 +81,12 @@ const (
 	// have been persisted. Args: (*content.Content, map[string]string meta).
 	// It is intentionally generic so notification services and plugins can
 	// react to framework content events without themes knowing about them.
-	ContentCreated = "content.created"
+	ContentCreated       = "content.created"
+	ContentUpdated       = "content.updated"
+	ContentPublished     = "content.published"
+	ContentTrashed       = "content.trashed"
+	ContentRestored      = "content.restored"
+	MediaMetadataUpdated = "media.metadata_updated"
 
 	// AdminContentFormFields is rendered as an HTML slot inside the admin
 	// content edit form, after the built-in meta fields and before taxonomy

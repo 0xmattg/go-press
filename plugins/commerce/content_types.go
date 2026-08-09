@@ -1,6 +1,6 @@
 package commerce
 
-import "go-press/core/content"
+import "github.com/0xmattg/go-press/core/content"
 
 // registerProductTypes idempotently registers the commerce content types and
 // taxonomies into the given registry. It runs once immediately on Activate and

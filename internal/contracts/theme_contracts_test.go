@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"go-press/core/hook"
+	"github.com/0xmattg/go-press/core/hook"
 )
 
 var standardFrontendHooks = []string{

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"go-press/core/mail"
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/core/mail"
+	"github.com/0xmattg/go-press/pkg/logger"
 )
 
 // onOrderStatusChanged is the commerce.order.status_changed listener. It sends

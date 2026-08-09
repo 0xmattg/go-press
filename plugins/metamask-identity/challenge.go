@@ -13,7 +13,7 @@ import (
 
 	siwe "github.com/signinwithethereum/siwe-go"
 
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core/user"
 )
 
 const challengeLifetime = 5 * time.Minute

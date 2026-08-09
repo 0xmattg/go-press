@@ -26,6 +26,17 @@
 * [后台扩展点](admin/extension-points.md)
 * [菜单管理](admin/menus.md)
 
+## Agent 与 MCP
+
+* [总览](agent/overview.md)
+* [快速上手](agent/getting-started.md)
+* [分层架构](agent/architecture.md)
+* [Tool 与执行管线](agent/tools-and-execution.md)
+* [身份、授权与安全](agent/security.md)
+* [扩展开发](agent/extension-development.md)
+* [运维与测试](agent/operations-and-testing.md)
+* [Phase 规划与决策记录](architecture/mcp-agent-capability-plan.md)
+
 ## 主题开发
 
 * [主题系统总览](themes/overview.md)
@@ -43,6 +54,7 @@
 * [内置插件：SEO Extras (Yoast-like)](plugins/seo-extras.md)
 * [内置插件：Code Snippets (WPCode-like)](plugins/code-snippets.md)
 * [内置插件：GoPress Analytics](plugins/gopress-analytics.md)
+* [内置插件：GoPress MCP（Agent 接入）](plugins/gopress-mcp.md)
 * [内置插件：Google Identity](architecture/public-authentication.md#google-identity-插件)
 * [内置插件：MetaMask Identity](architecture/public-authentication.md#metamask-identity-插件)
 

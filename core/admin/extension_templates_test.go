@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"go-press/core/content"
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/user"
 )
 
 func TestExtensionSettingsTemplatesParse(t *testing.T) {

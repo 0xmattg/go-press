@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	modulePath      = "go-press"
+	modulePath = "github.com/0xmattg/go-press"
 	autoloadRelPath = "internal/autoload/autoload_gen.go"
 	autoloadPkg     = "autoload"
 	themesRelDir    = "themes"

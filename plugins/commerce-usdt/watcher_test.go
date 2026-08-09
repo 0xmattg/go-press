@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	corecommerce "go-press/core/commerce"
-	"go-press/core/hook"
-	"go-press/pkg/dbprefix"
+	corecommerce "github.com/0xmattg/go-press/core/commerce"
+	"github.com/0xmattg/go-press/core/hook"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
 
 	_ "github.com/mattn/go-sqlite3"
 	"gorm.io/driver/postgres"

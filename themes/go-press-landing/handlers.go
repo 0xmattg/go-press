@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"go-press/core/menu"
+	"github.com/0xmattg/go-press/core/menu"
 
 	"github.com/gin-gonic/gin"
 )

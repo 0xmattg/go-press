@@ -3,8 +3,8 @@ package core
 import (
 	"testing"
 
-	"go-press/core/plugin"
-	coreTheme "go-press/core/theme"
+	"github.com/0xmattg/go-press/core/plugin"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
 )
 
 // fakeModule is a registered-but-inactive default-inactive plugin.

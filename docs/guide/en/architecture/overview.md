@@ -71,7 +71,8 @@ restart.
 ## Engine Responsibilities
 
 - Own stable content, taxonomy, user, session, permission, media, menu, option,
-  cache, rewrite, SEO, mail, comment, public-submission, and worker services.
+  cache, rewrite, SEO, mail, comment, public-submission, Agent, and worker
+  services.
 - Register core content types and config-driven theme types.
 - Expose generic repositories, template helpers, hooks, filters, providers,
   middleware points, and protected route helpers.
@@ -79,6 +80,40 @@ restart.
   from the same registries.
 - Keep extension activation, dependency checks, migrations, and cache invalidation
   coordinated.
+
+## Agent and MCP Boundary
+
+`core/agent` is protocol-neutral. It contains no MCP method names, HTTP
+handlers, or client-specific branches. It owns the Tool Registry, principals,
+credentials, scope and RBAC authorization, Tool Policy, Executor, restricted
+JSON Schema validation, idempotency records, and Agent audit. Core registers
+generic site, content-type, content, taxonomy, and media tools; active
+theme-declared content types flow through the same Content Registry rather than
+creating theme-specific Agent code.
+
+The disabled-by-default `gopress-mcp` plugin maps `/mcp` Streamable HTTP
+messages to `agent.Call` and maps structured results back to MCP. It does not
+call repositories directly or identify themes and business plugins. Core does
+not import the MCP SDK or adapter package.
+
+Every tool call follows one mandatory pipeline:
+
+```text
+refresh principal
+  -> validate argument schema
+  -> scope AND Core RBAC AND ownership
+  -> site Tool Profile and per-tool policy
+  -> high-risk confirmation
+  -> write idempotency acquisition
+  -> bounded domain execution
+  -> result schema validation
+  -> idempotency completion
+  -> mandatory audit
+```
+
+See the [Agent and MCP module](../agent/overview.md) for design, tools, and
+execution details, and the [GoPress MCP Plugin](../plugins/gopress-mcp.md) for
+current connection configuration and operations.
 
 ## Extension Boundaries
 
@@ -98,6 +133,8 @@ restart.
 - **Policy-driven public authoring** — themes can declare which roles may create
   or maintain a content type; core enforces active-account, RBAC, ownership,
   editorial state, validation, and abuse limits without owning the UI.
+- **Protocol-neutral Agent Core** — core owns Tool, Principal, execution, and
+  security contracts; optional adapters own MCP or future wire protocols.
 
 See [Public Authentication](public-authentication.md) for the account and
 identity-provider contract, and

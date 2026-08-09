@@ -3,7 +3,7 @@ package commerce
 import (
 	"strings"
 
-	corecommerce "go-press/core/commerce"
+	corecommerce "github.com/0xmattg/go-press/core/commerce"
 
 	"github.com/gin-gonic/gin"
 )

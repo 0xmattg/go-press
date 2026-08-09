@@ -1,10 +1,10 @@
 package theme
 
 import (
-	"go-press/core/content"
-	"go-press/core/hook"
-	coreI18n "go-press/core/i18n"
-	"go-press/core/rewrite"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/hook"
+	coreI18n "github.com/0xmattg/go-press/core/i18n"
+	"github.com/0xmattg/go-press/core/rewrite"
 )
 
 // SEOPageService extends BasePageService with the per-page SEO-metadata assembly

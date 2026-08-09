@@ -8,9 +8,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"go-press/core/content"
-	"go-press/core/hook"
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/hook"
+	"github.com/0xmattg/go-press/core/user"
 
 	"gorm.io/gorm"
 )

@@ -3,7 +3,7 @@ package media
 import (
 	"time"
 
-	"go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
 )
 
 // MediaVariant stores one generated derivative of an uploaded image.

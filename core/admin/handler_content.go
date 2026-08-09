@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"go-press/core/content"
-	"go-press/core/hook"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/hook"
 
 	"github.com/gin-gonic/gin"
 )
@@ -389,8 +389,8 @@ func (h *Handler) ContentList(c *gin.Context) {
 	}
 	role := c.GetString("admin_role")
 	canBulkDelete := h.svc.rbac.Can(role, h.mapResource(typeName), "delete")
-	canBulkPublish := typeDef.HasPublicRoute() && h.svc.rbac.Can(role, h.mapResource(typeName), "update")
-	canBulkUnpublish := canBulkPublish
+	canBulkPublish := typeDef.HasPublicRoute() && h.svc.rbac.Can(role, h.mapResource(typeName), "publish")
+	canBulkUnpublish := typeDef.HasPublicRoute() && h.svc.rbac.Can(role, h.mapResource(typeName), "update")
 	canBulkActions := canBulkDelete || canBulkPublish || canBulkUnpublish
 	if canBulkActions {
 		tableColumnCount++
@@ -558,44 +558,11 @@ func applyParentFromForm(c *gin.Context, typeDef *content.ContentTypeDef, item *
 	}
 }
 
-// systemReservedSlugs are top-level path segments owned by the engine/router. A
-// rootless page whose slug matches one would be shadowed by the real route and
-// therefore unreachable, so saving it is rejected.
-var systemReservedSlugs = map[string]bool{
-	"admin": true, "api": true, "static": true, "uploads": true,
-	"auth": true, "swagger": true, "health": true,
-	"sitemap.xml": true, "robots.txt": true, "favicon.ico": true,
-}
-
 // isReservedPageSlug reports whether slug collides with a system route, a
 // content-type archive prefix, or a taxonomy prefix — any of which would make a
 // rootless page at /{slug} unreachable because those routes resolve first.
 func (h *Handler) isReservedPageSlug(slug string) bool {
-	slug = strings.ToLower(strings.Trim(strings.TrimSpace(slug), "/"))
-	if slug == "" {
-		return false
-	}
-	if systemReservedSlugs[slug] {
-		return true
-	}
-	for _, td := range h.registry.AllTypes() {
-		if td.Rewrite.Rootless {
-			continue
-		}
-		prefix := td.Rewrite.Slug
-		if prefix == "" {
-			prefix = td.Name
-		}
-		if strings.EqualFold(prefix, slug) {
-			return true
-		}
-	}
-	for _, tax := range h.registry.AllTaxonomies() {
-		if strings.EqualFold(tax.Name, slug) {
-			return true
-		}
-	}
-	return false
+	return content.IsReservedRootlessSlug(h.registry, slug)
 }
 
 func (h *Handler) ContentNew(c *gin.Context) {
@@ -613,14 +580,15 @@ func (h *Handler) ContentNew(c *gin.Context) {
 	label := h.contentTypeLabel(lang, typeName, typeDef.Label)
 	filterQuery := listFilterQuery(c)
 	data := gin.H{
-		"Title":     adminT(lang, "content.new", label),
-		"Active":    slug,
-		"TypeDef":   typeDef,
-		"TypeName":  typeName,
-		"Slug":      slug,
-		"HookItem":  (*content.Content)(nil),
-		"BackURL":   listURLWithFilter(slug, filterQuery),
-		"BackQuery": filterQuery,
+		"Title":      adminT(lang, "content.new", label),
+		"Active":     slug,
+		"TypeDef":    typeDef,
+		"TypeName":   typeName,
+		"Slug":       slug,
+		"HookItem":   (*content.Content)(nil),
+		"BackURL":    listURLWithFilter(slug, filterQuery),
+		"BackQuery":  filterQuery,
+		"CanPublish": h.svc.rbac.Can(c.GetString("admin_role"), h.mapResource(typeName), "publish"),
 	}
 
 	// Load taxonomy forms for selectors
@@ -648,7 +616,7 @@ func (h *Handler) ContentCreate(c *gin.Context) {
 
 	item := &content.Content{
 		Type:   typeName,
-		Status: content.StatusPublished,
+		Status: content.StatusDraft,
 		Title:  c.PostForm("title"),
 		Slug:   c.PostForm("slug"),
 	}
@@ -657,6 +625,9 @@ func (h *Handler) ContentCreate(c *gin.Context) {
 	// Set status from form
 	if st := c.PostForm("status"); st != "" {
 		item.Status = normalizeContentStatus(st, item.Status)
+	}
+	if publishingTransition("", item.Status) && !h.checkPermission(c, typeName, "publish") {
+		return
 	}
 	if hasSupport(typeDef.Supports, "comments") {
 		item.CommentStatus = commentStatusFromForm(c.PostForm("comment_status"))
@@ -697,47 +668,26 @@ func (h *Handler) ContentCreate(c *gin.Context) {
 		data := gin.H{
 			"Title": adminT(lang, "content.new", label), "Active": slug,
 			"TypeDef": typeDef, "TypeName": typeName, "Slug": slug,
-			"Item":      view,
-			"Error":     msg,
-			"HookItem":  item,
-			"BackURL":   listURLWithFilter(slug, filterQuery),
-			"BackQuery": filterQuery,
+			"Item":       view,
+			"Error":      msg,
+			"HookItem":   item,
+			"BackURL":    listURLWithFilter(slug, filterQuery),
+			"BackQuery":  filterQuery,
+			"CanPublish": h.svc.rbac.Can(c.GetString("admin_role"), h.mapResource(typeName), "publish"),
 		}
 		h.loadTaxonomyForms(typeDef, &view, data)
 		h.addPageAttributesData(c, typeName, typeDef, item, data)
 		h.render(c, "content_form", data)
 	}
 
-	// A rootless page slug that collides with a system route or an existing
-	// archive/taxonomy prefix would be unreachable, so reject it up front.
-	if typeDef.Rewrite.Rootless && h.isReservedPageSlug(item.Slug) {
-		renderCreateError(adminT(lang, "error.slug_reserved", item.Slug))
-		return
-	}
-
-	if err := h.svc.CreateContent(item); err != nil {
+	meta := contentMetaFromForm(c, typeDef, false)
+	if err := h.svc.CreateContentContext(content.RequestContext(c), item, meta); err != nil {
+		if errors.Is(err, content.ErrReservedSlug) {
+			renderCreateError(adminT(lang, "error.slug_reserved", item.Slug))
+			return
+		}
 		renderCreateError(adminT(lang, "error.create_failed", err.Error()))
 		return
-	}
-
-	// Save meta fields
-	for _, mf := range typeDef.MetaFields {
-		val := c.PostForm(mf.Key)
-		if val != "" {
-			h.svc.contentRepo.SaveMeta(item.ID, mf.Key, val)
-		}
-	}
-
-	// Save gallery images (multi-image support)
-	if hasSupport(typeDef.Supports, "thumbnail") {
-		h.svc.contentRepo.SaveMeta(item.ID, "gallery_images", c.PostForm("gallery_images"))
-	}
-
-	// Save the selected page template + per-page embed code (rootless pages only).
-	// embed_code is stored raw and sanitized at render time via embedHTML.
-	if typeDef.Rewrite.Rootless {
-		h.svc.contentRepo.SaveMeta(item.ID, "page_template", strings.TrimSpace(c.PostForm("page_template")))
-		h.svc.contentRepo.SaveMeta(item.ID, "embed_code", strings.TrimSpace(c.PostForm("embed_code")))
 	}
 
 	// Save taxonomy relationships
@@ -788,7 +738,7 @@ func contentBulkPermission(action string) (string, bool) {
 	case contentBulkActionDelete:
 		return "delete", true
 	case contentBulkActionPublish:
-		return "update", true
+		return "publish", true
 	case contentBulkActionUnpublish:
 		return "update", true
 	default:
@@ -838,11 +788,11 @@ func (h *Handler) ContentBulkAction(c *gin.Context) {
 	)
 	switch action {
 	case contentBulkActionDelete:
-		count, err = h.svc.BulkHardDeleteContent(typeName, ids)
+		count, err = h.svc.BulkHardDeleteContentContext(content.RequestContext(c), typeName, ids)
 	case contentBulkActionPublish:
-		count, err = h.svc.BulkPublishContent(typeName, ids)
+		count, err = h.svc.BulkPublishContentContext(content.RequestContext(c), typeName, ids)
 	case contentBulkActionUnpublish:
-		count, err = h.svc.BulkUnpublishContent(typeName, ids)
+		count, err = h.svc.BulkUnpublishContentContext(content.RequestContext(c), typeName, ids)
 	}
 	if err != nil {
 		redirectWith("error", adminT(lang, "error.bulk_action_failed", err.Error()))
@@ -911,6 +861,7 @@ func (h *Handler) ContentEdit(c *gin.Context) {
 		"HookItem":        item,
 		"BackURL":         listURLWithFilter(slug, filterQuery),
 		"BackQuery":       filterQuery,
+		"CanPublish":      h.svc.rbac.Can(c.GetString("admin_role"), h.mapResource(typeName), "publish"),
 	}
 	if message := strings.TrimSpace(c.Query("error")); message != "" {
 		data["Error"] = message
@@ -944,6 +895,7 @@ func (h *Handler) ContentUpdate(c *gin.Context) {
 		c.Redirect(http.StatusFound, listRedirectURL(slug, filterQuery, "error", adminT(lang, "error.not_found")))
 		return
 	}
+	previousStatus := item.Status
 
 	item.Title = c.PostForm("title")
 	item.Slug = c.PostForm("slug")
@@ -951,6 +903,9 @@ func (h *Handler) ContentUpdate(c *gin.Context) {
 	// Set status from form
 	if st := c.PostForm("status"); st != "" {
 		item.Status = normalizeContentStatus(st, item.Status)
+	}
+	if publishingTransition(previousStatus, item.Status) && !h.checkPermission(c, typeName, "publish") {
+		return
 	}
 	if hasSupport(typeDef.Supports, "comments") {
 		item.CommentStatus = commentStatusFromForm(c.PostForm("comment_status"))
@@ -992,42 +947,26 @@ func (h *Handler) ContentUpdate(c *gin.Context) {
 		data := gin.H{
 			"Title": adminT(lang, "content.edit", label), "Active": slug,
 			"TypeDef": typeDef, "TypeName": typeName, "Slug": slug,
-			"Item":      view,
-			"Error":     msg,
-			"HookItem":  item,
-			"BackURL":   listURLWithFilter(slug, filterQuery),
-			"BackQuery": filterQuery,
+			"Item":       view,
+			"Error":      msg,
+			"HookItem":   item,
+			"BackURL":    listURLWithFilter(slug, filterQuery),
+			"BackQuery":  filterQuery,
+			"CanPublish": h.svc.rbac.Can(c.GetString("admin_role"), h.mapResource(typeName), "publish"),
 		}
 		h.loadTaxonomyForms(typeDef, &view, data)
 		h.addPageAttributesData(c, typeName, typeDef, item, data)
 		h.render(c, "content_form", data)
 	}
 
-	if typeDef.Rewrite.Rootless && h.isReservedPageSlug(item.Slug) {
-		renderUpdateError(adminT(lang, "error.slug_reserved", item.Slug))
-		return
-	}
-
-	if err := h.svc.UpdateContent(item); err != nil {
+	meta := contentMetaFromForm(c, typeDef, true)
+	if err := h.svc.UpdateContentContext(content.RequestContext(c), typeName, item, meta); err != nil {
+		if errors.Is(err, content.ErrReservedSlug) {
+			renderUpdateError(adminT(lang, "error.slug_reserved", item.Slug))
+			return
+		}
 		renderUpdateError(adminT(lang, "error.update_failed", err.Error()))
 		return
-	}
-
-	// Update meta fields
-	for _, mf := range typeDef.MetaFields {
-		h.svc.contentRepo.SaveMeta(item.ID, mf.Key, c.PostForm(mf.Key))
-	}
-
-	// Save gallery images (multi-image support)
-	if hasSupport(typeDef.Supports, "thumbnail") {
-		h.svc.contentRepo.SaveMeta(item.ID, "gallery_images", c.PostForm("gallery_images"))
-	}
-
-	// Save the selected page template + per-page embed code (rootless pages only).
-	// embed_code is stored raw and sanitized at render time via embedHTML.
-	if typeDef.Rewrite.Rootless {
-		h.svc.contentRepo.SaveMeta(item.ID, "page_template", strings.TrimSpace(c.PostForm("page_template")))
-		h.svc.contentRepo.SaveMeta(item.ID, "embed_code", strings.TrimSpace(c.PostForm("embed_code")))
 	}
 
 	// Update taxonomy relationships
@@ -1071,7 +1010,7 @@ func (h *Handler) ContentDetail(c *gin.Context) {
 	// Mark as read (change status from draft to published)
 	if item.Status != content.StatusPublished {
 		item.Status = content.StatusPublished
-		_ = h.svc.UpdateContent(item)
+		_ = h.svc.UpdateContentContext(content.RequestContext(c), typeName, item, nil)
 	}
 
 	view := h.svc.ToDynamicContentView(*item, typeDef)
@@ -1107,7 +1046,7 @@ func (h *Handler) ContentDelete(c *gin.Context) {
 		c.Redirect(http.StatusFound, listRedirectURL(slug, listFilterQuery(c), "error", adminT(h.svc.AdminLanguage(), "error.not_found")))
 		return
 	}
-	_ = h.svc.DeleteContent(id)
+	_ = h.svc.DeleteContentContext(content.RequestContext(c), typeName, id)
 	h.invalidatePageCache()
 	h.logAction(c, "delete", typeName, id, "")
 	c.Redirect(http.StatusFound, listRedirectURL(slug, listFilterQuery(c), "success", adminT(h.svc.AdminLanguage(), "notice.deleted")))
@@ -1124,6 +1063,33 @@ func normalizeContentStatus(value, fallback string) string {
 	default:
 		return fallback
 	}
+}
+
+func publishingTransition(previousStatus, nextStatus string) bool {
+	return nextStatus == content.StatusPublished && previousStatus != content.StatusPublished
+}
+
+// contentMetaFromForm collects only meta keys declared by the active content
+// type. The domain command validates the same allow-list before persistence.
+func contentMetaFromForm(c *gin.Context, typeDef *content.ContentTypeDef, includeEmpty bool) map[string]string {
+	meta := make(map[string]string)
+	if c == nil || typeDef == nil {
+		return meta
+	}
+	for _, field := range typeDef.MetaFields {
+		value := c.PostForm(field.Key)
+		if includeEmpty || value != "" {
+			meta[field.Key] = value
+		}
+	}
+	if typeDef.SupportsFeature("thumbnail") {
+		meta["gallery_images"] = c.PostForm("gallery_images")
+	}
+	if typeDef.Rewrite.Rootless {
+		meta["page_template"] = strings.TrimSpace(c.PostForm("page_template"))
+		meta["embed_code"] = strings.TrimSpace(c.PostForm("embed_code"))
+	}
+	return meta
 }
 
 // ==================== Content Reorder (drag & drop) ====================
@@ -1154,7 +1120,7 @@ func (h *Handler) ContentReorder(c *gin.Context) {
 	}
 
 	offset, _ := strconv.Atoi(c.Query("offset"))
-	if err := h.svc.ReorderContent(typeName, req.IDs, offset); err != nil {
+	if err := h.svc.ReorderContentContext(content.RequestContext(c), typeName, req.IDs, offset); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

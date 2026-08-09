@@ -5,7 +5,7 @@ go-press/
   cmd/
     server/        server entrypoint
     gendoc/        Swagger generation command
-  core/            engine, content, themes, plugins, admin, installer, media, hooks, cache
+  core/            engine, domains, protocol-neutral Agent runtime, admin, extensions, cache
   themes/          built-in and custom themes
   plugins/         built-in and custom plugins
   internal/autoload/ generated extension imports
@@ -23,6 +23,10 @@ go-press/
 
 - `engine.go`, `bootstrap.go`, `migrate.go`, and `seeder.go` manage startup, migrations, and demo import.
 - `content/` owns content, metadata, content types, repositories, queries, and request scopes.
+- `agent/` owns protocol-neutral tools, principals, credentials, scope/RBAC
+  authorization, execution policy, idempotency, and Agent audit.
+- `audit/` contains the cross-transport audit model shared outside the admin
+  package.
 - `theme/` provides the theme interface, BaseTheme runtime, page-bundle loading, template helpers, SEO helpers, and fallback templates.
 - `plugin/` defines the plugin interface.
 - `admin/` implements the CMS admin UI.
@@ -64,8 +68,13 @@ routes, database tables, admin templates, middleware, identity providers, and
 frontend output through core extension points.
 
 Bundled examples cover multilingual content, per-content SEO, code injection,
-self-hosted analytics, and external identity. Plugin-owned tables use
+self-hosted analytics, the disabled-by-default MCP adapter, and external
+identity. Plugin-owned tables use
 `dbprefix.PluginTable`; runtime implementations do not import themes.
+
+`plugins/gopress-mcp` owns only MCP transport, protocol compatibility, Bearer
+authentication mapping, and its admin controls. It invokes the generic Core
+Agent Executor rather than importing content repositories or themes.
 
 ## Runtime Sites
 

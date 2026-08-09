@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	corePlugin "go-press/core/plugin"
-	coreTheme "go-press/core/theme"
-	"go-press/pkg/semver"
+	corePlugin "github.com/0xmattg/go-press/core/plugin"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
+	"github.com/0xmattg/go-press/pkg/semver"
 )
 
 // validateExtensionDeps checks, at codegen time, that every theme's declared

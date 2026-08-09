@@ -7,7 +7,7 @@ import (
 	"time"
 	"unicode"
 
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core/user"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

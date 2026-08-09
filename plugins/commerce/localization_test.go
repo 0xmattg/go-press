@@ -9,11 +9,11 @@ import (
 	"strings"
 	"testing"
 
-	"go-press/core"
-	"go-press/core/admin"
-	"go-press/core/content"
-	coreI18n "go-press/core/i18n"
-	coreTheme "go-press/core/theme"
+	"github.com/0xmattg/go-press/core"
+	"github.com/0xmattg/go-press/core/admin"
+	"github.com/0xmattg/go-press/core/content"
+	coreI18n "github.com/0xmattg/go-press/core/i18n"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
 
 	"github.com/gin-gonic/gin"
 )

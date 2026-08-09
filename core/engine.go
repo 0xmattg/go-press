@@ -15,30 +15,32 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"go-press/config"
-	"go-press/core/admin"
-	"go-press/core/api"
-	"go-press/core/cache"
-	"go-press/core/comment"
-	"go-press/core/content"
-	"go-press/core/hook"
-	coreI18n "go-press/core/i18n"
-	coreMail "go-press/core/mail"
-	"go-press/core/media"
-	"go-press/core/menu"
-	"go-press/core/notification"
-	"go-press/core/option"
-	"go-press/core/plugin"
-	"go-press/core/rewrite"
-	"go-press/core/taxonomy"
-	coreTheme "go-press/core/theme"
-	"go-press/core/updatecheck"
-	"go-press/core/user"
-	"go-press/core/worker"
-	"go-press/pkg/logger"
-	"go-press/pkg/middleware"
-	"go-press/pkg/semver"
-	"go-press/version"
+	"github.com/0xmattg/go-press/config"
+	"github.com/0xmattg/go-press/core/admin"
+	coreAgent "github.com/0xmattg/go-press/core/agent"
+	"github.com/0xmattg/go-press/core/api"
+	"github.com/0xmattg/go-press/core/audit"
+	"github.com/0xmattg/go-press/core/cache"
+	"github.com/0xmattg/go-press/core/comment"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/hook"
+	coreI18n "github.com/0xmattg/go-press/core/i18n"
+	coreMail "github.com/0xmattg/go-press/core/mail"
+	"github.com/0xmattg/go-press/core/media"
+	"github.com/0xmattg/go-press/core/menu"
+	"github.com/0xmattg/go-press/core/notification"
+	"github.com/0xmattg/go-press/core/option"
+	"github.com/0xmattg/go-press/core/plugin"
+	"github.com/0xmattg/go-press/core/rewrite"
+	"github.com/0xmattg/go-press/core/taxonomy"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
+	"github.com/0xmattg/go-press/core/updatecheck"
+	"github.com/0xmattg/go-press/core/user"
+	"github.com/0xmattg/go-press/core/worker"
+	"github.com/0xmattg/go-press/pkg/logger"
+	"github.com/0xmattg/go-press/pkg/middleware"
+	"github.com/0xmattg/go-press/pkg/semver"
+	"github.com/0xmattg/go-press/version"
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -91,6 +93,16 @@ type Engine struct {
 	Sched    *worker.Scheduler
 	Mail     *coreMail.Service
 	Updates  *updatecheck.Service
+	Audit    *audit.Service
+
+	// Agent foundation is protocol-neutral. Network transports such as MCP are
+	// optional plugins that consume these services through plugin.AgentHost.
+	AgentTools       *coreAgent.Registry
+	AgentExec        *coreAgent.Executor
+	AgentCredentials *coreAgent.CredentialService
+	AgentIdempotency *coreAgent.IdempotencyStore
+	AgentAudit       *coreAgent.AuditStore
+	AgentPolicy      *coreAgent.Policy
 
 	// URL / SEO services derive public routes, metadata, redirects, and sitemap
 	// entries from the content registry and repositories.
@@ -102,6 +114,7 @@ type Engine struct {
 	// Repositories are thin data access layers. Higher-level workflows should
 	// still go through services where those exist, especially in admin code.
 	Content           *content.Repository
+	ContentCommands   *content.CommandService
 	Comments          *comment.Service
 	Taxonomy          *taxonomy.Repository
 	Users             *user.Repository
@@ -205,7 +218,8 @@ func New(cfg *config.Config, db *gorm.DB) *Engine {
 		Workers:  wp,
 		Sched:    sched,
 
-		Mail: coreMail.NewService(cfg.Mail, hookBus),
+		Mail:  coreMail.NewService(cfg.Mail, hookBus),
+		Audit: audit.NewService(db),
 
 		Content:      content.NewRepositoryWithHooks(db, hookBus),
 		Taxonomy:     taxonomy.NewRepository(db),
@@ -234,7 +248,55 @@ func New(cfg *config.Config, db *gorm.DB) *Engine {
 		logger.Error("Failed to register core update target", "error", err)
 	}
 	e.Comments = comment.NewService(db, hookBus, e.Registry)
+	e.ContentCommands = content.NewCommandService(db, e.Registry)
+	e.ContentCommands.SetMutationObserver(func(ctx context.Context, mutation content.Mutation) {
+		switch mutation.Kind {
+		case content.MutationCreated:
+			e.Hooks.DoAction(ctx, hook.ContentCreated, mutation.Item, mutation.Meta)
+		case content.MutationUpdated:
+			e.Hooks.DoAction(ctx, hook.ContentUpdated, mutation.Item, mutation.Meta)
+		case content.MutationPublished:
+			e.Hooks.DoAction(ctx, hook.ContentPublished, mutation.Item)
+		case content.MutationTrashed:
+			e.Hooks.DoAction(ctx, hook.ContentTrashed, mutation.Item)
+		case content.MutationRestored:
+			e.Hooks.DoAction(ctx, hook.ContentRestored, mutation.Item)
+		}
+		cache.InvalidatePageCache(e.Cache)
+	})
+	e.Media.SetMetadataObserver(func(ctx context.Context, item *media.Media) {
+		e.Hooks.DoAction(ctx, hook.MediaMetadataUpdated, item)
+		cache.InvalidatePageCache(e.Cache)
+	})
 	e.PublicSubmissions = content.NewPublicSubmissionService(e.Content, e.Users, e.Registry, e.RBAC)
+	e.AgentTools = coreAgent.NewRegistry()
+	e.AgentPolicy = coreAgent.NewPolicy()
+	e.AgentCredentials = coreAgent.NewCredentialService(db, e.RBAC)
+	e.AgentIdempotency = coreAgent.NewIdempotencyStore(db)
+	e.AgentAudit = coreAgent.NewAuditStore(db)
+	e.AgentExec = coreAgent.NewExecutor(
+		e.AgentTools,
+		e.AgentCredentials,
+		coreAgent.NewAuthorizer(e.RBAC),
+		e.AgentIdempotency,
+		e.AgentAudit,
+	)
+	e.AgentExec.SetRiskPolicy(e.AgentPolicy)
+	if _, err := coreAgent.RegisterCoreReadTools(e.AgentTools, coreAgent.CoreToolServices{
+		ContentRegistry: e.Registry, ContentRepo: e.Content,
+		ContentCommands: e.ContentCommands,
+		TaxonomyRepo:    e.Taxonomy, MediaRepo: e.Media, Options: e.Options,
+		SiteName: cfg.Site.Name, SiteURL: cfg.Site.URL, SiteTimezone: cfg.Site.Timezone,
+		CoreVersion: version.String(),
+	}); err != nil {
+		logger.Error("Failed to register core Agent tools", "error", err)
+	}
+	if _, err := coreAgent.RegisterCoreWriteTools(e.AgentTools, coreAgent.CoreToolServices{
+		ContentRegistry: e.Registry, ContentRepo: e.Content, ContentCommands: e.ContentCommands,
+		MediaRepo: e.Media,
+	}); err != nil {
+		logger.Error("Failed to register core Agent write tools", "error", err)
+	}
 
 	// URL / SEO (depends on Registry, created after it)
 	e.Rewrite = rewrite.NewEngine(e.Registry)
@@ -997,6 +1059,8 @@ func (e *Engine) SetupAdmin() {
 		e.Registry,
 	)
 	svc.SetCommentService(e.Comments)
+	svc.SetAuditService(e.Audit)
+	svc.SetContentCommandService(e.ContentCommands)
 	h := admin.NewHandler(svc, e.Registry, "core/admin/templates")
 	h.SetUpdateStatusProvider(e.Updates)
 
@@ -1436,17 +1500,26 @@ func (e *Engine) CommentService() *comment.Service { return e.Comments }
 func (e *Engine) PublicSubmissionService() *content.PublicSubmissionService {
 	return e.PublicSubmissions
 }
-func (e *Engine) TaxonomyRepo() *taxonomy.Repository    { return e.Taxonomy }
-func (e *Engine) ContentRegistry() *content.Registry    { return e.Registry }
-func (e *Engine) OptionsStore() *option.Store           { return e.Options }
-func (e *Engine) RewriteEngine() *rewrite.Engine        { return e.Rewrite }
-func (e *Engine) SEOBuilder() *rewrite.SEOBuilder       { return e.SEO }
-func (e *Engine) MenuStore() *menu.Store                { return e.Menus }
-func (e *Engine) MediaRepo() *media.Repository          { return e.Media }
-func (e *Engine) I18nManager() *coreI18n.Manager        { return e.I18n }
-func (e *Engine) HookBus() *hook.Bus                    { return e.Hooks }
-func (e *Engine) MailSender() coreMail.Sender           { return e.Mail }
-func (e *Engine) PublicAuthenticator() *user.PublicAuth { return e.FrontendAuth }
+func (e *Engine) TaxonomyRepo() *taxonomy.Repository     { return e.Taxonomy }
+func (e *Engine) ContentRegistry() *content.Registry     { return e.Registry }
+func (e *Engine) OptionsStore() *option.Store            { return e.Options }
+func (e *Engine) RewriteEngine() *rewrite.Engine         { return e.Rewrite }
+func (e *Engine) SEOBuilder() *rewrite.SEOBuilder        { return e.SEO }
+func (e *Engine) MenuStore() *menu.Store                 { return e.Menus }
+func (e *Engine) MediaRepo() *media.Repository           { return e.Media }
+func (e *Engine) I18nManager() *coreI18n.Manager         { return e.I18n }
+func (e *Engine) HookBus() *hook.Bus                     { return e.Hooks }
+func (e *Engine) MailSender() coreMail.Sender            { return e.Mail }
+func (e *Engine) PublicAuthenticator() *user.PublicAuth  { return e.FrontendAuth }
+func (e *Engine) AgentToolRegistry() *coreAgent.Registry { return e.AgentTools }
+func (e *Engine) AgentExecutor() *coreAgent.Executor     { return e.AgentExec }
+func (e *Engine) AgentCredentialService() *coreAgent.CredentialService {
+	return e.AgentCredentials
+}
+func (e *Engine) AgentAuditStore() *coreAgent.AuditStore { return e.AgentAudit }
+func (e *Engine) AgentToolPolicy() *coreAgent.Policy     { return e.AgentPolicy }
+func (e *Engine) AdminAuth() *user.Auth                  { return e.Auth }
+func (e *Engine) RBACManager() *user.RBAC                { return e.RBAC }
 func (e *Engine) PublicSiteURL() string {
 	if e == nil || e.Config == nil {
 		return ""
@@ -1459,6 +1532,8 @@ func (e *Engine) PublicAuthProviders() []user.ProviderDescriptor {
 	}
 	return e.AuthProviders.All()
 }
+
+var _ plugin.AgentHost = (*Engine)(nil)
 
 // CanPublicUser applies core RBAC to the authenticated public account in the
 // request context. It deliberately carries no identity-provider information.

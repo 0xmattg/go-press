@@ -1,6 +1,6 @@
 package shopstarter
 
-import "go-press/core/option"
+import "github.com/0xmattg/go-press/core/option"
 
 // registerTranslatableOptions exposes every theme-owned visible text setting
 // through Core's generic option registry.

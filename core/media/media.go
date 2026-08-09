@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
 )
 
 // Media represents an uploaded file tracked by the media library.
@@ -26,6 +26,7 @@ type Media struct {
 	Height       int       `json:"height"`
 	UploadedBy   uint      `json:"uploaded_by"`
 	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 func (Media) TableName() string { return dbprefix.Table("media") }

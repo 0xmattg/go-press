@@ -13,9 +13,9 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/gin-gonic/gin"
 
-	"go-press/core"
-	"go-press/core/option"
-	coreTheme "go-press/core/theme"
+	"github.com/0xmattg/go-press/core"
+	"github.com/0xmattg/go-press/core/option"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
 )
 
 func stubFuncs() template.FuncMap {
@@ -347,7 +347,7 @@ func TestThemeImplementationDoesNotImportPlugins(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if strings.Contains(string(data), "go-press/plugins/") {
+		if strings.Contains(string(data), "github.com/0xmattg/go-press/plugins/") {
 			t.Errorf("theme implementation imports a plugin in %s", path)
 		}
 	}

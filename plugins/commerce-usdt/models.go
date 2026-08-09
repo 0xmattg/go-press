@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

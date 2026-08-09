@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"go-press/core/plugin"
-	coreTheme "go-press/core/theme"
-	"go-press/pkg/logger"
-	"go-press/pkg/semver"
-	"go-press/version"
+	"github.com/0xmattg/go-press/core/plugin"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
+	"github.com/0xmattg/go-press/pkg/logger"
+	"github.com/0xmattg/go-press/pkg/semver"
+	"github.com/0xmattg/go-press/version"
 )
 
 // DepState is the resolved state of one theme→plugin dependency.

@@ -5,7 +5,7 @@ import (
 	"math"
 	"time"
 
-	"go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
 
 	"gorm.io/gorm"
 )
@@ -46,6 +46,14 @@ func NewQuery(db *gorm.DB) *ContentQuery {
 func (q *ContentQuery) Type(t string) *ContentQuery {
 	tbl := dbprefix.Table("contents")
 	q.db = q.db.Where(tbl+".type = ?", t)
+	return q
+}
+
+// ID filters by the primary key. Combining ID with Type is the preferred
+// pattern for external callers because it prevents cross-type ID probing.
+func (q *ContentQuery) ID(id uint) *ContentQuery {
+	tbl := dbprefix.Table("contents")
+	q.db = q.db.Where(tbl+".id = ?", id)
 	return q
 }
 

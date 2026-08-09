@@ -3,7 +3,7 @@ package admin
 import (
 	"errors"
 
-	coreI18n "go-press/core/i18n"
+	coreI18n "github.com/0xmattg/go-press/core/i18n"
 )
 
 // This file defines the small, per-domain interfaces the admin Handler depends

@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	coreI18n "go-press/core/i18n"
+	coreI18n "github.com/0xmattg/go-press/core/i18n"
 )
 
 // commerceLocaleFS keeps the plugin's storefront copy with the plugin. Message

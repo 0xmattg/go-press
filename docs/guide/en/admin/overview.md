@@ -52,6 +52,11 @@ List search is server-side and searches titles only, matching the admin placehol
   usable until expiry.
 - **System settings** — maintain site identity, language, timezone, favicon, and
   admin preferences.
+- **Agent/MCP controls** — after the disabled-by-default `gopress-mcp` plugin is
+  activated, its settings page provides connection diagnostics, read-only or
+  Safe Write policy, short-lived token issue/revocation, and filtered Tool
+  audit. Dedicated RBAC protects the page and every custom handler. See
+  [GoPress MCP (Agent Access)](../plugins/gopress-mcp.md).
 
 ## Settings
 

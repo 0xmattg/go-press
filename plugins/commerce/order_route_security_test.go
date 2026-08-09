@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"go-press/core"
-	"go-press/core/hook"
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core"
+	"github.com/0xmattg/go-press/core/hook"
+	"github.com/0xmattg/go-press/core/user"
 
 	"github.com/gin-gonic/gin"
 )

@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core/user"
 )
 
 // RateLimiter implements a simple token bucket rate limiter per IP.

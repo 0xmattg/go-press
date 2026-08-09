@@ -1,6 +1,6 @@
 package commerceusdt
 
-import "go-press/core"
+import "github.com/0xmattg/go-press/core"
 
 // init registers the plugin factory. Importing core here (only in register.go)
 // keeps the commerce coupling elsewhere limited to the core/commerce contracts.

@@ -44,7 +44,7 @@ func (r *RBAC) registerDefaults() {
 		"*.*": true,
 	})
 	r.RegisterRole(RoleEditor, "编辑", 50, map[string]bool{
-		"content.create": true, "content.read": true, "content.update": true, "content.delete": true,
+		"content.create": true, "content.read": true, "content.update": true, "content.delete": true, "content.publish": true,
 		"taxonomy.create": true, "taxonomy.read": true, "taxonomy.update": true, "taxonomy.delete": true,
 		"media.create": true, "media.read": true, "media.update": true, "media.delete": true,
 		"menu.read": true, "menu.update": true,

@@ -6,14 +6,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"go-press/core"
-	"go-press/core/admin"
-	corecommerce "go-press/core/commerce"
-	"go-press/core/content"
-	"go-press/core/hook"
-	"go-press/core/plugin"
-	"go-press/core/user"
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/core"
+	"github.com/0xmattg/go-press/core/admin"
+	corecommerce "github.com/0xmattg/go-press/core/commerce"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/hook"
+	"github.com/0xmattg/go-press/core/plugin"
+	"github.com/0xmattg/go-press/core/user"
+	"github.com/0xmattg/go-press/pkg/logger"
 )
 
 // Plugin is the GoPress Commerce engine — the opt-in e-commerce foundation

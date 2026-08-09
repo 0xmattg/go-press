@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	coreMedia "go-press/core/media"
+	coreMedia "github.com/0xmattg/go-press/core/media"
 )
 
 type imageAttrs struct {

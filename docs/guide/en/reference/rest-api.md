@@ -21,6 +21,11 @@ After starting the server:
 
 ## Authentication
 
+> REST and MCP are separate security surfaces. The admin JWT and `X-API-Key`
+> below apply to REST only. `/mcp` rejects them and uses dedicated Agent Bearer
+> tokens, scopes, current RBAC, and Tool Policy. See
+> [GoPress MCP (Agent Access)](../plugins/gopress-mcp.md).
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \

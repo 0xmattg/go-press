@@ -1,6 +1,6 @@
 package financialnews
 
-import "go-press/core/option"
+import "github.com/0xmattg/go-press/core/option"
 
 // registerTranslatableOptions declares text-based theme settings that can be
 // translated by the multilingual plugin.

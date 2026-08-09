@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"go-press/config"
-	"go-press/core/hook"
+	"github.com/0xmattg/go-press/config"
+	"github.com/0xmattg/go-press/core/hook"
 
 	gomail "github.com/wneessen/go-mail"
 )

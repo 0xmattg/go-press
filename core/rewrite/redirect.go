@@ -7,8 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"go-press/pkg/dbprefix"
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/pkg/logger"
 )
 
 // Redirect represents a URL redirect stored in the database.

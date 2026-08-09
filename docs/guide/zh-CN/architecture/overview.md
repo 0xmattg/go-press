@@ -94,12 +94,45 @@ main.go
 ## 引擎职责
 
 - 统一拥有内容、分类、用户、Session、权限、媒体、菜单、选项、缓存、
-  Rewrite、SEO、邮件、评论、前台内容提交和 Worker 等稳定服务。
+  Rewrite、SEO、邮件、评论、前台内容提交、Agent 和 Worker 等稳定服务。
 - 注册核心内容类型和配置驱动的主题内容类型。
 - 暴露通用仓储、模板 helper、Hook、Filter、Provider、中间件扩展点及受保护
   路由 helper。
 - 从同一组注册表生成公开 URL、canonical、Sitemap 和回退模板。
 - 协调扩展激活、依赖校验、数据迁移与缓存失效。
+
+## Agent 与 MCP 边界
+
+`core/agent` 是协议无关的能力层，不包含 MCP 方法名、HTTP Handler 或特定客户端
+逻辑。它维护 Tool Registry、Principal、Credential、Scope/RBAC Authorizer、
+Tool Policy、Executor、JSON Schema 校验、幂等记录和 Agent 审计。引擎注册通用
+站点、内容类型、内容、分类与媒体 Tool，当前主题声明的 ContentType 通过同一
+Registry 自动被这些通用 Tool 识别。
+
+默认停用的 `gopress-mcp` 插件依赖上述 Core 接口，把 `/mcp` Streamable HTTP
+消息映射为 `agent.Call`，再把结构化结果映射回 MCP。它不直接调用内容仓储、
+不识别主题或业务插件；Core 也不 import MCP SDK 或该插件。停用插件只移除协议
+入口，不改变 Core 的领域模型。
+
+每次 Tool 执行都遵循固定管线：
+
+```text
+刷新 Principal
+  -> 校验参数 Schema
+  -> Scope AND Core RBAC AND 所有权
+  -> 站点 Tool Profile / 逐 Tool 策略
+  -> 高风险确认
+  -> 写操作幂等获取
+  -> 有超时和并发上限的领域执行
+  -> 结果 Schema 校验
+  -> 幂等落库
+  -> 强制审计
+```
+
+当前 Agent 设计、Tool 与执行细节见
+[Agent 与 MCP 模块](../agent/overview.md)，网络连接与运维方法见
+[GoPress MCP 插件](../plugins/gopress-mcp.md)，完整演进路线见
+[框架级 Agent 与 MCP 能力规划](mcp-agent-capability-plan.md)。
 
 ## 关键解耦点
 
@@ -111,5 +144,7 @@ main.go
 - **零主题/插件交叉耦合** — 主题只依赖 core funcmap 字符串 key，插件只向 core 注册 hook/ctx key，**主题和插件之间不存在任何直接调用或类型依赖**，core 是唯一交汇点
 - **Provider-neutral 前台认证** — core 负责用户、Identity、注册策略和可撤销 Session；Google OIDC、钱包签名等协议由独立插件验证，主题只读取统一登录上下文
 - **策略驱动前台创作** — 主题声明哪些角色能够创建或维护某种内容，Core 统一执行账号状态、RBAC、所有权、编辑状态、输入校验与滥用限制，而不接管主题 UI
+- **协议无关 Agent Core** — Core 只定义 Tool、Principal、执行与安全契约；
+  MCP 由可选插件适配，主题和业务插件无需知道协议或客户端存在
 
 前台账号、身份插件和主题接入详见[前台用户注册与身份登录](public-authentication.md)，登录用户创作流程详见[前台用户内容提交](public-content-submission.md)。其他主题见左侧导航中的架构章节。

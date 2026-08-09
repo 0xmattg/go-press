@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	corecommerce "go-press/core/commerce"
-	"go-press/pkg/logger"
+	corecommerce "github.com/0xmattg/go-press/core/commerce"
+	"github.com/0xmattg/go-press/pkg/logger"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

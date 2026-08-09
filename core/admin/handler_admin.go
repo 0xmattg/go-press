@@ -12,10 +12,10 @@ import (
 	"strconv"
 	"strings"
 
-	"go-press/config"
-	"go-press/core/hook"
-	"go-press/core/option"
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/config"
+	"github.com/0xmattg/go-press/core/hook"
+	"github.com/0xmattg/go-press/core/option"
+	"github.com/0xmattg/go-press/core/user"
 
 	"github.com/gin-gonic/gin"
 )

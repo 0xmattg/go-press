@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
 
 	_ "github.com/mattn/go-sqlite3"
 	"gorm.io/driver/postgres"

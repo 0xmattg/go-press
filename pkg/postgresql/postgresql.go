@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"go-press/config"
-	"go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/config"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

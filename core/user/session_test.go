@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"

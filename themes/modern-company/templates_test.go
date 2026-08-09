@@ -12,11 +12,11 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/gin-gonic/gin"
 
-	"go-press/core"
-	"go-press/core/content"
-	coreI18n "go-press/core/i18n"
-	"go-press/core/rewrite"
-	coreTheme "go-press/core/theme"
+	"github.com/0xmattg/go-press/core"
+	"github.com/0xmattg/go-press/core/content"
+	coreI18n "github.com/0xmattg/go-press/core/i18n"
+	"github.com/0xmattg/go-press/core/rewrite"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
 )
 
 func TestTemplatesCompile(t *testing.T) {

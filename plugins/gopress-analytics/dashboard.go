@@ -11,7 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"go-press/core/i18n"
+	"github.com/0xmattg/go-press/core/i18n"
 )
 
 type widgetView struct {

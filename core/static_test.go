@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"go-press/config"
+	"github.com/0xmattg/go-press/config"
 )
 
 func TestServeStaticHeadUploadReturnsHeaders(t *testing.T) {

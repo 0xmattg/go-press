@@ -1,9 +1,10 @@
 package taxonomy
 
 import (
+	"context"
 	"fmt"
 
-	"go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
 
 	"gorm.io/gorm"
 )
@@ -48,8 +49,17 @@ func (r *Repository) GetTaxonomy(id uint) (*Taxonomy, error) {
 
 // ListByTaxonomy returns all taxonomy entries of a given type (e.g. "category").
 func (r *Repository) ListByTaxonomy(taxonomyType string) ([]Taxonomy, error) {
+	return r.ListByTaxonomyContext(context.Background(), taxonomyType)
+}
+
+// ListByTaxonomyContext propagates cancellation and deadlines from protocol-
+// neutral request contexts.
+func (r *Repository) ListByTaxonomyContext(ctx context.Context, taxonomyType string) ([]Taxonomy, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	var items []Taxonomy
-	err := r.db.Preload("Term").
+	err := r.db.WithContext(ctx).Preload("Term").
 		Where("taxonomy = ?", taxonomyType).
 		Order("count DESC").
 		Find(&items).Error

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"go-press/core/hook"
+	"github.com/0xmattg/go-press/core/hook"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -41,6 +41,12 @@ func (r *Repository) Query() *ContentQuery {
 	return NewQuery(r.db)
 }
 
+// QueryContext creates a query with standard-context content scopes applied.
+// It is the preferred entry point for Agent, worker, and other non-Gin callers.
+func (r *Repository) QueryContext(ctx context.Context) *ContentQuery {
+	return NewQuery(ScopedDBContext(ctx, r.db))
+}
+
 // FindByID returns a content item by ID, with meta preloaded.
 func (r *Repository) FindByID(id uint) (*Content, error) {
 	var c Content
@@ -74,7 +80,13 @@ func (r *Repository) FindBySlug(contentType, slug string) (*Content, error) {
 // When ctx == nil or no scopes are registered, behavior is identical to
 // FindBySlug. The Session() inside ScopedDB makes it safe for repeated use.
 func (r *Repository) FindBySlugScoped(ctx *gin.Context, contentType, slug string) (*Content, error) {
-	db := ScopedDB(ctx, r.db)
+	return r.FindBySlugContext(RequestContext(ctx), contentType, slug)
+}
+
+// FindBySlugContext is the framework-neutral scope-aware variant used by
+// domain services and non-HTTP callers.
+func (r *Repository) FindBySlugContext(ctx context.Context, contentType, slug string) (*Content, error) {
+	db := ScopedDBContext(ctx, r.db)
 	var c Content
 	err := db.Preload("Meta").
 		Where("type = ? AND slug = ?", contentType, slug).
@@ -242,7 +254,13 @@ func (r *Repository) EnsureUniqueSlug(contentType, slug string, excludeID uint) 
 // the exact same slug — disambiguation is handled at request time by the URL
 // language prefix + the same scope mechanism in FindBySlugScoped.
 func (r *Repository) EnsureUniqueSlugScoped(ctx *gin.Context, contentType, slug string, excludeID uint) (string, error) {
-	return ensureUnique(ScopedDB(ctx, r.db), contentType, slug, excludeID)
+	return r.EnsureUniqueSlugContext(RequestContext(ctx), contentType, slug, excludeID)
+}
+
+// EnsureUniqueSlugContext applies request scopes carried by a standard
+// context, allowing command services to remain independent from Gin.
+func (r *Repository) EnsureUniqueSlugContext(ctx context.Context, contentType, slug string, excludeID uint) (string, error) {
+	return ensureUnique(ScopedDBContext(ctx, r.db), contentType, slug, excludeID)
 }
 
 func ensureUnique(db *gorm.DB, contentType, slug string, excludeID uint) (string, error) {

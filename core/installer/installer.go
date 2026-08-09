@@ -21,15 +21,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"go-press/config"
-	"go-press/core"
-	"go-press/core/option"
-	"go-press/core/updatecheck"
-	"go-press/core/user"
-	"go-press/pkg/dbprefix"
-	"go-press/pkg/logger"
-	"go-press/pkg/middleware"
-	pg "go-press/pkg/postgresql"
+	"github.com/0xmattg/go-press/config"
+	"github.com/0xmattg/go-press/core"
+	"github.com/0xmattg/go-press/core/option"
+	"github.com/0xmattg/go-press/core/updatecheck"
+	"github.com/0xmattg/go-press/core/user"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/pkg/logger"
+	"github.com/0xmattg/go-press/pkg/middleware"
+	pg "github.com/0xmattg/go-press/pkg/postgresql"
 )
 
 const (

@@ -27,6 +27,9 @@
   分页和仅当前账号可见的 Profile 契约。
 - **内置运营插件** — 多语言管理、内容级 SEO 覆盖、站点代码片段和带保留
   策略、本地 GeoIP 的自托管访问统计。
+- **Agent / MCP Phase 0–3** — 协议无关的 Core Agent Registry/Executor、短期
+  Credential、Scope + RBAC + 所有权、幂等与审计，以及默认停用/默认只读的
+  双协议 MCP 插件、6 个只读 Tool 和 6 个受控写 Tool。
 - **交付工具** — 支持 Handler 热切换的 Web 安装器、`gopress` autoload/
   build 流程、Swagger 生成、站点级配置和站点级公开生成物。
 
@@ -35,6 +38,10 @@
 - Shortcode 解析器。
 - 读写数据库连接分离。
 - Prometheus 监控指标。
+- **Agent / MCP Phase 4** — OAuth 2.1 授权发现、PKCE、Refresh Token 轮换、
+  Step-up Scope、OpenTelemetry、指标、告警和审计保留策略。
+- **Agent / MCP Phase 5** — Resources、Prompts、Tasks、MCP Apps、订阅、
+  Registry 发布与第三方 Tool 治理。
 - CI/CD 流水线加固。
 - Benchmark 与性能调优。
 - 主题/插件版本迁移 Hook。

@@ -1,17 +1,19 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 
-	"go-press/core/admin"
-	"go-press/core/comment"
-	"go-press/core/content"
-	coreMedia "go-press/core/media"
-	"go-press/core/menu"
-	"go-press/core/option"
-	"go-press/core/taxonomy"
-	"go-press/core/user"
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/core/agent"
+	"github.com/0xmattg/go-press/core/audit"
+	"github.com/0xmattg/go-press/core/comment"
+	"github.com/0xmattg/go-press/core/content"
+	coreMedia "github.com/0xmattg/go-press/core/media"
+	"github.com/0xmattg/go-press/core/menu"
+	"github.com/0xmattg/go-press/core/option"
+	"github.com/0xmattg/go-press/core/taxonomy"
+	"github.com/0xmattg/go-press/core/user"
+	"github.com/0xmattg/go-press/pkg/logger"
 
 	"gorm.io/gorm"
 )
@@ -27,7 +29,19 @@ func MigrateDB(db *gorm.DB) error {
 	if err := db.AutoMigrate(coreModels()...); err != nil {
 		return err
 	}
-	return migrateLegacyUserColumns(db.Migrator())
+	if err := migrateLegacyUserColumns(db.Migrator()); err != nil {
+		return err
+	}
+	return backfillMediaUpdatedAt(db)
+}
+
+func backfillMediaUpdatedAt(db *gorm.DB) error {
+	if db == nil {
+		return errors.New("database is required")
+	}
+	return db.Model(&coreMedia.Media{}).
+		Where("updated_at IS NULL").
+		Update("updated_at", gorm.Expr("created_at")).Error
 }
 
 type columnAlterer interface {
@@ -70,7 +84,12 @@ func coreModels() []interface{} {
 		// Media
 		&coreMedia.Media{},
 		&coreMedia.MediaVariant{},
-		// Admin (audit logs)
-		&admin.AuditLog{},
+		// Cross-transport audit events
+		&audit.Event{},
+		// Protocol-neutral Agent foundation
+		&agent.ServiceAccount{},
+		&agent.Credential{},
+		&agent.IdempotencyRecord{},
+		&agent.AuditEvent{},
 	}
 }

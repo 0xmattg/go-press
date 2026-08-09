@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"go-press/core/user"
-	"go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/core/user"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
