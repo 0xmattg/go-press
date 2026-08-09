@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/pkg/logger"
 )
 
 // Task represents a unit of background work executed by the pool.

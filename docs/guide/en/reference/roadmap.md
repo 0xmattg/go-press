@@ -34,6 +34,10 @@
 - **Bundled operational plugins** — multilingual management, SEO overrides,
   site-level code snippets, and self-hosted traffic analytics with retention and
   local GeoIP support.
+- **Agent/MCP Phases 0–3** — protocol-neutral Core Agent Registry and Executor,
+  short-lived credentials, scope plus RBAC plus ownership, idempotency and
+  audit, and a disabled/read-only-by-default dual-protocol MCP plugin with six
+  read tools and six controlled write tools.
 - **Delivery tooling** — web installer with live handler switch, `gopress`
   autoload/build workflow, Swagger generation, site-scoped configuration, and
   generated public artifacts.
@@ -43,6 +47,10 @@
 - Shortcode parser.
 - Read/write database connection splitting.
 - Prometheus metrics.
+- **Agent/MCP Phase 4** — OAuth 2.1 discovery, PKCE, refresh-token rotation,
+  step-up scopes, OpenTelemetry, metrics, alerts, and audit retention.
+- **Agent/MCP Phase 5** — Resources, Prompts, Tasks, MCP Apps, subscriptions,
+  registry publication, and third-party Tool governance.
 - CI/CD pipeline hardening.
 - Benchmark suite and performance tuning.
 - Theme and plugin version migration hooks.

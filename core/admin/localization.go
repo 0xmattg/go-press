@@ -3,7 +3,7 @@ package admin
 import (
 	"embed"
 
-	coreI18n "go-press/core/i18n"
+	coreI18n "github.com/0xmattg/go-press/core/i18n"
 )
 
 const defaultAdminLanguage = coreI18n.DefaultUILanguage

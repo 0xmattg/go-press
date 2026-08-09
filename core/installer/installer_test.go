@@ -11,7 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"go-press/config"
+	"github.com/0xmattg/go-press/config"
 )
 
 func TestInstallerWelcomePageRenders(t *testing.T) {

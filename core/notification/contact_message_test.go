@@ -5,9 +5,9 @@ import (
 	"reflect"
 	"testing"
 
-	"go-press/core/content"
-	"go-press/core/hook"
-	"go-press/core/mail"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/hook"
+	"github.com/0xmattg/go-press/core/mail"
 )
 
 func TestSplitRecipientsNormalizesAndDeduplicates(t *testing.T) {

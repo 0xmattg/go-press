@@ -23,7 +23,7 @@ import (
 	"strings"
 	"sync"
 
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/pkg/logger"
 
 	"github.com/gin-gonic/gin"
 	goi18n "github.com/nicksnyder/go-i18n/v2/i18n"

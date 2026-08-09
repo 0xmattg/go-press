@@ -15,6 +15,10 @@ Plugins extend GoPress through public core contracts. They can register hooks, a
   from retaining removed navigation or script output.
 - Sitemap transformers and other registration APIs return symmetric remove
   handles and follow the same lifecycle contract.
+- Plugins can contribute protocol-neutral Agent tools through the Core Agent
+  Registry and revoke their handles on deactivation. Authentication, scopes,
+  RBAC, risk policy, idempotency, and audit remain mandatory Core Executor
+  wrappers rather than plugin-specific implementations.
 
 ## Plugin Lifecycle
 
@@ -52,6 +56,7 @@ The [Hook System](../architecture/hooks.md) and
 | `seo-extras` | Yoast-like per-content SEO title, description, Open Graph image, and robots overrides. |
 | `code-snippets` | WPCode-like site-level HTML/JS injection into head, body, and footer slots. |
 | `gopress-analytics` | First-party self-hosted page-view, visitor, trend, and top-page analytics. |
+| `gopress-mcp` | Disabled-by-default remote MCP adapter with six read tools, six controlled write tools, short-lived credentials, per-tool Safe Write policy, diagnostics, and audit. |
 | `google-identity` | Google OpenID Connect login and registration through the core public-auth contract. |
 | `metamask-identity` | MetaMask and EIP-4361 Sign-In with Ethereum login and registration through one-time server challenges. |
 
@@ -68,3 +73,4 @@ See [Public Authentication](../architecture/public-authentication.md) for identi
 - [SEO Extras](seo-extras.md)
 - [Code Snippets](code-snippets.md)
 - [GoPress Analytics](gopress-analytics.md)
+- [GoPress MCP (Agent Access)](gopress-mcp.md)

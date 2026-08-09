@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	corecontent "go-press/core/content"
+	corecontent "github.com/0xmattg/go-press/core/content"
 
 	"github.com/gin-gonic/gin"
 )

@@ -3,7 +3,7 @@ package googleidentity
 import (
 	_ "embed"
 
-	"go-press/core/plugin"
+	"github.com/0xmattg/go-press/core/plugin"
 )
 
 //go:embed plugin.toml

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core/user"
 
 	"github.com/gin-gonic/gin"
 )

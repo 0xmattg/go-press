@@ -1,0 +1,7 @@
+[plugin]
+slug = "gopress-mcp"
+name = "GoPress MCP"
+version = "0.1.4"
+description = "Official MCP server adapter for GoPress Agent capabilities, read-only by default."
+author = "GoPress Team"
+default_inactive = true

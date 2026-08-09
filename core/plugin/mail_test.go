@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"go-press/core/mail"
+	"github.com/0xmattg/go-press/core/mail"
 )
 
 type fakeMailApp struct {

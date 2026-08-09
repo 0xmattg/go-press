@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
 )
 
 // TableOwner identifies the subsystem responsible for a registered table.

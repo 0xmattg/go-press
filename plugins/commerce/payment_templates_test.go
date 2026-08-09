@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	corecommerce "go-press/core/commerce"
+	corecommerce "github.com/0xmattg/go-press/core/commerce"
 )
 
 func TestPaymentActionTemplatesRender(t *testing.T) {

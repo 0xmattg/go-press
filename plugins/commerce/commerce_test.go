@@ -3,7 +3,7 @@ package commerce
 import (
 	"testing"
 
-	"go-press/core/content"
+	"github.com/0xmattg/go-press/core/content"
 )
 
 // TestRegisterProductTypesIdempotent verifies the commerce content types

@@ -8,7 +8,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/gin-gonic/gin"
 
-	"go-press/core"
+	"github.com/0xmattg/go-press/core"
 )
 
 func TestTemplatesCompile(t *testing.T) {

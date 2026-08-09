@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"go-press/config"
+	"github.com/0xmattg/go-press/config"
 )
 
 func TestBuildDSNDefaultsSchemaToPublic(t *testing.T) {

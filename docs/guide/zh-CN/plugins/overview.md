@@ -13,6 +13,9 @@ GoPress 的插件系统借鉴 WordPress 的 hook 模型，但用 Go 接口实现
 - **Sitemap Transformer Hook** — 插件可通过 `engine.Sitemap.AddTransformer()` 拦截每条 URL 条目，追加 hreflang 备选链接或衍生多语言副本（多语言插件据此实现 sitemap 翻译组）
 - **表注册** — 插件通过 `core.RegisterPluginTable()` 注册自定义表，引擎统一追踪生命周期
 - **Settings 接口** — `SettingsProvider` 提供设置页模板，`SettingsDataProvider` 注入自定义数据，`SettingsSaveProvider` 监听设置保存事件
+- **Agent Tool Provider** — 插件可通过协议无关的 `core/agent.Registry` 注册
+  Tool，并保存可撤销 Handle；具体 MCP 适配器只读取 Registry，不识别业务插件。
+  Tool 的认证、Scope、RBAC、风险策略、幂等和审计由 Core Executor 统一包装。
 
 ## 扩展接口速查
 
@@ -39,6 +42,7 @@ Core 在 `core/admin/content_tabs.go` 和 `core/hook/constants.go` 集中暴露�
 | **seo-extras (Yoast-like)** | 给每条内容加 4 个独立 SEO 覆盖字段（`_seo_title` / `_seo_description` / `_seo_image` / `_seo_robots`），激活后内容编辑页底部出现可折叠的「SEO 设置（可选）」面板。零核心改动、零插件表。详见 [SEO Extras 插件](seo-extras.md) |
 | **code-snippets (WPCode-like)** | 通过 `theme.head.end` / `theme.body.open` / `theme.footer.end` 三个主题插槽注入站点级 HTML/JS，适合 Analytics、GTM、站点验证、客服 widget。详见 [Code Snippets 插件](code-snippets.md) |
 | **gopress-analytics** | GoPress 官方自托管访问统计，异步采集 PV、UV、新访客、趋势和热门页面，数据存储在插件自有表。详见 [GoPress Analytics](gopress-analytics.md) |
+| **gopress-mcp** | 默认停用的官方远程 MCP 适配器，提供 6 个只读 Tool、6 个受控写 Tool、短期凭证、逐 Tool Safe Write 策略、诊断与审计。详见 [GoPress MCP（Agent 接入）](gopress-mcp.md) |
 | **google-identity** | 通过 core 公共认证契约实现 Google OIDC 登录和注册。详见 [前台用户注册与身份登录](../architecture/public-authentication.md#google-identity-插件) |
 | **metamask-identity** | 通过 EIP-4361 SIWE、服务端一次性 Challenge 和 core 公共认证契约实现 MetaMask 钱包登录与注册。详见 [前台用户注册与身份登录](../architecture/public-authentication.md#metamask-identity-插件) |
 
@@ -58,5 +62,6 @@ Core 在 `core/admin/content_tabs.go` 和 `core/hook/constants.go` 集中暴露�
 - [SEO Extras 插件](seo-extras.md) — Yoast 风格 per-content SEO 覆盖
 - [Code Snippets 插件](code-snippets.md) — WPCode 风格站点级代码注入
 - [GoPress Analytics](gopress-analytics.md) — 官方自托管访问统计
+- [GoPress MCP（Agent 接入）](gopress-mcp.md) — 远程 Agent 连接、Tool/Scope、安全写入与运维
 - [Google Identity](../architecture/public-authentication.md#google-identity-插件) — Google OIDC 与通用身份 Provider 接入
 - [MetaMask Identity](../architecture/public-authentication.md#metamask-identity-插件) — EIP-4361 SIWE 钱包登录与注册

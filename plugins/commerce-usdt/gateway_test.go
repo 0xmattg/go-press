@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"testing"
 
-	corecommerce "go-press/core/commerce"
+	corecommerce "github.com/0xmattg/go-press/core/commerce"
 )
 
 func testReadyConfig(t *testing.T) config {

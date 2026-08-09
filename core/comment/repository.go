@@ -3,8 +3,8 @@ package comment
 import (
 	"time"
 
-	"go-press/core/content"
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/user"
 
 	"gorm.io/gorm"
 )

@@ -11,8 +11,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"go-press/core"
-	coreTheme "go-press/core/theme"
+	"github.com/0xmattg/go-press/core"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
 )
 
 func init() {

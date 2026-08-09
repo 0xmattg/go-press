@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/pkg/logger"
 )
 
 // TemplateEngine manages template loading and rendering.

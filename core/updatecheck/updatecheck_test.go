@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"go-press/core/option"
+	"github.com/0xmattg/go-press/core/option"
 )
 
 func TestRegistryValidatesAndCopiesTargets(t *testing.T) {

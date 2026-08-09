@@ -7,7 +7,7 @@
 </p>
 
 > GoPress 是一个用 Go 编写的内容管理框架与 CMS 引擎，面向需要自托管、主题化、插件化和 API 扩展能力的网站与内容应用。
-> 它将内容模型、后台管理、主题模板、插件扩展、SEO、媒体处理和 REST API 组织为一套可组合的工程框架。
+> 它将内容模型、后台管理、主题模板、插件扩展、REST API、协议无关 Agent 能力、可选远程 MCP 适配、SEO 与媒体处理组织为一套可组合的工程框架。
 > 适合用于企业官网、内容站、产品展示站、文档站，以及需要在 Go 技术栈中保留 CMS 编辑体验的定制项目。
 
 [![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go)](https://go.dev)
@@ -17,7 +17,7 @@
 
 ## GoPress 是什么？
 
-GoPress 旨在把传统 CMS 中经过验证的内容模型、主题系统、插件扩展和后台管理能力，放到 Go 的运行时与工程生态里重新组织。它提供统一的内容模型、数据驱动的后台 CRUD、主题模板引擎、Hook / Filter 扩展点、REST API、SEO 基础设施、多级缓存、媒体变体和多站点配置能力。
+GoPress 旨在把传统 CMS 中经过验证的内容模型、主题系统、插件扩展和后台管理能力，放到 Go 的运行时与工程生态里重新组织。它提供统一的内容模型、数据驱动的后台 CRUD、主题模板引擎、Hook / Filter 扩展点、REST API、协议无关 Agent 执行层、可选远程 MCP Server、SEO 基础设施、多级缓存、媒体变体和多站点配置能力。
 
 这个项目不是 WordPress 的逐行重写，也不是对 PHP 生态的替代宣言。GoPress 更关注一类具体场景：开发者希望保留 CMS 的编辑体验和扩展模型，同时获得 Go 在部署、并发、可观测性和长期维护上的工程优势。
 
@@ -56,6 +56,7 @@ GoPress 将公开站点交付、后台工作流、REST / OpenAPI、内容服务�
 5. **SEO 内建** — URL 重写、永久链接、Canonical、Sitemap、Meta、重定向等能力在核心层统一处理。
 6. **API First** — 内容类型可暴露 REST API，并通过 Swagger / OpenAPI 描述接口。
 7. **多实例隔离** — 支持表前缀和站点级配置，便于多实例共享基础设施并隔离数据边界。
+8. **Agent 不绕过治理** — Agent Tool 复用 Core 领域服务，并同时执行凭证 Scope、当前 RBAC、所有权、风险策略、幂等和审计。
 
 ## 主题与后台界面预览
 
@@ -156,6 +157,7 @@ gopress serve     # 装完之后任意目录都能跑
 | `http://localhost:8080/admin` | 后台 CMS |
 | `http://localhost:8080/swagger/index.html` | API 文档 |
 | `http://localhost:8080/api/v1/content` | REST API |
+| `http://localhost:8080/mcp` | 远程 MCP Endpoint，仅在可选 `gopress-mcp` 插件激活期间存在 |
 
 完整安装指南见 [docs/guide/zh-CN/getting-started/installation.md](docs/guide/zh-CN/getting-started/installation.md)。
 
@@ -172,7 +174,8 @@ gopress serve     # 装完之后任意目录都能跑
 | [架构](docs/guide/zh-CN/architecture/overview.md) | 引擎启动流程、内容模型、前台身份登录、前台用户内容提交、登录用户评论、URL/SEO、缓存、i18n、Content Scope、Hook 系统 |
 | [后台管理](docs/guide/zh-CN/admin/overview.md) | 后台 CMS、独立页面、扩展点、菜单管理 |
 | [主题开发](docs/guide/zh-CN/themes/overview.md) | 创建主题、SEO 接入规范、图片管线、媒体变体 |
-| [插件开发](docs/guide/zh-CN/plugins/overview.md) | 创建插件、Hook 列表、内置 multilang / seo-extras / code-snippets / gopress-analytics |
+| [插件开发](docs/guide/zh-CN/plugins/overview.md) | 创建插件、Hook 列表、内置插件与插件专属配置 |
+| [Agent 与 MCP](docs/guide/zh-CN/agent/overview.md) | Core Agent 设计、分层架构、Tool 执行、授权、扩展开发、运维测试，以及可选 [MCP 适配器](docs/guide/zh-CN/plugins/gopress-mcp.md) |
 | [电商模块](docs/guide/zh-CN/commerce/overview.md) | Commerce 电商：核心契约、目录、购物车、结算、订单、库存、支付与商城主题接入 |
 | [参考资料](docs/guide/zh-CN/reference/project-structure.md) | 项目结构、数据库表前缀、REST API、技术栈、路线图 |
 
@@ -233,6 +236,20 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 
 数据模型、主题契约、审核流程、安全规则和扩展点详见[评论与审核](docs/guide/zh-CN/architecture/comments.md)。
 
+### Agent 与 MCP（Safe Write Beta）
+
+- **协议无关 Core** — `core/agent` 负责 Tool Registry、Principal 实时刷新、凭证 Scope、RBAC 与所有权授权、风险策略、Schema 校验、受限执行、幂等和强制审计，不依赖 MCP。
+- **可选官方适配器** — 默认停用的 `gopress-mcp` 插件使用官方 Go SDK 在 `/mcp` 暴露无状态 Streamable HTTP，同时支持协议 `2026-07-28` 与 `2025-11-25` 兼容通道。
+- **默认只读** — 6 个只读 Tool 覆盖安全站点信息、内容类型、内容、分类和媒体元数据；Tool 列表按当前凭证过滤并私有缓存 30 秒。
+- **显式 Safe Write** — 6 个内容/媒体写 Tool 必须同时满足 `safe_write`、逐 Tool 开关、对应 Token Scope、当前 Core RBAC 与所有权判断。所有写入要求幂等键，更新使用乐观锁时间戳，发布与回收还要求显式确认。
+- **短期凭证与审计** — 管理员签发的 Bearer Token 绑定 Audience，最长 90 天，数据库只保存摘要、明文只显示一次且可立即撤销；审计只记录元数据和摘要，不保存 Token 或参数值。
+- **准确的 Beta 边界** — OAuth 2.1 浏览器授权、Resources、Prompts、Tasks 与 MCP Apps 属于后续 Phase，当前尚未提供。
+
+设计思路和实现细节详见独立的
+[Agent 与 MCP 模块](docs/guide/zh-CN/agent/overview.md)；Endpoint 启用、Scope、
+Tool 入参、curl 验证和排障见
+[GoPress MCP 插件指南](docs/guide/zh-CN/plugins/gopress-mcp.md)。
+
 ### 引擎核心
 
 - **统一内容模型** — `Content` + `ContentMeta` + `ContentType` 注册表；核心保留 `post` / `page` / `contact_message`，主题通过 `theme.toml` 声明自定义类型
@@ -288,6 +305,7 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 - **seo-extras** — Yoast 风格 per-content SEO 覆盖（4 字段：title/description/og:image/robots）
 - **code-snippets** — WPCode 风格站点级代码注入（`<head>` 末尾、`<body>` 开头、`</body>` 前）
 - **gopress-analytics** — GoPress 官方自托管访问统计，支持 PV、UV、新访客、访问趋势、访客构成和热门页面分析
+- **gopress-mcp** — Core Agent Tool 的远程 MCP 适配器，默认只读，提供受控 Safe Write、短期凭证、诊断与审计；默认停用。详见 [GoPress MCP](docs/guide/zh-CN/plugins/gopress-mcp.md)
 - **google-identity** — 基于 Provider-neutral 前台认证核心，为 Gmail 和 Google Workspace 账号提供 Google OIDC 登录与注册
 - **metamask-identity** — 基于 EIP-4361 Sign-In with Ethereum 和服务端一次性 Challenge，为 MetaMask 浏览器扩展提供钱包登录与注册
 - **commerce** — 可选电商模块（对标 WooCommerce）：`product` 目录、游客/账号购物车、单事务结算、订单状态机、行锁库存预留、媒介无关的支付网关契约，以及内置离线银行转账网关。默认停用。详见 [docs/guide/zh-CN/commerce/overview.md](docs/guide/zh-CN/commerce/overview.md)。
@@ -315,7 +333,7 @@ API 接口规范单独存放，由 `swag` 从代码注解自动生成：
 
 ## 技术栈
 
-Gin / GORM / PostgreSQL / Redis / golang-jwt / Viper + TOML / log/slog / go-i18n / Quill 2.0 / swaggo/swag
+Gin / GORM / PostgreSQL / Redis / 官方 MCP Go SDK / golang-jwt / Viper + TOML / log/slog / go-i18n / Quill 2.0 / swaggo/swag
 
 完整选型说明见 [docs/guide/zh-CN/reference/tech-stack.md](docs/guide/zh-CN/reference/tech-stack.md)。
 

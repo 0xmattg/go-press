@@ -3,7 +3,7 @@ package rewrite
 import (
 	"strings"
 
-	"go-press/core/content"
+	"github.com/0xmattg/go-press/core/content"
 )
 
 // PermalinkStructure defines the URL pattern for a content type.

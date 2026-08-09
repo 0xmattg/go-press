@@ -12,8 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/oauth2"
 
-	"go-press/core/user"
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/core/user"
+	"github.com/0xmattg/go-press/pkg/logger"
 )
 
 func (p *Plugin) handleLogo(c *gin.Context) {

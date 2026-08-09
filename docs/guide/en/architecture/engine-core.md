@@ -74,6 +74,33 @@ See [Caching and i18n](caching-and-i18n.md).
 The worker pool combines goroutine workers with cron-style scheduling for
 background tasks that should not block page rendering.
 
+## Agent Capability Layer
+
+`core/agent` provides a protocol-neutral boundary for MCP, future adapters, and
+reviewed plugin-contributed tools:
+
+- The Registry stores tools with restricted JSON input/output schemas, risk,
+  permissions, timeouts, and concurrency bounds; registration returns a
+  revocable handle.
+- Credentials bind a high-entropy token digest to a user or service account,
+  scopes, audience, expiry, and revocation. The Executor reloads the current
+  principal and role before every call.
+- Authorization is `token scope AND Core RBAC AND ownership`, with a separate
+  `read_only` or `safe_write` site policy and individual write-tool switches.
+- Writes require idempotency keys. Resource mutations and transitions use
+  `expected_updated_at` optimistic locking; publish and trash also require
+  explicit confirmation.
+- The Executor wraps every handler with schema validation, authorization,
+  policy, bounded execution, result validation, idempotency, and mandatory
+  audit.
+
+Core currently supplies generic site, content-type, content, taxonomy, and
+media read tools plus draft, update, publish, trash, restore, and media metadata
+writes. Network transport stays outside Core; the disabled-by-default official
+plugin provides MCP adaptation. See the
+[Agent and MCP Architecture](../agent/architecture.md) for the layered design
+and the [GoPress MCP Plugin](../plugins/gopress-mcp.md) for connection setup.
+
 ## Users and Permissions
 
 Core owns users, JWT and public sessions, roles, capabilities, and audit logs.

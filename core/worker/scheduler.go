@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/pkg/logger"
 )
 
 // ScheduledJob defines a recurring in-process job.

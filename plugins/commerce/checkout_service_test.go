@@ -12,12 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"go-press/config"
-	"go-press/core"
-	corecommerce "go-press/core/commerce"
-	"go-press/core/content"
-	"go-press/core/hook"
-	"go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/config"
+	"github.com/0xmattg/go-press/core"
+	corecommerce "github.com/0xmattg/go-press/core/commerce"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/hook"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"

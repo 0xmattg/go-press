@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"go-press/core/content"
-	"go-press/core/rewrite"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/rewrite"
 
 	"github.com/gin-gonic/gin"
 )

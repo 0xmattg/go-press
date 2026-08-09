@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	coreTheme "go-press/core/theme"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
 )
 
 type shellTestTheme struct {

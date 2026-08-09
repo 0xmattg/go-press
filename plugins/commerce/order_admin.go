@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"go-press/core/admin"
-	corecommerce "go-press/core/commerce"
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/core/admin"
+	corecommerce "github.com/0xmattg/go-press/core/commerce"
+	"github.com/0xmattg/go-press/pkg/logger"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

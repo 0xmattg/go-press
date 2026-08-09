@@ -3,9 +3,9 @@ package theme
 import (
 	"testing"
 
-	"go-press/core/content"
-	"go-press/core/option"
-	"go-press/core/taxonomy"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/option"
+	"github.com/0xmattg/go-press/core/taxonomy"
 )
 
 func TestNewBasePageServiceWiresSharedRepos(t *testing.T) {

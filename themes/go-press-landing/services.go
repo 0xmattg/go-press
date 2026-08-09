@@ -4,10 +4,10 @@ import (
 	"strconv"
 	"strings"
 
-	"go-press/core"
-	"go-press/core/content"
-	"go-press/core/rewrite"
-	coreTheme "go-press/core/theme"
+	"github.com/0xmattg/go-press/core"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/rewrite"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

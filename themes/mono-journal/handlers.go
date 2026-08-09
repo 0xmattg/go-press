@@ -13,11 +13,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"go-press/core/comment"
-	coreI18n "go-press/core/i18n"
-	coreTheme "go-press/core/theme"
-	"go-press/core/user"
-	"go-press/pkg/middleware"
+	"github.com/0xmattg/go-press/core/comment"
+	coreI18n "github.com/0xmattg/go-press/core/i18n"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
+	"github.com/0xmattg/go-press/core/user"
+	"github.com/0xmattg/go-press/pkg/middleware"
 )
 
 type Handler struct {

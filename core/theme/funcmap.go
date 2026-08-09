@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"go-press/core/content"
-	"go-press/core/menu"
-	"go-press/core/rewrite"
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/menu"
+	"github.com/0xmattg/go-press/core/rewrite"
+	"github.com/0xmattg/go-press/core/user"
 
 	"github.com/gin-gonic/gin"
 )

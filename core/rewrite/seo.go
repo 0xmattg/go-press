@@ -8,7 +8,7 @@ import (
 	"path"
 	"strings"
 
-	"go-press/core/content"
+	"github.com/0xmattg/go-press/core/content"
 )
 
 // SEOMeta is the page-level SEO contract passed from core/theme to templates.

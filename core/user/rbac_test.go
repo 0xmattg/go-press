@@ -41,3 +41,15 @@ func TestDefaultPublicCommentAndProfileCapabilities(t *testing.T) {
 		t.Fatal("editor must be able to moderate comments")
 	}
 }
+
+func TestDefaultPublishCapabilityIsExplicitlyLimited(t *testing.T) {
+	rbac := NewRBAC()
+	if !rbac.Can(RoleEditor, "content", "publish") || !rbac.Can(RoleSuperAdmin, "content", "publish") {
+		t.Fatal("editor and super admin must be able to publish through the dedicated capability")
+	}
+	for _, role := range []string{RoleAuthor, RoleContributor, RoleSubscriber} {
+		if rbac.Can(role, "content", "publish") {
+			t.Fatalf("%s must not receive content.publish implicitly", role)
+		}
+	}
+}

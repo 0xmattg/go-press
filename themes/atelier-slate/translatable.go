@@ -1,6 +1,6 @@
 package atelierslate
 
-import "go-press/core/option"
+import "github.com/0xmattg/go-press/core/option"
 
 // registerTranslatableOptions declares all text-based theme settings that need translation.
 // Called during Setup() so Core and multilang plugin can route translations.

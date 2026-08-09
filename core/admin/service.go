@@ -17,14 +17,15 @@ import (
 	"sync"
 	"time"
 
-	"go-press/config"
-	"go-press/core/comment"
-	"go-press/core/content"
-	coreMail "go-press/core/mail"
-	coreMedia "go-press/core/media"
-	"go-press/core/option"
-	"go-press/core/taxonomy"
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/config"
+	"github.com/0xmattg/go-press/core/audit"
+	"github.com/0xmattg/go-press/core/comment"
+	"github.com/0xmattg/go-press/core/content"
+	coreMail "github.com/0xmattg/go-press/core/mail"
+	coreMedia "github.com/0xmattg/go-press/core/media"
+	"github.com/0xmattg/go-press/core/option"
+	"github.com/0xmattg/go-press/core/taxonomy"
+	"github.com/0xmattg/go-press/core/user"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -48,6 +49,8 @@ type Service struct {
 	sitePublicDir string
 	registry      *content.Registry
 	comments      CommentService
+	audit         *audit.Service
+	commands      *content.CommandService
 
 	mediaVariantJobMu sync.Mutex
 	mediaVariantJob   MediaVariantJob
@@ -107,10 +110,16 @@ func NewService(
 		mailer:        mailer,
 		sitePublicDir: sitePublicDir,
 		registry:      registry,
+		audit:         audit.NewService(db),
+		commands:      content.NewCommandService(db, registry),
 	}
 }
 
 func (s *Service) SetCommentService(service CommentService) { s.comments = service }
+func (s *Service) SetAuditService(service *audit.Service)   { s.audit = service }
+func (s *Service) SetContentCommandService(service *content.CommandService) {
+	s.commands = service
+}
 
 func (s *Service) SiteName() string {
 	if s.options != nil {
@@ -183,7 +192,11 @@ func (s *Service) ListContent(contentType, orderField, orderDir string) ([]conte
 // plugin's language-based filter). When no scopes are present, the result is
 // identical to ListContent.
 func (s *Service) ListContentScoped(c *gin.Context, contentType, orderField, orderDir string) ([]content.Content, error) {
-	db := content.ScopedDB(c, s.db)
+	return s.ListContentContext(content.RequestContext(c), contentType, orderField, orderDir)
+}
+
+func (s *Service) ListContentContext(ctx context.Context, contentType, orderField, orderDir string) ([]content.Content, error) {
+	db := content.ScopedDBContext(ctx, s.db)
 	return content.NewQuery(db).
 		Type(contentType).
 		OrderBy(orderField, orderDir).
@@ -191,7 +204,11 @@ func (s *Service) ListContentScoped(c *gin.Context, contentType, orderField, ord
 }
 
 func (s *Service) ListContentPageScoped(c *gin.Context, contentType, orderField, orderDir string, page, perPage int, search string, taxonomyName string, termSlug string, dateMonth string, dateField string) (*content.PaginatedResult, error) {
-	db := content.ScopedDB(c, s.db)
+	return s.ListContentPageContext(content.RequestContext(c), contentType, orderField, orderDir, page, perPage, search, taxonomyName, termSlug, dateMonth, dateField)
+}
+
+func (s *Service) ListContentPageContext(ctx context.Context, contentType, orderField, orderDir string, page, perPage int, search string, taxonomyName string, termSlug string, dateMonth string, dateField string) (*content.PaginatedResult, error) {
+	db := content.ScopedDBContext(ctx, s.db)
 	q := content.NewQuery(db).Type(contentType)
 	if strings.TrimSpace(search) != "" {
 		q.SearchTitle(search)
@@ -206,7 +223,11 @@ func (s *Service) ListContentPageScoped(c *gin.Context, contentType, orderField,
 }
 
 func (s *Service) ListContentMonthsScoped(c *gin.Context, contentType, dateField string) ([]string, error) {
-	db := content.ScopedDB(c, s.db)
+	return s.ListContentMonthsContext(content.RequestContext(c), contentType, dateField)
+}
+
+func (s *Service) ListContentMonthsContext(ctx context.Context, contentType, dateField string) ([]string, error) {
+	db := content.ScopedDBContext(ctx, s.db)
 	items, err := content.NewQuery(db).
 		Type(contentType).
 		OrderBy(adminListDateField(dateField), "DESC").
@@ -251,56 +272,64 @@ func (s *Service) GetContent(id uint) (*content.Content, error) {
 }
 
 func (s *Service) CreateContent(c *content.Content) error {
-	return s.contentRepo.Create(c)
+	return s.CreateContentContext(context.Background(), c, nil)
 }
 
 func (s *Service) UpdateContent(c *content.Content) error {
-	return s.contentRepo.Update(c)
+	if c == nil {
+		return content.ErrContentNotFound
+	}
+	return s.UpdateContentContext(context.Background(), c.Type, c, nil)
 }
 
 func (s *Service) DeleteContent(id uint) error {
-	return s.contentRepo.Delete(id)
+	item, err := s.GetContent(id)
+	if err != nil {
+		return err
+	}
+	return s.DeleteContentContext(context.Background(), item.Type, id)
+}
+
+func (s *Service) CreateContentContext(ctx context.Context, item *content.Content, meta map[string]string) error {
+	if s == nil || s.commands == nil {
+		return content.ErrCommandUnavailable
+	}
+	return s.commands.Create(ctx, item, meta)
+}
+
+func (s *Service) UpdateContentContext(ctx context.Context, contentType string, item *content.Content, meta map[string]string) error {
+	if s == nil || s.commands == nil {
+		return content.ErrCommandUnavailable
+	}
+	return s.commands.Update(ctx, contentType, item, meta)
+}
+
+func (s *Service) DeleteContentContext(ctx context.Context, contentType string, id uint) error {
+	if s == nil || s.commands == nil {
+		return content.ErrCommandUnavailable
+	}
+	return s.commands.Delete(ctx, contentType, id)
 }
 
 // BulkHardDeleteContent permanently removes content rows of the given type and
 // clears core-owned relationship rows. IDs from other content types are ignored
 // so forged form submissions cannot affect unrelated resources.
 func (s *Service) BulkHardDeleteContent(contentType string, ids []uint) (int, error) {
-	validIDs := normalizeBulkContentIDs(ids)
-	if contentType == "" || len(validIDs) == 0 {
-		return 0, nil
-	}
+	return s.BulkHardDeleteContentContext(context.Background(), contentType, ids)
+}
 
-	var matched []uint
-	if err := s.db.Model(&content.Content{}).
-		Where("type = ? AND id IN ?", contentType, validIDs).
-		Pluck("id", &matched).Error; err != nil {
-		return 0, err
+func (s *Service) BulkHardDeleteContentContext(ctx context.Context, contentType string, ids []uint) (int, error) {
+	if s == nil || s.commands == nil {
+		return 0, content.ErrCommandUnavailable
 	}
-	if len(matched) == 0 {
-		return 0, nil
-	}
-
-	err := s.db.Transaction(func(tx *gorm.DB) error {
+	return s.commands.HardDelete(ctx, contentType, ids, func(tx *gorm.DB, matched []uint) error {
 		if s.comments != nil {
 			if err := s.comments.DeleteByContentIDs(tx, matched); err != nil {
 				return err
 			}
 		}
-		if err := tx.Where("content_id IN ?", matched).Delete(&content.ContentMeta{}).Error; err != nil {
-			return err
-		}
-		if err := tx.Where("content_id IN ?", matched).Delete(&taxonomy.TermRelationship{}).Error; err != nil {
-			return err
-		}
-		return tx.Unscoped().
-			Where("type = ? AND id IN ?", contentType, matched).
-			Delete(&content.Content{}).Error
+		return tx.Where("content_id IN ?", matched).Delete(&taxonomy.TermRelationship{}).Error
 	})
-	if err != nil {
-		return 0, err
-	}
-	return len(matched), nil
 }
 
 func (s *Service) ListComments(status string, page, perPage int) (*comment.Page, error) {
@@ -321,85 +350,46 @@ func (s *Service) ModerateComment(ctx context.Context, id uint, status string) (
 // publish timestamps are preserved; rows without one receive the current UTC
 // instant so they become visible to public queries immediately.
 func (s *Service) BulkPublishContent(contentType string, ids []uint) (int, error) {
-	validIDs := normalizeBulkContentIDs(ids)
-	if contentType == "" || len(validIDs) == 0 {
-		return 0, nil
+	return s.BulkPublishContentContext(context.Background(), contentType, ids)
+}
+
+func (s *Service) BulkPublishContentContext(ctx context.Context, contentType string, ids []uint) (int, error) {
+	if s == nil || s.commands == nil {
+		return 0, content.ErrCommandUnavailable
 	}
-	result := s.db.Model(&content.Content{}).
-		Where("type = ? AND id IN ?", contentType, validIDs).
-		Updates(bulkPublishUpdates(time.Now().UTC()))
-	if result.Error != nil {
-		return 0, result.Error
-	}
-	return int(result.RowsAffected), nil
+	return s.commands.Publish(ctx, contentType, ids)
 }
 
 // BulkUnpublishContent moves selected rows of the given type back to draft
 // without changing their publish timestamp. Bulk status changes are visibility
 // controls; operators can edit publish time explicitly from the content form.
 func (s *Service) BulkUnpublishContent(contentType string, ids []uint) (int, error) {
-	validIDs := normalizeBulkContentIDs(ids)
-	if contentType == "" || len(validIDs) == 0 {
-		return 0, nil
-	}
-	result := s.db.Model(&content.Content{}).
-		Where("type = ? AND id IN ?", contentType, validIDs).
-		Updates(bulkUnpublishUpdates())
-	if result.Error != nil {
-		return 0, result.Error
-	}
-	return int(result.RowsAffected), nil
+	return s.BulkUnpublishContentContext(context.Background(), contentType, ids)
 }
 
-func bulkPublishUpdates(now time.Time) map[string]interface{} {
-	return map[string]interface{}{
-		"status":       content.StatusPublished,
-		"published_at": gorm.Expr("COALESCE(published_at, ?)", now),
+func (s *Service) BulkUnpublishContentContext(ctx context.Context, contentType string, ids []uint) (int, error) {
+	if s == nil || s.commands == nil {
+		return 0, content.ErrCommandUnavailable
 	}
-}
-
-func bulkUnpublishUpdates() map[string]interface{} {
-	return map[string]interface{}{
-		"status": content.StatusDraft,
-	}
+	return s.commands.Unpublish(ctx, contentType, ids)
 }
 
 func normalizeBulkContentIDs(ids []uint) []uint {
-	if len(ids) == 0 {
-		return nil
-	}
-	seen := make(map[uint]bool, len(ids))
-	out := make([]uint, 0, len(ids))
-	for _, id := range ids {
-		if id == 0 || seen[id] {
-			continue
-		}
-		seen[id] = true
-		out = append(out, id)
-	}
-	return out
+	return content.NormalizeIDs(ids)
 }
 
 // ReorderContent assigns sort_order = 1..N to the given IDs in sequence,
 // inside a single transaction. The type filter protects against stray IDs
 // from other content types accidentally hijacking sort slots.
 func (s *Service) ReorderContent(contentType string, ids []uint, offset int) error {
-	if contentType == "" || len(ids) == 0 {
-		return nil
+	return s.ReorderContentContext(context.Background(), contentType, ids, offset)
+}
+
+func (s *Service) ReorderContentContext(ctx context.Context, contentType string, ids []uint, offset int) error {
+	if s == nil || s.commands == nil {
+		return content.ErrCommandUnavailable
 	}
-	if offset < 0 {
-		offset = 0
-	}
-	return s.db.Transaction(func(tx *gorm.DB) error {
-		for i, id := range ids {
-			if err := tx.Model(&content.Content{}).
-				Where("id = ? AND type = ?", id, contentType).
-				Update("sort_order", offset+i+1).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	return s.commands.Reorder(ctx, contentType, ids, offset)
 }
 
 // ==================== Generic View Model Builders ====================
@@ -510,19 +500,16 @@ func (s *Service) ToDynamicContentViews(items []content.Content, typeDef *conten
 		unresolvedContentIDs = append(unresolvedContentIDs, views[i].ID)
 	}
 	if len(unresolvedContentIDs) > 0 {
-		var logs []AuditLog
-		s.db.Select("resource_id", "username", "created_at").
-			Where("action = ? AND resource = ? AND resource_id IN ?", "create", typeDef.Name, unresolvedContentIDs).
-			Order("created_at DESC").
-			Find(&logs)
-
-		for _, lg := range logs {
-			idx, ok := unresolvedByContentID[lg.ResourceID]
-			if !ok || strings.TrimSpace(lg.Username) == "" {
+		actorNames := map[uint]string{}
+		if s.audit != nil {
+			actorNames, _ = s.audit.LatestUsernamesByResource(context.Background(), "create", typeDef.Name, unresolvedContentIDs)
+		}
+		for resourceID, username := range actorNames {
+			idx, ok := unresolvedByContentID[resourceID]
+			if !ok {
 				continue
 			}
-			views[idx].AuthorName = strings.TrimSpace(lg.Username)
-			delete(unresolvedByContentID, lg.ResourceID)
+			views[idx].AuthorName = username
 		}
 	}
 
@@ -1401,10 +1388,14 @@ func (s *Service) UpdateMediaMeta(id uint, altText, title, caption string) error
 // ==================== Audit ====================
 
 func (s *Service) LogAction(userID uint, username, action, resource string, resourceID uint, details, ip string) {
-	if s == nil || s.db == nil {
+	s.LogActionContext(context.Background(), userID, username, action, resource, resourceID, details, ip)
+}
+
+func (s *Service) LogActionContext(ctx context.Context, userID uint, username, action, resource string, resourceID uint, details, ip string) {
+	if s == nil || s.audit == nil {
 		return
 	}
-	entry := &AuditLog{
+	entry := &audit.Event{
 		UserID:     userID,
 		Username:   username,
 		Action:     action,
@@ -1413,12 +1404,17 @@ func (s *Service) LogAction(userID uint, username, action, resource string, reso
 		Details:    details,
 		IPAddress:  ip,
 	}
-	s.db.Create(entry)
+	_ = s.audit.Record(ctx, entry)
 }
 
 func (s *Service) ListRecentAuditLogs(limit int) []AuditLog {
-	var items []AuditLog
-	s.db.Order("created_at DESC").Limit(limit).Find(&items)
+	if s == nil || s.audit == nil {
+		return nil
+	}
+	items, err := s.audit.ListRecent(context.Background(), limit)
+	if err != nil {
+		return nil
+	}
 	return items
 }
 

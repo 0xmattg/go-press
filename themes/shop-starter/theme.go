@@ -10,10 +10,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"go-press/core"
-	"go-press/core/option"
-	coreTheme "go-press/core/theme"
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/core"
+	"github.com/0xmattg/go-press/core/option"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
+	"github.com/0xmattg/go-press/pkg/logger"
 )
 
 func init() {

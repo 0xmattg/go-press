@@ -3,8 +3,8 @@ package admin
 import (
 	"net/http"
 
-	"go-press/core/user"
-	"go-press/pkg/middleware"
+	"github.com/0xmattg/go-press/core/user"
+	"github.com/0xmattg/go-press/pkg/middleware"
 
 	"github.com/gin-gonic/gin"
 )

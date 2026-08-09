@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	coreMedia "go-press/core/media"
+	coreMedia "github.com/0xmattg/go-press/core/media"
 )
 
 func TestAppendOriginalCandidateExtendsSrcsetToOriginalWidth(t *testing.T) {

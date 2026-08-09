@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core/user"
 )
 
 func TestMenuCreateRejectsSubscriberBeforeMutation(t *testing.T) {

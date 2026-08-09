@@ -12,8 +12,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	corecommerce "go-press/core/commerce"
-	"go-press/pkg/logger"
+	corecommerce "github.com/0xmattg/go-press/core/commerce"
+	"github.com/0xmattg/go-press/pkg/logger"
 )
 
 const (

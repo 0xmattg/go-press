@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"go-press/core/content"
+	"github.com/0xmattg/go-press/core/content"
 )
 
 func TestListRejectsNonPublishedStatusBeforeQuery(t *testing.T) {

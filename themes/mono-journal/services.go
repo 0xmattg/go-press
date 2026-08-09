@@ -8,13 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"go-press/core/comment"
-	"go-press/core/content"
-	coreI18n "go-press/core/i18n"
-	"go-press/core/option"
-	"go-press/core/rewrite"
-	coreTheme "go-press/core/theme"
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core/comment"
+	"github.com/0xmattg/go-press/core/content"
+	coreI18n "github.com/0xmattg/go-press/core/i18n"
+	"github.com/0xmattg/go-press/core/option"
+	"github.com/0xmattg/go-press/core/rewrite"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
+	"github.com/0xmattg/go-press/core/user"
 )
 
 type PageData struct {

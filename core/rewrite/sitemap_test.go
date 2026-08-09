@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"go-press/core/content"
+	"github.com/0xmattg/go-press/core/content"
 )
 
 func TestSitemapAlternatesMarshal(t *testing.T) {

@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	"go-press/core/content"
-	"go-press/core/option"
-	"go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/option"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

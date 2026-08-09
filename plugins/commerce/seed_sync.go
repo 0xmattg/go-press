@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/pkg/logger"
 )
 
 // syncProductsFromSeed derives product_data + product_lookup rows from the

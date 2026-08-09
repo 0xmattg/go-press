@@ -5,8 +5,8 @@ import (
 	"math"
 	"testing"
 
-	"go-press/core"
-	"go-press/core/option"
+	"github.com/0xmattg/go-press/core"
+	"github.com/0xmattg/go-press/core/option"
 )
 
 func TestComputeTotals(t *testing.T) {

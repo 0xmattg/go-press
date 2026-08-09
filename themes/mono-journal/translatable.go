@@ -1,6 +1,6 @@
 package monojournal
 
-import "go-press/core/option"
+import "github.com/0xmattg/go-press/core/option"
 
 func registerTranslatableOptions() {
 	entries := []struct {

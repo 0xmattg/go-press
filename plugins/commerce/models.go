@@ -3,7 +3,7 @@ package commerce
 import (
 	"time"
 
-	"go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
 )
 
 // tbl resolves a plugin table's full name, e.g. gp_plgn_commerce_orders.

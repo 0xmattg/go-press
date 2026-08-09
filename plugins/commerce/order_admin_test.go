@@ -3,7 +3,7 @@ package commerce
 import (
 	"testing"
 
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core/user"
 )
 
 // TestShopOrderRBAC verifies the authorization wiring that guards the order back

@@ -16,13 +16,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"go-press/core"
-	corecommerce "go-press/core/commerce"
-	"go-press/core/hook"
-	coreI18n "go-press/core/i18n"
-	"go-press/core/option"
-	"go-press/core/plugin"
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/core"
+	corecommerce "github.com/0xmattg/go-press/core/commerce"
+	"github.com/0xmattg/go-press/core/hook"
+	coreI18n "github.com/0xmattg/go-press/core/i18n"
+	"github.com/0xmattg/go-press/core/option"
+	"github.com/0xmattg/go-press/core/plugin"
+	"github.com/0xmattg/go-press/pkg/logger"
 )
 
 //go:embed locales/*.json locales/admin/*.json

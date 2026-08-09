@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"go-press/core"
+	"github.com/0xmattg/go-press/core"
 )
 
 func TestConsumeCartSnapshotPreservesConcurrentMutations(t *testing.T) {

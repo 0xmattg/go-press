@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	coreI18n "go-press/core/i18n"
-	"go-press/core/user"
+	coreI18n "github.com/0xmattg/go-press/core/i18n"
+	"github.com/0xmattg/go-press/core/user"
 
 	"github.com/gin-gonic/gin"
 )

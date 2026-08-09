@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/pkg/logger"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

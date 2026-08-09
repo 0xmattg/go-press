@@ -15,9 +15,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"go-press/core/content"
-	"go-press/core/hook"
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/hook"
+	"github.com/0xmattg/go-press/core/user"
 )
 
 func TestEnsurePublishedAtForPublishedSetsMissingTime(t *testing.T) {
@@ -209,7 +209,7 @@ func TestContentBulkPermissionMapsActions(t *testing.T) {
 	if action, ok := contentBulkPermission(contentBulkActionDelete); !ok || action != "delete" {
 		t.Fatalf("delete permission = %q, %v", action, ok)
 	}
-	if action, ok := contentBulkPermission(contentBulkActionPublish); !ok || action != "update" {
+	if action, ok := contentBulkPermission(contentBulkActionPublish); !ok || action != "publish" {
 		t.Fatalf("publish permission = %q, %v", action, ok)
 	}
 	if action, ok := contentBulkPermission(contentBulkActionUnpublish); !ok || action != "update" {
@@ -217,6 +217,34 @@ func TestContentBulkPermissionMapsActions(t *testing.T) {
 	}
 	if _, ok := contentBulkPermission("publish-now"); ok {
 		t.Fatal("unexpected permission for unknown bulk action")
+	}
+}
+
+func TestPublishingTransitionAndRBACUseDedicatedCapability(t *testing.T) {
+	if !publishingTransition(content.StatusDraft, content.StatusPublished) ||
+		publishingTransition(content.StatusPublished, content.StatusPublished) ||
+		publishingTransition(content.StatusDraft, content.StatusPending) {
+		t.Fatal("publishing transition detection is incorrect")
+	}
+	rbac := user.NewRBAC()
+	if rbac.Can(user.RoleAuthor, "content", "publish") || !rbac.Can(user.RoleEditor, "content", "publish") {
+		t.Fatal("publish capability must deny authors and allow editors")
+	}
+
+	gin.SetMode(gin.TestMode)
+	handler := &Handler{svc: &Service{rbac: rbac}, registry: content.NewRegistry()}
+	for _, test := range []struct {
+		role    string
+		allowed bool
+	}{{user.RoleAuthor, false}, {user.RoleEditor, true}} {
+		recorder := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(recorder)
+		ctx.Request = httptest.NewRequest(http.MethodPost, "/admin/posts/new", nil)
+		ctx.Set("admin_role", test.role)
+		allowed := handler.checkPermission(ctx, "content", "publish")
+		if allowed != test.allowed {
+			t.Fatalf("role=%s allowed=%v", test.role, allowed)
+		}
 	}
 }
 
@@ -233,13 +261,32 @@ func TestNormalizeBulkContentIDsDropsZeroAndDuplicates(t *testing.T) {
 	}
 }
 
-func TestBulkUnpublishUpdatesPreservePublishedAt(t *testing.T) {
-	updates := bulkUnpublishUpdates()
-	if got := updates["status"]; got != content.StatusDraft {
-		t.Fatalf("status update = %#v, want draft", got)
+func TestContentMetaFromFormUsesDeclaredCoreKeys(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	form := url.Values{
+		"subtitle":       {""},
+		"gallery_images": {`["/one.jpg"]`},
+		"page_template":  {" landing "},
+		"embed_code":     {" <iframe></iframe> "},
+		"private_key":    {"forged"},
 	}
-	if _, ok := updates["published_at"]; ok {
-		t.Fatal("bulk unpublish must not change published_at")
+	req := httptest.NewRequest(http.MethodPost, "/admin/pages", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c.Request = req
+	definition := &content.ContentTypeDef{
+		Name: "page", Supports: []string{"thumbnail"},
+		MetaFields: []content.MetaFieldDef{{Key: "subtitle"}}, Rewrite: content.RewriteRule{Rootless: true},
+	}
+	meta := contentMetaFromForm(c, definition, false)
+	if _, exists := meta["subtitle"]; exists {
+		t.Fatal("empty custom meta should be omitted during create")
+	}
+	if meta["gallery_images"] != `["/one.jpg"]` || meta["page_template"] != "landing" || meta["embed_code"] != "<iframe></iframe>" {
+		t.Fatalf("unexpected core meta: %#v", meta)
+	}
+	if _, exists := meta["private_key"]; exists {
+		t.Fatal("undeclared form meta must not be collected")
 	}
 }
 

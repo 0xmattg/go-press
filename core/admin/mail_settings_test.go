@@ -4,8 +4,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"go-press/config"
-	coreMail "go-press/core/mail"
+	"github.com/0xmattg/go-press/config"
+	coreMail "github.com/0xmattg/go-press/core/mail"
 )
 
 func TestUpdateMailSettingsPreservesAndClearsMailKey(t *testing.T) {

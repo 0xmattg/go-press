@@ -18,8 +18,8 @@ package multilang
 import (
 	"strings"
 
-	contentPkg "go-press/core/content"
-	"go-press/core/rewrite"
+	contentPkg "github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/rewrite"
 )
 
 // sitemapTransformer is registered with the core sitemap generator and runs

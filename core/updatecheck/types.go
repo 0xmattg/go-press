@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"go-press/pkg/semver"
+	"github.com/0xmattg/go-press/pkg/semver"
 )
 
 const (

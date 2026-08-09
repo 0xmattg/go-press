@@ -11,7 +11,7 @@
 //
 // Usage in main.go:
 //
-//	import _ "go-press/plugins/multilang"
+//	import _ "github.com/0xmattg/go-press/plugins/multilang"
 package multilang
 
 import (
@@ -33,18 +33,18 @@ import (
 	"golang.org/x/text/language"
 	"gorm.io/gorm"
 
-	"go-press/core"
-	"go-press/core/admin"
-	"go-press/core/cache"
-	contentPkg "go-press/core/content"
-	"go-press/core/hook"
-	coreI18n "go-press/core/i18n"
-	"go-press/core/menu"
-	"go-press/core/option"
-	"go-press/core/plugin"
-	"go-press/core/rewrite"
-	"go-press/pkg/dbprefix"
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/core"
+	"github.com/0xmattg/go-press/core/admin"
+	"github.com/0xmattg/go-press/core/cache"
+	contentPkg "github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/hook"
+	coreI18n "github.com/0xmattg/go-press/core/i18n"
+	"github.com/0xmattg/go-press/core/menu"
+	"github.com/0xmattg/go-press/core/option"
+	"github.com/0xmattg/go-press/core/plugin"
+	"github.com/0xmattg/go-press/core/rewrite"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/pkg/logger"
 )
 
 const (

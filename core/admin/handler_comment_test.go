@@ -9,10 +9,10 @@ import (
 	"strings"
 	"testing"
 
-	"go-press/core/comment"
-	"go-press/core/content"
-	"go-press/core/hook"
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core/comment"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/hook"
+	"github.com/0xmattg/go-press/core/user"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

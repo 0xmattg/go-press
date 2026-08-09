@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/pkg/logger"
 )
 
 const collectorFlushInterval = 5 * time.Second

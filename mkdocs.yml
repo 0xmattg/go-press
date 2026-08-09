@@ -88,11 +88,23 @@ nav:
           - Caching and i18n: en/architecture/caching-and-i18n.md
           - Content Scope API: en/architecture/content-scope.md
           - Hook System: en/architecture/hooks.md
+          - Public Authentication: en/architecture/public-authentication.md
+          - Public Content Submission: en/architecture/public-content-submission.md
+          - Comments and Replies: en/architecture/comments.md
       - Admin:
           - Admin Overview: en/admin/overview.md
           - Standalone Pages: en/admin/pages.md
           - Admin Extension Points: en/admin/extension-points.md
           - Menu Management: en/admin/menus.md
+      - Agent and MCP:
+          - Overview: en/agent/overview.md
+          - Getting Started: en/agent/getting-started.md
+          - Layered Architecture: en/agent/architecture.md
+          - Tools and Execution: en/agent/tools-and-execution.md
+          - Identity, Authorization, and Security: en/agent/security.md
+          - Extension Development: en/agent/extension-development.md
+          - Operations and Testing: en/agent/operations-and-testing.md
+          - Phase Plan and Decision Record (Chinese): zh-CN/architecture/mcp-agent-capability-plan.md
       - Theme Development:
           - Theme System Overview: en/themes/overview.md
           - Creating Themes: en/themes/creating-themes.md
@@ -105,6 +117,15 @@ nav:
           - Multilingual Plugin: en/plugins/multilang.md
           - SEO Extras: en/plugins/seo-extras.md
           - Code Snippets: en/plugins/code-snippets.md
+          - GoPress Analytics: en/plugins/gopress-analytics.md
+          - GoPress MCP (Agent Access): en/plugins/gopress-mcp.md
+      - Commerce:
+          - Overview: en/commerce/overview.md
+          - Getting Started: en/commerce/getting-started.md
+          - Architecture: en/commerce/architecture.md
+          - Catalog, Cart and Orders: en/commerce/catalog-orders.md
+          - Payments: en/commerce/payments.md
+          - Theme Integration: en/commerce/theme-integration.md
       - Reference:
           - Project Structure: en/reference/project-structure.md
           - Database Prefixes: en/reference/database-prefix.md
@@ -123,11 +144,23 @@ nav:
           - 缓存与 i18n: zh-CN/architecture/caching-and-i18n.md
           - Content Scope API: zh-CN/architecture/content-scope.md
           - Hook 系统: zh-CN/architecture/hooks.md
+          - 前台用户注册与身份登录: zh-CN/architecture/public-authentication.md
+          - 前台用户内容提交: zh-CN/architecture/public-content-submission.md
+          - 评论与回复: zh-CN/architecture/comments.md
       - 后台管理:
           - 功能总览: zh-CN/admin/overview.md
           - 独立页面: zh-CN/admin/pages.md
           - 后台扩展点: zh-CN/admin/extension-points.md
           - 菜单管理: zh-CN/admin/menus.md
+      - Agent 与 MCP:
+          - 总览: zh-CN/agent/overview.md
+          - 快速上手: zh-CN/agent/getting-started.md
+          - 分层架构: zh-CN/agent/architecture.md
+          - Tool 与执行管线: zh-CN/agent/tools-and-execution.md
+          - 身份、授权与安全: zh-CN/agent/security.md
+          - 扩展开发: zh-CN/agent/extension-development.md
+          - 运维与测试: zh-CN/agent/operations-and-testing.md
+          - Phase 规划与决策记录: zh-CN/architecture/mcp-agent-capability-plan.md
       - 主题开发:
           - 主题系统总览: zh-CN/themes/overview.md
           - 创建主题: zh-CN/themes/creating-themes.md
@@ -140,6 +173,15 @@ nav:
           - 多语言插件: zh-CN/plugins/multilang.md
           - SEO Extras 插件: zh-CN/plugins/seo-extras.md
           - Code Snippets 插件: zh-CN/plugins/code-snippets.md
+          - GoPress Analytics: zh-CN/plugins/gopress-analytics.md
+          - GoPress MCP（Agent 接入）: zh-CN/plugins/gopress-mcp.md
+      - Commerce 电商模块:
+          - 总览: zh-CN/commerce/overview.md
+          - 快速上手: zh-CN/commerce/getting-started.md
+          - 架构: zh-CN/commerce/architecture.md
+          - 目录、购物车与订单: zh-CN/commerce/catalog-orders.md
+          - 支付: zh-CN/commerce/payments.md
+          - 主题接入: zh-CN/commerce/theme-integration.md
       - 参考资料:
           - 项目结构: zh-CN/reference/project-structure.md
           - 数据库表前缀: zh-CN/reference/database-prefix.md

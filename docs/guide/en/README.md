@@ -16,6 +16,9 @@ It is not a line-by-line rewrite of WordPress, and it is not a claim that PHP-ba
   owner-scoped RBAC, review states, validation, and rate limits.
 - Core comments with authenticated posting, one-level replies, moderation, admin
   pagination, cache invalidation, and theme-owned account/profile presentation.
+- A protocol-neutral Core Agent Registry and Executor with principal refresh,
+  scope plus RBAC authorization, ownership checks, idempotency, and mandatory
+  audit, exposed through the optional read-only-by-default `gopress-mcp` plugin.
 
 ## Project Status
 
@@ -66,3 +69,6 @@ teams that want CMS workflows inside a Go architecture.
 - [Comments and Replies](architecture/comments.md)
 - [Theme Development](themes/overview.md)
 - [Plugin Development](plugins/overview.md)
+- [Agent and MCP](agent/overview.md)
+- [GoPress MCP Plugin Setup](plugins/gopress-mcp.md)
+- [Agent and MCP Phase Plan (Chinese)](../zh-CN/architecture/mcp-agent-capability-plan.md)

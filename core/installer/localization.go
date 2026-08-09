@@ -3,7 +3,7 @@ package installer
 import (
 	"embed"
 
-	coreI18n "go-press/core/i18n"
+	coreI18n "github.com/0xmattg/go-press/core/i18n"
 )
 
 const defaultInstallerLanguage = coreI18n.DefaultUILanguage

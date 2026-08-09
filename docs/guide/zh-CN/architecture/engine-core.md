@@ -65,6 +65,28 @@ filter。详见 [Hook 系统](hooks.md)。
 Worker Pool 组合 goroutine worker 与 Cron 风格调度器，用于执行不应阻塞
 页面渲染的后台任务。
 
+## Agent 能力层
+
+`core/agent` 为 MCP、未来其他协议适配器和受控业务插件提供统一的协议无关能力
+层：
+
+- Registry 保存带 JSON 输入/输出 Schema、风险、权限、超时和并发限制的 Tool，
+  注册返回可撤销 Handle。
+- Credential 把高熵 Token 摘要绑定到用户或 Service Account、Scope、Audience、
+  有效期和撤销状态；Executor 在每次执行前刷新主体和当前角色。
+- Authorizer 使用 `Token Scope AND Core RBAC AND Ownership`，Tool Policy 再提供
+  `read_only` / `safe_write` 与逐 Tool 风险上限。
+- 写 Tool 强制幂等键；资源更新与状态转换使用 `expected_updated_at` 乐观锁；
+  发布和回收还要求显式确认。
+- Executor 统一执行 Schema、权限、策略、超时、并发、结果校验和强制审计，
+  Tool Handler 无法选择跳过这些步骤。
+
+Core 当前提供站点、内容类型、内容、分类和媒体的通用读 Tool，以及创建草稿、
+安全更新、发布、回收、恢复和媒体描述更新 Tool。网络入口不在 Core；默认停用的
+官方插件负责 MCP 适配。分层实现详见
+[Agent 与 MCP 架构](../agent/architecture.md)，连接配置见
+[GoPress MCP 插件](../plugins/gopress-mcp.md)。
+
 ## 用户与权限
 
 Core 统一管理用户、JWT 与前台 Session、角色、Capability 和审计日志。受

@@ -12,11 +12,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"go-press/core/hook"
-	"go-press/core/option"
-	"go-press/core/plugin"
-	"go-press/core/user"
-	"go-press/pkg/logger"
+	"github.com/0xmattg/go-press/core/hook"
+	"github.com/0xmattg/go-press/core/option"
+	"github.com/0xmattg/go-press/core/plugin"
+	"github.com/0xmattg/go-press/core/user"
+	"github.com/0xmattg/go-press/pkg/logger"
 )
 
 const (

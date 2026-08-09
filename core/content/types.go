@@ -106,6 +106,20 @@ func (d *ContentTypeDef) IsEditable() bool {
 	return d != nil && !d.ReadOnly
 }
 
+// SupportsFeature reports whether a content type declares a core editor or
+// mutation capability such as thumbnail, comments, or sort_order.
+func (d *ContentTypeDef) SupportsFeature(feature string) bool {
+	if d == nil {
+		return false
+	}
+	for _, supported := range d.Supports {
+		if supported == feature {
+			return true
+		}
+	}
+	return false
+}
+
 // TemplateDef optionally maps a content type to theme page template names.
 //
 // Most themes can rely on the default hierarchy derived from the content type

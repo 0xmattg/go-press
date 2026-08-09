@@ -3,8 +3,8 @@ package core
 import (
 	"testing"
 
-	"go-press/core/content"
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/user"
 )
 
 func TestThemePublicSubmissionCapabilitiesFollowActiveRegistry(t *testing.T) {

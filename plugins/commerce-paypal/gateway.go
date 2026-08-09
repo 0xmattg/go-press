@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	corecommerce "go-press/core/commerce"
+	corecommerce "github.com/0xmattg/go-press/core/commerce"
 )
 
 // gatewayID is the stable payment-method identifier stored on orders.

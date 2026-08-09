@@ -1,6 +1,6 @@
 package content
 
-import "go-press/pkg/dbprefix"
+import "github.com/0xmattg/go-press/pkg/dbprefix"
 
 // ContentMeta stores arbitrary key-value metadata for a Content item.
 // This is equivalent to WordPress wp_postmeta table.

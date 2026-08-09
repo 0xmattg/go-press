@@ -1,7 +1,8 @@
 package plugin
 
 import (
-	"go-press/core/user"
+	"github.com/0xmattg/go-press/core/agent"
+	"github.com/0xmattg/go-press/core/user"
 
 	"github.com/BurntSushi/toml"
 )
@@ -49,6 +50,14 @@ type App interface{}
 type PublicAuthHost interface {
 	PublicAuthenticator() *user.PublicAuth
 	PublicSiteURL() string
+}
+
+// AgentHost is the narrow, protocol-neutral capability available to business
+// plugins that contribute Agent Tools. Registration returns revocable handles;
+// plugins must revoke their own handles during Deactivate.
+type AgentHost interface {
+	AgentToolRegistry() *agent.Registry
+	AgentExecutor() *agent.Executor
 }
 
 // Plugin is the lifecycle contract every GoPress plugin must implement.

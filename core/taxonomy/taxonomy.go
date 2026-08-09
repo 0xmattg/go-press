@@ -1,6 +1,6 @@
 package taxonomy
 
-import "go-press/pkg/dbprefix"
+import "github.com/0xmattg/go-press/pkg/dbprefix"
 
 // Term represents a tag/category name and slug.
 type Term struct {

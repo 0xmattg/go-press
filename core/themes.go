@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	coreTheme "go-press/core/theme"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
 )
 
 // ThemeFactory is a constructor function for creating theme instances.

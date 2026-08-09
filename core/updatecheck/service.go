@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
-	"go-press/core/option"
-	"go-press/pkg/logger"
-	"go-press/pkg/semver"
+	"github.com/0xmattg/go-press/core/option"
+	"github.com/0xmattg/go-press/pkg/logger"
+	"github.com/0xmattg/go-press/pkg/semver"
 )
 
 const (

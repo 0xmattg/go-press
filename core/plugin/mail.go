@@ -1,6 +1,6 @@
 package plugin
 
-import "go-press/core/mail"
+import "github.com/0xmattg/go-press/core/mail"
 
 // MailProvider is an optional App capability for plugins that need to send
 // notification emails through core's configured mail service.

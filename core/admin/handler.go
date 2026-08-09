@@ -13,12 +13,12 @@ import (
 	"strings"
 	"time"
 
-	"go-press/core/content"
-	"go-press/core/hook"
-	coreI18n "go-press/core/i18n"
-	"go-press/core/updatecheck"
-	"go-press/pkg/middleware"
-	"go-press/version"
+	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/hook"
+	coreI18n "github.com/0xmattg/go-press/core/i18n"
+	"github.com/0xmattg/go-press/core/updatecheck"
+	"github.com/0xmattg/go-press/pkg/middleware"
+	"github.com/0xmattg/go-press/version"
 
 	"github.com/gin-gonic/gin"
 )
@@ -985,7 +985,7 @@ func (h *Handler) logAction(c *gin.Context, action, resource string, resourceID 
 		userID, _ = uid.(uint)
 	}
 	username := c.GetString("admin_username")
-	h.svc.LogAction(userID, username, action, resource, resourceID, details, c.ClientIP())
+	h.svc.LogActionContext(c.Request.Context(), userID, username, action, resource, resourceID, details, c.ClientIP())
 }
 
 func getIDParam(c *gin.Context) uint {
@@ -1049,14 +1049,14 @@ func (h *Handler) LoginSubmit(c *gin.Context) {
 	u, token, err := h.svc.Login(username, password)
 	if err != nil {
 		h.loginThrottle.fail(clientIP)
-		h.svc.LogAction(0, username, "login_failed", "auth", 0, "failed admin login", clientIP)
+		h.svc.LogActionContext(c.Request.Context(), 0, username, "login_failed", "auth", 0, "failed admin login", clientIP)
 		h.render(c, "login", gin.H{"Title": adminT(lang, "page.login"), "Error": adminT(lang, "error.invalid_login")})
 		return
 	}
 
 	h.loginThrottle.reset(clientIP)
 	writeAdminCookie(c, token, h.svc.secureCookies())
-	h.svc.LogAction(u.ID, u.Username, "login", "auth", 0, "user login", clientIP)
+	h.svc.LogActionContext(c.Request.Context(), u.ID, u.Username, "login", "auth", 0, "user login", clientIP)
 	c.Redirect(http.StatusFound, "/admin/")
 }
 
@@ -1066,7 +1066,7 @@ func (h *Handler) Logout(c *gin.Context) {
 		userID, _ = uid.(uint)
 	}
 	username := c.GetString("admin_username")
-	h.svc.LogAction(userID, username, "logout", "auth", 0, "user logout", c.ClientIP())
+	h.svc.LogActionContext(c.Request.Context(), userID, username, "logout", "auth", 0, "user logout", c.ClientIP())
 	clearAdminCookie(c, h.svc.secureCookies())
 	c.Redirect(http.StatusFound, "/admin/login")
 }

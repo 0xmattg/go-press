@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"go-press/core/content"
-	coreI18n "go-press/core/i18n"
-	"go-press/core/menu"
-	coreTheme "go-press/core/theme"
+	"github.com/0xmattg/go-press/core/content"
+	coreI18n "github.com/0xmattg/go-press/core/i18n"
+	"github.com/0xmattg/go-press/core/menu"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
 
 	"github.com/gin-gonic/gin"
 )

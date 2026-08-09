@@ -3,7 +3,7 @@ package user
 import (
 	"strings"
 
-	"go-press/core/option"
+	"github.com/0xmattg/go-press/core/option"
 )
 
 // OptionReader is the narrow settings surface required by registration policy.

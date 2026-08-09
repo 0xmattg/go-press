@@ -5,8 +5,8 @@ import (
 	"runtime"
 	"sync"
 
-	"go-press/core/hook"
-	"go-press/pkg/dbprefix"
+	"github.com/0xmattg/go-press/core/hook"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
 
 	"gorm.io/gorm"
 )
