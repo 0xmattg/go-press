@@ -1,14 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Communa">
-  <defs>
-    <linearGradient id="cmnLogo" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#79c142"/>
-      <stop offset="1" stop-color="#3aaede"/>
-    </linearGradient>
-  </defs>
-  <rect x="6" y="6" width="108" height="108" rx="28" fill="url(#cmnLogo)"/>
-  <path d="M86 54.5a26 26 0 0 1-2.8 11.7A26.3 26.3 0 0 1 59.7 80.7a26 26 0 0 1-11.7-2.8L34 82l4.1-14a26 26 0 0 1-2.8-11.7A26.3 26.3 0 0 1 49.8 30.8 26 26 0 0 1 61.5 28h1.5A26.2 26.2 0 0 1 86 51v1.5z"
-        fill="none" stroke="#ffffff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="50" cy="55" r="4.2" fill="#ffffff"/>
-  <circle cx="62" cy="55" r="4.2" fill="#ffffff"/>
-  <circle cx="74" cy="55" r="4.2" fill="#ffffff"/>
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+  <rect width="48" height="48" rx="11" fill="#79c142"/>
+  <path transform="translate(6 6) scale(1.5)" d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="18" cy="23" r="1.9" fill="#fff"/>
+  <circle cx="24" cy="23" r="1.9" fill="#fff"/>
+  <circle cx="30" cy="23" r="1.9" fill="#fff"/>
 </svg>
