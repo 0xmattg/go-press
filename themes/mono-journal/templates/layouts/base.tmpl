@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css?v=mono-journal-5">
+    <link rel="stylesheet" href="/static/css/style.css?v=mono-journal-6">
     {{renderHook "theme.head.end" .}}
 </head>
 <body class="mj-page-{{.ActivePage}}" data-palette="{{journalPalette (settingOr .Settings "theme_color_scheme" "ink")}}">
@@ -18,7 +18,8 @@
     {{template "header" .}}
     <main id="main-content">{{template "content" .}}</main>
     {{template "footer" .}}
-    <script src="/static/js/main.js?v=mono-journal-3"></script>
+    {{template "loginModal" .}}
+    <script src="/static/js/main.js?v=mono-journal-4"></script>
     {{renderHook "theme.footer.end" .}}
 </body>
 </html>{{end}}

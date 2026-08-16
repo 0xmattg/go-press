@@ -1,0 +1,733 @@
+# ============================================================
+# Communa — Demo Seed Data
+# A friendly community: members, groups, discussions, and posts.
+#
+# Image strategy (kept light so demo import stays fast):
+#   - Member avatars: DiceBear (8 downloads). Each member's avatar is reused
+#     verbatim as the author avatar of their posts/discussions, so the importer
+#     de-duplicates and downloads it only once.
+#   - Post images: Lorem Picsum (8 downloads).
+#   - Groups use the theme's built-in gradient cover fallback (0 downloads).
+#   Total remote downloads ≈ 16. All URLs always resolve; on a failed download
+#   the importer keeps the remote URL rather than aborting.
+# ============================================================
+
+# ---------- Settings ----------
+[[settings]]
+key = "site_name"
+value = "Communa"
+[[settings]]
+key = "site_description"
+value = "A friendly home for people who want to learn, share, and belong. Join groups, meet members, and start a conversation."
+
+[[settings]]
+key = "home_logo_text"
+value = "Communa"
+[[settings]]
+key = "home_login_text"
+value = "Log in"
+[[settings]]
+key = "home_join_text"
+value = "Join"
+
+[[settings]]
+key = "home_hero_eyebrow"
+value = "The friendly community platform"
+[[settings]]
+key = "home_hero_title"
+value = "Welcome to the community"
+[[settings]]
+key = "home_hero_subtitle"
+value = "Meet people who share your interests, join groups, and jump into the conversation — no algorithms, just good company."
+[[settings]]
+key = "home_hero_search_placeholder"
+value = "Search members…"
+[[settings]]
+key = "home_hero_cta_text"
+value = "Search"
+[[settings]]
+key = "home_hero_btn1_text"
+value = "Join"
+[[settings]]
+key = "home_hero_btn1_link"
+value = "/login"
+[[settings]]
+key = "home_hero_btn2_text"
+value = "Browse groups"
+[[settings]]
+key = "home_hero_btn2_link"
+value = "/groups"
+
+[[settings]]
+key = "home_members_title"
+value = "Members"
+[[settings]]
+key = "home_groups_title"
+value = "Groups"
+[[settings]]
+key = "home_activity_title"
+value = "Latest Activity"
+[[settings]]
+key = "home_discussions_title"
+value = "Recent Discussions"
+[[settings]]
+key = "home_stats_title"
+value = "Community at a glance"
+[[settings]]
+key = "home_featured_groups_label"
+value = "Communities"
+[[settings]]
+key = "home_featured_groups_title"
+value = "Popular groups to join"
+[[settings]]
+key = "home_featured_groups_subtitle"
+value = "Find your people around the topics you love — from design and code to photography and the great outdoors."
+
+[[settings]]
+key = "home_cta_title"
+value = "Ready to join the conversation?"
+[[settings]]
+key = "home_cta_desc"
+value = "Create your profile, follow the groups you care about, and start meeting people today."
+[[settings]]
+key = "home_cta_btn_text"
+value = "Join the community"
+[[settings]]
+key = "home_cta_btn_link"
+value = "/login"
+
+[[settings]]
+key = "company_email"
+value = "hello@communa.example"
+[[settings]]
+key = "company_phone"
+value = "+1 (555) 018-2277"
+[[settings]]
+key = "company_address"
+value = "24 Gather Lane, Internet City"
+[[settings]]
+key = "company_hours"
+value = "The team reads messages Mon–Fri"
+[[settings]]
+key = "company_description"
+value = "Communa is a calm, welcoming home for online communities — groups, discussions, and the people who make them worth showing up for."
+[[settings]]
+key = "company_year"
+value = "2026"
+[[settings]]
+key = "footer_copyright_text"
+value = "Communa. Built for communities everywhere."
+
+[[settings]]
+key = "about_title"
+value = "About our community"
+[[settings]]
+key = "about_subtitle"
+value = "We are a friendly home for people who want to learn, share, and belong."
+[[settings]]
+key = "about_intro"
+value = "Communa started with a simple idea: the internet is better with the people you meet on it. We build the calm, welcoming spaces where real conversations happen."
+[[settings]]
+key = "about_story"
+value = "<p>Every day, thousands of members join groups, start discussions, and help one another. There are no engagement traps or endless feeds here — just people, topics, and a shared sense of belonging.</p><p>Whether you are here to learn a craft, share your work, or simply find your people, you are welcome. Pull up a chair and say hello.</p>"
+[[settings]]
+key = "about_values_title"
+value = "What we stand for"
+[[settings]]
+key = "about_value_1_title"
+value = "Kindness first"
+[[settings]]
+key = "about_value_1_desc"
+value = "We moderate for warmth. Every member deserves a space that feels safe, respectful, and genuinely welcoming."
+[[settings]]
+key = "about_value_2_title"
+value = "People over algorithms"
+[[settings]]
+key = "about_value_2_desc"
+value = "No engagement traps or endless feeds. Just groups, discussions, and the people who make them worth showing up for."
+[[settings]]
+key = "about_value_3_title"
+value = "Made to belong"
+[[settings]]
+key = "about_value_3_desc"
+value = "Find a group for whatever you are into. There is always a seat at the table, and always someone glad you came."
+[[settings]]
+key = "about_cta_title"
+value = "Come say hello"
+[[settings]]
+key = "about_cta_desc"
+value = "Joining takes a minute. Belonging lasts a lot longer."
+[[settings]]
+key = "about_cta_btn_text"
+value = "Join the community"
+
+[[settings]]
+key = "contact_title"
+value = "Get in touch"
+[[settings]]
+key = "contact_subtitle"
+value = "Questions, feedback, or a partnership idea? The community team reads every message."
+
+[[settings]]
+key = "social_x"
+value = "https://x.com/communa"
+[[settings]]
+key = "social_instagram"
+value = "https://instagram.com/communa"
+[[settings]]
+key = "social_discord"
+value = "https://discord.gg/communa"
+[[settings]]
+key = "social_github"
+value = "https://github.com/communa"
+
+# ---------- Categories (topics / forums) ----------
+[[categories]]
+name = "Creative Arts"
+slug = "creative-arts"
+[[categories]]
+name = "Technology"
+slug = "technology"
+[[categories]]
+name = "Photography"
+slug = "photography"
+[[categories]]
+name = "Travel & Outdoors"
+slug = "travel-outdoors"
+[[categories]]
+name = "Food & Drink"
+slug = "food-drink"
+[[categories]]
+name = "Wellness"
+slug = "wellness"
+[[categories]]
+name = "Gaming"
+slug = "gaming"
+[[categories]]
+name = "Books"
+slug = "books"
+[[categories]]
+name = "Community News"
+slug = "community-news"
+
+# ---------- Tags (interests) ----------
+[[tags]]
+name = "UI Design"
+slug = "ui-design"
+[[tags]]
+name = "JavaScript"
+slug = "javascript"
+[[tags]]
+name = "Hiking"
+slug = "hiking"
+[[tags]]
+name = "Coffee"
+slug = "coffee"
+[[tags]]
+name = "Film Photography"
+slug = "film-photography"
+[[tags]]
+name = "Yoga"
+slug = "yoga"
+[[tags]]
+name = "Indie Games"
+slug = "indie-games"
+[[tags]]
+name = "Sci-Fi"
+slug = "sci-fi"
+[[tags]]
+name = "Home Cooking"
+slug = "home-cooking"
+[[tags]]
+name = "Watercolor"
+slug = "watercolor"
+[[tags]]
+name = "Running"
+slug = "running"
+[[tags]]
+name = "Open Source"
+slug = "open-source"
+[[tags]]
+name = "Welcome"
+slug = "welcome"
+
+# ============================================================
+# MEMBERS  (avatars: 8 DiceBear downloads, reused as author avatars below)
+# ============================================================
+[[contents]]
+type = "member"
+title = "Maya Chen"
+slug = "maya-chen"
+sort_order = 1
+image_url = "https://api.dicebear.com/9.x/avataaars/png?seed=MayaChen&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+excerpt = "Product designer, plant hoarder, and forever a beginner at watercolor."
+content = """<p>Hi, I'm Maya! I design products by day and paint (badly) by night. I started the Design Collective because I wanted a low-pressure place to share work-in-progress and get honest, kind feedback.</p><p>Say hi if you're into UI design, side projects, or houseplants that refuse to die.</p>"""
+tags = ["ui-design", "watercolor"]
+[contents.meta]
+role = "Product Designer"
+location = "Lisbon, Portugal"
+joined = "March 2024"
+website = "https://maya.example"
+posts_count = "34"
+groups_count = "5"
+
+[[contents]]
+type = "member"
+title = "Diego Santos"
+slug = "diego-santos"
+sort_order = 2
+image_url = "https://api.dicebear.com/9.x/avataaars/png?seed=DiegoSantos&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+excerpt = "Backend engineer who runs on coffee and open source."
+content = """<p>I build things with Go and JavaScript, and I help run Code & Coffee — a group for developers who like shipping and helping each other out.</p><p>Ask me anything about backends, career switches, or the perfect pour-over.</p>"""
+tags = ["javascript", "coffee", "open-source"]
+[contents.meta]
+role = "Backend Engineer"
+location = "São Paulo, Brazil"
+joined = "January 2024"
+website = "https://diego.example"
+posts_count = "58"
+groups_count = "7"
+
+[[contents]]
+type = "member"
+title = "Amara Okafor"
+slug = "amara-okafor"
+sort_order = 3
+image_url = "https://api.dicebear.com/9.x/avataaars/png?seed=AmaraOkafor&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+excerpt = "Documentary photographer chasing good light."
+content = """<p>I photograph people and places, mostly on film. I moderate the Shutter Club, where we run monthly themes and gentle critiques.</p><p>Bring your camera and your curiosity.</p>"""
+tags = ["film-photography"]
+[contents.meta]
+role = "Photographer"
+location = "Lagos, Nigeria"
+joined = "May 2024"
+website = "https://amara.example"
+posts_count = "41"
+groups_count = "3"
+
+[[contents]]
+type = "member"
+title = "Leo Fischer"
+slug = "leo-fischer"
+sort_order = 4
+image_url = "https://api.dicebear.com/9.x/avataaars/png?seed=LeoFischer&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+excerpt = "Trail runner and weekend cartographer."
+content = """<p>If there's a trail, I've probably tried to run up it. I started Trailblazers to swap routes, trip reports, and gear tips.</p><p>Let's find the good views together.</p>"""
+tags = ["hiking", "running"]
+[contents.meta]
+role = "Community Organizer"
+location = "Innsbruck, Austria"
+joined = "February 2024"
+posts_count = "27"
+groups_count = "4"
+
+[[contents]]
+type = "member"
+title = "Priya Nair"
+slug = "priya-nair"
+sort_order = 5
+image_url = "https://api.dicebear.com/9.x/avataaars/png?seed=PriyaNair&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+excerpt = "Home cook, recipe tinkerer, and chai enthusiast."
+content = """<p>I cook simple, seasonal food and love sharing the wins (and the disasters). Find me in The Test Kitchen swapping weeknight ideas.</p>"""
+tags = ["home-cooking", "coffee"]
+[contents.meta]
+role = "Recipe Developer"
+location = "Bengaluru, India"
+joined = "April 2024"
+website = "https://priya.example"
+posts_count = "49"
+groups_count = "6"
+
+[[contents]]
+type = "member"
+title = "Sam Rivera"
+slug = "sam-rivera"
+sort_order = 6
+image_url = "https://api.dicebear.com/9.x/avataaars/png?seed=SamRivera&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+excerpt = "Yoga teacher building calmer mornings."
+content = """<p>I help people start their day with a little more breathing room. I host Mindful Mornings — short, friendly sessions and check-ins.</p>"""
+tags = ["yoga"]
+[contents.meta]
+role = "Wellness Guide"
+location = "Austin, USA"
+joined = "June 2024"
+posts_count = "22"
+groups_count = "2"
+
+[[contents]]
+type = "member"
+title = "Yuki Tanaka"
+slug = "yuki-tanaka"
+sort_order = 7
+image_url = "https://api.dicebear.com/9.x/avataaars/png?seed=YukiTanaka&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+excerpt = "Indie game dev with a soft spot for pixel art."
+content = """<p>I make small games and big to-do lists. Pixel Arcade is my happy place — we share works in progress and play each other's builds.</p>"""
+tags = ["indie-games", "sci-fi"]
+[contents.meta]
+role = "Game Developer"
+location = "Kyoto, Japan"
+joined = "March 2024"
+website = "https://yuki.example"
+posts_count = "37"
+groups_count = "5"
+
+[[contents]]
+type = "member"
+title = "Nora Bergström"
+slug = "nora-bergstrom"
+sort_order = 8
+image_url = "https://api.dicebear.com/9.x/avataaars/png?seed=NoraBergstrom&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+excerpt = "Reader of everything, keeper of too many bookmarks."
+content = """<p>I run Page Turners, a low-key book club where we read across genres and argue happily about endings. Currently deep in a sci-fi phase.</p>"""
+tags = ["sci-fi"]
+[contents.meta]
+role = "Book Club Host"
+location = "Stockholm, Sweden"
+joined = "May 2024"
+posts_count = "31"
+groups_count = "4"
+
+# ============================================================
+# GROUPS  (gradient cover fallback — no image downloads)
+# ============================================================
+[[contents]]
+type = "group"
+title = "Design Collective"
+slug = "design-collective"
+sort_order = 1
+excerpt = "A low-pressure space to share work-in-progress and trade honest, kind feedback."
+content = """<p>The Design Collective is for anyone who makes things — UI, brand, product, or the occasional watercolor. We run weekly "show your work" threads and gentle critiques.</p><p>No portfolios required. Beginners especially welcome.</p>"""
+category = "creative-arts"
+tags = ["ui-design", "watercolor"]
+[contents.meta]
+members_count = "1,284"
+privacy = "Public"
+activity = "Active 2 hours ago"
+lead = "Maya Chen"
+
+[[contents]]
+type = "group"
+title = "Code & Coffee"
+slug = "code-and-coffee"
+sort_order = 2
+excerpt = "Developers who like shipping, learning in public, and a good pour-over."
+content = """<p>Code & Coffee is a friendly group for developers of every level. We pair up on side projects, review each other's code, and celebrate small wins.</p><p>Weekly threads: what are you building, what are you stuck on, and what are you drinking.</p>"""
+category = "technology"
+tags = ["javascript", "open-source", "coffee"]
+[contents.meta]
+members_count = "2,047"
+privacy = "Public"
+activity = "Active 12 minutes ago"
+lead = "Diego Santos"
+
+[[contents]]
+type = "group"
+title = "Shutter Club"
+slug = "shutter-club"
+sort_order = 3
+excerpt = "Monthly photo themes and gentle critiques for every kind of camera."
+content = """<p>Whether you shoot film, digital, or the phone in your pocket, Shutter Club is a warm place to share and improve. Each month has a theme and a friendly critique thread.</p>"""
+category = "photography"
+tags = ["film-photography"]
+[contents.meta]
+members_count = "976"
+privacy = "Public"
+activity = "Active 1 hour ago"
+lead = "Amara Okafor"
+
+[[contents]]
+type = "group"
+title = "Trailblazers"
+slug = "trailblazers"
+sort_order = 4
+excerpt = "Routes, trip reports, and gear tips for people who love being outside."
+content = """<p>Trailblazers is for hikers, runners, and wanderers. Share your favorite routes, ask for recommendations, and find people to explore with.</p>"""
+category = "travel-outdoors"
+tags = ["hiking", "running"]
+[contents.meta]
+members_count = "1,530"
+privacy = "Public"
+activity = "Active 4 hours ago"
+lead = "Leo Fischer"
+
+[[contents]]
+type = "group"
+title = "The Test Kitchen"
+slug = "the-test-kitchen"
+sort_order = 5
+excerpt = "Weeknight dinners, kitchen wins, and the occasional glorious failure."
+content = """<p>The Test Kitchen is where we swap simple, seasonal recipes and cheer each other on. Post what you cooked — the messier the better.</p>"""
+category = "food-drink"
+tags = ["home-cooking"]
+[contents.meta]
+members_count = "1,842"
+privacy = "Public"
+activity = "Active 30 minutes ago"
+lead = "Priya Nair"
+
+[[contents]]
+type = "group"
+title = "Mindful Mornings"
+slug = "mindful-mornings"
+sort_order = 6
+excerpt = "Short, friendly sessions and check-ins to start the day with room to breathe."
+content = """<p>Mindful Mornings is a gentle group for anyone building a calmer routine. Join a session, share a small intention, and check in with people who get it.</p>"""
+category = "wellness"
+tags = ["yoga"]
+[contents.meta]
+members_count = "614"
+privacy = "Private"
+activity = "Active yesterday"
+lead = "Sam Rivera"
+
+[[contents]]
+type = "group"
+title = "Pixel Arcade"
+slug = "pixel-arcade"
+sort_order = 7
+excerpt = "Indie devs and players sharing works-in-progress and hidden gems."
+content = """<p>Pixel Arcade is for people who make and love small games. Share a build, get feedback, and discover indie gems you'd never find on the front page.</p>"""
+category = "gaming"
+tags = ["indie-games"]
+[contents.meta]
+members_count = "1,105"
+privacy = "Public"
+activity = "Active 3 hours ago"
+lead = "Yuki Tanaka"
+
+[[contents]]
+type = "group"
+title = "Page Turners"
+slug = "page-turners"
+sort_order = 8
+excerpt = "A low-key book club that reads across genres and argues happily about endings."
+content = """<p>Page Turners picks a book a month and talks about it — no homework, no pressure. Currently on a sci-fi streak. Newcomers always welcome.</p>"""
+category = "books"
+tags = ["sci-fi"]
+[contents.meta]
+members_count = "788"
+privacy = "Public"
+activity = "Active 6 hours ago"
+lead = "Nora Bergström"
+
+# ============================================================
+# DISCUSSIONS  (author avatars reuse the member avatars above — no new downloads)
+# ============================================================
+[[contents]]
+type = "discussion"
+title = "What's on your desk right now?"
+slug = "whats-on-your-desk"
+excerpt = "Show us your setup — the good, the cluttered, and the suspiciously empty."
+content = """<p>I'm reorganizing my workspace and stealing ideas shamelessly. What does your desk look like today? Bonus points for plants, sketchbooks, and mystery cables.</p>"""
+category = "creative-arts"
+tags = ["ui-design"]
+[contents.meta]
+author_name = "Maya Chen"
+author_avatar = "https://api.dicebear.com/9.x/avataaars/png?seed=MayaChen&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+group_name = "Design Collective"
+replies_count = "42"
+
+[[contents]]
+type = "discussion"
+title = "Show us your latest shot"
+slug = "show-us-your-latest-shot"
+excerpt = "This month's theme is \"golden hour\". Drop your favorite frame."
+content = """<p>New month, new theme: <strong>golden hour</strong>. Post one shot and tell us a little about it — where, when, and what you were going for. Kind critique welcome if you ask for it.</p>"""
+category = "photography"
+tags = ["film-photography"]
+[contents.meta]
+author_name = "Amara Okafor"
+author_avatar = "https://api.dicebear.com/9.x/avataaars/png?seed=AmaraOkafor&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+group_name = "Shutter Club"
+replies_count = "63"
+
+[[contents]]
+type = "discussion"
+title = "Best trail you hiked this year?"
+slug = "best-trail-this-year"
+excerpt = "Looking for a big autumn route. Sell me on your favorite."
+content = """<p>Planning one last big hike before the snow. Tell me about the best trail you did this year — distance, difficulty, and the view that made it worth it.</p>"""
+category = "travel-outdoors"
+tags = ["hiking"]
+[contents.meta]
+author_name = "Leo Fischer"
+author_avatar = "https://api.dicebear.com/9.x/avataaars/png?seed=LeoFischer&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+group_name = "Trailblazers"
+replies_count = "38"
+
+[[contents]]
+type = "discussion"
+title = "Weeknight dinners that actually work"
+slug = "weeknight-dinners"
+excerpt = "Fast, cheap, and genuinely good. What's your reliable go-to?"
+content = """<p>The 6pm "what's for dinner" panic is real. Share your dependable weeknight meal — bonus points if it's under 30 minutes and uses stuff most people have.</p>"""
+category = "food-drink"
+tags = ["home-cooking"]
+[contents.meta]
+author_name = "Priya Nair"
+author_avatar = "https://api.dicebear.com/9.x/avataaars/png?seed=PriyaNair&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+group_name = "The Test Kitchen"
+replies_count = "57"
+
+[[contents]]
+type = "discussion"
+title = "How do you start a mindful morning?"
+slug = "mindful-morning-routines"
+excerpt = "Trying to build a gentler start to the day. What works for you?"
+content = """<p>I'm experimenting with slower mornings and would love to hear your routines. Five minutes or fifty — what actually helps you feel grounded before the day takes over?</p>"""
+category = "wellness"
+tags = ["yoga"]
+[contents.meta]
+author_name = "Sam Rivera"
+author_avatar = "https://api.dicebear.com/9.x/avataaars/png?seed=SamRivera&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+group_name = "Mindful Mornings"
+replies_count = "29"
+
+[[contents]]
+type = "discussion"
+title = "Underrated indie games of the year"
+slug = "underrated-indie-games"
+excerpt = "The gems that deserved more love. Drop your picks."
+content = """<p>Let's put together a list of indie games that flew under the radar this year. Tell us what you played, why it stuck with you, and where we can find it.</p>"""
+category = "gaming"
+tags = ["indie-games", "sci-fi"]
+[contents.meta]
+author_name = "Yuki Tanaka"
+author_avatar = "https://api.dicebear.com/9.x/avataaars/png?seed=YukiTanaka&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+group_name = "Pixel Arcade"
+replies_count = "71"
+
+[[contents]]
+type = "discussion"
+title = "What are you reading this month?"
+slug = "reading-this-month"
+excerpt = "One line about your current book. Go."
+content = """<p>Book club check-in! What are you reading right now, and would you recommend it? Trying to fill my shelf before the long winter nights.</p>"""
+category = "books"
+tags = ["sci-fi"]
+[contents.meta]
+author_name = "Nora Bergström"
+author_avatar = "https://api.dicebear.com/9.x/avataaars/png?seed=NoraBergstrom&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+group_name = "Page Turners"
+replies_count = "45"
+
+[[contents]]
+type = "discussion"
+title = "First open-source contribution — any tips?"
+slug = "first-open-source-contribution"
+excerpt = "Want to make my first PR without the nerves. Where do I start?"
+content = """<p>I've been coding for a while but never contributed to open source. It feels intimidating! How did you make your first contribution, and what do you wish you'd known?</p>"""
+category = "technology"
+tags = ["open-source", "javascript"]
+[contents.meta]
+author_name = "Diego Santos"
+author_avatar = "https://api.dicebear.com/9.x/avataaars/png?seed=DiegoSantos&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+group_name = "Code & Coffee"
+replies_count = "34"
+
+# ============================================================
+# POSTS (blog / activity — 8 Picsum image downloads)
+# ============================================================
+[[contents]]
+type = "post"
+title = "Welcome to Communa"
+slug = "welcome-to-communa"
+excerpt = "A quick tour of your new favorite corner of the internet."
+image_url = "https://picsum.photos/seed/communa-post-welcome/1040/560"
+content = """<p>Welcome! Communa is a friendly place to find your people. Here's how to get started.</p><h3>Find a group</h3><p>Browse the groups directory and join anything that sparks your interest. Groups are where the day-to-day conversations happen.</p><h3>Introduce yourself</h3><p>Say hello in a discussion — everyone remembers being new. The community is warmer than you'd expect.</p><h3>Make it yours</h3><p>Fill out your profile, add your interests, and start posting. See you inside.</p>"""
+category = "community-news"
+tags = ["welcome"]
+[contents.meta]
+author_name = "Maya Chen"
+author_avatar = "https://api.dicebear.com/9.x/avataaars/png?seed=MayaChen&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+
+[[contents]]
+type = "post"
+title = "5 ways to make a group feel like home"
+slug = "make-a-group-feel-like-home"
+excerpt = "Small habits that turn a member list into a real community."
+image_url = "https://picsum.photos/seed/communa-post-home/1040/560"
+content = """<p>Great communities aren't built by features — they're built by people showing up with care. Here are five habits we've seen work again and again.</p><h3>1. Welcome every newcomer</h3><p>A single friendly reply changes everything.</p><h3>2. Ask real questions</h3><p>Curiosity invites conversation. Prompts beat announcements.</p><h3>3. Celebrate small wins</h3><p>First PR, first loaf, first 5k — cheer it on.</p><h3>4. Keep it kind</h3><p>Assume good faith, and moderate for warmth.</p><h3>5. Show up regularly</h3><p>Consistency is what turns a page into a home.</p>"""
+category = "community-news"
+tags = ["welcome", "ui-design"]
+[contents.meta]
+author_name = "Diego Santos"
+author_avatar = "https://api.dicebear.com/9.x/avataaars/png?seed=DiegoSantos&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+
+[[contents]]
+type = "post"
+title = "Meet the makers: our September spotlight"
+slug = "september-maker-spotlight"
+excerpt = "Three members quietly making the community better."
+image_url = "https://picsum.photos/seed/communa-post-makers/1040/560"
+content = """<p>Every month we spotlight members who make Communa a kinder place. This month, we're celebrating a photographer, a home cook, and a first-time group host.</p><p>Their common thread? They show up, they're generous with feedback, and they make newcomers feel welcome. That's the whole game.</p>"""
+category = "community-news"
+tags = ["film-photography", "home-cooking"]
+[contents.meta]
+author_name = "Amara Okafor"
+author_avatar = "https://api.dicebear.com/9.x/avataaars/png?seed=AmaraOkafor&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+
+[[contents]]
+type = "post"
+title = "How we keep conversations kind"
+slug = "keeping-conversations-kind"
+excerpt = "A peek at the values and small tools behind our moderation."
+image_url = "https://picsum.photos/seed/communa-post-kind/1040/560"
+content = """<p>Kindness doesn't happen by accident. Here's how we protect it: clear, simple guidelines, human moderators who assume good faith, and members who look out for each other.</p><p>We'd rather move slowly and stay warm than grow fast and lose the plot.</p>"""
+category = "community-news"
+tags = ["welcome"]
+[contents.meta]
+author_name = "Sam Rivera"
+author_avatar = "https://api.dicebear.com/9.x/avataaars/png?seed=SamRivera&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+
+[[contents]]
+type = "post"
+title = "A beginner's guide to joining your first group"
+slug = "joining-your-first-group"
+excerpt = "Nervous about jumping in? Start here."
+image_url = "https://picsum.photos/seed/communa-post-guide/1040/560"
+content = """<p>Joining a new community can feel a little daunting. It shouldn't. Pick one group that matches something you already love, read a few threads to get the vibe, then post a simple hello.</p><p>That's it. You're in. The hardest part is the first message, and it's smaller than you think.</p>"""
+category = "community-news"
+tags = ["welcome"]
+[contents.meta]
+author_name = "Priya Nair"
+author_avatar = "https://api.dicebear.com/9.x/avataaars/png?seed=PriyaNair&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+
+[[contents]]
+type = "post"
+title = "Community roundup: the best of this month"
+slug = "monthly-community-roundup"
+excerpt = "The threads, shots, and recipes we loved most."
+image_url = "https://picsum.photos/seed/communa-post-roundup/1040/560"
+content = """<p>What a month. Trailblazers hit a hundred trip reports, the Shutter Club's golden-hour thread was pure magic, and The Test Kitchen convinced half of us to try miso butter.</p><p>Thanks for making this place what it is. Here's to the next one.</p>"""
+category = "community-news"
+tags = ["hiking", "home-cooking"]
+[contents.meta]
+author_name = "Leo Fischer"
+author_avatar = "https://api.dicebear.com/9.x/avataaars/png?seed=LeoFischer&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+
+[[contents]]
+type = "post"
+title = "Behind the scenes: building in the open"
+slug = "building-in-the-open"
+excerpt = "Why we share our roadmap, our wins, and our mistakes."
+image_url = "https://picsum.photos/seed/communa-post-open/1040/560"
+content = """<p>We build Communa in the open because communities deserve to know how the place they call home actually works. That means a public roadmap, honest changelogs, and owning our mistakes.</p><p>Open source is part of it too — a lot of what powers Communa is out there for anyone to learn from.</p>"""
+category = "technology"
+tags = ["open-source"]
+[contents.meta]
+author_name = "Yuki Tanaka"
+author_avatar = "https://api.dicebear.com/9.x/avataaars/png?seed=YukiTanaka&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+
+[[contents]]
+type = "post"
+title = "Tips for hosting a great discussion"
+slug = "hosting-a-great-discussion"
+excerpt = "How to write a prompt people actually want to answer."
+image_url = "https://picsum.photos/seed/communa-post-hosting/1040/560"
+content = """<p>The best discussions start with a great question. Keep it specific, make it easy to answer with a single reply, and share your own answer first so people feel safe going next.</p><p>And when the replies come in? Respond. Nothing keeps a thread alive like a host who's genuinely listening.</p>"""
+category = "community-news"
+tags = ["welcome"]
+[contents.meta]
+author_name = "Nora Bergström"
+author_avatar = "https://api.dicebear.com/9.x/avataaars/png?seed=NoraBergstrom&size=240&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"

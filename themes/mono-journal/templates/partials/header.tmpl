@@ -30,7 +30,7 @@
                     {{if $account.AvatarURL}}<img src="{{$account.AvatarURL}}" alt="">{{else}}<span>{{authorInitials $account.DisplayName}}</span>{{end}}
                 </a>
             {{else}}
-                <a class="mj-signin-link" href="{{loginURL .Ctx}}" aria-label="{{T .Ctx "auth.sign_in"}}"><span>{{T .Ctx "auth.sign_in"}}</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20a7 7 0 0 1 14 0"></path></svg></a>
+                <a class="mj-signin-link" href="{{loginURL .Ctx}}" data-login-open aria-haspopup="dialog" aria-controls="mj-login-modal" aria-label="{{T .Ctx "auth.sign_in"}}"><span>{{T .Ctx "auth.sign_in"}}</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20a7 7 0 0 1 14 0"></path></svg></a>
             {{end}}
             <button class="mj-menu-button" type="button" aria-label="{{T .Ctx "nav.toggle"}}" aria-expanded="false" data-nav-toggle><span></span><span></span></button>
         </div>

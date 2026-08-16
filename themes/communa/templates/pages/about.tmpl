@@ -1,0 +1,72 @@
+{{define "content"}}
+{{$s := .Settings}}
+<section class="cmn-page-banner">
+    <div class="cmn-container">
+        <nav class="cmn-breadcrumb" aria-label="Breadcrumb">
+            <a href="{{langPrefixURL .Ctx "/"}}">{{T .Ctx "nav_home"}}</a><span aria-hidden="true">/</span><span>{{T .Ctx "nav_about"}}</span>
+        </nav>
+        <h1>{{settingOr $s "about_title" "About our community"}}</h1>
+        <p class="cmn-page-banner-sub">{{settingOr $s "about_subtitle" "We are a friendly home for people who want to learn, share, and belong."}}</p>
+    </div>
+</section>
+
+<section class="cmn-section">
+    <div class="cmn-container cmn-about-intro">
+        <div class="cmn-about-lead">
+            <span class="cmn-eyebrow">{{T .Ctx "about_who_label"}}</span>
+            <p class="cmn-about-lead-text">{{settingOr $s "about_intro" "Communa started with a simple idea: the internet is better with the people you meet on it. We build the calm, welcoming spaces where real conversations happen."}}</p>
+        </div>
+        <div class="cmn-about-story cmn-richtext">
+            {{safeHTML (settingOr $s "about_story" "<p>Every day, thousands of members join groups, start discussions, and help one another. There are no algorithms fighting for your attention here — just people, topics, and a shared sense of belonging.</p><p>Whether you are here to learn a craft, share your work, or simply find your people, you are welcome. Pull up a chair and say hello.</p>")}}
+        </div>
+    </div>
+</section>
+
+<section class="cmn-stats-band">
+    <div class="cmn-container">
+        <div class="cmn-stats-band-grid">
+            <div class="cmn-stat-tile cmn-stat-tile-lg"><span class="cmn-stat-num">{{.Stats.Members}}</span><span class="cmn-stat-label">{{T .Ctx "stat_members"}}</span></div>
+            <div class="cmn-stat-tile cmn-stat-tile-lg"><span class="cmn-stat-num">{{.Stats.Groups}}</span><span class="cmn-stat-label">{{T .Ctx "stat_groups"}}</span></div>
+            <div class="cmn-stat-tile cmn-stat-tile-lg"><span class="cmn-stat-num">{{.Stats.Discussions}}</span><span class="cmn-stat-label">{{T .Ctx "stat_discussions"}}</span></div>
+            <div class="cmn-stat-tile cmn-stat-tile-lg"><span class="cmn-stat-num">{{.Stats.Posts}}</span><span class="cmn-stat-label">{{T .Ctx "stat_posts"}}</span></div>
+        </div>
+    </div>
+</section>
+
+<section class="cmn-section">
+    <div class="cmn-container">
+        <div class="cmn-section-head cmn-center">
+            <span class="cmn-eyebrow">{{T .Ctx "about_values_label"}}</span>
+            <h2 class="cmn-section-title">{{settingOr $s "about_values_title" "What we stand for"}}</h2>
+        </div>
+        <div class="cmn-values-grid">
+            <div class="cmn-value-card">
+                <span class="cmn-value-icon cmn-value-icon-green"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+                <h3>{{settingOr $s "about_value_1_title" "Kindness first"}}</h3>
+                <p>{{settingOr $s "about_value_1_desc" "We moderate for warmth. Every member deserves a space that feels safe, respectful, and genuinely welcoming."}}</p>
+            </div>
+            <div class="cmn-value-card">
+                <span class="cmn-value-icon cmn-value-icon-blue"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+                <h3>{{settingOr $s "about_value_2_title" "People over algorithms"}}</h3>
+                <p>{{settingOr $s "about_value_2_desc" "No engagement traps or endless feeds. Just groups, discussions, and the people who make them worth showing up for."}}</p>
+            </div>
+            <div class="cmn-value-card">
+                <span class="cmn-value-icon cmn-value-icon-amber"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg></span>
+                <h3>{{settingOr $s "about_value_3_title" "Made to belong"}}</h3>
+                <p>{{settingOr $s "about_value_3_desc" "Find a group for whatever you are into. There is always a seat at the table, and always someone glad you came."}}</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cmn-cta">
+    <div class="cmn-container cmn-cta-inner">
+        <h2>{{settingOr $s "about_cta_title" "Come say hello"}}</h2>
+        <p>{{settingOr $s "about_cta_desc" "Joining takes a minute. Belonging lasts a lot longer."}}</p>
+        <div class="cmn-cta-actions">
+            <a class="cmn-btn cmn-btn-green cmn-btn-lg" href="{{settingOr $s "home_cta_btn_link" (loginURL .Ctx)}}">{{settingOr $s "about_cta_btn_text" "Join the community"}}</a>
+            <a class="cmn-btn cmn-btn-ghost-light cmn-btn-lg" href="{{langPrefixURL .Ctx "/contact"}}">{{T .Ctx "nav_contact"}}</a>
+        </div>
+    </div>
+</section>
+{{end}}

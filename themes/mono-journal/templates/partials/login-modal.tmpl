@@ -1,0 +1,24 @@
+{{define "loginModal"}}
+{{if not (isLoggedIn .Ctx)}}
+<div class="mj-login-modal" id="mj-login-modal" data-login-modal hidden>
+  <button class="mj-login-backdrop" type="button" tabindex="-1" data-login-close aria-label="{{T .Ctx "auth.close"}}"></button>
+  <section class="mj-login-dialog" role="dialog" aria-modal="true" aria-labelledby="mj-login-title" aria-describedby="mj-login-desc" tabindex="-1">
+    <button class="mj-login-close" type="button" data-login-close aria-label="{{T .Ctx "auth.close"}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    <span class="mj-login-eyebrow">{{T .Ctx "auth.eyebrow"}}</span>
+    <h2 id="mj-login-title" class="mj-login-title">{{T .Ctx "auth.title"}} {{settingOr .Settings "home_logo_text" "Mono Journal"}}</h2>
+    <p id="mj-login-desc" class="mj-login-desc">{{T .Ctx "auth.description"}}</p>
+    {{$providers := loginProviders}}
+    {{if $providers}}
+    <div class="mj-login-providers">
+      {{range $providers}}
+      <a href="{{loginProviderURL .BeginURL $.Ctx}}">{{if .IconURL}}<img src="{{.IconURL}}" alt="" width="22" height="22">{{else}}<span class="mj-login-provider-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3.4"></circle><path d="M5 20a7 7 0 0 1 14 0"></path></svg></span>{{end}}<span>{{T $.Ctx "auth.continue_with"}} {{.Label}}</span></a>
+      {{end}}
+    </div>
+    {{else}}
+    <div class="mj-login-empty" role="status"><strong>{{T .Ctx "auth.no_methods_title"}}</strong><p>{{T .Ctx "auth.no_methods_text"}}</p></div>
+    {{end}}
+    <p class="mj-login-note">{{T .Ctx "auth.note"}}</p>
+  </section>
+</div>
+{{end}}
+{{end}}

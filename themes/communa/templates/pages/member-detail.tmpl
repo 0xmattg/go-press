@@ -1,0 +1,75 @@
+{{define "content"}}
+{{$m := .Item}}
+<article class="cmn-profile">
+    <div class="cmn-profile-cover"{{if $m.CoverImage}} style="background-image:url('{{$m.CoverImage}}')"{{end}}>
+        <div class="cmn-container">
+            <a class="cmn-back-link" href="{{langPrefixURL .Ctx .ArchiveURL}}">&larr; {{T .Ctx "btn_back_members"}}</a>
+        </div>
+    </div>
+    <div class="cmn-container">
+        <header class="cmn-profile-head">
+            <span class="cmn-avatar cmn-avatar-xl">
+                {{if $m.ImageURL}}<img src="{{$m.ImageURL}}" alt="{{$m.Title}}">{{else}}<span class="cmn-avatar-fallback">{{initials $m.Title}}</span>{{end}}
+            </span>
+            <div class="cmn-profile-head-main">
+                <h1 class="cmn-profile-name">{{$m.Title}}</h1>
+                <p class="cmn-profile-role">{{if $m.Role}}{{$m.Role}}{{else}}{{T .Ctx "member_default_role"}}{{end}}</p>
+                <ul class="cmn-profile-meta">
+                    {{if $m.Location}}<li><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>{{$m.Location}}</li>{{end}}
+                    {{if $m.Joined}}<li><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>{{T .Ctx "member_joined"}} {{$m.Joined}}</li>{{end}}
+                    {{if $m.Website}}<li><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></svg><a href="{{$m.Website}}" target="_blank" rel="noopener nofollow">{{$m.Website}}</a></li>{{end}}
+                </ul>
+            </div>
+            <div class="cmn-profile-stats">
+                <div class="cmn-profile-stat"><span class="cmn-stat-num">{{if $m.PostsCount}}{{$m.PostsCount}}{{else}}0{{end}}</span><span class="cmn-stat-label">{{T .Ctx "label_posts"}}</span></div>
+                <div class="cmn-profile-stat"><span class="cmn-stat-num">{{if $m.GroupsCount}}{{$m.GroupsCount}}{{else}}0{{end}}</span><span class="cmn-stat-label">{{T .Ctx "label_groups"}}</span></div>
+            </div>
+        </header>
+
+        <div class="cmn-profile-layout">
+            <div class="cmn-profile-main cmn-richtext">
+                {{if $m.Excerpt}}<p class="cmn-profile-tagline">{{$m.Excerpt}}</p>{{end}}
+                {{safeHTML $m.Content}}
+            </div>
+            <aside class="cmn-profile-side">
+                {{if .Tags}}
+                <div class="cmn-side-card">
+                    <h3>{{T .Ctx "sidebar_interests"}}</h3>
+                    <div class="cmn-tag-row">
+                        {{range .Tags}}<a class="cmn-tag" href="{{langPrefixURL $.Ctx (taxonomyURL "tag" .Slug)}}">{{.Name}}</a>{{end}}
+                    </div>
+                </div>
+                {{end}}
+                <div class="cmn-side-card cmn-side-cta">
+                    <h3>{{T .Ctx "profile_connect_title"}}</h3>
+                    <p>{{T .Ctx "profile_connect_text"}}</p>
+                    <a class="cmn-btn cmn-btn-blue cmn-btn-block" href="{{langPrefixURL .Ctx (archiveURL "group")}}">{{T .Ctx "btn_browse_groups"}}</a>
+                </div>
+            </aside>
+        </div>
+    </div>
+</article>
+
+{{if .Related}}
+<section class="cmn-section cmn-section-alt">
+    <div class="cmn-container">
+        <div class="cmn-section-head cmn-center">
+            <h2 class="cmn-section-title">{{T .Ctx "section_similar_members"}}</h2>
+        </div>
+        <div class="cmn-member-grid cmn-member-grid-compact">
+            {{range .Related}}
+            <article class="cmn-member-card cmn-member-card-sm">
+                <a class="cmn-avatar cmn-avatar-lg cmn-member-card-avatar" href="{{langPrefixURL $.Ctx .URL}}">
+                    {{if .ImageURL}}<img src="{{.ImageURL}}" alt="{{.Title}}" loading="lazy">{{else}}<span class="cmn-avatar-fallback">{{initials .Title}}</span>{{end}}
+                </a>
+                <div class="cmn-member-card-body">
+                    <h3 class="cmn-member-card-name"><a href="{{langPrefixURL $.Ctx .URL}}">{{.Title}}</a></h3>
+                    <p class="cmn-member-card-role">{{if .Role}}{{.Role}}{{else}}{{T $.Ctx "member_default_role"}}{{end}}</p>
+                </div>
+            </article>
+            {{end}}
+        </div>
+    </div>
+</section>
+{{end}}
+{{end}}

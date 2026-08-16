@@ -1,0 +1,37 @@
+{{define "base"}}<!DOCTYPE html>
+<html lang="{{currentLang .Ctx}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{$fallbackTitle := printf "%s · %s" .Title (settingOr .Settings "site_name" "Communa")}}
+    <title>{{pageTitleFor . $fallbackTitle}}</title>
+    {{$siteIcon := settingOr .Settings "site_icon" ""}}
+    {{with seoHeadFor .}}{{.}}{{else}}
+    <meta name="description" content="{{settingOr $.Settings "site_description" "A place for your community to gather, share, and grow together."}}">
+    {{faviconLinks $siteIcon}}
+    {{end}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,600;0,6..12,700;0,6..12,800;0,6..12,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css?v=11">
+    {{renderHook "theme.head.end" .}}
+</head>
+<body class="cmn-body{{if eq .ActivePage "home"}} cmn-is-home{{end}}">
+    {{renderHook "theme.body.open" .}}
+    {{template "header" .}}
+
+    <main class="cmn-main">
+        {{template "content" .}}
+    </main>
+
+    {{template "footer" .}}
+
+    {{template "cmn-login-modal" .}}
+
+    <button id="cmn-scroll-top" class="cmn-scroll-top" aria-label="Scroll to top" type="button">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+    </button>
+    <script src="/static/js/main.js?v=3"></script>
+    {{renderHook "theme.footer.end" .}}
+</body>
+</html>{{end}}

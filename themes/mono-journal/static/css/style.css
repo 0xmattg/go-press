@@ -337,3 +337,31 @@ button { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
+
+/* Sign-in modal */
+.mj-login-modal { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.mj-login-modal[hidden] { display: none; }
+.mj-login-backdrop { position: absolute; inset: 0; border: 0; padding: 0; background: rgba(22, 22, 22, .46); cursor: pointer; }
+.mj-login-dialog { position: relative; z-index: 1; width: min(100%, 420px); background: var(--mj-bg); border: 1px solid var(--mj-line); border-radius: var(--mj-radius); padding: 40px 36px 30px; box-shadow: 0 24px 60px rgba(0, 0, 0, .16); }
+.mj-login-dialog:focus { outline: none; }
+.mj-login-close { position: absolute; top: 16px; right: 16px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--mj-line); border-radius: 50%; background: var(--mj-bg); color: var(--mj-muted); cursor: pointer; }
+.mj-login-close svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.mj-login-close:hover { color: var(--mj-text); border-color: var(--mj-accent); }
+.mj-login-eyebrow { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--mj-muted); margin-bottom: 10px; }
+.mj-login-title { font-family: var(--mj-serif); font-weight: 500; font-size: 28px; line-height: 1.15; margin: 0 0 10px; color: var(--mj-text); }
+.mj-login-desc { color: var(--mj-muted); font-size: 15px; line-height: 1.6; margin: 0 0 24px; }
+.mj-login-providers { display: grid; gap: 10px; margin-bottom: 22px; }
+.mj-login-providers a { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 18px; border: 1px solid var(--mj-line); border-radius: var(--mj-radius); background: var(--mj-bg); color: var(--mj-text); font-weight: 600; font-size: 15px; text-decoration: none; transition: border-color .15s, background .15s; }
+.mj-login-providers a:hover { border-color: var(--mj-accent); background: var(--mj-surface); }
+.mj-login-providers img { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; }
+.mj-login-provider-icon { display: inline-flex; color: var(--mj-muted); flex-shrink: 0; }
+.mj-login-provider-icon svg { width: 22px; height: 22px; }
+.mj-login-empty { padding: 18px; border: 1px solid var(--mj-line); border-radius: var(--mj-radius); background: var(--mj-surface); margin-bottom: 22px; }
+.mj-login-empty strong { display: block; color: var(--mj-text); margin-bottom: 4px; }
+.mj-login-empty p { margin: 0; color: var(--mj-muted); font-size: 14px; }
+.mj-login-note { margin: 0; color: var(--mj-muted); font-size: 13px; }
+body.mj-modal-open { overflow: hidden; }
+@media (max-width: 560px) {
+    .mj-login-dialog { padding: 32px 22px 24px; }
+    .mj-login-title { font-size: 24px; }
+}

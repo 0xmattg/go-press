@@ -11,6 +11,7 @@ import (
 	_ "github.com/0xmattg/go-press/themes/atelier-slate"
 	_ "github.com/0xmattg/go-press/themes/axis-form"
 	_ "github.com/0xmattg/go-press/themes/civic-estate"
+	_ "github.com/0xmattg/go-press/themes/communa"
 	_ "github.com/0xmattg/go-press/themes/financial-news"
 	_ "github.com/0xmattg/go-press/themes/florafi"
 	_ "github.com/0xmattg/go-press/themes/go-press-landing"

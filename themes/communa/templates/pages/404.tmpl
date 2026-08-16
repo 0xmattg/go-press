@@ -1,0 +1,13 @@
+{{define "content"}}
+<section class="cmn-notfound">
+    <div class="cmn-container">
+        <span class="cmn-notfound-code">404</span>
+        <h1>{{T .Ctx "notfound_title"}}</h1>
+        <p>{{T .Ctx "notfound_text"}}</p>
+        <div class="cmn-notfound-actions">
+            <a class="cmn-btn cmn-btn-green cmn-btn-lg" href="{{langPrefixURL .Ctx "/"}}">{{T .Ctx "notfound_home"}}</a>
+            <a class="cmn-btn cmn-btn-outline cmn-btn-lg" href="{{langPrefixURL .Ctx (archiveURL "discussion")}}">{{T .Ctx "nav_discussions"}}</a>
+        </div>
+    </div>
+</section>
+{{end}}

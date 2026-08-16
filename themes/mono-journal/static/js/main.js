@@ -71,6 +71,40 @@
         });
     });
 
+    const loginModal = document.querySelector('[data-login-modal]');
+    const loginDialog = loginModal?.querySelector('[role="dialog"]');
+    let loginTrigger = null;
+    const closeLogin = () => {
+        if (!loginModal || loginModal.hidden) return;
+        loginModal.hidden = true;
+        body.classList.remove('mj-modal-open');
+        loginTrigger?.focus();
+    };
+    const openLogin = (trigger) => {
+        if (!loginModal || !loginDialog) return;
+        closeNav();
+        loginTrigger = trigger;
+        loginModal.hidden = false;
+        body.classList.add('mj-modal-open');
+        loginDialog.focus();
+    };
+    document.querySelectorAll('[data-login-open]').forEach((opener) => opener.addEventListener('click', (event) => {
+        if (!loginModal) return;
+        event.preventDefault();
+        openLogin(opener);
+    }));
+    loginModal?.querySelectorAll('[data-login-close]').forEach((closer) => closer.addEventListener('click', closeLogin));
+    loginModal?.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { event.preventDefault(); closeLogin(); return; }
+        if (event.key !== 'Tab' || !loginDialog) return;
+        const focusable = [...loginDialog.querySelectorAll('a[href], button:not([disabled])')];
+        if (!focusable.length) { event.preventDefault(); loginDialog.focus(); return; }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && (document.activeElement === first || document.activeElement === loginDialog)) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    });
+
     const updateProgress = () => {
         if (!progress) return;
         const max = document.documentElement.scrollHeight - window.innerHeight;
