@@ -1,0 +1,45 @@
+{{define "cmn-comments"}}
+<section class="cmn-comments" id="comments">
+    <div class="cmn-comments-head">
+        <h2>{{T .Ctx "comments_title"}}</h2>
+        <span class="cmn-comments-count">{{.CommentCount}}</span>
+    </div>
+    {{if eq .CommentNotice "pending"}}<div class="cmn-alert cmn-alert-info" role="status">{{T .Ctx "comments_pending_notice"}}</div>{{end}}
+    {{if .CommentError}}<div class="cmn-alert cmn-alert-error" role="alert">{{if eq .CommentError "body"}}{{T .Ctx "comments_error_body"}}{{else if eq .CommentError "closed"}}{{T .Ctx "comments_error_closed"}}{{else if eq .CommentError "reply"}}{{T .Ctx "comments_error_reply"}}{{else if eq .CommentError "rate"}}{{T .Ctx "comments_error_rate"}}{{else}}{{T .Ctx "comments_error_invalid"}}{{end}}</div>{{end}}
+
+    {{if .Comments}}
+    <div class="cmn-comment-list">
+        {{range .Comments}}
+        <article class="cmn-comment{{if eq .Status "pending"}} is-pending{{end}}" id="comment-{{.ID}}">
+            <div class="cmn-avatar cmn-avatar-sm">{{if .Author.AvatarURL}}<img src="{{.Author.AvatarURL}}" alt="">{{else}}<span class="cmn-avatar-fallback">{{initials .Author.DisplayName}}</span>{{end}}</div>
+            <div class="cmn-comment-body">
+                <header class="cmn-comment-head"><strong>{{.Author.DisplayName}}</strong><time>{{formatDateTime .CreatedAt}}</time>{{if eq .Status "pending"}}<span class="cmn-comment-flag">{{T $.Ctx "comments_pending"}}</span>{{end}}</header>
+                <p class="cmn-comment-text">{{.Body}}</p>
+                {{if and $.CanComment (eq .Status "approved")}}<button type="button" class="cmn-comment-reply-btn" data-comment-reply="reply-{{.ID}}">{{T $.Ctx "comments_reply"}}</button>{{end}}
+                {{if $.CanComment}}
+                <form class="cmn-comment-form cmn-reply-form" id="reply-{{.ID}}" method="post" action="{{langPrefixURL $.Ctx "/comments"}}" hidden>
+                    <input type="hidden" name="content_id" value="{{$.Item.ID}}"><input type="hidden" name="parent_id" value="{{.ID}}"><input type="hidden" name="return_to" value="{{langPrefixURL $.Ctx $.Permalink}}">
+                    <label for="reply-body-{{.ID}}">{{T $.Ctx "comments_reply_to"}} {{.Author.DisplayName}}</label>
+                    <textarea id="reply-body-{{.ID}}" name="body" rows="3" minlength="2" maxlength="4000" required></textarea>
+                    <div class="cmn-comment-form-actions"><button type="submit" class="cmn-btn cmn-btn-green cmn-btn-sm">{{T $.Ctx "comments_submit_reply"}}</button><button type="button" class="cmn-btn cmn-btn-ghost cmn-btn-sm" data-comment-cancel="reply-{{.ID}}">{{T $.Ctx "comments_cancel"}}</button></div>
+                </form>
+                {{end}}
+                {{if .Replies}}<div class="cmn-comment-replies">{{range .Replies}}<article class="cmn-comment{{if eq .Status "pending"}} is-pending{{end}}" id="comment-{{.ID}}"><div class="cmn-avatar cmn-avatar-sm">{{if .Author.AvatarURL}}<img src="{{.Author.AvatarURL}}" alt="">{{else}}<span class="cmn-avatar-fallback">{{initials .Author.DisplayName}}</span>{{end}}</div><div class="cmn-comment-body"><header class="cmn-comment-head"><strong>{{.Author.DisplayName}}</strong><time>{{formatDateTime .CreatedAt}}</time>{{if eq .Status "pending"}}<span class="cmn-comment-flag">{{T $.Ctx "comments_pending"}}</span>{{end}}</header><p class="cmn-comment-text">{{.Body}}</p></div></article>{{end}}</div>{{end}}
+            </div>
+        </article>
+        {{end}}
+    </div>
+    {{else}}<p class="cmn-comments-empty">{{T .Ctx "comments_empty"}}</p>{{end}}
+
+    {{if .CommentsOpen}}
+        {{if .CanComment}}
+        <form class="cmn-comment-form cmn-comment-main-form" method="post" action="{{langPrefixURL .Ctx "/comments"}}">
+            <input type="hidden" name="content_id" value="{{.Item.ID}}"><input type="hidden" name="return_to" value="{{langPrefixURL .Ctx .Permalink}}">
+            <label for="comment-body">{{T .Ctx "comments_leave"}}</label>
+            <textarea id="comment-body" name="body" rows="5" minlength="2" maxlength="4000" placeholder="{{T .Ctx "comments_placeholder"}}" required></textarea>
+            <div class="cmn-comment-form-actions"><small>{{T .Ctx "comments_moderated"}}</small><button type="submit" class="cmn-btn cmn-btn-green">{{T .Ctx "comments_submit"}}</button></div>
+        </form>
+        {{else if not (isLoggedIn .Ctx)}}<div class="cmn-comment-signin"><p>{{T .Ctx "comments_signin_text"}}</p><a class="cmn-btn cmn-btn-blue" href="{{loginURL .Ctx}}">{{T .Ctx "comments_signin"}}</a></div>{{end}}
+    {{else}}<p class="cmn-comments-closed">{{T .Ctx "comments_closed"}}</p>{{end}}
+</section>
+{{end}}

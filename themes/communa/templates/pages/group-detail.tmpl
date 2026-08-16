@@ -1,0 +1,80 @@
+{{define "content"}}
+{{$g := .Item}}
+<article class="cmn-group-detail">
+    <div class="cmn-group-hero">
+        {{if $g.ImageURL}}<div class="cmn-group-hero-img">{{responsiveImagePriority $g.ImageURL $g.Title "" "100vw"}}</div>{{end}}
+        <div class="cmn-group-hero-overlay"></div>
+        <div class="cmn-container cmn-group-hero-inner">
+            <a class="cmn-back-link cmn-back-link-light" href="{{langPrefixURL .Ctx .ArchiveURL}}">&larr; {{T .Ctx "btn_back_groups"}}</a>
+            <div class="cmn-group-hero-meta">
+                {{if $g.Category.Name}}<a class="cmn-group-hero-cat" href="{{langPrefixURL .Ctx (taxonomyURL "category" $g.Category.Slug)}}">{{$g.Category.Name}}</a>{{end}}
+                {{if $g.Privacy}}<span class="cmn-badge cmn-badge-{{lower $g.Privacy}}">{{$g.Privacy}}</span>{{end}}
+            </div>
+            <h1 class="cmn-group-hero-title">{{$g.Title}}</h1>
+            {{if $g.Excerpt}}<p class="cmn-group-hero-sub">{{$g.Excerpt}}</p>{{end}}
+            <div class="cmn-group-hero-actions">
+                <a class="cmn-btn cmn-btn-green cmn-btn-lg" href="{{loginURL .Ctx}}">{{T .Ctx "btn_join_group"}}</a>
+                {{if $g.MembersCount}}<span class="cmn-group-hero-count">{{$g.MembersCount}} {{T .Ctx "label_members"}}</span>{{end}}
+            </div>
+        </div>
+    </div>
+
+    <div class="cmn-container">
+        <div class="cmn-group-layout">
+            <div class="cmn-group-main cmn-richtext">
+                <h2 class="cmn-block-title">{{T .Ctx "section_about_group"}}</h2>
+                {{safeHTML $g.Content}}
+                {{if .Tags}}
+                <div class="cmn-tag-row cmn-tag-row-lg">
+                    {{range .Tags}}<a class="cmn-tag" href="{{langPrefixURL $.Ctx (taxonomyURL "tag" .Slug)}}">#{{.Name}}</a>{{end}}
+                </div>
+                {{end}}
+            </div>
+            <aside class="cmn-group-side">
+                <div class="cmn-side-card">
+                    <h3>{{T .Ctx "section_group_facts"}}</h3>
+                    <ul class="cmn-facts">
+                        {{if $g.MembersCount}}<li><span>{{T .Ctx "label_members"}}</span><strong>{{$g.MembersCount}}</strong></li>{{end}}
+                        {{if $g.Privacy}}<li><span>{{T .Ctx "label_privacy"}}</span><strong>{{$g.Privacy}}</strong></li>{{end}}
+                        {{if $g.Lead}}<li><span>{{T .Ctx "label_organizer"}}</span><strong>{{$g.Lead}}</strong></li>{{end}}
+                        {{if $g.Activity}}<li><span>{{T .Ctx "label_last_active"}}</span><strong>{{$g.Activity}}</strong></li>{{end}}
+                    </ul>
+                </div>
+                <div class="cmn-side-card cmn-side-cta">
+                    <h3>{{T .Ctx "group_join_title"}}</h3>
+                    <p>{{T .Ctx "group_join_text"}}</p>
+                    <a class="cmn-btn cmn-btn-green cmn-btn-block" href="{{loginURL .Ctx}}">{{T .Ctx "btn_join_group"}}</a>
+                </div>
+            </aside>
+        </div>
+    </div>
+</article>
+
+{{if .Related}}
+<section class="cmn-section cmn-section-alt">
+    <div class="cmn-container">
+        <div class="cmn-section-head cmn-center">
+            <h2 class="cmn-section-title">{{T .Ctx "section_related_groups"}}</h2>
+        </div>
+        <div class="cmn-group-grid">
+            {{range .Related}}
+            <article class="cmn-group-card">
+                <a class="cmn-group-cover" href="{{langPrefixURL $.Ctx .URL}}">
+                    {{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="cmn-group-cover-fallback">{{initials .Title}}</span>{{end}}
+                </a>
+                <div class="cmn-group-card-body">
+                    {{if .Category.Name}}<span class="cmn-group-cat">{{.Category.Name}}</span>{{end}}
+                    <h3 class="cmn-group-card-title"><a href="{{langPrefixURL $.Ctx .URL}}">{{.Title}}</a></h3>
+                    {{if .Excerpt}}<p class="cmn-group-card-desc">{{.Excerpt}}</p>{{end}}
+                    <div class="cmn-group-card-foot">
+                        <span class="cmn-group-card-count">{{if .MembersCount}}{{.MembersCount}} {{T $.Ctx "label_members"}}{{end}}</span>
+                        <a class="cmn-group-card-link" href="{{langPrefixURL $.Ctx .URL}}">{{T $.Ctx "btn_view_group"}} <span aria-hidden="true">→</span></a>
+                    </div>
+                </div>
+            </article>
+            {{end}}
+        </div>
+    </div>
+</section>
+{{end}}
+{{end}}

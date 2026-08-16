@@ -27,7 +27,7 @@ func TestThemeConfigAndInterfaces(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse theme.toml: %v", err)
 	}
-	if cfg.Theme.Name != "Mono Journal" || cfg.Theme.Version != "1.1.0" {
+	if cfg.Theme.Name != "Mono Journal" || cfg.Theme.Version != "1.1.1" {
 		t.Fatalf("unexpected metadata: %+v", cfg.Theme)
 	}
 	if cfg.Requires.Core == "" || len(cfg.Requires.Plugins) != 1 ||
@@ -73,6 +73,32 @@ func TestHeaderExposesStandardNavigationHook(t *testing.T) {
 	}
 	if !strings.Contains(string(data), `renderHook "header.nav.after"`) {
 		t.Fatal("header must expose the standard header.nav.after extension point")
+	}
+}
+
+func TestLoginModalContract(t *testing.T) {
+	modal, err := os.ReadFile(filepath.Join("templates", "partials", "login-modal.tmpl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"isLoggedIn .Ctx", "loginProviders", "loginProviderURL .BeginURL $.Ctx", `role="dialog"`, `aria-modal="true"`, "data-login-close"} {
+		if !strings.Contains(string(modal), want) {
+			t.Errorf("login modal missing %q", want)
+		}
+	}
+	header, err := os.ReadFile(filepath.Join("templates", "partials", "header.tmpl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(header), "data-login-open") {
+		t.Error("header must open the login modal via data-login-open")
+	}
+	base, err := os.ReadFile(filepath.Join("templates", "layouts", "base.tmpl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(base), `{{template "loginModal" .}}`) {
+		t.Error("base layout must include the login modal partial")
 	}
 }
 

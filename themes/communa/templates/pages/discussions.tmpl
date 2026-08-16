@@ -1,0 +1,55 @@
+{{define "content"}}
+<section class="cmn-page-banner">
+    <div class="cmn-container">
+        <nav class="cmn-breadcrumb" aria-label="Breadcrumb">
+            <a href="{{langPrefixURL .Ctx "/"}}">{{T .Ctx "nav_home"}}</a><span aria-hidden="true">/</span><span>{{.Title}}</span>
+        </nav>
+        <h1>{{.Title}}</h1>
+        <p class="cmn-page-banner-sub">{{T .Ctx "archive_discussions_sub"}} · {{.Pagination.Total}} {{T .Ctx "nav_discussions"}}</p>
+    </div>
+</section>
+
+<section class="cmn-section">
+    <div class="cmn-container">
+        <div class="cmn-archive-toolbar">
+            <form class="cmn-inline-search" action="{{langPrefixURL .Ctx (archiveURL "discussion")}}" method="get" role="search">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                <input type="search" name="q" value="{{.SearchQuery}}" maxlength="80" placeholder="{{T .Ctx "form_ph_search_discussions"}}" aria-label="{{T .Ctx "form_ph_search_discussions"}}">
+            </form>
+            {{if .Categories}}
+            <div class="cmn-filter-chips">
+                <a href="{{langPrefixURL .Ctx (archiveURL "discussion")}}" class="cmn-chip{{if not .ActiveCat}} is-active{{end}}">{{T .Ctx "filter_all"}}</a>
+                {{range .Categories}}
+                <a href="{{langPrefixURL $.Ctx (printf "%s?category=%s" (archiveURL "discussion") .Slug)}}" class="cmn-chip{{if eq $.ActiveCat .Slug}} is-active{{end}}">{{.Name}}</a>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+
+        {{if .Items}}
+        <ul class="cmn-forum-list">
+            {{range .Items}}
+            {{$name := .AuthorName}}{{if not $name}}{{$name = (T $.Ctx "activity_a_member")}}{{end}}
+            <li class="cmn-forum-row">
+                <a class="cmn-avatar" href="{{langPrefixURL $.Ctx .URL}}">
+                    {{if .AuthorAvatar}}<img src="{{.AuthorAvatar}}" alt="{{$name}}" loading="lazy">{{else}}<span class="cmn-avatar-fallback">{{initials $name}}</span>{{end}}
+                </a>
+                <div class="cmn-forum-main">
+                    {{if .Category.Name}}<a class="cmn-forum-cat" href="{{langPrefixURL $.Ctx (taxonomyURL "category" .Category.Slug)}}">{{.Category.Name}}</a>{{end}}
+                    <h3 class="cmn-forum-title"><a href="{{langPrefixURL $.Ctx .URL}}">{{.Title}}</a></h3>
+                    <p class="cmn-forum-meta">{{T $.Ctx "discussion_started_by"}} <strong>{{$name}}</strong>{{if .GroupName}} · {{T $.Ctx "activity_in_group"}} <em>{{.GroupName}}</em>{{end}} · {{formatDate .PublishedAt}}</p>
+                    {{if .Excerpt}}<p class="cmn-forum-excerpt">{{.Excerpt}}</p>{{end}}
+                </div>
+                <div class="cmn-forum-stats">
+                    <span class="cmn-forum-replies"><strong>{{if .RepliesCount}}{{.RepliesCount}}{{else}}0{{end}}</strong><small>{{T $.Ctx "label_replies"}}</small></span>
+                </div>
+            </li>
+            {{end}}
+        </ul>
+        {{template "cmn-pagination" .}}
+        {{else}}
+        <div class="cmn-empty"><p>{{T .Ctx "empty_no_discussions"}}</p></div>
+        {{end}}
+    </div>
+</section>
+{{end}}

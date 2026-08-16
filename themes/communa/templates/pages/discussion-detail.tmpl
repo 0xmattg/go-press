@@ -1,0 +1,54 @@
+{{define "content"}}
+{{$d := .Item}}
+{{$author := $d.AuthorName}}{{if not $author}}{{$author = (T .Ctx "activity_a_member")}}{{end}}
+<article class="cmn-thread">
+    <div class="cmn-container cmn-thread-shell">
+        <a class="cmn-back-link" href="{{langPrefixURL .Ctx .ArchiveURL}}">&larr; {{T .Ctx "btn_back_discussions"}}</a>
+        <header class="cmn-thread-head">
+            {{if $d.Category.Name}}<a class="cmn-thread-cat" href="{{langPrefixURL .Ctx (taxonomyURL "category" $d.Category.Slug)}}">{{$d.Category.Name}}</a>{{end}}
+            <h1 class="cmn-thread-title">{{$d.Title}}</h1>
+            <div class="cmn-thread-byline">
+                <span class="cmn-avatar cmn-avatar-sm">{{if $d.AuthorAvatar}}<img src="{{$d.AuthorAvatar}}" alt="{{$author}}">{{else}}<span class="cmn-avatar-fallback">{{initials $author}}</span>{{end}}</span>
+                <div>
+                    <p class="cmn-thread-byline-main">{{T .Ctx "discussion_started_by"}} <strong>{{$author}}</strong></p>
+                    <p class="cmn-thread-byline-sub">{{if $d.GroupName}}{{T .Ctx "activity_in_group"}} <em>{{$d.GroupName}}</em> · {{end}}<time>{{formatDateTime $d.PublishedAt}}</time></p>
+                </div>
+            </div>
+        </header>
+
+        <div class="cmn-thread-body cmn-richtext">
+            {{safeHTML $d.Content}}
+        </div>
+
+        {{if .Tags}}
+        <div class="cmn-tag-row cmn-tag-row-lg">
+            {{range .Tags}}<a class="cmn-tag" href="{{langPrefixURL $.Ctx (taxonomyURL "tag" .Slug)}}">#{{.Name}}</a>{{end}}
+        </div>
+        {{end}}
+
+        {{template "cmn-comments" .}}
+    </div>
+</article>
+
+{{if .Related}}
+<section class="cmn-section cmn-section-alt">
+    <div class="cmn-container">
+        <div class="cmn-section-head cmn-center">
+            <h2 class="cmn-section-title">{{T .Ctx "section_related_discussions"}}</h2>
+        </div>
+        <ul class="cmn-forum-list cmn-forum-list-plain">
+            {{range .Related}}
+            {{$rname := .AuthorName}}{{if not $rname}}{{$rname = (T $.Ctx "activity_a_member")}}{{end}}
+            <li class="cmn-forum-row">
+                <a class="cmn-avatar" href="{{langPrefixURL $.Ctx .URL}}">{{if .AuthorAvatar}}<img src="{{.AuthorAvatar}}" alt="{{$rname}}" loading="lazy">{{else}}<span class="cmn-avatar-fallback">{{initials $rname}}</span>{{end}}</a>
+                <div class="cmn-forum-main">
+                    <h3 class="cmn-forum-title"><a href="{{langPrefixURL $.Ctx .URL}}">{{.Title}}</a></h3>
+                    <p class="cmn-forum-meta">{{T $.Ctx "discussion_started_by"}} <strong>{{$rname}}</strong> · {{formatDate .PublishedAt}}</p>
+                </div>
+            </li>
+            {{end}}
+        </ul>
+    </div>
+</section>
+{{end}}
+{{end}}

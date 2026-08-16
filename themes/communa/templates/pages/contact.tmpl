@@ -1,0 +1,78 @@
+{{define "content"}}
+{{$s := .Settings}}
+<section class="cmn-page-banner">
+    <div class="cmn-container">
+        <nav class="cmn-breadcrumb" aria-label="Breadcrumb">
+            <a href="{{langPrefixURL .Ctx "/"}}">{{T .Ctx "nav_home"}}</a><span aria-hidden="true">/</span><span>{{T .Ctx "nav_contact"}}</span>
+        </nav>
+        <h1>{{settingOr $s "contact_title" "Get in touch"}}</h1>
+        <p class="cmn-page-banner-sub">{{settingOr $s "contact_subtitle" "Questions, feedback, or a partnership idea? The community team reads every message."}}</p>
+    </div>
+</section>
+
+<section class="cmn-section">
+    <div class="cmn-container cmn-contact-layout">
+        <div class="cmn-contact-info">
+            {{if .Settings.company_email}}
+            <div class="cmn-contact-card">
+                <span class="cmn-contact-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg></span>
+                <div><h3>{{T .Ctx "contact_card_email"}}</h3><a href="mailto:{{.Settings.company_email}}">{{.Settings.company_email}}</a></div>
+            </div>
+            {{end}}
+            {{if .Settings.company_phone}}
+            <div class="cmn-contact-card">
+                <span class="cmn-contact-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+                <div><h3>{{T .Ctx "contact_card_phone"}}</h3><span>{{.Settings.company_phone}}</span></div>
+            </div>
+            {{end}}
+            {{if .Settings.company_address}}
+            <div class="cmn-contact-card">
+                <span class="cmn-contact-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+                <div><h3>{{T .Ctx "contact_card_address"}}</h3><span>{{.Settings.company_address}}</span></div>
+            </div>
+            {{end}}
+            {{if .Settings.company_hours}}
+            <div class="cmn-contact-card">
+                <span class="cmn-contact-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>
+                <div><h3>{{T .Ctx "contact_card_hours"}}</h3><span>{{.Settings.company_hours}}</span></div>
+            </div>
+            {{end}}
+        </div>
+
+        <div class="cmn-contact-form-wrap">
+            {{if .Success}}
+            <div class="cmn-alert cmn-alert-success" role="status">
+                <strong>{{T .Ctx "contact_success_title"}}</strong>
+                <span>{{T .Ctx "contact_success_text"}}</span>
+            </div>
+            {{end}}
+            {{if .Error}}
+            <div class="cmn-alert cmn-alert-error" role="alert">
+                {{if eq .Error "missing"}}{{T .Ctx "contact_error_missing"}}{{else if eq .Error "email"}}{{T .Ctx "contact_error_email"}}{{else if eq .Error "rate"}}{{T .Ctx "contact_error_rate"}}{{else}}{{T .Ctx "contact_error_failed"}}{{end}}
+            </div>
+            {{end}}
+            <form class="cmn-form cmn-contact-form" id="cmn-contact-form" method="post" action="{{langPrefixURL .Ctx "/contact"}}">
+                <div class="cmn-field-row">
+                    <div class="cmn-field">
+                        <label for="name">{{T .Ctx "form_label_name"}}</label>
+                        <input type="text" id="name" name="name" maxlength="120" placeholder="{{T .Ctx "form_ph_name"}}" required>
+                    </div>
+                    <div class="cmn-field">
+                        <label for="email">{{T .Ctx "form_label_email"}}</label>
+                        <input type="email" id="email" name="email" maxlength="160" placeholder="{{T .Ctx "form_ph_email"}}" required>
+                    </div>
+                </div>
+                <div class="cmn-field">
+                    <label for="phone">{{T .Ctx "form_label_phone"}}</label>
+                    <input type="text" id="phone" name="phone" maxlength="60" placeholder="{{T .Ctx "form_ph_phone"}}">
+                </div>
+                <div class="cmn-field">
+                    <label for="message">{{T .Ctx "form_label_message"}}</label>
+                    <textarea id="message" name="message" rows="6" maxlength="4000" placeholder="{{T .Ctx "form_ph_message"}}" required></textarea>
+                </div>
+                <button type="submit" class="cmn-btn cmn-btn-green cmn-btn-lg">{{T .Ctx "btn_send_message"}}</button>
+            </form>
+        </div>
+    </div>
+</section>
+{{end}}

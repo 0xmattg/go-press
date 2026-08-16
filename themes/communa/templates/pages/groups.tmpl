@@ -1,0 +1,55 @@
+{{define "content"}}
+<section class="cmn-page-banner">
+    <div class="cmn-container">
+        <nav class="cmn-breadcrumb" aria-label="Breadcrumb">
+            <a href="{{langPrefixURL .Ctx "/"}}">{{T .Ctx "nav_home"}}</a><span aria-hidden="true">/</span><span>{{.Title}}</span>
+        </nav>
+        <h1>{{.Title}}</h1>
+        <p class="cmn-page-banner-sub">{{T .Ctx "archive_groups_sub"}} · {{.Pagination.Total}} {{T .Ctx "nav_groups"}}</p>
+    </div>
+</section>
+
+<section class="cmn-section">
+    <div class="cmn-container">
+        <div class="cmn-archive-toolbar">
+            <form class="cmn-inline-search" action="{{langPrefixURL .Ctx (archiveURL "group")}}" method="get" role="search">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                <input type="search" name="q" value="{{.SearchQuery}}" maxlength="80" placeholder="{{T .Ctx "form_ph_search_groups"}}" aria-label="{{T .Ctx "form_ph_search_groups"}}">
+            </form>
+            {{if .Categories}}
+            <div class="cmn-filter-chips">
+                <a href="{{langPrefixURL .Ctx (archiveURL "group")}}" class="cmn-chip{{if not .ActiveCat}} is-active{{end}}">{{T .Ctx "filter_all"}}</a>
+                {{range .Categories}}
+                <a href="{{langPrefixURL $.Ctx (printf "%s?category=%s" (archiveURL "group") .Slug)}}" class="cmn-chip{{if eq $.ActiveCat .Slug}} is-active{{end}}">{{.Name}}</a>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+
+        {{if .Items}}
+        <div class="cmn-group-grid">
+            {{range .Items}}
+            <article class="cmn-group-card">
+                <a class="cmn-group-cover" href="{{langPrefixURL $.Ctx .URL}}">
+                    {{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="cmn-group-cover-fallback">{{initials .Title}}</span>{{end}}
+                    {{if .Privacy}}<span class="cmn-badge cmn-badge-{{lower .Privacy}}">{{.Privacy}}</span>{{end}}
+                </a>
+                <div class="cmn-group-card-body">
+                    {{if .Category.Name}}<a class="cmn-group-cat" href="{{langPrefixURL $.Ctx (taxonomyURL "category" .Category.Slug)}}">{{.Category.Name}}</a>{{end}}
+                    <h3 class="cmn-group-card-title"><a href="{{langPrefixURL $.Ctx .URL}}">{{.Title}}</a></h3>
+                    {{if .Excerpt}}<p class="cmn-group-card-desc">{{.Excerpt}}</p>{{end}}
+                    <div class="cmn-group-card-foot">
+                        <span class="cmn-group-card-count">{{if .MembersCount}}{{.MembersCount}} {{T $.Ctx "label_members"}}{{end}}</span>
+                        <a class="cmn-group-card-link" href="{{langPrefixURL $.Ctx .URL}}">{{T $.Ctx "btn_view_group"}} <span aria-hidden="true">→</span></a>
+                    </div>
+                </div>
+            </article>
+            {{end}}
+        </div>
+        {{template "cmn-pagination" .}}
+        {{else}}
+        <div class="cmn-empty"><p>{{T .Ctx "empty_no_groups"}}</p></div>
+        {{end}}
+    </div>
+</section>
+{{end}}

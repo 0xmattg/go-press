@@ -1,0 +1,152 @@
+[theme]
+name = "Communa"
+version = "1.0.12"
+description = "A friendly community & social-network theme for GoPress, with member directories, groups, and discussion forums."
+author = "GoPress Labs"
+
+# Declarative dependencies (theme -> plugin). Resolved and enforced by core on
+# boot and on theme switch. Communa is intentionally standalone: it only asks for
+# a compatible core and works with the generic CMS primitives. Optional plugins
+# such as multilang or an identity provider enhance it but are never required.
+[requires]
+core = ">=0.6.0"
+
+# ------------------------------------------------------------------
+# Content types
+#
+# The BuddyPress-style community surface is modeled with three CMS content
+# types plus the built-in "post" (the activity / news feed). Everything is stored
+# in the shared contents/content_meta/terms tables — no bespoke tables.
+# ------------------------------------------------------------------
+
+# Members — the community member directory (curated profiles).
+[[content_types]]
+name = "member"
+label = "Member"
+label_plural = "Members"
+archive_title_key = "page_title_members"
+supports = ["title", "content", "excerpt", "thumbnail", "sort_order"]
+taxonomies = ["tag"]
+has_archive = true
+rewrite_slug = "members"
+menu_icon = "users"
+menu_order = 1
+
+[[content_types.meta_fields]]
+key = "role"
+label = "Role / Title"
+type = "string"
+
+[[content_types.meta_fields]]
+key = "location"
+label = "Location"
+type = "string"
+
+[[content_types.meta_fields]]
+key = "joined"
+label = "Joined"
+type = "string"
+
+[[content_types.meta_fields]]
+key = "website"
+label = "Website URL"
+type = "string"
+
+[[content_types.meta_fields]]
+key = "cover_image"
+label = "Cover Image URL"
+type = "string"
+
+[[content_types.meta_fields]]
+key = "posts_count"
+label = "Posts Count"
+type = "string"
+
+[[content_types.meta_fields]]
+key = "groups_count"
+label = "Groups Count"
+type = "string"
+
+# Groups — community groups / circles.
+[[content_types]]
+name = "group"
+label = "Group"
+label_plural = "Groups"
+archive_title_key = "page_title_groups"
+supports = ["title", "content", "excerpt", "thumbnail", "sort_order"]
+taxonomies = ["category", "tag"]
+has_archive = true
+rewrite_slug = "groups"
+menu_icon = "collection"
+menu_order = 2
+
+[[content_types.meta_fields]]
+key = "members_count"
+label = "Members Count"
+type = "string"
+
+[[content_types.meta_fields]]
+key = "privacy"
+label = "Privacy (public / private)"
+type = "string"
+
+[[content_types.meta_fields]]
+key = "activity"
+label = "Last Activity Text"
+type = "string"
+
+[[content_types.meta_fields]]
+key = "lead"
+label = "Group Organizer"
+type = "string"
+
+# Discussions — the forum topics / threads.
+[[content_types]]
+name = "discussion"
+label = "Discussion"
+label_plural = "Discussions"
+archive_title_key = "page_title_discussions"
+supports = ["title", "content", "excerpt", "thumbnail", "comments"]
+taxonomies = ["category", "tag"]
+has_archive = true
+rewrite_slug = "discussions"
+menu_icon = "edit"
+menu_order = 3
+
+[[content_types.meta_fields]]
+key = "author_name"
+label = "Started By"
+type = "string"
+
+[[content_types.meta_fields]]
+key = "author_avatar"
+label = "Author Avatar URL"
+type = "string"
+
+[[content_types.meta_fields]]
+key = "group_name"
+label = "Group"
+type = "string"
+
+[[content_types.meta_fields]]
+key = "replies_count"
+label = "Replies Count"
+type = "string"
+
+# Menu locations supported by the theme.
+[[menu_locations]]
+name = "header"
+label = "Header Navigation"
+
+[[menu_locations]]
+name = "footer"
+label = "Footer Navigation"
+
+# Selectable page templates for the standalone Pages module.
+[[page_templates]]
+name = "Standard Page"
+template = "page"
+
+[[page_templates]]
+name = "Full-width Page"
+template = "page-full-width"

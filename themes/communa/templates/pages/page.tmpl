@@ -1,0 +1,18 @@
+{{define "content"}}
+{{$p := .Item}}
+<section class="cmn-page-banner">
+    <div class="cmn-container">
+        <nav class="cmn-breadcrumb" aria-label="Breadcrumb">
+            <a href="{{langPrefixURL .Ctx "/"}}">{{T .Ctx "nav_home"}}</a><span aria-hidden="true">/</span><span>{{$p.Title}}</span>
+        </nav>
+        <h1>{{$p.Title}}</h1>
+        {{if $p.Excerpt}}<p class="cmn-page-banner-sub">{{$p.Excerpt}}</p>{{end}}
+    </div>
+</section>
+<section class="cmn-section">
+    <div class="cmn-container cmn-page-narrow">
+        {{if $p.ImageURL}}<figure class="cmn-page-hero">{{responsiveImage $p.ImageURL $p.Title "" "(max-width: 900px) 100vw, 820px" "lazy"}}</figure>{{end}}
+        <div class="cmn-richtext">{{safeHTML $p.Content}}</div>
+    </div>
+</section>
+{{end}}

@@ -1,0 +1,13 @@
+{{define "cmn-pagination"}}
+{{with .Pagination}}
+{{if gt .TotalPages 1}}
+<nav class="cmn-pagination" aria-label="Pagination">
+    {{if gt .Page 1}}<a class="cmn-page-link cmn-page-prev" href="{{archivePageURL $.Ctx (add .Page -1)}}" rel="prev" aria-label="Previous page">&larr;</a>{{end}}
+    {{range archivePageWindow .Page .TotalPages}}
+    <a href="{{archivePageURL $.Ctx .}}" class="cmn-page-link{{if eq $.Pagination.Page .}} is-active{{end}}"{{if eq $.Pagination.Page .}} aria-current="page"{{end}}>{{.}}</a>
+    {{end}}
+    {{if lt .Page .TotalPages}}<a class="cmn-page-link cmn-page-next" href="{{archivePageURL $.Ctx (add .Page 1)}}" rel="next" aria-label="Next page">&rarr;</a>{{end}}
+</nav>
+{{end}}
+{{end}}
+{{end}}

@@ -1,0 +1,62 @@
+{{define "content"}}
+{{$p := .Item}}
+{{$author := $p.AuthorName}}{{if not $author}}{{$author = (T .Ctx "activity_a_member")}}{{end}}
+<article class="cmn-article">
+    <div class="cmn-container cmn-article-shell">
+        <a class="cmn-back-link" href="{{langPrefixURL .Ctx .ArchiveURL}}">&larr; {{T .Ctx "btn_back_blog"}}</a>
+        <header class="cmn-article-head">
+            {{if $p.Category.Name}}<a class="cmn-article-cat" href="{{langPrefixURL .Ctx (taxonomyURL "category" $p.Category.Slug)}}">{{$p.Category.Name}}</a>{{end}}
+            <h1 class="cmn-article-title">{{$p.Title}}</h1>
+            {{if $p.Excerpt}}<p class="cmn-article-deck">{{$p.Excerpt}}</p>{{end}}
+            <div class="cmn-article-byline">
+                <span class="cmn-avatar cmn-avatar-sm">{{if $p.AuthorAvatar}}<img src="{{$p.AuthorAvatar}}" alt="{{$author}}">{{else}}<span class="cmn-avatar-fallback">{{initials $author}}</span>{{end}}</span>
+                <span>{{T .Ctx "label_by"}} <strong>{{$author}}</strong> · <time>{{formatDateTime $p.PublishedAt}}</time></span>
+            </div>
+        </header>
+    </div>
+
+    {{if $p.ImageURL}}
+    <div class="cmn-container">
+        <figure class="cmn-article-hero">{{responsiveImagePriority $p.ImageURL $p.Title "" "(max-width: 1100px) 100vw, 1040px"}}</figure>
+    </div>
+    {{end}}
+
+    <div class="cmn-container cmn-article-shell">
+        <div class="cmn-article-body cmn-richtext">
+            {{safeHTML $p.Content}}
+        </div>
+        {{if .Tags}}
+        <div class="cmn-tag-row cmn-tag-row-lg">
+            {{range .Tags}}<a class="cmn-tag" href="{{langPrefixURL $.Ctx (taxonomyURL "tag" .Slug)}}">#{{.Name}}</a>{{end}}
+        </div>
+        {{end}}
+        {{template "cmn-comments" .}}
+    </div>
+</article>
+
+{{if .Related}}
+<section class="cmn-section cmn-section-alt">
+    <div class="cmn-container">
+        <div class="cmn-section-head cmn-center">
+            <h2 class="cmn-section-title">{{T .Ctx "section_related_articles"}}</h2>
+        </div>
+        <div class="cmn-post-grid">
+            {{range .Related}}
+            <article class="cmn-post-card">
+                <a class="cmn-post-card-image" href="{{langPrefixURL $.Ctx .URL}}">
+                    {{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="cmn-post-card-ph">{{initials .Title}}</span>{{end}}
+                </a>
+                <div class="cmn-post-card-body">
+                    <div class="cmn-post-card-meta">
+                        {{if .Category.Name}}<span class="cmn-post-cat">{{.Category.Name}}</span>{{end}}
+                        <time>{{formatDate .PublishedAt}}</time>
+                    </div>
+                    <h3 class="cmn-post-card-title"><a href="{{langPrefixURL $.Ctx .URL}}">{{.Title}}</a></h3>
+                </div>
+            </article>
+            {{end}}
+        </div>
+    </div>
+</section>
+{{end}}
+{{end}}

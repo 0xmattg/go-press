@@ -1,0 +1,25 @@
+{{define "cmn-login-modal"}}
+{{if not (isLoggedIn .Ctx)}}
+<div class="cmn-login-modal" id="cmn-login-modal" data-login-modal hidden>
+  <button class="cmn-login-backdrop" type="button" tabindex="-1" data-login-close aria-label="{{T .Ctx "auth_close"}}"></button>
+  <section class="cmn-login-dialog" role="dialog" aria-modal="true" aria-labelledby="cmn-login-title" aria-describedby="cmn-login-desc" tabindex="-1">
+    <button class="cmn-login-close" type="button" data-login-close aria-label="{{T .Ctx "auth_close"}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    <span class="cmn-login-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
+    <span class="cmn-login-eyebrow">{{T .Ctx "auth_modal_eyebrow"}}</span>
+    <h2 id="cmn-login-title">{{T .Ctx "auth_modal_title"}} {{settingOr .Settings "site_name" "Communa"}}</h2>
+    <p class="cmn-login-desc" id="cmn-login-desc">{{T .Ctx "auth_modal_desc"}}</p>
+    {{$providers := loginProviders}}
+    {{if $providers}}
+    <div class="cmn-login-providers">
+      {{range $providers}}
+      <a href="{{loginProviderURL .BeginURL $.Ctx}}">{{if .IconURL}}<img src="{{.IconURL}}" alt="" width="24" height="24">{{else}}<span class="cmn-provider-fallback" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.25"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg></span>{{end}}<span>{{T $.Ctx "auth_continue_with"}} {{.Label}}</span><span class="cmn-login-arrow" aria-hidden="true">→</span></a>
+      {{end}}
+    </div>
+    {{else}}
+    <div class="cmn-login-empty" role="status"><strong>{{T .Ctx "auth_no_methods_title"}}</strong><p>{{T .Ctx "auth_no_methods_text"}}</p></div>
+    {{end}}
+    <p class="cmn-login-note">{{T .Ctx "auth_modal_note"}}</p>
+  </section>
+</div>
+{{end}}
+{{end}}

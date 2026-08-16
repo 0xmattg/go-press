@@ -1,0 +1,36 @@
+{{define "content"}}
+<section class="cmn-page-banner">
+    <div class="cmn-container">
+        <nav class="cmn-breadcrumb" aria-label="Breadcrumb">
+            <a href="{{langPrefixURL .Ctx "/"}}">{{T .Ctx "nav_home"}}</a><span aria-hidden="true">/</span><span>{{if eq .TaxSlug "category"}}{{T .Ctx "archive_label_category"}}{{else}}{{T .Ctx "archive_label_tag"}}{{end}}</span>
+        </nav>
+        <span class="cmn-page-banner-eyebrow">{{if eq .TaxSlug "category"}}{{T .Ctx "archive_label_category"}}{{else}}{{T .Ctx "archive_label_tag"}}{{end}}</span>
+        <h1>{{.TermName}}</h1>
+        <p class="cmn-page-banner-sub">{{len .Items}} {{T .Ctx "archive_items_found"}}</p>
+    </div>
+</section>
+
+<section class="cmn-section">
+    <div class="cmn-container">
+        {{if .Items}}
+        <div class="cmn-content-grid">
+            {{range .Items}}
+            <article class="cmn-content-card">
+                <a class="cmn-content-card-image" href="{{.DetailURL}}">
+                    {{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="cmn-content-card-ph">{{initials .Title}}</span>{{end}}
+                    <span class="cmn-badge cmn-badge-type cmn-badge-{{.ContentType}}">{{.TypeLabel}}</span>
+                </a>
+                <div class="cmn-content-card-body">
+                    <h3 class="cmn-content-card-title"><a href="{{.DetailURL}}">{{.Title}}</a></h3>
+                    {{if .Excerpt}}<p class="cmn-content-card-excerpt">{{.Excerpt}}</p>{{end}}
+                    <a class="cmn-content-card-link" href="{{.DetailURL}}">{{T $.Ctx "btn_view_details"}} <span aria-hidden="true">→</span></a>
+                </div>
+            </article>
+            {{end}}
+        </div>
+        {{else}}
+        <div class="cmn-empty"><p>{{T .Ctx "empty_no_content"}}</p></div>
+        {{end}}
+    </div>
+</section>
+{{end}}

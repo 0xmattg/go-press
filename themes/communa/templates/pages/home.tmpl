@@ -1,0 +1,246 @@
+{{define "content"}}
+{{$s := .Settings}}
+
+<div class="cmn-container">
+    <div class="cmn-dashboard cmn-dashboard-home">
+
+        <!-- Left column -->
+        <aside class="cmn-col cmn-col-left">
+            <section class="cmn-widget cmn-search-widget">
+                <form class="cmn-sidebar-search" action="{{langPrefixURL .Ctx (archiveURL "member")}}" method="get" role="search">
+                    <input type="search" name="q" maxlength="80" placeholder="{{settingOr $s "home_hero_search_placeholder" "Search members…"}}" aria-label="{{settingOr $s "home_hero_search_placeholder" "Search members…"}}" autocomplete="off">
+                    <button type="submit" class="cmn-btn cmn-btn-blue cmn-btn-sm">{{T .Ctx "btn_search"}}</button>
+                </form>
+            </section>
+
+            <section class="cmn-widget">
+                <div class="cmn-widget-head">
+                    <h2 class="cmn-widget-title">{{settingOr $s "home_members_title" "Members"}}</h2>
+                    <a class="cmn-widget-link" href="{{langPrefixURL .Ctx (archiveURL "member")}}">{{T .Ctx "btn_see_all"}}</a>
+                </div>
+                <div class="cmn-widget-body">
+                    {{if .Members}}
+                    <ul class="cmn-member-list">
+                        {{range .Members}}
+                        <li class="cmn-member-row">
+                            <a class="cmn-avatar" href="{{langPrefixURL $.Ctx .URL}}">
+                                {{if .ImageURL}}<img src="{{.ImageURL}}" alt="{{.Title}}" loading="lazy">{{else}}<span class="cmn-avatar-fallback">{{initials .Title}}</span>{{end}}
+                            </a>
+                            <div class="cmn-member-row-body">
+                                <a class="cmn-member-name" href="{{langPrefixURL $.Ctx .URL}}">{{.Title}}</a>
+                                <span class="cmn-member-role">{{if .Role}}{{.Role}}{{else if .Location}}{{.Location}}{{else}}{{T $.Ctx "member_default_role"}}{{end}}</span>
+                            </div>
+                        </li>
+                        {{end}}
+                    </ul>
+                    {{else}}<p class="cmn-widget-empty">{{T .Ctx "empty_no_members"}}</p>{{end}}
+                </div>
+            </section>
+
+            <section class="cmn-widget">
+                <div class="cmn-widget-head">
+                    <h2 class="cmn-widget-title">{{settingOr $s "home_groups_title" "Groups"}}</h2>
+                    <a class="cmn-widget-link" href="{{langPrefixURL .Ctx (archiveURL "group")}}">{{T .Ctx "btn_see_all"}}</a>
+                </div>
+                <div class="cmn-widget-body">
+                    {{if .Groups}}
+                    <ul class="cmn-group-list">
+                        {{range .Groups}}
+                        <li class="cmn-group-row">
+                            <a class="cmn-group-thumb" href="{{langPrefixURL $.Ctx .URL}}">
+                                {{if .ImageURL}}<img src="{{.ImageURL}}" alt="{{.Title}}" loading="lazy">{{else}}<span class="cmn-group-thumb-fallback">{{initials .Title}}</span>{{end}}
+                            </a>
+                            <div class="cmn-group-row-body">
+                                <a class="cmn-group-name" href="{{langPrefixURL $.Ctx .URL}}">{{.Title}}</a>
+                                <span class="cmn-group-meta">{{if .MembersCount}}{{.MembersCount}} {{T $.Ctx "label_members"}}{{end}}{{if .Activity}} · {{.Activity}}{{end}}</span>
+                            </div>
+                        </li>
+                        {{end}}
+                    </ul>
+                    {{else}}<p class="cmn-widget-empty">{{T .Ctx "empty_no_groups"}}</p>{{end}}
+                </div>
+            </section>
+        </aside>
+
+        <!-- Main column -->
+        <main class="cmn-col cmn-col-main">
+            <!-- Featured carousel -->
+            <section class="cmn-carousel" data-carousel data-interval="6000" aria-roledescription="carousel" aria-label="{{settingOr $s "home_hero_title" "Welcome to the community"}}">
+                <div class="cmn-carousel-viewport">
+                    <div class="cmn-carousel-track" data-carousel-track>
+                        <div class="cmn-slide cmn-slide-welcome" role="group" aria-roledescription="slide">
+                            <div class="cmn-slide-welcome-text">
+                                <span class="cmn-slide-eyebrow">{{settingOr $s "home_hero_eyebrow" "The friendly community platform"}}</span>
+                                <h1 class="cmn-slide-welcome-title">{{settingOr $s "home_hero_title" "Welcome to the community"}}</h1>
+                                <p class="cmn-slide-welcome-sub">{{settingOr $s "home_hero_subtitle" "Meet people who share your interests, join groups, and jump into the conversation."}}</p>
+                                <div class="cmn-slide-welcome-actions">
+                                    <a class="cmn-btn cmn-btn-green cmn-btn-sm" href="{{settingOr $s "home_hero_btn1_link" (loginURL .Ctx)}}">{{settingOr $s "home_hero_btn1_text" "Join"}}</a>
+                                    <a class="cmn-btn cmn-btn-ghost-light cmn-btn-sm" href="{{langPrefixURL .Ctx (settingOr $s "home_hero_btn2_link" (archiveURL "group"))}}">{{settingOr $s "home_hero_btn2_text" "Browse groups"}}</a>
+                                </div>
+                            </div>
+                            <div class="cmn-slide-welcome-art" aria-hidden="true">
+                                <img src="/static/images/hero-community.svg" alt="" width="438" height="322" loading="eager">
+                            </div>
+                        </div>
+                        {{$hasCustomBanners := or (index $s "home_banner_1_image") (index $s "home_banner_1_title") (index $s "home_banner_2_image") (index $s "home_banner_2_title") (index $s "home_banner_3_image") (index $s "home_banner_3_title")}}
+                        {{if $hasCustomBanners}}
+                        {{range $i := seq 3}}
+                        {{$img := index $s (printf "home_banner_%d_image" $i)}}
+                        {{$title := index $s (printf "home_banner_%d_title" $i)}}
+                        {{if or $img $title}}
+                        {{$link := index $s (printf "home_banner_%d_link" $i)}}
+                        <a class="cmn-slide cmn-slide-post"{{if $link}} href="{{langPrefixURL $.Ctx $link}}"{{end}} role="group" aria-roledescription="slide">
+                            {{if $img}}<div class="cmn-slide-img">{{responsiveImage $img $title "" "(max-width: 1100px) 100vw, 620px" "lazy"}}</div>{{end}}
+                            <span class="cmn-slide-overlay" aria-hidden="true"></span>
+                            <div class="cmn-slide-body">
+                                {{$label := index $s (printf "home_banner_%d_label" $i)}}{{if $label}}<span class="cmn-slide-cat">{{$label}}</span>{{end}}
+                                <h3 class="cmn-slide-title">{{$title}}</h3>
+                                {{$text := index $s (printf "home_banner_%d_text" $i)}}{{if $text}}<p class="cmn-slide-excerpt">{{$text}}</p>{{end}}
+                                {{if $link}}<span class="cmn-slide-cta">{{T $.Ctx "btn_read_more"}}</span>{{end}}
+                            </div>
+                        </a>
+                        {{end}}
+                        {{end}}
+                        {{else}}
+                        {{range .Featured}}
+                        <a class="cmn-slide cmn-slide-post" href="{{langPrefixURL $.Ctx .URL}}" role="group" aria-roledescription="slide">
+                            <div class="cmn-slide-img">{{responsiveImage .ImageURL .Title "" "(max-width: 1100px) 100vw, 620px" "lazy"}}</div>
+                            <span class="cmn-slide-overlay" aria-hidden="true"></span>
+                            <div class="cmn-slide-body">
+                                {{if .Category.Name}}<span class="cmn-slide-cat">{{.Category.Name}}</span>{{end}}
+                                <h3 class="cmn-slide-title">{{.Title}}</h3>
+                                {{if .Excerpt}}<p class="cmn-slide-excerpt">{{.Excerpt}}</p>{{end}}
+                                <span class="cmn-slide-cta">{{T $.Ctx "btn_read_more"}}</span>
+                            </div>
+                        </a>
+                        {{end}}
+                        {{end}}
+                    </div>
+                </div>
+                <button class="cmn-carousel-arrow cmn-carousel-prev" type="button" aria-label="Previous slide" data-carousel-prev>&#8249;</button>
+                <button class="cmn-carousel-arrow cmn-carousel-next" type="button" aria-label="Next slide" data-carousel-next>&#8250;</button>
+                <div class="cmn-carousel-dots" data-carousel-dots></div>
+            </section>
+
+            <!-- Latest activity -->
+            <section class="cmn-widget cmn-activity-widget">
+                <div class="cmn-widget-head">
+                    <h2 class="cmn-widget-title">{{settingOr $s "home_activity_title" "Latest Activity"}}</h2>
+                </div>
+                <div class="cmn-widget-body">
+                    {{if .Activity}}
+                    <div class="cmn-activity">
+                        {{range .Activity}}
+                        {{$name := .AuthorName}}{{if not $name}}{{$name = (T $.Ctx "activity_a_member")}}{{end}}
+                        <article class="cmn-activity-item">
+                            <a class="cmn-avatar" href="{{langPrefixURL $.Ctx .URL}}">
+                                {{if .AuthorAvatar}}<img src="{{.AuthorAvatar}}" alt="{{$name}}" loading="lazy">{{else}}<span class="cmn-avatar-fallback">{{initials $name}}</span>{{end}}
+                            </a>
+                            <div class="cmn-activity-body">
+                                <p class="cmn-activity-head">
+                                    <strong>{{$name}}</strong>
+                                    <span class="cmn-activity-verb">{{if eq .Kind "discussion"}}{{T $.Ctx "activity_started_discussion"}}{{else}}{{T $.Ctx "activity_posted_update"}}{{end}}</span>
+                                    {{if .GroupName}}<span class="cmn-activity-in">{{T $.Ctx "activity_in_group"}} <em>{{.GroupName}}</em></span>{{end}}
+                                    <time class="cmn-activity-time">· {{formatDate .PublishedAt}}</time>
+                                </p>
+                                <h3 class="cmn-activity-title"><a href="{{langPrefixURL $.Ctx .URL}}">{{.Title}}</a></h3>
+                                {{if .Excerpt}}<p class="cmn-activity-excerpt">{{.Excerpt}}</p>{{end}}
+                                <div class="cmn-activity-foot">
+                                    <a class="cmn-activity-cta" href="{{langPrefixURL $.Ctx .URL}}">
+                                        {{if eq .Kind "discussion"}}<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>{{if gt .Count 0}}{{.Count}} {{T $.Ctx "label_replies"}}{{else}}{{T $.Ctx "activity_join_thread"}}{{end}}{{else}}<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-6 0v4M5 9h14l1 12H4z"/></svg>{{T $.Ctx "activity_read_more"}}{{end}}
+                                    </a>
+                                </div>
+                            </div>
+                        </article>
+                        {{end}}
+                    </div>
+                    <div class="cmn-widget-foot">
+                        <a class="cmn-btn cmn-btn-outline cmn-btn-block" href="{{langPrefixURL .Ctx (archiveURL "post")}}">{{T .Ctx "btn_load_more"}}</a>
+                    </div>
+                    {{else}}<p class="cmn-widget-empty">{{T .Ctx "empty_no_activity"}}</p>{{end}}
+                </div>
+            </section>
+        </main>
+
+        <!-- Right column -->
+        <aside class="cmn-col cmn-col-right">
+            <section class="cmn-widget">
+                <div class="cmn-widget-head">
+                    <h2 class="cmn-widget-title">{{settingOr $s "home_stats_title" "Community at a glance"}}</h2>
+                </div>
+                <div class="cmn-widget-body">
+                    <div class="cmn-stats-grid">
+                        <a class="cmn-stat-tile" href="{{langPrefixURL .Ctx (archiveURL "member")}}"><span class="cmn-stat-num">{{.Stats.Members}}</span><span class="cmn-stat-label">{{T .Ctx "stat_members"}}</span></a>
+                        <a class="cmn-stat-tile" href="{{langPrefixURL .Ctx (archiveURL "group")}}"><span class="cmn-stat-num">{{.Stats.Groups}}</span><span class="cmn-stat-label">{{T .Ctx "stat_groups"}}</span></a>
+                        <a class="cmn-stat-tile" href="{{langPrefixURL .Ctx (archiveURL "discussion")}}"><span class="cmn-stat-num">{{.Stats.Discussions}}</span><span class="cmn-stat-label">{{T .Ctx "stat_discussions"}}</span></a>
+                        <a class="cmn-stat-tile" href="{{langPrefixURL .Ctx (archiveURL "post")}}"><span class="cmn-stat-num">{{.Stats.Posts}}</span><span class="cmn-stat-label">{{T .Ctx "stat_posts"}}</span></a>
+                    </div>
+                </div>
+            </section>
+
+            <section class="cmn-widget">
+                <div class="cmn-widget-head">
+                    <h2 class="cmn-widget-title">{{settingOr $s "home_discussions_title" "Recent Discussions"}}</h2>
+                    <a class="cmn-widget-link" href="{{langPrefixURL .Ctx (archiveURL "discussion")}}">{{T .Ctx "btn_see_all"}}</a>
+                </div>
+                <div class="cmn-widget-body">
+                    {{if .Discussions}}
+                    <ul class="cmn-topic-list">
+                        {{range .Discussions}}
+                        <li class="cmn-topic-row">
+                            <a class="cmn-topic-title" href="{{langPrefixURL $.Ctx .URL}}">{{.Title}}</a>
+                            <span class="cmn-topic-meta">{{if .AuthorName}}{{.AuthorName}} · {{end}}{{formatDate .PublishedAt}}{{if .RepliesCount}} · {{.RepliesCount}} {{T $.Ctx "label_replies"}}{{end}}</span>
+                        </li>
+                        {{end}}
+                    </ul>
+                    {{else}}<p class="cmn-widget-empty">{{T .Ctx "empty_no_discussions"}}</p>{{end}}
+                </div>
+            </section>
+        </aside>
+    </div>
+</div>
+
+<!-- ============ Featured Groups ============ -->
+{{if .Groups}}
+<section class="cmn-section cmn-featured">
+    <div class="cmn-container">
+        <div class="cmn-section-head cmn-center">
+            <span class="cmn-eyebrow">{{settingOr $s "home_featured_groups_label" "Communities"}}</span>
+            <h2 class="cmn-section-title">{{settingOr $s "home_featured_groups_title" "Popular groups to join"}}</h2>
+            <p class="cmn-section-sub">{{settingOr $s "home_featured_groups_subtitle" "Find your people around the topics you love — from design and code to photography and travel."}}</p>
+        </div>
+        <div class="cmn-group-grid">
+            {{range .Groups}}
+            <article class="cmn-group-card">
+                <a class="cmn-group-cover" href="{{langPrefixURL $.Ctx .URL}}">
+                    {{if .ImageURL}}{{responsiveImage .ImageURL .Title "" "(max-width: 768px) 100vw, 33vw" "lazy"}}{{else}}<span class="cmn-group-cover-fallback">{{initials .Title}}</span>{{end}}
+                    {{if .Privacy}}<span class="cmn-badge cmn-badge-{{lower .Privacy}}">{{.Privacy}}</span>{{end}}
+                </a>
+                <div class="cmn-group-card-body">
+                    {{if .Category.Name}}<a class="cmn-group-cat" href="{{langPrefixURL $.Ctx (taxonomyURL "category" .Category.Slug)}}">{{.Category.Name}}</a>{{end}}
+                    <h3 class="cmn-group-card-title"><a href="{{langPrefixURL $.Ctx .URL}}">{{.Title}}</a></h3>
+                    {{if .Excerpt}}<p class="cmn-group-card-desc">{{.Excerpt}}</p>{{end}}
+                    <div class="cmn-group-card-foot">
+                        <span class="cmn-group-card-count">{{if .MembersCount}}{{.MembersCount}} {{T $.Ctx "label_members"}}{{end}}</span>
+                        <a class="cmn-group-card-link" href="{{langPrefixURL $.Ctx .URL}}">{{T $.Ctx "btn_view_group"}} <span aria-hidden="true">→</span></a>
+                    </div>
+                </div>
+            </article>
+            {{end}}
+        </div>
+    </div>
+</section>
+{{end}}
+
+<!-- ============ CTA ============ -->
+<section class="cmn-cta">
+    <div class="cmn-container cmn-cta-inner">
+        <h2>{{settingOr $s "home_cta_title" "Ready to join the conversation?"}}</h2>
+        <p>{{settingOr $s "home_cta_desc" "Create your profile, follow the groups you care about, and start meeting people today."}}</p>
+        <div class="cmn-cta-actions">
+            <a class="cmn-btn cmn-btn-green cmn-btn-lg" href="{{settingOr $s "home_cta_btn_link" (loginURL .Ctx)}}">{{settingOr $s "home_cta_btn_text" "Join the community"}}</a>
+            <a class="cmn-btn cmn-btn-ghost-light cmn-btn-lg" href="{{langPrefixURL .Ctx (archiveURL "group")}}">{{T .Ctx "btn_browse_groups"}}</a>
+        </div>
+    </div>
+</section>
+{{end}}

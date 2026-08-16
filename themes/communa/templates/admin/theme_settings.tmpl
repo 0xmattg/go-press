@@ -1,0 +1,260 @@
+{{define "content"}}
+<div class="content-header">
+    <div style="display:flex; align-items:center; gap:1rem;">
+        <a href="/admin/themes" class="btn btn-secondary" style="display:inline-flex; align-items:center; gap:0.4rem; text-decoration:none;">
+            ← {{X $ "communa.settings.back" "返回主题管理"}}
+        </a>
+        <h2>{{X $ "communa.settings.title" "%s - 主题设置" .ThemeName}}</h2>
+    </div>
+</div>
+
+{{$s := .Settings}}
+<form method="POST" action="/admin/themes/{{.ThemeSlug}}/settings" id="themeSettingsForm">
+
+<div class="ts-tabs">
+    <button type="button" class="ts-tab active" data-tab="general">{{X $ "communa.settings.tab.general" "社区信息"}}</button>
+    <button type="button" class="ts-tab" data-tab="brand">{{X $ "communa.settings.tab.brand" "品牌导航"}}</button>
+    <button type="button" class="ts-tab" data-tab="hero">{{X $ "communa.settings.tab.hero" "首页横幅"}}</button>
+    <button type="button" class="ts-tab" data-tab="home">{{X $ "communa.settings.tab.home" "首页组件"}}</button>
+    <button type="button" class="ts-tab" data-tab="cta">{{X $ "communa.settings.tab.cta" "行动号召"}}</button>
+    <button type="button" class="ts-tab" data-tab="about">{{X $ "communa.settings.tab.about" "关于页"}}</button>
+    <button type="button" class="ts-tab" data-tab="contact">{{X $ "communa.settings.tab.contact" "联系页"}}</button>
+    <button type="button" class="ts-tab" data-tab="social">{{X $ "communa.settings.tab.social" "社交媒体"}}</button>
+</div>
+
+<!-- ===== General / footer ===== -->
+<div class="ts-panel active" id="tab-general">
+    <h3 class="ts-section-title">{{X $ "communa.settings.general.title" "社区基本信息"}}</h3>
+    <p class="ts-hint">{{X $ "communa.settings.general.hint" "用于页脚、联系页与 SEO 元数据。"}}</p>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "communa.settings.field.email" "联系邮箱"}}</label>
+            <input type="email" name="company_email" value="{{index $s "company_email"}}" placeholder="hello@communa.example">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "communa.settings.field.phone" "联系电话"}}</label>
+            <input type="text" name="company_phone" value="{{index $s "company_phone"}}" placeholder="+1 555 123 4567">
+        </div>
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "communa.settings.field.address" "地址"}}</label>
+        <input type="text" name="company_address" value="{{index $s "company_address"}}" placeholder="123 Community Ave, Internet City">
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "communa.settings.field.hours" "服务时间"}}</label>
+            <input type="text" name="company_hours" value="{{index $s "company_hours"}}" placeholder="Mon–Fri, 9:00–18:00">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "communa.settings.field.year" "版权年份"}}</label>
+            <input type="text" name="company_year" value="{{index $s "company_year"}}" placeholder="2026">
+        </div>
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "communa.settings.field.description" "社区简介（页脚）"}}</label>
+        <textarea name="company_description" rows="2" placeholder="{{X $ "communa.settings.field.description.ph" "一句话介绍你的社区"}}">{{index $s "company_description"}}</textarea>
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "communa.settings.field.copyright" "页脚版权文案"}}</label>
+        <input type="text" name="footer_copyright_text" value="{{index $s "footer_copyright_text"}}" placeholder="Communa. Built for communities everywhere.">
+    </div>
+</div>
+
+<!-- ===== Brand & header ===== -->
+<div class="ts-panel" id="tab-brand">
+    <h3 class="ts-section-title">{{X $ "communa.settings.brand.title" "品牌与导航"}}</h3>
+    <p class="ts-hint">{{X $ "communa.settings.brand.hint" "顶部品牌名、Logo 与登录/注册按钮。"}}</p>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "communa.settings.field.brand_name" "品牌名称"}}</label>
+            <input type="text" name="home_logo_text" value="{{index $s "home_logo_text"}}" placeholder="Communa">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "communa.settings.field.logo" "Logo 图片 URL（可选）"}}</label>
+            <input type="text" name="home_logo_image" value="{{index $s "home_logo_image"}}" placeholder="/static/images/logo.svg">
+        </div>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "communa.settings.field.login_text" "登录按钮文字"}}</label>
+            <input type="text" name="home_login_text" value="{{index $s "home_login_text"}}" placeholder="Log in">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "communa.settings.field.join_text" "注册按钮文字"}}</label>
+            <input type="text" name="home_join_text" value="{{index $s "home_join_text"}}" placeholder="Join">
+        </div>
+    </div>
+</div>
+
+<!-- ===== Hero ===== -->
+<div class="ts-panel" id="tab-hero">
+    <h3 class="ts-section-title">{{X $ "communa.settings.hero.title" "首页横幅"}}</h3>
+    <p class="ts-hint">{{X $ "communa.settings.hero.hint" "首页顶部的欢迎横幅与搜索框。"}}</p>
+    <div class="ts-field">
+        <label>{{X $ "communa.settings.field.hero_eyebrow" "小标签"}}</label>
+        <input type="text" name="home_hero_eyebrow" value="{{index $s "home_hero_eyebrow"}}" placeholder="The community platform">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "communa.settings.field.hero_title" "主标题"}}</label>
+        <input type="text" name="home_hero_title" value="{{index $s "home_hero_title"}}" placeholder="Welcome to the community">
+    </div>
+    <div class="ts-field">
+        <label>{{X $ "communa.settings.field.hero_subtitle" "副标题"}}</label>
+        <textarea name="home_hero_subtitle" rows="2" placeholder="{{X $ "communa.settings.field.hero_subtitle.ph" "一句话邀请访客加入"}}">{{index $s "home_hero_subtitle"}}</textarea>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field">
+            <label>{{X $ "communa.settings.field.hero_search" "搜索框占位文字"}}</label>
+            <input type="text" name="home_hero_search_placeholder" value="{{index $s "home_hero_search_placeholder"}}" placeholder="Search members…">
+        </div>
+        <div class="ts-field">
+            <label>{{X $ "communa.settings.field.hero_btn" "搜索按钮文字"}}</label>
+            <input type="text" name="home_hero_cta_text" value="{{index $s "home_hero_cta_text"}}" placeholder="Search">
+        </div>
+    </div>
+
+    <h4 style="margin:1.5rem 0 0.75rem; font-size:0.95rem; color:#475569;">{{X $ "communa.settings.hero.welcome_buttons" "欢迎屏按钮"}}</h4>
+    <div class="ts-grid-2">
+        <div class="ts-field"><label>{{X $ "communa.settings.field.hero_btn1_text" "按钮1 文字"}}</label><input type="text" name="home_hero_btn1_text" value="{{index $s "home_hero_btn1_text"}}" placeholder="Join"></div>
+        <div class="ts-field"><label>{{X $ "communa.settings.field.hero_btn1_link" "按钮1 链接"}}</label><input type="text" name="home_hero_btn1_link" value="{{index $s "home_hero_btn1_link"}}" placeholder="/login"></div>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field"><label>{{X $ "communa.settings.field.hero_btn2_text" "按钮2 文字"}}</label><input type="text" name="home_hero_btn2_text" value="{{index $s "home_hero_btn2_text"}}" placeholder="Browse groups"></div>
+        <div class="ts-field"><label>{{X $ "communa.settings.field.hero_btn2_link" "按钮2 链接"}}</label><input type="text" name="home_hero_btn2_link" value="{{index $s "home_hero_btn2_link"}}" placeholder="/groups"></div>
+    </div>
+
+    <h4 style="margin:1.5rem 0 0.5rem; font-size:0.95rem; color:#475569;">{{X $ "communa.settings.hero.banners" "轮播 Banner 幻灯片"}}</h4>
+    <p class="ts-hint">{{X $ "communa.settings.hero.banners_hint" "填写后覆盖首屏之后的轮播内容；全部留空则自动展示带封面的近期文章。"}}</p>
+    {{range $i := seq 3}}
+    <h5 style="margin:1rem 0 0.4rem; font-size:0.85rem; color:#64748b;">{{X $ "communa.settings.hero.banner" "Banner"}} {{$i}}</h5>
+    <div class="ts-field"><label>{{X $ "communa.settings.field.banner_image" "图片 URL"}}</label><input type="text" name="home_banner_{{$i}}_image" value="{{index $s (printf "home_banner_%d_image" $i)}}" placeholder="https://…/banner.jpg"></div>
+    <div class="ts-grid-2">
+        <div class="ts-field"><label>{{X $ "communa.settings.field.banner_label" "标签"}}</label><input type="text" name="home_banner_{{$i}}_label" value="{{index $s (printf "home_banner_%d_label" $i)}}"></div>
+        <div class="ts-field"><label>{{X $ "communa.settings.field.banner_link" "跳转链接"}}</label><input type="text" name="home_banner_{{$i}}_link" value="{{index $s (printf "home_banner_%d_link" $i)}}" placeholder="/blog/…"></div>
+    </div>
+    <div class="ts-field"><label>{{X $ "communa.settings.field.banner_title" "标题"}}</label><input type="text" name="home_banner_{{$i}}_title" value="{{index $s (printf "home_banner_%d_title" $i)}}"></div>
+    <div class="ts-field"><label>{{X $ "communa.settings.field.banner_text" "描述"}}</label><textarea name="home_banner_{{$i}}_text" rows="2">{{index $s (printf "home_banner_%d_text" $i)}}</textarea></div>
+    {{end}}
+</div>
+
+<!-- ===== Home widgets ===== -->
+<div class="ts-panel" id="tab-home">
+    <h3 class="ts-section-title">{{X $ "communa.settings.home.title" "首页组件标题"}}</h3>
+    <p class="ts-hint">{{X $ "communa.settings.home.hint" "首页三栏仪表盘各组件与推荐群组区块的标题。"}}</p>
+    <div class="ts-grid-2">
+        <div class="ts-field"><label>{{X $ "communa.settings.field.w_members" "成员组件"}}</label><input type="text" name="home_members_title" value="{{index $s "home_members_title"}}" placeholder="Members"></div>
+        <div class="ts-field"><label>{{X $ "communa.settings.field.w_groups" "群组组件"}}</label><input type="text" name="home_groups_title" value="{{index $s "home_groups_title"}}" placeholder="Groups"></div>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field"><label>{{X $ "communa.settings.field.w_activity" "动态组件"}}</label><input type="text" name="home_activity_title" value="{{index $s "home_activity_title"}}" placeholder="Latest Activity"></div>
+        <div class="ts-field"><label>{{X $ "communa.settings.field.w_discussions" "讨论组件"}}</label><input type="text" name="home_discussions_title" value="{{index $s "home_discussions_title"}}" placeholder="Recent Discussions"></div>
+    </div>
+    <div class="ts-field"><label>{{X $ "communa.settings.field.w_stats" "统计组件"}}</label><input type="text" name="home_stats_title" value="{{index $s "home_stats_title"}}" placeholder="Community at a glance"></div>
+    <h4 style="margin:1.5rem 0 0.75rem; font-size:0.95rem; color:#475569;">{{X $ "communa.settings.home.featured" "推荐群组区块"}}</h4>
+    <div class="ts-field"><label>{{X $ "communa.settings.field.fg_label" "区块小标签"}}</label><input type="text" name="home_featured_groups_label" value="{{index $s "home_featured_groups_label"}}" placeholder="Communities"></div>
+    <div class="ts-field"><label>{{X $ "communa.settings.field.fg_title" "区块标题"}}</label><input type="text" name="home_featured_groups_title" value="{{index $s "home_featured_groups_title"}}" placeholder="Popular groups to join"></div>
+    <div class="ts-field"><label>{{X $ "communa.settings.field.fg_sub" "区块副标题"}}</label><textarea name="home_featured_groups_subtitle" rows="2">{{index $s "home_featured_groups_subtitle"}}</textarea></div>
+</div>
+
+<!-- ===== CTA ===== -->
+<div class="ts-panel" id="tab-cta">
+    <h3 class="ts-section-title">{{X $ "communa.settings.cta.title" "行动号召"}}</h3>
+    <p class="ts-hint">{{X $ "communa.settings.cta.hint" "首页与关于页底部的加入号召区块。"}}</p>
+    <div class="ts-field"><label>{{X $ "communa.settings.field.cta_title" "标题"}}</label><input type="text" name="home_cta_title" value="{{index $s "home_cta_title"}}" placeholder="Ready to join the conversation?"></div>
+    <div class="ts-field"><label>{{X $ "communa.settings.field.cta_desc" "描述"}}</label><textarea name="home_cta_desc" rows="2">{{index $s "home_cta_desc"}}</textarea></div>
+    <div class="ts-grid-2">
+        <div class="ts-field"><label>{{X $ "communa.settings.field.cta_btn" "按钮文字"}}</label><input type="text" name="home_cta_btn_text" value="{{index $s "home_cta_btn_text"}}" placeholder="Join the community"></div>
+        <div class="ts-field"><label>{{X $ "communa.settings.field.cta_link" "按钮链接"}}</label><input type="text" name="home_cta_btn_link" value="{{index $s "home_cta_btn_link"}}" placeholder="/login"></div>
+    </div>
+</div>
+
+<!-- ===== About page ===== -->
+<div class="ts-panel" id="tab-about">
+    <h3 class="ts-section-title">{{X $ "communa.settings.about.title" "关于页"}}</h3>
+    <p class="ts-hint">{{X $ "communa.settings.about.hint" "关于页横幅、正文、价值主张与 CTA。"}}</p>
+    <div class="ts-field"><label>{{X $ "communa.settings.field.about_title" "横幅标题"}}</label><input type="text" name="about_title" value="{{index $s "about_title"}}" placeholder="About our community"></div>
+    <div class="ts-field"><label>{{X $ "communa.settings.field.about_subtitle" "横幅副标题"}}</label><input type="text" name="about_subtitle" value="{{index $s "about_subtitle"}}"></div>
+    <div class="ts-field"><label>{{X $ "communa.settings.field.about_intro" "导语"}}</label><textarea name="about_intro" rows="2">{{index $s "about_intro"}}</textarea></div>
+    <div class="ts-field"><label>{{X $ "communa.settings.field.about_story" "正文（支持 HTML 段落）"}}</label><textarea name="about_story" rows="4">{{index $s "about_story"}}</textarea></div>
+    <div class="ts-field"><label>{{X $ "communa.settings.field.about_values_title" "价值区块标题"}}</label><input type="text" name="about_values_title" value="{{index $s "about_values_title"}}" placeholder="What we stand for"></div>
+    {{range $i := seq 3}}
+    <h4 style="margin:1.25rem 0 0.5rem; font-size:0.92rem; color:#475569;">{{X $ "communa.settings.about.value" "价值主张"}} {{$i}}</h4>
+    <div class="ts-grid-2">
+        <div class="ts-field"><label>{{X $ "communa.settings.field.value_title" "标题"}}</label><input type="text" name="about_value_{{$i}}_title" value="{{index $s (printf "about_value_%d_title" $i)}}"></div>
+        <div class="ts-field"><label>{{X $ "communa.settings.field.value_desc" "描述"}}</label><input type="text" name="about_value_{{$i}}_desc" value="{{index $s (printf "about_value_%d_desc" $i)}}"></div>
+    </div>
+    {{end}}
+    <h4 style="margin:1.5rem 0 0.75rem; font-size:0.95rem; color:#475569;">{{X $ "communa.settings.about.cta" "关于页 CTA"}}</h4>
+    <div class="ts-field"><label>{{X $ "communa.settings.field.about_cta_title" "标题"}}</label><input type="text" name="about_cta_title" value="{{index $s "about_cta_title"}}"></div>
+    <div class="ts-field"><label>{{X $ "communa.settings.field.about_cta_desc" "描述"}}</label><textarea name="about_cta_desc" rows="2">{{index $s "about_cta_desc"}}</textarea></div>
+    <div class="ts-field"><label>{{X $ "communa.settings.field.about_cta_btn" "按钮文字"}}</label><input type="text" name="about_cta_btn_text" value="{{index $s "about_cta_btn_text"}}"></div>
+</div>
+
+<!-- ===== Contact page ===== -->
+<div class="ts-panel" id="tab-contact">
+    <h3 class="ts-section-title">{{X $ "communa.settings.contact.title" "联系页"}}</h3>
+    <p class="ts-hint">{{X $ "communa.settings.contact.hint" "联系页横幅标题（联系方式取自“社区信息”标签）。"}}</p>
+    <div class="ts-field"><label>{{X $ "communa.settings.field.contact_title" "横幅标题"}}</label><input type="text" name="contact_title" value="{{index $s "contact_title"}}" placeholder="Get in touch"></div>
+    <div class="ts-field"><label>{{X $ "communa.settings.field.contact_subtitle" "横幅副标题"}}</label><textarea name="contact_subtitle" rows="2">{{index $s "contact_subtitle"}}</textarea></div>
+</div>
+
+<!-- ===== Social ===== -->
+<div class="ts-panel" id="tab-social">
+    <h3 class="ts-section-title">{{X $ "communa.settings.social.title" "社交媒体链接"}}</h3>
+    <p class="ts-hint">{{X $ "communa.settings.social.hint" "填写的链接才会显示在页脚；全部留空则不显示社交区块。"}}</p>
+    <div class="ts-grid-2">
+        <div class="ts-field"><label>Facebook</label><input type="url" name="social_facebook" value="{{index $s "social_facebook"}}" placeholder="https://facebook.com/…"></div>
+        <div class="ts-field"><label>X / Twitter</label><input type="url" name="social_x" value="{{index $s "social_x"}}" placeholder="https://x.com/…"></div>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field"><label>Instagram</label><input type="url" name="social_instagram" value="{{index $s "social_instagram"}}" placeholder="https://instagram.com/…"></div>
+        <div class="ts-field"><label>LinkedIn</label><input type="url" name="social_linkedin" value="{{index $s "social_linkedin"}}" placeholder="https://linkedin.com/company/…"></div>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field"><label>YouTube</label><input type="url" name="social_youtube" value="{{index $s "social_youtube"}}" placeholder="https://youtube.com/@…"></div>
+        <div class="ts-field"><label>Discord</label><input type="url" name="social_discord" value="{{index $s "social_discord"}}" placeholder="https://discord.gg/…"></div>
+    </div>
+    <div class="ts-grid-2">
+        <div class="ts-field"><label>GitHub</label><input type="url" name="social_github" value="{{index $s "social_github"}}" placeholder="https://github.com/…"></div>
+        <div class="ts-field"><label>Slack</label><input type="url" name="social_slack" value="{{index $s "social_slack"}}" placeholder="https://…slack.com"></div>
+    </div>
+</div>
+
+<div class="ts-save-bar">
+    <button type="submit" class="btn btn-primary">{{X $ "communa.settings.save" "保存设置"}}</button>
+    <a href="/admin/themes" class="btn btn-secondary" style="text-decoration:none;">{{X $ "communa.settings.cancel" "取消"}}</a>
+</div>
+
+</form>
+
+<style>
+.ts-tabs { display:flex; gap:0; border-bottom:2px solid #e2e8f0; margin-bottom:0; overflow-x:auto; background:#fff; border-radius:8px 8px 0 0; }
+.ts-tab { padding:0.85rem 1.25rem; border:none; background:none; cursor:pointer; font-size:0.88rem; font-weight:500; color:#64748b; white-space:nowrap; border-bottom:2px solid transparent; margin-bottom:-2px; transition:color .2s, border-color .2s; }
+.ts-tab:hover { color:#1e293b; }
+.ts-tab.active { color:#3aaede; border-bottom-color:#3aaede; font-weight:600; }
+.ts-panel { display:none; background:#fff; padding:1.5rem; border-radius:0 0 8px 8px; border:1px solid #e2e8f0; border-top:none; }
+.ts-panel.active { display:block; }
+.ts-section-title { margin:0 0 0.5rem; font-size:1.05rem; font-weight:600; color:#1e293b; }
+.ts-hint { color:#64748b; font-size:0.85rem; margin-bottom:1.25rem; line-height:1.5; }
+.ts-field { margin-bottom:1rem; }
+.ts-field label { display:block; margin-bottom:0.35rem; font-size:0.85rem; font-weight:500; color:#374151; }
+.ts-field input[type="text"], .ts-field input[type="email"], .ts-field input[type="url"], .ts-field textarea, .ts-field select { width:100%; padding:0.55rem 0.75rem; border:1px solid #d1d5db; border-radius:6px; font-size:0.88rem; transition:border-color .2s; font-family:inherit; box-sizing:border-box; }
+.ts-field input:focus, .ts-field textarea:focus, .ts-field select:focus { outline:none; border-color:#3aaede; box-shadow:0 0 0 2px rgba(58,174,222,0.15); }
+.ts-field textarea { resize:vertical; }
+.ts-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.ts-save-bar { display:flex; gap:0.75rem; align-items:center; margin-top:1.25rem; padding:1rem 1.25rem; background:#fff; border:1px solid #e2e8f0; border-radius:8px; }
+@media (max-width:640px){ .ts-grid-2 { grid-template-columns:1fr; } .ts-tabs { flex-wrap:nowrap; } }
+</style>
+
+<script>
+document.querySelectorAll('.ts-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.ts-tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.ts-panel').forEach(function(p) { p.classList.remove('active'); });
+        tab.classList.add('active');
+        var panel = document.getElementById('tab-' + tab.dataset.tab);
+        if (panel) panel.classList.add('active');
+    });
+});
+</script>
+{{end}}
