@@ -13,6 +13,7 @@ import (
 	"github.com/BurntSushi/toml"
 
 	"github.com/0xmattg/go-press/core"
+	"github.com/0xmattg/go-press/core/content"
 	coreTheme "github.com/0xmattg/go-press/core/theme"
 )
 
@@ -21,7 +22,7 @@ func TestThemeConfigAndInterfaces(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse theme.toml: %v", err)
 	}
-	if cfg.Theme.Name != "Communa" || cfg.Theme.Version != "1.0.12" {
+	if cfg.Theme.Name != "Communa" || cfg.Theme.Version != "1.0.14" {
 		t.Fatalf("unexpected metadata: %+v", cfg.Theme)
 	}
 	names := map[string]bool{}
@@ -250,6 +251,23 @@ func TestLoginModalContract(t *testing.T) {
 	}
 	if !strings.Contains(string(base), `{{template "cmn-login-modal" .}}`) {
 		t.Error("base layout must include the login modal partial")
+	}
+}
+
+// TestLogoSVGSurvivesSanitizer guards the admin theme-card logo: core inlines it
+// through content.SanitizeSVG, whose allowlist has no <linearGradient>/<stop>, so
+// the logo must use solid fills — otherwise the background renders empty.
+func TestLogoSVGSurvivesSanitizer(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("static", "logo.svg"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	clean := content.SanitizeSVG(string(raw))
+	if !strings.Contains(clean, "#79c142") {
+		t.Fatalf("logo brand fill did not survive the admin SVG sanitizer: %s", clean)
+	}
+	if strings.Contains(strings.ToLower(clean), "gradient") {
+		t.Fatal("logo relies on a <gradient> element, which the admin SVG sanitizer strips")
 	}
 }
 
