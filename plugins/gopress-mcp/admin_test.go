@@ -17,7 +17,15 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/0xmattg/go-press/core/agent"
+	"github.com/0xmattg/go-press/core/content"
 )
+
+func TestPluginLogoSVGIsSanitizable(t *testing.T) {
+	sanitized := content.SanitizeSVG(New().LogoSVG())
+	if !strings.Contains(sanitized, "<svg") || !strings.Contains(sanitized, "viewBox=") || !strings.Contains(sanitized, `fill="#4f46e5"`) {
+		t.Fatalf("MCP logo did not survive sanitization: %s", sanitized)
+	}
+}
 
 func TestPluginMetadataLifecycleAndSettingsTemplate(t *testing.T) {
 	fixture := newTestFixture(t)
