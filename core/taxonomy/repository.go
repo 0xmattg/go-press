@@ -11,12 +11,34 @@ import (
 
 // Repository provides CRUD operations for terms and taxonomies.
 type Repository struct {
-	db *gorm.DB
+	db  *gorm.DB
+	ctx context.Context
 }
 
 // NewRepository creates a new taxonomy Repository.
 func NewRepository(db *gorm.DB) *Repository {
 	return &Repository{db: db}
+}
+
+// WithContext returns a request-scoped repository clone. Existing callers that
+// do not opt in keep the historical, unscoped behaviour.
+func (r *Repository) WithContext(ctx context.Context) *Repository {
+	if r == nil {
+		return nil
+	}
+	clone := *r
+	clone.ctx = nonNilContext(ctx)
+	return &clone
+}
+
+func (r *Repository) context(ctx context.Context) context.Context {
+	if ctx != nil {
+		return ctx
+	}
+	if r != nil && r.ctx != nil {
+		return r.ctx
+	}
+	return context.Background()
 }
 
 // --- Term operations ---
@@ -28,8 +50,25 @@ func (r *Repository) CreateTerm(t *Term) error {
 
 // GetTermBySlug finds a term by its slug.
 func (r *Repository) GetTermBySlug(slug string) (*Term, error) {
+	return r.GetTermBySlugContext(nil, slug)
+}
+
+// GetTermBySlugContext resolves a term inside the active taxonomy scope.
+func (r *Repository) GetTermBySlugContext(ctx context.Context, slug string) (*Term, error) {
+	ctx = r.context(ctx)
 	var t Term
-	err := r.db.Where("slug = ?", slug).First(&t).Error
+	q := r.db.WithContext(ctx)
+	if len(Scopes(ctx)) > 0 {
+		taxTable := Taxonomy{}.TableName()
+		termTable := Term{}.TableName()
+		q = ScopedDBContext(ctx, q.Model(&Taxonomy{})).
+			Select(termTable+".*").
+			Joins("JOIN "+termTable+" ON "+termTable+".id = "+taxTable+".term_id").
+			Where(termTable+".slug = ?", slug)
+	} else {
+		q = q.Model(&Term{}).Where("slug = ?", slug)
+	}
+	err := q.First(&t).Error
 	return &t, err
 }
 
@@ -42,24 +81,45 @@ func (r *Repository) CreateTaxonomy(tax *Taxonomy) error {
 
 // GetTaxonomy returns a taxonomy by ID with its term loaded.
 func (r *Repository) GetTaxonomy(id uint) (*Taxonomy, error) {
+	return r.GetTaxonomyContext(nil, id)
+}
+
+// GetTaxonomyContext returns a taxonomy only when it belongs to the active
+// request scope.
+func (r *Repository) GetTaxonomyContext(ctx context.Context, id uint) (*Taxonomy, error) {
+	ctx = r.context(ctx)
 	var tax Taxonomy
-	err := r.db.Preload("Term").First(&tax, id).Error
+	err := ScopedDBContext(ctx, r.db.WithContext(ctx).Model(&Taxonomy{})).
+		Preload("Term").Where(Taxonomy{}.TableName()+".id = ?", id).First(&tax).Error
 	return &tax, err
+}
+
+// FindByTypeAndSlugContext resolves a taxonomy archive identity inside the
+// active scope without exposing extension-specific language concepts to core.
+func (r *Repository) FindByTypeAndSlugContext(ctx context.Context, taxonomyType, slug string) (*Taxonomy, error) {
+	ctx = r.context(ctx)
+	var item Taxonomy
+	taxTable := Taxonomy{}.TableName()
+	termTable := Term{}.TableName()
+	err := ScopedDBContext(ctx, r.db.WithContext(ctx).Model(&Taxonomy{})).
+		Preload("Term").
+		Joins("JOIN "+termTable+" ON "+termTable+".id = "+taxTable+".term_id").
+		Where(taxTable+".taxonomy = ? AND "+termTable+".slug = ?", taxonomyType, slug).
+		First(&item).Error
+	return &item, err
 }
 
 // ListByTaxonomy returns all taxonomy entries of a given type (e.g. "category").
 func (r *Repository) ListByTaxonomy(taxonomyType string) ([]Taxonomy, error) {
-	return r.ListByTaxonomyContext(context.Background(), taxonomyType)
+	return r.ListByTaxonomyContext(nil, taxonomyType)
 }
 
 // ListByTaxonomyContext propagates cancellation and deadlines from protocol-
 // neutral request contexts.
 func (r *Repository) ListByTaxonomyContext(ctx context.Context, taxonomyType string) ([]Taxonomy, error) {
-	if ctx == nil {
-		ctx = context.Background()
-	}
+	ctx = r.context(ctx)
 	var items []Taxonomy
-	err := r.db.WithContext(ctx).Preload("Term").
+	err := ScopedDBContext(ctx, r.db.WithContext(ctx).Model(&Taxonomy{})).Preload("Term").
 		Where("taxonomy = ?", taxonomyType).
 		Order("count DESC").
 		Find(&items).Error
@@ -71,6 +131,21 @@ func (r *Repository) ListByTaxonomyContext(ctx context.Context, taxonomyType str
 // front-end count), this admin-facing aggregate includes drafts and archived
 // content while excluding soft-deleted and trashed content.
 func (r *Repository) ContentReferenceCounts(taxonomyType string) (map[uint]int64, error) {
+	return r.ContentReferenceCountsContext(nil, taxonomyType)
+}
+
+// ContentReferenceCountsContext restricts aggregates to taxonomy identities
+// visible in the active scope.
+func (r *Repository) ContentReferenceCountsContext(ctx context.Context, taxonomyType string) (map[uint]int64, error) {
+	ctx = r.context(ctx)
+	var visibleIDs []uint
+	if err := ScopedDBContext(ctx, r.db.WithContext(ctx).Model(&Taxonomy{})).
+		Where("taxonomy = ?", taxonomyType).Pluck("id", &visibleIDs).Error; err != nil {
+		return nil, err
+	}
+	if len(visibleIDs) == 0 {
+		return map[uint]int64{}, nil
+	}
 	tax := dbprefix.Table("taxonomies")
 	tr := dbprefix.Table("term_relationships")
 	ct := dbprefix.Table("contents")
@@ -80,15 +155,15 @@ func (r *Repository) ContentReferenceCounts(taxonomyType string) (map[uint]int64
 		ReferenceCount int64
 	}
 	var rows []referenceCountRow
-	err := r.db.Raw(fmt.Sprintf(`
+	err := r.db.WithContext(ctx).Raw(fmt.Sprintf(`
 		SELECT t.id AS taxonomy_id, COUNT(c.id) AS reference_count
 		FROM %s t
 		LEFT JOIN %s tr ON tr.taxonomy_id = t.id
 		LEFT JOIN %s c ON c.id = tr.content_id
 			AND c.deleted_at IS NULL
 			AND c.status <> 'trash'
-		WHERE t.taxonomy = ?
-		GROUP BY t.id`, tax, tr, ct), taxonomyType).Scan(&rows).Error
+		WHERE t.taxonomy = ? AND t.id IN ?
+		GROUP BY t.id`, tax, tr, ct), taxonomyType, visibleIDs).Scan(&rows).Error
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +177,12 @@ func (r *Repository) ContentReferenceCounts(taxonomyType string) (map[uint]int64
 
 // ListByTaxonomyTree returns a hierarchical tree for a taxonomy type.
 func (r *Repository) ListByTaxonomyTree(taxonomyType string) ([]Taxonomy, error) {
-	all, err := r.ListByTaxonomy(taxonomyType)
+	return r.ListByTaxonomyTreeContext(nil, taxonomyType)
+}
+
+// ListByTaxonomyTreeContext returns the scoped hierarchy.
+func (r *Repository) ListByTaxonomyTreeContext(ctx context.Context, taxonomyType string) ([]Taxonomy, error) {
+	all, err := r.ListByTaxonomyContext(ctx, taxonomyType)
 	if err != nil {
 		return nil, err
 	}
@@ -139,10 +219,17 @@ func (r *Repository) SetContentTaxonomies(contentID uint, taxonomyIDs []uint) er
 
 // GetContentTaxonomies returns all taxonomies for a content item.
 func (r *Repository) GetContentTaxonomies(contentID uint, taxonomyType string) ([]Taxonomy, error) {
+	return r.GetContentTaxonomiesContext(nil, contentID, taxonomyType)
+}
+
+// GetContentTaxonomiesContext returns relationships whose taxonomy identities
+// are visible in the active request scope.
+func (r *Repository) GetContentTaxonomiesContext(ctx context.Context, contentID uint, taxonomyType string) ([]Taxonomy, error) {
+	ctx = r.context(ctx)
 	var items []Taxonomy
 	tr := dbprefix.Table("term_relationships")
 	tax := dbprefix.Table("taxonomies")
-	q := r.db.Preload("Term").
+	q := ScopedDBContext(ctx, r.db.WithContext(ctx).Model(&Taxonomy{})).Preload("Term").
 		Joins(fmt.Sprintf("JOIN %s tr ON tr.taxonomy_id = %s.id", tr, tax)).
 		Where("tr.content_id = ?", contentID)
 	if taxonomyType != "" {

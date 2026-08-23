@@ -15,6 +15,7 @@ type DynamicContentView struct {
 	AuthorID      uint
 	AuthorName    string
 	Slug          string
+	Permalink     string
 	Content       string
 	Excerpt       string
 	ImageURL      string
@@ -88,6 +89,9 @@ type TaxonomyItemView struct {
 	ID             uint
 	Name           string
 	Slug           string
+	Description    string
+	ParentID       uint
+	ParentName     string
 	ReferenceCount int64
 }
 

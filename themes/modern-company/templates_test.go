@@ -66,6 +66,45 @@ func TestBaseTemplateFallsBackWhenSEOTitleEmpty(t *testing.T) {
 	}
 }
 
+func TestBaseTemplateScopesXCardToBlogArticles(t *testing.T) {
+	tmpl := newBaseTemplateTest(t)
+	article := PageData{
+		Title:      "Cleanroom Testing",
+		ActivePage: "blog",
+		Settings:   map[string]string{"site_name": "Hurricane Techs"},
+		SEO: rewrite.SEOMeta{
+			OGType:        "article",
+			OGTitle:       "Cleanroom Testing",
+			OGDescription: "A practical guide.",
+			OGImage:       "https://example.test/uploads/cleanroom.jpg",
+		},
+	}
+
+	var out bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&out, "base", article); err != nil {
+		t.Fatalf("execute article template: %v", err)
+	}
+	for _, want := range []string{
+		`<meta name="twitter:card" content="summary_large_image">`,
+		`<meta name="twitter:title" content="Cleanroom Testing">`,
+		`<meta name="twitter:description" content="A practical guide.">`,
+		`<meta name="twitter:image" content="https://example.test/uploads/cleanroom.jpg">`,
+	} {
+		if !strings.Contains(out.String(), want) {
+			t.Fatalf("article head is missing %q: %s", want, out.String())
+		}
+	}
+
+	article.ActivePage = "product"
+	out.Reset()
+	if err := tmpl.ExecuteTemplate(&out, "base", article); err != nil {
+		t.Fatalf("execute non-blog template: %v", err)
+	}
+	if strings.Contains(out.String(), `name="twitter:`) {
+		t.Fatalf("non-blog page should not emit theme-specific X Card tags: %s", out.String())
+	}
+}
+
 func TestContentMegaMenuForURLUsesRewriteSlugFromRegistry(t *testing.T) {
 	engine := newArchiveURLTestEngine()
 	svc := &PageService{
@@ -161,6 +200,59 @@ func TestBlogTemplateRendersCorePagination(t *testing.T) {
 		if !strings.Contains(templateBody, want) {
 			t.Fatalf("blog template is missing pagination marker %q", want)
 		}
+	}
+}
+
+func TestBlogTemplateLinksCardImagesToPost(t *testing.T) {
+	body, err := os.ReadFile("templates/pages/blog.tmpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	templateBody := string(body)
+	link := `<a href="{{langPrefixURL $.Ctx (contentURL . "post")}}" class="blog-card-image-link" aria-label="{{.Title}}">`
+	if !strings.Contains(templateBody, link) {
+		t.Fatalf("blog card image link is missing: %s", link)
+	}
+}
+
+func TestPostDetailTemplateProvidesSocialShareActions(t *testing.T) {
+	body, err := os.ReadFile("templates/pages/post-detail.tmpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	templateBody := string(body)
+	for _, want := range []string{
+		`https://x.com/intent/tweet?url=`,
+		`https://www.facebook.com/sharer/sharer.php?u=`,
+		`https://www.linkedin.com/sharing/share-offsite/?url=`,
+		`https://www.pinterest.com/pin/create/button/?url=`,
+		`{{urlquery .SEO.CanonicalURL}}`,
+		`class="post-share-button post-share-copy"`,
+		`aria-live="polite"`,
+	} {
+		if !strings.Contains(templateBody, want) {
+			t.Fatalf("post detail template is missing social share marker %q", want)
+		}
+	}
+}
+
+func TestPostShareRailDoesNotConsumeArticleGridWidth(t *testing.T) {
+	body, err := os.ReadFile("static/css/style.css")
+	if err != nil {
+		t.Fatal(err)
+	}
+	stylesheet := string(body)
+	for _, want := range []string{
+		`grid-template-columns: minmax(0, 1fr) 320px;`,
+		`transform: translateX(-68px);`,
+		`@media (max-width: 1380px)`,
+	} {
+		if !strings.Contains(stylesheet, want) {
+			t.Fatalf("post share layout is missing %q", want)
+		}
+	}
+	if strings.Contains(stylesheet, `grid-template-columns: 44px minmax(0, 1fr) 320px;`) {
+		t.Fatal("post share rail must not consume a dedicated desktop grid column")
 	}
 }
 

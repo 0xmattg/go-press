@@ -117,8 +117,12 @@ current connection configuration and operations.
 
 ## Extension Boundaries
 
-- **Core-type protection** — `post`, `page`, `contact_message`, `category`, and
-  `tag` survive every theme switch.
+- **Core model protection** — content types `post`, `page`, and
+  `contact_message`, plus taxonomies `category` and `tag`, survive every theme
+  switch.
+- **Generic request scopes** — content and taxonomy scopes let extensions add
+  language, tenant, visibility, or preview constraints without adding those
+  policies to core or themes.
 - **Config-driven theme models** — admin CRUD, REST, rewrites, and templates read
   the active content registry rather than special-casing business type names.
 - **Hot theme and plugin changes** — routes and cache are rebuilt; plugins remove

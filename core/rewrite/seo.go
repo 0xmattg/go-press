@@ -17,16 +17,23 @@ import (
 // Plugins can filter SEOMeta before rendering to provide per-content overrides,
 // robots directives, social images, or structured-data extensions.
 type SEOMeta struct {
-	Title         string `json:"title"`
-	Description   string `json:"description"`
-	CanonicalURL  string `json:"canonical_url"`
-	OGTitle       string `json:"og_title"`
-	OGDescription string `json:"og_description"`
-	OGImage       string `json:"og_image"`
-	OGType        string `json:"og_type"`   // "website", "article"
-	Robots        string `json:"robots"`    // "index,follow"
-	JSONLD        string `json:"json_ld"`   // JSON-LD structured data
-	SiteIcon      string `json:"site_icon"` // Favicon URL (rendered as <link rel="icon">)
+	Title         string         `json:"title"`
+	Description   string         `json:"description"`
+	CanonicalURL  string         `json:"canonical_url"`
+	OGTitle       string         `json:"og_title"`
+	OGDescription string         `json:"og_description"`
+	OGImage       string         `json:"og_image"`
+	OGType        string         `json:"og_type"`   // "website", "article"
+	Robots        string         `json:"robots"`    // "index,follow"
+	JSONLD        string         `json:"json_ld"`   // JSON-LD structured data
+	SiteIcon      string         `json:"site_icon"` // Favicon URL (rendered as <link rel="icon">)
+	Alternates    []SEOAlternate `json:"alternates,omitempty"`
+}
+
+// SEOAlternate is one language-specific canonical equivalent.
+type SEOAlternate struct {
+	HrefLang string `json:"hreflang"`
+	Href     string `json:"href"`
 }
 
 // SEOBuilder constructs default SEO metadata from site settings and content.
@@ -155,6 +162,12 @@ func (b *SEOBuilder) RenderHead(meta SEOMeta) template.HTML {
 	if meta.CanonicalURL != "" {
 		sb.WriteString(fmt.Sprintf(`<link rel="canonical" href="%s">`+"\n", escAttr(meta.CanonicalURL)))
 	}
+	for _, alternate := range meta.Alternates {
+		if strings.TrimSpace(alternate.HrefLang) == "" || strings.TrimSpace(alternate.Href) == "" {
+			continue
+		}
+		sb.WriteString(fmt.Sprintf(`<link rel="alternate" hreflang="%s" href="%s">`+"\n", escAttr(alternate.HrefLang), escAttr(alternate.Href)))
+	}
 
 	// Favicon — used by browsers and surfaced in Google search results.
 	if meta.SiteIcon != "" {
@@ -168,11 +181,17 @@ func (b *SEOBuilder) RenderHead(meta SEOMeta) template.HTML {
 	if meta.OGDescription != "" {
 		sb.WriteString(fmt.Sprintf(`<meta property="og:description" content="%s">`+"\n", escAttr(meta.OGDescription)))
 	}
+	if meta.CanonicalURL != "" {
+		sb.WriteString(fmt.Sprintf(`<meta property="og:url" content="%s">`+"\n", escAttr(meta.CanonicalURL)))
+	}
 	if meta.OGImage != "" {
 		sb.WriteString(fmt.Sprintf(`<meta property="og:image" content="%s">`+"\n", escAttr(meta.OGImage)))
 	}
 	if meta.OGType != "" {
 		sb.WriteString(fmt.Sprintf(`<meta property="og:type" content="%s">`+"\n", escAttr(meta.OGType)))
+	}
+	if b.siteName != "" {
+		sb.WriteString(fmt.Sprintf(`<meta property="og:site_name" content="%s">`+"\n", escAttr(b.siteName)))
 	}
 
 	// JSON-LD

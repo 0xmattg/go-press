@@ -63,7 +63,7 @@ admin workflows instead.
 | `page` | Page number, starting at 1. |
 | `per_page` | Items per page. |
 | `sort` | Field and direction, such as `created_at:desc`. |
-| `lang` | Language code when multilingual support is active. |
+| `lang` | Language code when multilingual support is active; content and taxonomy filters use the same request scope. |
 
 ## Regenerate Swagger
 

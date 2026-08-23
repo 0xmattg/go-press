@@ -92,6 +92,7 @@
 <!-- Sub-tab Navigation -->
 <div class="ml-subtabs">
     <button type="button" class="ml-subtab active" data-subtab="content-trans">{{X $ "plugin.multilang.ui.016" "内容翻译"}}</button>
+    <button type="button" class="ml-subtab" data-subtab="taxonomy-trans">{{X $ "plugin.multilang.taxonomy.tab" "分类与标签翻译"}}</button>
     <button type="button" class="ml-subtab" data-subtab="menu-trans">{{X $ "plugin.multilang.ui.017" "菜单翻译"}}</button>
     <button type="button" class="ml-subtab" data-subtab="string-trans">{{X $ "plugin.multilang.ui.018" "字符串翻译"}}</button>
     <button type="button" class="ml-subtab" data-subtab="option-trans">{{X $ "plugin.multilang.ui.019" "主题设置翻译"}}</button>
@@ -167,6 +168,64 @@
     </div>
     {{end}}
 </div><!-- /subtab-content-trans -->
+
+<!-- Sub-tab: Taxonomy translations -->
+<div class="ml-subtab-panel" id="subtab-taxonomy-trans">
+    <span id="taxonomy-translations"></span>
+    <h3 class="ts-section-title">{{X $ "plugin.multilang.taxonomy.title" "分类与标签翻译"}}</h3>
+    <p class="ts-hint">{{X $ "plugin.multilang.taxonomy.hint" "基础路径 category / tag 保持不变；选择独立翻译后，每种语言使用各自的名称、Slug、描述和层级。共享模式保持现有网站行为。"}}</p>
+
+    <div class="ml-tax-policy-grid">
+        {{range .TaxonomyPolicies}}
+        <label class="ml-tax-policy-card">
+            <span><strong>{{adminTaxonomyLabel $.AdminLanguage .Type .Label}}</strong><code>{{.Type}}</code></span>
+            <select name="plugin_multi-language_taxonomy_{{.Type}}_mode" aria-label="{{adminTaxonomyLabel $.AdminLanguage .Type .Label}} {{X $ "plugin.multilang.taxonomy.mode" "翻译模式"}}">
+                <option value="shared" {{if eq .Mode "shared"}}selected{{end}}>{{X $ "plugin.multilang.taxonomy.shared" "共享（兼容现有行为）"}}</option>
+                <option value="translated_only" {{if eq .Mode "translated_only"}}selected{{end}}>{{X $ "plugin.multilang.taxonomy.independent" "按语言独立翻译"}}</option>
+            </select>
+        </label>
+        {{end}}
+    </div>
+    <p class="ts-hint">{{X $ "plugin.multilang.taxonomy.save_first" "切换模式后请先点击页面底部的“保存设置”，再创建翻译。已有分类、标签和文章关系不会被迁移或删除。"}}</p>
+
+    {{if .HasTranslatedTaxonomies}}
+    {{if .TaxonomyItems}}
+    <div class="ml-trans-table-wrap">
+        <table class="ml-table ml-taxonomy-table">
+            <thead><tr>
+                <th style="width:80px;">{{X $ "plugin.multilang.ui.024" "类型"}}</th>
+                <th>{{X $ "plugin.multilang.taxonomy.term" "分类项"}}</th>
+                {{range .Languages}}<th style="width:100px;text-align:center;">{{.Flag}} {{.Code}}</th>{{end}}
+            </tr></thead>
+            <tbody>
+                {{$langs := .Languages}}
+                {{range .TaxonomyItems}}
+                {{$view := .}}
+                <tr data-type="{{.Type}}">
+                    <td><span class="ml-type-badge">{{adminTaxonomyLabel $.AdminLanguage .Type .TypeLabel}}</span></td>
+                    <td><strong>{{.Name}}</strong><span class="ml-slug-text">/{{.Type}}/{{.Slug}}</span></td>
+                    {{range $langs}}
+                    {{$targetID := index $view.Translations .Code}}
+                    <td style="text-align:center;">
+                        {{if $targetID}}
+                        <a class="ml-trans-edit" href="/admin/{{$view.AdminSlug}}?lang={{.Code}}#taxonomy-{{$targetID}}" title="{{X $ "plugin.multilang.taxonomy.edit" "编辑该语言分类项"}}">✏️</a>
+                        {{else}}
+                        <button type="button" class="ml-trans-add" data-taxonomy-id="{{$view.ID}}" data-target-lang="{{.Code}}" data-lang-name="{{.Name}}" data-source-name="{{$view.Name}}" data-source-slug="{{$view.Slug}}" data-source-description="{{$view.Description}}" onclick="createTaxonomyTranslation(this)" title="{{X $ "plugin.multilang.taxonomy.create" "创建分类/标签翻译"}}">➕</button>
+                        {{end}}
+                    </td>
+                    {{end}}
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+    {{else}}
+    <div class="ml-empty-state"><p>{{X $ "plugin.multilang.taxonomy.empty" "暂无分类或标签数据。"}}</p></div>
+    {{end}}
+    {{else}}
+    <div class="ml-empty-state"><p>{{X $ "plugin.multilang.taxonomy.enable_hint" "先将 Category 或 Tag 切换为“按语言独立翻译”并保存设置，随后即可在这里建立翻译关系。"}}</p></div>
+    {{end}}
+</div><!-- /subtab-taxonomy-trans -->
 
 <!-- Sub-tab: Menu translations -->
 <div class="ml-subtab-panel" id="subtab-menu-trans">
@@ -466,12 +525,14 @@
 
     <div class="ml-help-section">
         <h4>📋 {{X $ "plugin.multilang.ui.082" "数据表结构"}}</h4>
-        <p>{{X $ "plugin.multilang.ui.083" "插件使用 4 张独立表："}}</p>
+        <p>{{X $ "plugin.multilang.ui.083" "插件使用 6 张独立表："}}</p>
         <ul>
             <li><code>gp_plgn_multilang_translations</code> — {{X $ "plugin.multilang.ui.084" "内容翻译关联表 (trid 链接)"}}</li>
             <li><code>gp_plgn_multilang_languages</code> — {{X $ "plugin.multilang.ui.085" "启用的语言列表"}}</li>
             <li><code>gp_plgn_multilang_string_translations</code> — {{X $ "plugin.multilang.ui.086" "UI 字符串翻译"}}</li>
             <li><code>gp_plgn_multilang_menu_translations</code> — {{X $ "plugin.multilang.ui.087" "菜单翻译关联表"}}</li>
+            <li><code>gp_plgn_multilang_taxonomy_translation_groups</code> — {{X $ "plugin.multilang.taxonomy.group_table" "分类与标签翻译组"}}</li>
+            <li><code>gp_plgn_multilang_taxonomy_translations</code> — {{X $ "plugin.multilang.taxonomy.link_table" "分类与标签语言关联表"}}</li>
         </ul>
     </div>
 </div>
@@ -544,8 +605,38 @@
     border-bottom-color: #2563eb;
     font-weight: 600;
 }
+.ml-subtab:focus-visible,
+.ml-trans-add:focus-visible,
+.ml-trans-edit:focus-visible,
+.ml-tax-policy-card select:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
 .ml-subtab-panel { display: none; }
 .ml-subtab-panel.active { display: block; }
+.ml-tax-policy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+.ml-tax-policy-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+.ml-tax-policy-card span { display:flex; flex-direction:column; gap:0.2rem; }
+.ml-tax-policy-card code { color:#64748b; font-size:0.75rem; }
+.ml-tax-policy-card select { min-width:170px; padding:0.4rem 0.55rem; border:1px solid #cbd5e1; border-radius:6px; background:#fff; }
+@media (max-width: 640px) {
+    .ml-tax-policy-card { align-items:stretch; flex-direction:column; }
+    .ml-tax-policy-card select { width:100%; }
+}
 .ml-loc-card {
     border: 1px solid #e2e8f0;
     border-radius: 8px;
@@ -864,7 +955,12 @@ var mlText = {
     cloneTo: {{toJSON (X $ "plugin.multilang.js.clone_to" "将克隆当前内容到 %s (%s)。")}},
     createFailed: {{toJSON (X $ "plugin.multilang.js.create_failed" "创建翻译失败")}},
     visibleCount: {{toJSON (X $ "plugin.multilang.js.visible_count" "显示 %d / %d 条")}},
-    totalTranslations: {{toJSON (X $ "plugin.multilang.js.total_translations" "%d 条翻译")}}
+    totalTranslations: {{toJSON (X $ "plugin.multilang.js.total_translations" "%d 条翻译")}},
+    taxonomyTranslationTitle: {{toJSON (X $ "plugin.multilang.js.taxonomy_translation" "创建分类/标签翻译")}},
+    targetLanguage: {{toJSON (X $ "plugin.multilang.js.target_language" "目标语言：%s (%s)")}},
+    taxonomyName: {{toJSON (X $ "plugin.multilang.js.taxonomy_name" "名称")}},
+    taxonomySlug: {{toJSON (X $ "plugin.multilang.js.taxonomy_slug" "Slug")}},
+    taxonomyDescription: {{toJSON (X $ "plugin.multilang.js.taxonomy_description" "描述")}}
 };
 
 function mlFormat(template) {
@@ -1073,6 +1169,64 @@ function createTranslation(contentID, targetLang, langName) {
         }).catch(function(err) {
             alert(mlText.createFailed + ': ' + err.message);
         });
+    };
+}
+
+function createTaxonomyTranslation(button) {
+    var taxonomyID = button.dataset.taxonomyId;
+    var targetLang = button.dataset.targetLang;
+    var langName = button.dataset.langName;
+    var sourceName = button.dataset.sourceName;
+    var sourceSlug = button.dataset.sourceSlug;
+    var sourceDescription = button.dataset.sourceDescription;
+    var modal = document.getElementById('mlTaxonomyTranslateModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'mlTaxonomyTranslateModal';
+        modal.className = 'ml-dialog-backdrop';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.48);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;';
+        modal.innerHTML = '<div role="dialog" aria-modal="true" aria-labelledby="mlTaxDialogTitle" style="background:#fff;border-radius:10px;width:min(480px,100%);padding:24px;box-shadow:0 20px 50px rgba(15,23,42,.25);">'
+            + '<h3 id="mlTaxDialogTitle" style="margin:0 0 6px;font-size:17px;">' + mlText.taxonomyTranslationTitle + '</h3>'
+            + '<p id="mlTaxDialogHint" style="margin:0 0 18px;color:#64748b;font-size:13px;"></p>'
+            + '<label class="form-group" style="display:block;margin-bottom:12px;"><span>' + mlText.taxonomyName + '</span><input id="mlTaxName" type="text" required style="width:100%;"></label>'
+            + '<label class="form-group" style="display:block;margin-bottom:12px;"><span>' + mlText.taxonomySlug + '</span><input id="mlTaxSlug" type="text" required style="width:100%;"></label>'
+            + '<label class="form-group" style="display:block;margin-bottom:18px;"><span>' + mlText.taxonomyDescription + '</span><textarea id="mlTaxDescription" rows="3" style="width:100%;"></textarea></label>'
+            + '<div style="display:flex;gap:8px;justify-content:flex-end;"><button type="button" id="mlTaxCancel" class="btn btn-secondary">' + mlText.cancel + '</button><button type="button" id="mlTaxConfirm" class="btn btn-primary">' + mlText.confirmCreate + '</button></div>'
+            + '</div>';
+        document.body.appendChild(modal);
+    }
+    modal.querySelector('#mlTaxDialogHint').textContent = mlFormat(mlText.targetLanguage, langName, targetLang);
+    modal.querySelector('#mlTaxName').value = sourceName + ' [' + targetLang + ']';
+    modal.querySelector('#mlTaxSlug').value = sourceSlug;
+    modal.querySelector('#mlTaxDescription').value = sourceDescription || '';
+    modal.style.display = 'flex';
+    modal.querySelector('#mlTaxName').focus();
+
+    function closeTaxonomyModal() {
+        modal.style.display = 'none';
+        modal.onkeydown = null;
+        modal.querySelector('#mlTaxCancel').onclick = null;
+        modal.querySelector('#mlTaxConfirm').onclick = null;
+        button.focus();
+    }
+    modal.onkeydown = function(event) {
+        if (event.key === 'Escape') closeTaxonomyModal();
+    };
+    modal.querySelector('#mlTaxCancel').onclick = closeTaxonomyModal;
+    modal.querySelector('#mlTaxConfirm').onclick = function() {
+        var name = modal.querySelector('#mlTaxName').value.trim();
+        var slug = modal.querySelector('#mlTaxSlug').value.trim();
+        if (!name || !slug) return;
+        var form = new FormData();
+        form.append('taxonomy_id', taxonomyID);
+        form.append('target_lang', targetLang);
+        form.append('name', name);
+        form.append('slug', slug);
+        form.append('description', modal.querySelector('#mlTaxDescription').value);
+        closeTaxonomyModal();
+        fetch('/admin/plugins/multi-language/taxonomy-translate', {method:'POST', body:form})
+            .then(function(resp) { window.location.href = resp.redirected ? resp.url : '/admin/plugins/multi-language/settings#taxonomy-translations'; })
+            .catch(function(err) { alert(mlText.createFailed + ': ' + err.message); });
     };
 }
 

@@ -37,11 +37,13 @@ data unless an explicit uninstall workflow says otherwise.
 | Extension point | Purpose |
 |---|---|
 | `admin.content_list.tabs` | Add filtered content-list tabs and counts. |
+| `admin.taxonomy_list.tabs` | Add request-aware variants above taxonomy lists. |
 | `admin.content.permalink_prefix` | Add contextual editor URL prefixes. |
 | `admin.content_form.fields` | Add editor meta boxes. |
 | `admin.content.saved` | Persist extension-owned form values. |
 | `admin.dashboard.widgets` | Add permission-aware dashboard summaries. |
 | `seo.content.meta` | Transform single-page SEO metadata. |
+| `seo.taxonomy.meta` | Add canonical alternates to taxonomy archives. |
 | `theme.head.end`, `theme.body.open`, `theme.footer.end` | Inject site-level markup at semantic frontend slots. |
 | `header.nav.after` | Add a primary-navigation extension item. |
 
@@ -52,7 +54,7 @@ The [Hook System](../architecture/hooks.md) and
 
 | Plugin | Purpose |
 |---|---|
-| `multilang` | WPML-like content translation, menu assignment, language-prefixed URLs, and theme setting translations. |
+| `multilang` | WPML-like content and optional Category/Tag translation, menu assignment, canonical language-prefixed URLs, and setting translations. |
 | `seo-extras` | Yoast-like per-content SEO title, description, Open Graph image, and robots overrides. |
 | `code-snippets` | WPCode-like site-level HTML/JS injection into head, body, and footer slots. |
 | `gopress-analytics` | First-party self-hosted page-view, visitor, trend, and top-page analytics. |

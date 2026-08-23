@@ -105,12 +105,12 @@ h1{font-size:28px;margin-bottom:12px}
 <h1>{{.Title}}</h1>
 <div class="meta">
 {{if .Item.PublishedAt}}{{.Item.PublishedAt.Format "2006-01-02"}}{{end}}
-{{range .Categories}}<a class="badge" href="/category/{{.Slug}}">{{.Name}}</a>{{end}}
+{{range .Categories}}<a class="badge" href="{{.URL}}">{{.Name}}</a>{{end}}
 </div>
 <div class="content">{{.Item.Content | safeHTML}}</div>
 {{if .Tags}}
 <div class="tags">
-{{range .Tags}}<a class="tag" href="/tag/{{.Slug}}">{{.Name}}</a>{{end}}
+{{range .Tags}}<a class="tag" href="{{.URL}}">{{.Name}}</a>{{end}}
 </div>
 {{end}}
 <a class="back" href="/">← 返回首页</a>

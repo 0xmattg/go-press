@@ -171,7 +171,7 @@ gopress serve     # 装完之后任意目录都能跑
 |---|---|
 | [介绍](docs/guide/zh-CN/README.md) | 项目定位、设计原则 |
 | [快速开始](docs/guide/zh-CN/getting-started/installation.md) | 安装、配置、Web 安装器 |
-| [架构](docs/guide/zh-CN/architecture/overview.md) | 引擎启动流程、内容模型、前台身份登录、前台用户内容提交、登录用户评论、URL/SEO、缓存、i18n、Content Scope、Hook 系统 |
+| [架构](docs/guide/zh-CN/architecture/overview.md) | 引擎启动流程、内容与 taxonomy 模型、前台身份登录、前台用户内容提交、登录用户评论、URL/SEO、缓存、i18n、Content/Taxonomy Scope、Hook 系统 |
 | [后台管理](docs/guide/zh-CN/admin/overview.md) | 后台 CMS、独立页面、扩展点、菜单管理 |
 | [主题开发](docs/guide/zh-CN/themes/overview.md) | 创建主题、SEO 接入规范、图片管线、媒体变体 |
 | [插件开发](docs/guide/zh-CN/plugins/overview.md) | 创建插件、Hook 列表、内置插件与插件专属配置 |
@@ -257,6 +257,8 @@ Tool 入参、curl 验证和排障见
 - **独立页面** — 内置 `page` 类型，用于 About/条款/隐私等独立页：根级永久链接（`/about`）、层级父页面、按页选主题模板、以及 iframe 白名单的嵌入代码字段。详见[独立页面](docs/guide/zh-CN/admin/pages.md)
 - **配置驱动内容路由** — `theme.toml` 的 `rewrite_slug` 和可选 `templates = { archive = "...", single = "..." }` 统一驱动归档 URL、详情 URL、Sitemap、后台永久链接和动态模板解析。`product` / `service` / `showcase` 只是示例类型，不是框架内置假设。
 - **链式查询构建器** — 下面以主题声明的 `product` 内容类型为例：`ContentQuery.Type("product").Published().Taxonomy("category", "hepa").Paginate(1, 20)`
+- **可作用域化的分类核心** — 通用请求 Scope 覆盖 term 查找、树、引用次数、内容关系和写入校验；插件可以提供按语言或租户隔离的 Category/Tag identity，core 不需要理解“语言”概念
+- **受保护的分类命令服务** — 创建、更新、删除、父级选择、作用域内 Slug 唯一性和内容关系写入统一经过事务、注册类型及 Scope 校验
 - **Hook 事件总线** — `AddAction` / `DoAction` / `AddFilter` / `ApplyFilter`，热拔插友好（每个 Add 返回 `Handle` 可精准 Remove）
 - **多级缓存** — L1 内存 + L2 Redis，自动降级，页面缓存中间件 < 1ms 命中
 - **Worker Pool** — Goroutine 工作池 + Cron 定时调度
@@ -268,7 +270,7 @@ Tool 入参、curl 验证和排障见
 - **SEOBuilder** — home/archive/single 三类页面统一生成 `<meta description>` + `<link canonical>` + `og:*` + JSON-LD（Article/WebSite schema）+ 爬虫友好的 favicon links
 - **`seoHeadFor` 模板助手** — reflection-based 安全实现，对 `gin.H` 和自定义 struct 都不会因字段缺失白屏
 - **Per-content SEO 覆盖** — 内置 `seo-extras` 插件提供 Yoast 风格 4 字段覆盖（Title / Description / OG Image / Robots），核心通过 `seo.content.meta` filter 开放扩展
-- **Sitemap 多语言 hreflang** — `SitemapGenerator.AddTransformer()` 让多语言插件按需贡献 `<xhtml:link hreflang>` 备选链接
+- **Sitemap 多语言 hreflang** — `SitemapGenerator.AddTransformer()` 与 taxonomy SEO filter 让多语言插件为内容及独立翻译的分类/标签贡献 `<xhtml:link hreflang>` 备选链接
 - **站点级公开生成物** — 后台生成的 sitemap 和 favicon 文件写入 `sites/{host}/public/`，多站点部署互不覆盖
 - **301/302 重定向** — 数据库驱动 + 内存缓存 + 命中计数
 
@@ -282,7 +284,7 @@ Tool 入参、curl 验证和排障见
 - **评论审核** — 支持待审核、已批准、垃圾评论和回收站筛选及服务端分页，可跳转到关联内容或父评论，并强制校验 `comment.moderate` RBAC 权限
 - **邮件设置与通知** — 独立 SMTP 设置页，默认使用 go-mail SMTP 驱动并保留 Go 标准库选项，`mail.mail_key` 保存在站点级 `config.toml`，支持 Gmail 常用的 `587 + STARTTLS`、测试邮件和新联系留言邮件通知开关
 - **拖拽排序 + 富文本** — Quill 2.0 编辑器、媒体选择器、内容列表 HTML5 DnD
-- **后台扩展点** — `admin.HookContentListTabs` / `admin.HookContentPermalinkPrefix` / `admin.content_form.fields` / `admin.content.saved` / `mail.message` 等通用 hook，多语言/SEO/通知等插件按需注入
+- **后台扩展点** — `admin.HookContentListTabs` / `admin.HookTaxonomyListTabs` / `admin.HookContentPermalinkPrefix` / `admin.content_form.fields` / `admin.content.saved` / `mail.message` 等通用 hook，多语言/SEO/通知等插件按需注入
 
 ### 主题与插件
 
@@ -301,7 +303,7 @@ Tool 入参、curl 验证和排障见
 
 ### 内置插件
 
-- **multilang** — WPML 风格内容翻译 + 菜单翻译 + 网站设置翻译 + 语言前缀路由 + 智能跳转
+- **multilang** — WPML 风格内容翻译 + 可选 Category/Tag 独立翻译 + 菜单与网站设置翻译 + 规范语言前缀路由 + 智能跳转
 - **seo-extras** — Yoast 风格 per-content SEO 覆盖（4 字段：title/description/og:image/robots）
 - **code-snippets** — WPCode 风格站点级代码注入（`<head>` 末尾、`<body>` 开头、`</body>` 前）
 - **gopress-analytics** — GoPress 官方自托管访问统计，支持 PV、UV、新访客、访问趋势、访客构成和热门页面分析

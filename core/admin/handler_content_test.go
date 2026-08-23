@@ -122,6 +122,7 @@ func TestContentFormHookReceivesStableCoreArgs(t *testing.T) {
 		"TypeName":      "post",
 		"Slug":          "posts",
 		"Item":          view,
+		"Permalink":     "/blog/seo-post",
 		"HookItem":      item,
 		"BackURL":       "/admin/posts",
 		"BackQuery":     "",
@@ -155,6 +156,80 @@ func TestContentFormHookReceivesStableCoreArgs(t *testing.T) {
 	}
 	if len(captured) != 3 || captured[0] != ctx || captured[1] != item || captured[2] != typeDef {
 		t.Fatalf("unexpected hook args: %#v", captured)
+	}
+}
+
+func TestAttachAdminContentPermalinksUsesEachRowsExtensionContext(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	ctx, _ := gin.CreateTestContext(httptest.NewRecorder())
+	registry := content.NewRegistry()
+	registry.RegisterType(content.ContentTypeDef{
+		Name: "post", Rewrite: content.RewriteRule{Slug: "blog"},
+	})
+	bus := hook.New()
+	bus.AddFilter(HookContentPermalinkPrefix, func(value interface{}, args ...interface{}) interface{} {
+		item := args[1].(*content.Content)
+		if item.ID == 2 {
+			return "/zh"
+		}
+		return value
+	}, 10)
+	h := &Handler{registry: registry, hooks: bus}
+	items := []content.Content{
+		{ID: 1, Type: "post", Slug: "english"},
+		{ID: 2, Type: "post", Slug: "zhongwen"},
+	}
+	views := []DynamicContentView{{ID: 1}, {ID: 2}}
+
+	h.attachAdminContentPermalinks(ctx, items, views)
+
+	if views[0].Permalink != "/blog/english" {
+		t.Fatalf("default-language permalink = %q", views[0].Permalink)
+	}
+	if views[1].Permalink != "/zh/blog/zhongwen" {
+		t.Fatalf("translated permalink = %q", views[1].Permalink)
+	}
+}
+
+func TestContentListTemplateUsesResolvedPermalink(t *testing.T) {
+	registry := content.NewRegistry()
+	typeDef := &content.ContentTypeDef{
+		Name: "post", Label: "Post", LabelPlural: "Posts", Rewrite: content.RewriteRule{Slug: "blog"},
+	}
+	registry.RegisterType(*typeDef)
+	h := &Handler{svc: &Service{rbac: user.NewRBAC()}, registry: registry}
+	h.buildFuncMap()
+	tmpl, err := template.New("content_list_test").Funcs(h.funcMap).
+		ParseFiles(filepath.Join("templates", "pages", "content_list.tmpl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var out bytes.Buffer
+	err = tmpl.ExecuteTemplate(&out, "content", gin.H{
+		"AdminLanguage": defaultAdminLanguage,
+		"CurrentRole":   user.RoleSuperAdmin,
+		"Title":         "Posts",
+		"TypeDef":       typeDef,
+		"TypeName":      "post",
+		"Slug":          "posts",
+		"VisibleColumns": map[string]bool{
+			"title": true,
+		},
+		"TableColumnCount": 1,
+		"Items": []DynamicContentView{{
+			ID: 2, Title: "中文文章", Slug: "zhongwen", Permalink: "/zh/blog/zhongwen",
+		}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	rendered := out.String()
+	if !strings.Contains(rendered, `href="/zh/blog/zhongwen"`) {
+		t.Fatalf("resolved multilingual permalink missing from content list: %s", rendered)
+	}
+	if strings.Contains(rendered, `href="/blog/zhongwen"`) {
+		t.Fatalf("content list reconstructed an unprefixed permalink: %s", rendered)
 	}
 }
 

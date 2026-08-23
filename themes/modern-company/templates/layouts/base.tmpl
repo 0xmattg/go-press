@@ -10,11 +10,18 @@
     <meta name="description" content="{{settingOr $.Settings "site_description" "Modern company website powered by GoPress."}}">
     {{faviconLinks $siteIcon}}
     {{end}}
+    {{if and (eq .ActivePage "blog") (eq .SEO.OGType "article")}}
+    <meta name="twitter:card" content="{{if .SEO.OGImage}}summary_large_image{{else}}summary{{end}}">
+    {{if .SEO.OGTitle}}<meta name="twitter:title" content="{{.SEO.OGTitle}}">{{end}}
+    {{if .SEO.OGDescription}}<meta name="twitter:description" content="{{.SEO.OGDescription}}">{{end}}
+    {{if .SEO.OGImage}}<meta name="twitter:image" content="{{.SEO.OGImage}}">
+    {{if .SEO.OGTitle}}<meta name="twitter:image:alt" content="{{.SEO.OGTitle}}">{{end}}{{end}}
+    {{end}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     {{if eq .ActivePage "home"}}{{responsiveImagePreload (settingOr .Settings "home_hero_1_image" "https://images.unsplash.com/photo-1584677123573-7446380b6d69?w=1600&h=900&fit=crop&q=80") "100vw"}}{{end}}
-    <link rel="stylesheet" href="/static/css/style.css?v=82">
+    <link rel="stylesheet" href="/static/css/style.css?v=84">
     {{renderHook "theme.head.end" .}}
 </head>
 <body>
@@ -28,7 +35,7 @@
     {{template "footer" .}}
 
     <button id="scroll-top" class="scroll-top" aria-label="Scroll to top">&#8679;</button>
-    <script src="/static/js/main.js?v=6"></script>
+    <script src="/static/js/main.js?v=7"></script>
     {{renderHook "theme.footer.end" .}}
 </body>
 </html>{{end}}

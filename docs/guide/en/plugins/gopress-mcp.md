@@ -269,4 +269,4 @@ was rejected by authorization, policy, or the domain command.
 The implementation-oriented design is documented in the
 [Agent and MCP module](../agent/overview.md). Full phase decisions, threat model,
 and later phases are currently documented in the
-[Chinese Agent and MCP capability plan](../../zh-CN/architecture/mcp-agent-capability-plan.md).
+[Roadmap and Contributions](../reference/roadmap.md).

@@ -3,10 +3,16 @@
     <h2>{{adminTaxonomyLabel .AdminLanguage .TaxType .TaxDef.LabelPlural}}</h2>
 </div>
 
+{{if .Tabs}}
+<div class="content-list-tabs" role="navigation" aria-label="{{T . "field.language"}}">
+    {{range .Tabs}}<a class="content-list-tab{{if .Active}} active{{end}}" href="{{.URL}}"{{if .Active}} aria-current="page"{{end}}>{{.Label}}{{if gt .Count 0}} <span class="content-list-tab-count">{{.Count}}</span>{{end}}</a>{{end}}
+</div>
+{{end}}
+
 {{if can .CurrentRole .TaxType "create"}}
 <div class="card">
     <div class="card-header"><h3>{{T . "taxonomy.new" (adminTaxonomyLabel .AdminLanguage .TaxType .TaxDef.Label)}}</h3></div>
-    <form method="POST" action="/admin/{{.Slug}}" class="inline-create-form">
+    <form method="POST" action="/admin/{{.Slug}}{{if .CurrentQuery}}?{{.CurrentQuery}}{{end}}" class="inline-create-form">
         <div class="form-row">
             <div class="form-group">
                 <input type="text" name="name" placeholder="{{T . "taxonomy.name_placeholder" (adminTaxonomyLabel .AdminLanguage .TaxType .TaxDef.Label)}}" required>
@@ -14,6 +20,17 @@
             <div class="form-group">
                 <input type="text" name="slug" placeholder="slug" required>
             </div>
+            <div class="form-group">
+                <input type="text" name="description" placeholder="{{T . "field.description"}}">
+            </div>
+            {{if .TaxDef.Hierarchical}}
+            <div class="form-group">
+                <select name="parent_id" aria-label="{{T . "taxonomy.parent"}}">
+                    <option value="">{{T . "taxonomy.no_parent"}}</option>
+                    {{range .Items}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+                </select>
+            </div>
+            {{end}}
             <button type="submit" class="btn btn-primary">{{T . "action.add"}}</button>
         </div>
     </form>
@@ -21,19 +38,22 @@
 {{end}}
 
 <div class="card">
-    <table class="data-table">
+    <div class="taxonomy-table-wrap">
+    <table class="data-table taxonomy-table">
         <thead>
             <tr>
                 <th>ID</th>
                 <th>{{T . "field.name"}}</th>
                 <th>Slug</th>
+                <th>{{T . "field.description"}}</th>
+                {{if .TaxDef.Hierarchical}}<th>{{T . "taxonomy.parent"}}</th>{{end}}
                 <th class="taxonomy-reference-count-col">{{T . "taxonomy.reference_count"}}</th>
                 <th>{{T . "field.actions"}}</th>
             </tr>
         </thead>
         <tbody>
             {{range .Items}}
-            <tr>
+            <tr id="taxonomy-{{.ID}}">
                 <td>{{.ID}}</td>
                 {{if can $.CurrentRole $.TaxType "update"}}
                 <td>
@@ -55,17 +75,29 @@
                         class="inline-input"
                         form="tax-edit-{{$.TaxType}}-{{.ID}}">
                 </td>
+                <td>
+                    <input type="text" name="description" value="{{.Description}}" class="inline-input" form="tax-edit-{{$.TaxType}}-{{.ID}}">
+                </td>
+                {{if $.TaxDef.Hierarchical}}
+                {{$row := .}}
+                <td>
+                    <select name="parent_id" class="inline-input" form="tax-edit-{{$.TaxType}}-{{.ID}}" aria-label="{{T $ "taxonomy.parent"}}">
+                        <option value="">{{T $ "taxonomy.no_parent"}}</option>
+                        {{range $.Items}}{{if ne .ID $row.ID}}<option value="{{.ID}}" {{if eq .ID $row.ParentID}}selected{{end}}>{{.Name}}</option>{{end}}{{end}}
+                    </select>
+                </td>
+                {{end}}
                 <td class="taxonomy-reference-count-col"><span class="taxonomy-reference-count">{{.ReferenceCount}}</span></td>
                 <td class="actions">
                     <form
                         method="POST"
-                        action="/admin/{{$.Slug}}/{{.ID}}/edit"
+                        action="/admin/{{$.Slug}}/{{.ID}}/edit{{if $.CurrentQuery}}?{{$.CurrentQuery}}{{end}}"
                         class="inline-form"
                         id="tax-edit-{{$.TaxType}}-{{.ID}}">
                         <button type="submit" class="btn btn-sm">{{T $ "action.save"}}</button>
                     </form>
                     {{if can $.CurrentRole $.TaxType "delete"}}
-                    <form method="POST" action="/admin/{{$.Slug}}/{{.ID}}/delete" class="inline-form">
+                    <form method="POST" action="/admin/{{$.Slug}}/{{.ID}}/delete{{if $.CurrentQuery}}?{{$.CurrentQuery}}{{end}}" class="inline-form">
                         <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('{{T $ "confirm.delete"}}')">{{T $ "action.delete"}}</button>
                     </form>
                     {{end}}
@@ -73,10 +105,12 @@
                 {{else}}
                 <td><a href="/{{$.TaxType}}/{{.Slug}}" target="_blank" class="content-title-link">{{.Name}}</a></td>
                 <td><code>{{.Slug}}</code></td>
+                <td>{{.Description}}</td>
+                {{if $.TaxDef.Hierarchical}}<td>{{if .ParentID}}{{.ParentName}}{{else}}—{{end}}</td>{{end}}
                 <td class="taxonomy-reference-count-col"><span class="taxonomy-reference-count">{{.ReferenceCount}}</span></td>
                 <td class="actions">
                     {{if can $.CurrentRole $.TaxType "delete"}}
-                    <form method="POST" action="/admin/{{$.Slug}}/{{.ID}}/delete" class="inline-form">
+                    <form method="POST" action="/admin/{{$.Slug}}/{{.ID}}/delete{{if $.CurrentQuery}}?{{$.CurrentQuery}}{{end}}" class="inline-form">
                         <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('{{T $ "confirm.delete"}}')">{{T $ "action.delete"}}</button>
                     </form>
                     {{end}}
@@ -84,9 +118,10 @@
                 {{end}}
             </tr>
             {{else}}
-            <tr><td colspan="5" class="empty-msg">{{T . "taxonomy.empty" (adminTaxonomyLabel .AdminLanguage .TaxType .TaxDef.Label)}}</td></tr>
+            <tr><td colspan="{{if .TaxDef.Hierarchical}}7{{else}}6{{end}}" class="empty-msg">{{T . "taxonomy.empty" (adminTaxonomyLabel .AdminLanguage .TaxType .TaxDef.Label)}}</td></tr>
             {{end}}
         </tbody>
     </table>
+    </div>
 </div>
 {{end}}

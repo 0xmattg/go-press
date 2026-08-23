@@ -171,7 +171,7 @@ The documentation lives under [`docs/guide/`](docs/guide/) and is organized as a
 |---|---|
 | [Introduction](docs/guide/en/README.md) | Positioning and design principles |
 | [Getting Started](docs/guide/en/getting-started/installation.md) | Installation, configuration, and the web installer |
-| [Architecture](docs/guide/en/architecture/overview.md) | Engine boot flow, content model, public authentication, public content submission, authenticated comments, URL/SEO, cache, i18n, content scope, and hooks |
+| [Architecture](docs/guide/en/architecture/overview.md) | Engine boot flow, content and taxonomy models, public authentication, public content submission, authenticated comments, URL/SEO, cache, i18n, content/taxonomy scopes, and hooks |
 | [Admin](docs/guide/en/admin/overview.md) | Admin CMS, standalone pages, extension points, and menu management |
 | [Themes](docs/guide/en/themes/overview.md) | Creating themes, SEO integration, image pipeline, and media variants |
 | [Plugins](docs/guide/en/plugins/overview.md) | Creating plugins, hook contracts, bundled plugins, and plugin-specific setup |
@@ -268,6 +268,8 @@ curl checks, and troubleshooting, use the
 - **Standalone pages** — a built-in `page` type for About/Terms/Privacy-style pages: root-level permalinks (`/about`), hierarchical parents, per-page theme templates, and an iframe-allowlisted embed field. See [Standalone Pages](docs/guide/en/admin/pages.md).
 - **Config-driven content routing** — `theme.toml` `rewrite_slug` and optional `templates = { archive = "...", single = "..." }` drive archive URLs, detail URLs, sitemap entries, admin permalinks, and dynamic template resolution. `product`, `service`, and `showcase` are examples, not framework assumptions.
 - **Chainable content queries** — for example: `ContentQuery.Type("product").Published().Taxonomy("category", "hepa").Paginate(1, 20)`.
+- **Scoped taxonomy core** — generic request scopes cover term lookup, trees, reference counts, content relationships, and mutation validation. Plugins can provide per-language or tenant-specific category/tag identities without adding language concepts to core.
+- **Guarded taxonomy commands** — create, update, delete, parent selection, scoped slug uniqueness, and relationship writes share one transactional command service with registered-type and scope validation.
 - **Hook event bus** — `AddAction` / `DoAction` / `AddFilter` / `ApplyFilter`, with removable handles for clean plugin deactivation.
 - **Multi-level cache** — L1 memory cache, optional L2 Redis, graceful fallback, and page-cache middleware for sub-millisecond cache hits.
 - **Worker pool** — goroutine worker pool plus cron-style scheduling.
@@ -279,7 +281,7 @@ curl checks, and troubleshooting, use the
 - **SEOBuilder** — home, archive, and single pages generate meta descriptions, canonical links, Open Graph tags, JSON-LD, and crawler-friendly favicon links.
 - **`seoHeadFor` helper** — reflection-based and safe for both `gin.H` and custom structs.
 - **Per-content SEO overrides** — the bundled `seo-extras` plugin adds Yoast-style fields for title, description, Open Graph image, and robots.
-- **Multilingual sitemap support** — `SitemapGenerator.AddTransformer()` lets the multilingual plugin contribute `hreflang` alternates.
+- **Multilingual sitemap support** — `SitemapGenerator.AddTransformer()` and taxonomy SEO filters let the multilingual plugin contribute content and translated-term `hreflang` alternates.
 - **Site-scoped public artifacts** — admin-generated sitemap files and favicon assets are written under `sites/{host}/public/`, keeping multi-site deployments isolated.
 - **Redirect manager** — database-backed 301/302 redirects with in-memory lookup and hit counts.
 
@@ -293,7 +295,7 @@ curl checks, and troubleshooting, use the
 - **Comment moderation** — filterable, server-paginated review queues support pending, approved, spam, and trash states, with direct links to the related content or parent comment and `comment.moderate` RBAC enforcement.
 - **Mail settings and notifications** — dedicated SMTP settings page, go-mail SMTP driver with Go stdlib option, site-level `config.toml` storage for `mail.mail_key`, test emails, Gmail-friendly `587 + STARTTLS` setup, and a switch for new contact-message notifications.
 - **Drag sorting and rich text** — Quill 2.0 editor, media picker, and HTML5 drag-and-drop ordering.
-- **Admin extension points** — hooks such as `admin.HookContentListTabs`, `admin.HookContentPermalinkPrefix`, `admin.content_form.fields`, `admin.content.saved`, and `mail.message`.
+- **Admin extension points** — hooks such as `admin.HookContentListTabs`, `admin.HookTaxonomyListTabs`, `admin.HookContentPermalinkPrefix`, `admin.content_form.fields`, `admin.content.saved`, and `mail.message`.
 
 ### Themes and Plugins
 
@@ -312,7 +314,7 @@ See [docs/guide/en/themes/overview.md](docs/guide/en/themes/overview.md).
 
 ### Bundled Plugins
 
-- **multilang** — WPML-style content translation, menu translation, site setting translation, language-prefixed routing, and language-aware redirects.
+- **multilang** — WPML-style content plus optional Category/Tag translation, menu and site-setting translation, canonical language-prefixed routing, and language-aware redirects.
 - **seo-extras** — Yoast-style per-content SEO overrides for title, description, Open Graph image, and robots.
 - **code-snippets** — WPCode-style site-level injection for end of `<head>`, start of `<body>`, and before `</body>`.
 - **gopress-analytics** — First-party self-hosted PV, UV, new-visitor, traffic-trend, and top-page analytics.

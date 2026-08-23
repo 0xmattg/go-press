@@ -148,3 +148,37 @@ func TestAdminNavFilterReceivesRoleAndLanguage(t *testing.T) {
 		t.Fatalf("admin nav args = role %q, lang %q", gotRole, gotLang)
 	}
 }
+
+func TestSystemSettingsIsAlwaysLastAdminNavItem(t *testing.T) {
+	bus := hook.New()
+	bus.AddFilter(hook.AdminNavItems, func(value interface{}, _ ...interface{}) interface{} {
+		items, _ := value.([]AdminMenuItem)
+		return append(items,
+			AdminMenuItem{Section: "Extension"},
+			AdminMenuItem{Label: "Extension Item", URL: "/admin/extension"},
+		)
+	}, 10)
+	h := &Handler{
+		registry: content.NewRegistry(),
+		hooks:    bus,
+		svc:      &Service{rbac: user.NewRBAC()},
+	}
+
+	items := h.buildMenuItems("en", user.RoleSuperAdmin)
+	if len(items) == 0 {
+		t.Fatal("admin menu is empty")
+	}
+	last := items[len(items)-1]
+	if last.URL != "/admin/settings" || last.Active != "settings" {
+		t.Fatalf("last admin menu item = %#v, want System Settings", last)
+	}
+	settingsCount := 0
+	for _, item := range items {
+		if item.URL == "/admin/settings" {
+			settingsCount++
+		}
+	}
+	if settingsCount != 1 {
+		t.Fatalf("System Settings item count = %d, want 1", settingsCount)
+	}
+}

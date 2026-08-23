@@ -134,7 +134,7 @@ func (p *MyPlugin) LogoSVG() string { return logoSVG }
 
 `LogoProvider` 与主题一致：把一个 `viewBox="0 0 48 48"` 的方形 SVG 嵌入插件（`//go:embed`），`LogoSVG()` 返回其内容即可。core 会先用 `content.SanitizeSVG` 清洗再内联进后台，所以第三方插件的 logo 也安全；返回 `""` 则卡片不显示图标。
 
-## 注册请求级内容过滤（Content Scope API）
+## 注册请求级内容与 Taxonomy 过滤
 
 如果你的插件需要让前后台内容查询自动按某条件过滤（多语言、可见性、草稿预览等）：
 
@@ -153,7 +153,10 @@ e.Hooks.AddAction("middleware.early", func(_ context.Context, args ...interface{
 // 主题自动获得过滤后的查询结果，无需任何适配代码
 ```
 
-详见 [Content Scope API](../architecture/content-scope.md)。
+如果扩展拥有按语言、租户等变体隔离的 Category/Tag identity，还应注册
+`taxonomy.Scope`，并让 taxonomy 写入统一经过 `taxonomy.CommandService`；
+不要给 core 添加特定语言或租户分支。详见
+[内容与 Taxonomy Scope API](../architecture/content-scope.md)。
 
 ## 身份 Provider 插件
 

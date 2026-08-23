@@ -66,3 +66,33 @@ type MenuTranslation struct {
 func (MenuTranslation) TableName() string {
 	return dbprefix.PluginTable(pluginSlug, "menu_translations")
 }
+
+// TaxonomyTranslationGroup is a database-generated translation-set identity.
+// A separate row avoids MAX(id)+1 races when two admins create translations at
+// the same time.
+type TaxonomyTranslationGroup struct {
+	ID           uint      `gorm:"primaryKey" json:"id"`
+	TaxonomyType string    `gorm:"size:50;not null;index" json:"taxonomy_type"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+func (TaxonomyTranslationGroup) TableName() string {
+	return dbprefix.PluginTable(pluginSlug, "taxonomy_translation_groups")
+}
+
+// TaxonomyTranslation associates one core taxonomy-row identity with a
+// language inside a translation group. Core owns terms and relationships;
+// this plugin owns only their language relationship.
+type TaxonomyTranslation struct {
+	ID                 uint      `gorm:"primaryKey" json:"id"`
+	GroupID            uint      `gorm:"not null;uniqueIndex:idx_taxonomy_group_lang" json:"group_id"`
+	TaxonomyID         uint      `gorm:"not null;uniqueIndex" json:"taxonomy_id"`
+	LanguageCode       string    `gorm:"size:10;not null;uniqueIndex:idx_taxonomy_group_lang" json:"language_code"`
+	SourceLanguageCode string    `gorm:"size:10" json:"source_language_code"`
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at"`
+}
+
+func (TaxonomyTranslation) TableName() string {
+	return dbprefix.PluginTable(pluginSlug, "taxonomy_translations")
+}

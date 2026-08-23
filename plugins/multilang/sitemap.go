@@ -44,6 +44,10 @@ func (p *Plugin) sitemapTransformer(entry *rewrite.SitemapEntry) {
 	if originalPath == "" {
 		originalPath = "/"
 	}
+	if entry.TaxonomyID > 0 && entry.TaxonomyType != "" {
+		p.applyTaxonomyAlternates(entry, langs, defLang, siteURL)
+		return
+	}
 
 	if entry.ContentType == "" || entry.ContentID == 0 {
 		// Generic (non-content) URL — replicate per active non-default language.
@@ -107,6 +111,63 @@ func (p *Plugin) sitemapTransformer(entry *rewrite.SitemapEntry) {
 		extra.Loc = fullURL
 		extra.Alternates = alternates
 		entry.Extra = append(entry.Extra, extra)
+	}
+}
+
+func (p *Plugin) applyTaxonomyAlternates(entry *rewrite.SitemapEntry, langs []Language, defLang, siteURL string) {
+	if p.taxonomyMode(entry.TaxonomyType) != taxonomyModeTranslatedOnly {
+		originalPath := strings.TrimPrefix(entry.URL.Loc, siteURL)
+		p.applyGenericAlternates(entry, langs, defLang, siteURL, originalPath)
+		return
+	}
+	link, err := p.repo.GetTaxonomyTranslation(entry.TaxonomyID)
+	if err != nil {
+		entry.URL.Alternates = append(entry.URL.Alternates,
+			rewrite.SitemapAlternate{Rel: "alternate", HrefLang: defLang, Href: entry.URL.Loc},
+			rewrite.SitemapAlternate{Rel: "alternate", HrefLang: "x-default", Href: entry.URL.Loc},
+		)
+		return
+	}
+	siblings, err := p.repo.GetTaxonomyTranslationsByGroup(link.GroupID)
+	if err != nil || len(siblings) == 0 {
+		return
+	}
+	primary := siblings[0]
+	for _, sibling := range siblings {
+		if sibling.LanguageCode == defLang {
+			primary = sibling
+			break
+		}
+	}
+	if entry.TaxonomyID != primary.TaxonomyID {
+		entry.Skip = true
+		return
+	}
+	langToURL := make(map[string]string, len(siblings))
+	for _, sibling := range siblings {
+		item, loadErr := p.engine.Taxonomy.GetTaxonomy(sibling.TaxonomyID)
+		if loadErr != nil || item.Taxonomy != entry.TaxonomyType {
+			continue
+		}
+		langToURL[sibling.LanguageCode] = siteURL + p.prefixedTaxonomyPath(sibling.LanguageCode, item.Taxonomy, item.Term.Slug)
+	}
+	if len(langToURL) == 0 {
+		return
+	}
+	primaryURL := langToURL[primary.LanguageCode]
+	entry.URL.Loc = primaryURL
+	alternates := buildAlternates(langToURL, defLang)
+	entry.URL.Alternates = append(entry.URL.Alternates, alternates...)
+	for _, sibling := range siblings {
+		if sibling.LanguageCode == primary.LanguageCode {
+			continue
+		}
+		if href := langToURL[sibling.LanguageCode]; href != "" {
+			extra := entry.URL
+			extra.Loc = href
+			extra.Alternates = alternates
+			entry.Extra = append(entry.Extra, extra)
+		}
 	}
 }
 

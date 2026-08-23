@@ -188,6 +188,13 @@ Dynamic archive pages also honor query-string filters for taxonomies declared on
 
 Treat those query-string filters as compatibility or non-indexable UI filters. Links to indexable term landing pages must use `taxonomyURL`, optionally wrapped with `langPrefixURL`, so internal links, taxonomy canonicals, and sitemap entries all point to `/category/{term}` or `/tag/{term}` consistently.
 
+Taxonomy rows supplied to BaseTheme are request-scoped. When a plugin provides
+independent term translations, `.Name`, `.Slug`, parent relationships, and
+`.URL` already describe the current-language identity. Themes must not look up
+an unscoped term by ID or attempt to map translation groups themselves. Keep
+the stable `category` / `tag` path bases and let `taxonomyURL` plus
+`langPrefixURL` compose the canonical URL.
+
 For navigation active state, compare the current request URL with the menu item URL through core:
 
 ```gotemplate

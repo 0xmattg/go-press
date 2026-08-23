@@ -23,6 +23,29 @@
 <section class="section">
     <div class="container">
         <div class="post-layout">
+            <nav class="post-share" aria-label="{{T $.Ctx "share_label"}}">
+                <span class="post-share-label">{{T $.Ctx "share_label"}}</span>
+                <div class="post-share-actions">
+                    <a class="post-share-button post-share-platform" href="https://x.com/intent/tweet?url={{urlquery .SEO.CanonicalURL}}&amp;text={{urlquery .Post.Title}}" target="_blank" rel="noopener noreferrer" aria-label="{{T $.Ctx "share_x"}}" title="{{T $.Ctx "share_x"}}">
+                        <span class="post-share-glyph post-share-glyph-x" aria-hidden="true">X</span>
+                    </a>
+                    <a class="post-share-button post-share-platform" href="https://www.facebook.com/sharer/sharer.php?u={{urlquery .SEO.CanonicalURL}}" target="_blank" rel="noopener noreferrer" aria-label="{{T $.Ctx "share_facebook"}}" title="{{T $.Ctx "share_facebook"}}">
+                        <span class="post-share-glyph post-share-glyph-facebook" aria-hidden="true">f</span>
+                    </a>
+                    <a class="post-share-button post-share-platform" href="https://www.linkedin.com/sharing/share-offsite/?url={{urlquery .SEO.CanonicalURL}}" target="_blank" rel="noopener noreferrer" aria-label="{{T $.Ctx "share_linkedin"}}" title="{{T $.Ctx "share_linkedin"}}">
+                        <span class="post-share-glyph post-share-glyph-linkedin" aria-hidden="true">in</span>
+                    </a>
+                    {{if .SEO.OGImage}}
+                    <a class="post-share-button post-share-platform" href="https://www.pinterest.com/pin/create/button/?url={{urlquery .SEO.CanonicalURL}}&amp;media={{urlquery .SEO.OGImage}}&amp;description={{urlquery .Post.Title}}" target="_blank" rel="noopener noreferrer" data-pin-do="buttonPin" data-pin-custom="true" aria-label="{{T $.Ctx "share_pinterest"}}" title="{{T $.Ctx "share_pinterest"}}">
+                        <span class="post-share-glyph post-share-glyph-pinterest" aria-hidden="true">p</span>
+                    </a>
+                    {{end}}
+                    <button class="post-share-button post-share-copy" type="button" data-share-url="{{.SEO.CanonicalURL}}" data-copy-success="{{T $.Ctx "share_copied"}}" data-copy-error="{{T $.Ctx "share_copy_failed"}}" aria-label="{{T $.Ctx "share_copy"}}" title="{{T $.Ctx "share_copy"}}" aria-describedby="post-share-status">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>
+                    </button>
+                </div>
+                <span class="post-share-status" id="post-share-status" role="status" aria-live="polite"></span>
+            </nav>
             <article class="post-content">
                 {{if .Post.ImageURL}}
                 <div class="post-featured-image">

@@ -115,6 +115,7 @@ type Engine struct {
 	// still go through services where those exist, especially in admin code.
 	Content           *content.Repository
 	ContentCommands   *content.CommandService
+	TaxonomyCommands  *taxonomy.CommandService
 	Comments          *comment.Service
 	Taxonomy          *taxonomy.Repository
 	Users             *user.Repository
@@ -249,6 +250,7 @@ func New(cfg *config.Config, db *gorm.DB) *Engine {
 	}
 	e.Comments = comment.NewService(db, hookBus, e.Registry)
 	e.ContentCommands = content.NewCommandService(db, e.Registry)
+	e.TaxonomyCommands = taxonomy.NewCommandService(db, e.Registry)
 	e.ContentCommands.SetMutationObserver(func(ctx context.Context, mutation content.Mutation) {
 		switch mutation.Kind {
 		case content.MutationCreated:
@@ -261,6 +263,17 @@ func New(cfg *config.Config, db *gorm.DB) *Engine {
 			e.Hooks.DoAction(ctx, hook.ContentTrashed, mutation.Item)
 		case content.MutationRestored:
 			e.Hooks.DoAction(ctx, hook.ContentRestored, mutation.Item)
+		}
+		cache.InvalidatePageCache(e.Cache)
+	})
+	e.TaxonomyCommands.SetMutationObserver(func(ctx context.Context, mutation taxonomy.Mutation) {
+		switch mutation.Kind {
+		case taxonomy.MutationCreated:
+			e.Hooks.DoAction(ctx, hook.TaxonomyCreated, mutation.Item)
+		case taxonomy.MutationUpdated:
+			e.Hooks.DoAction(ctx, hook.TaxonomyUpdated, mutation.Item)
+		case taxonomy.MutationDeleted:
+			e.Hooks.DoAction(ctx, hook.TaxonomyDeleted, mutation.Item)
 		}
 		cache.InvalidatePageCache(e.Cache)
 	})
@@ -907,7 +920,7 @@ func (e *Engine) SetupRouter() *gin.Engine {
 	apiGroup.Use(api.APIKeyAuth(apiKeyMap))
 	apiGroup.Use(api.JWTAuth(e.Auth))
 	{
-		apiHandler := api.NewHandler(e.Registry, e.Content)
+		apiHandler := api.NewHandler(e.Registry, e.Content, e.Taxonomy)
 		apiHandler.RegisterRoutes(apiGroup)
 		apiGroup.GET("/types", apiHandler.Types)
 	}
@@ -1061,6 +1074,7 @@ func (e *Engine) SetupAdmin() {
 	svc.SetCommentService(e.Comments)
 	svc.SetAuditService(e.Audit)
 	svc.SetContentCommandService(e.ContentCommands)
+	svc.SetTaxonomyCommandService(e.TaxonomyCommands)
 	h := admin.NewHandler(svc, e.Registry, "core/admin/templates")
 	h.SetUpdateStatusProvider(e.Updates)
 
@@ -1232,6 +1246,9 @@ func (e *Engine) SetupAdmin() {
 			// Guard: the active theme may declare a hard dependency on this plugin.
 			if e.ActiveThemeRequiresPlugin(name) {
 				return fmt.Errorf("当前主题「%s」依赖插件「%s」，请先切换主题再停用", e.ActiveThemeName(), name)
+			}
+			if err := e.PluginManager.CanDeactivate(name, e); err != nil {
+				return err
 			}
 			if !e.PluginManager.Deactivate(name, e) {
 				return fmt.Errorf("停用插件「%s」失败", name)

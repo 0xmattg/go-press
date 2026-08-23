@@ -29,10 +29,43 @@ func MigrateDB(db *gorm.DB) error {
 	if err := db.AutoMigrate(coreModels()...); err != nil {
 		return err
 	}
+	if err := migrateTaxonomySlugIndex(db); err != nil {
+		return err
+	}
 	if err := migrateLegacyUserColumns(db.Migrator()); err != nil {
 		return err
 	}
 	return backfillMediaUpdatedAt(db)
+}
+
+// migrateTaxonomySlugIndex relaxes the legacy globally-unique term slug index.
+// Core command services continue enforcing the exact historical rule when no
+// request scope is active, while extensions may safely reuse a slug in another
+// scoped variant. Existing rows and relationships remain untouched.
+func migrateTaxonomySlugIndex(db *gorm.DB) error {
+	if db == nil {
+		return errors.New("database is required")
+	}
+	indexes, err := db.Migrator().GetIndexes(&taxonomy.Term{})
+	if err != nil {
+		return fmt.Errorf("inspect taxonomy term indexes: %w", err)
+	}
+	for _, index := range indexes {
+		columns := index.Columns()
+		unique, ok := index.Unique()
+		if !ok || !unique || len(columns) != 1 || columns[0] != "slug" {
+			continue
+		}
+		if err := db.Migrator().DropIndex(&taxonomy.Term{}, index.Name()); err != nil {
+			return fmt.Errorf("drop legacy unique taxonomy slug index: %w", err)
+		}
+	}
+	if !db.Migrator().HasIndex(&taxonomy.Term{}, "Slug") {
+		if err := db.Migrator().CreateIndex(&taxonomy.Term{}, "Slug"); err != nil {
+			return fmt.Errorf("create taxonomy slug index: %w", err)
+		}
+	}
+	return nil
 }
 
 func backfillMediaUpdatedAt(db *gorm.DB) error {

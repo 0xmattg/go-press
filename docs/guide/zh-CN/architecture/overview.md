@@ -66,7 +66,7 @@ main.go
        ├→ engine.Bootstrap()                    // 5. 加载 Options/Menus/Redirects 到内存
        ├→ engine.LoadAllThemes()                // 6. 注册主题 + 激活配置主题
        │    ├→ Registry.Clear()                 //    清理旧注册
-       │    ├→ registerCoreTypes()              //    重注册 post/page/contact_message/category/tag（核心类型不丢失）
+       │    ├→ registerCoreTypes()              //    恢复核心内容类型与 category/tag taxonomy
        │    ├→ LoadFileConfig(theme.toml)        //    读取主题声明的内容类型/菜单/模板映射
        │    ├→ RegisterContentTypesFromConfig()  //    按 [[content_types]] 注册主题内容类型
        │    └→ theme.Setup()                    //    主题运行时初始化（菜单位置、设置、hook）
@@ -132,11 +132,15 @@ Registry 自动被这些通用 Tool 识别。
 当前 Agent 设计、Tool 与执行细节见
 [Agent 与 MCP 模块](../agent/overview.md)，网络连接与运维方法见
 [GoPress MCP 插件](../plugins/gopress-mcp.md)，完整演进路线见
-[框架级 Agent 与 MCP 能力规划](mcp-agent-capability-plan.md)。
+[路线图与贡献](../reference/roadmap.md)。
 
 ## 关键解耦点
 
-- **核心类型保护** — 引擎在 `Registry.Clear()` 后自动 `registerCoreTypes()`，`post` / `page` / `contact_message` / `category` / `tag` 跨主题切换永久保留
+- **核心模型保护** — 引擎在 `Registry.Clear()` 后自动 `registerCoreTypes()`；
+  内容类型 `post` / `page` / `contact_message` 与 taxonomy `category` / `tag`
+  跨主题切换永久保留
+- **通用请求 Scope** — Content 与 Taxonomy Scope 允许扩展加入语言、租户、
+  可见性或预览约束，无需把这些策略写入 core 或主题
 - **主题内容模型配置化** — 主题自定义内容类型由 `theme.toml` 的 `[[content_types]]` 声明，后台菜单、CRUD、REST API、Rewrite 和模板映射统一从注册表读取
 - **主题热切换** — 后台一键切主题，core 重建路由 + 刷新缓存，无需重启
 - **插件热拔插** — 插件 `Activate` 时记录所有 `hook.Handle`，`Deactivate` 时按 handle 摘除，运行时即可完整下线

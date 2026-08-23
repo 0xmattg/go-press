@@ -20,8 +20,9 @@ admin and API routes, installer routes, and the active frontend theme.
 
 - **Unified model** — `Content`, `ContentMeta`, and the `ContentType` registry
   drive every editorial type.
-- **Core types** — `post`, `page`, `contact_message`, `category`, and `tag` are
-  registered by the engine and survive theme switches.
+- **Core content types and taxonomies** — `post`, `page`, and
+  `contact_message` are core content types; `category` and `tag` are core
+  taxonomies. All survive theme switches.
 - **Theme types** — themes declare custom types in `theme.toml` under
   `[[content_types]]`; core registers them when the theme is activated.
 - **Public submissions** — a theme-defined type can declare a
@@ -39,6 +40,14 @@ admin and API routes, installer routes, and the active frontend theme.
 - **Taxonomies** — hierarchical categories and flat tags support many-to-many
   relationships and automatic counts. A theme attaches them to a content type
   with `taxonomies = ["category", "tag"]`.
+- **Taxonomy request scopes** — `taxonomy.Scope`, `AddScope`, `WithScope`, and
+  `RequestContext` let an extension constrain term lists, trees, detail lookup,
+  reference counts, and content relationships without core interpreting the
+  scope key. With no scope, legacy single-language behavior is unchanged.
+- **Safe taxonomy commands** — one transactional `taxonomy.CommandService`
+  validates registered types, scoped slug uniqueness, hierarchical parents,
+  submitted relationship IDs, and mutation boundaries. This prevents a scoped
+  admin or API request from selecting or mutating an out-of-scope term.
 - **Canonical term archives** — `/category/{slug}` and `/tag/{slug}` aggregate
   registered content types. Type badges use the active theme's
   `content_type.<name>` locale key and fall back to the registry label.
@@ -50,6 +59,12 @@ admin and API routes, installer routes, and the active frontend theme.
 Names such as `product`, `service`, and `showcase` are conventions used by some
 themes, not core requirements. A theme can declare `module`, `project`,
 `case_study`, or any other type and receive the same framework behavior.
+
+Core does not contain language-specific taxonomy branches. The bundled
+multilingual plugin composes the generic scope, command-observer, admin-tab,
+SEO-filter, and sitemap-transformer contracts to provide independently
+translated Category and Tag identities. See [Content and Taxonomy Scope
+APIs](content-scope.md) and the [Multilingual Plugin](../plugins/multilang.md).
 
 ## Hook Event Bus
 
