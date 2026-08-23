@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"net/url"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -199,7 +200,14 @@ func (p *Plugin) applyOverrides(value interface{}, args ...interface{}) interfac
 	if meta == nil {
 		return seo
 	}
+	return applyMetaOverrides(seo, meta, p.engine.PublicSiteURL())
+}
 
+// applyMetaOverrides applies stored values to the generic SEO contract. Image
+// overrides are normalized against the configured public site URL because
+// social crawlers require a fetchable absolute URL and do not resolve relative
+// metadata paths as a browser would resolve an <img> element.
+func applyMetaOverrides(seo rewrite.SEOMeta, meta map[string]string, siteURL string) rewrite.SEOMeta {
 	if t := strings.TrimSpace(meta[metaKeyTitle]); t != "" {
 		seo.Title = t
 		seo.OGTitle = t
@@ -209,15 +217,28 @@ func (p *Plugin) applyOverrides(value interface{}, args ...interface{}) interfac
 		seo.OGDescription = d
 	}
 	if img := strings.TrimSpace(meta[metaKeyImage]); img != "" {
-		// Absolute URLs pass through; relative paths are resolved by the
-		// theme's image helper / browser. Keeping it as-is matches how
-		// SEOBuilder handles c.ImageURL.
-		seo.OGImage = img
+		seo.OGImage = absolutePublicURL(siteURL, img)
 	}
 	if r := strings.TrimSpace(meta[metaKeyRobots]); r != "" {
 		seo.Robots = r
 	}
 	return seo
+}
+
+func absolutePublicURL(siteURL, raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return ""
+	}
+	ref, err := url.Parse(raw)
+	if err != nil || ref.IsAbs() {
+		return raw
+	}
+	base, err := url.Parse(strings.TrimRight(strings.TrimSpace(siteURL), "/") + "/")
+	if err != nil || base.Scheme == "" || base.Host == "" {
+		return raw
+	}
+	return base.ResolveReference(ref).String()
 }
 
 // --- HTML builder ---

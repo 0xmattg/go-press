@@ -1,6 +1,6 @@
 [theme]
 name = "Modern Company"
-version = "1.0.3"
+version = "1.0.4"
 description = "A modern, professional company website theme for GoPress."
 author = "Hurricane Techs"
 
@@ -14,7 +14,7 @@ author = "Hurricane Techs"
 [requires]
 core = ">=0.6.0"
 plugins = [
-  { slug = "seo-extras", version = ">=1.0.0" },
+  { slug = "seo-extras", version = ">=1.0.1" },
 ]
 
 # Content types supported by the theme.
