@@ -10,7 +10,7 @@
     <meta name="description" content="{{settingOr $.Settings "site_description" "Modern company website powered by GoPress."}}">
     {{faviconLinks $siteIcon}}
     {{end}}
-    {{if and (eq .ActivePage "blog") (eq .SEO.OGType "article")}}
+    {{if eq .SEO.OGType "article"}}
     <meta name="twitter:card" content="{{if .SEO.OGImage}}summary_large_image{{else}}summary{{end}}">
     {{if .SEO.OGTitle}}<meta name="twitter:title" content="{{.SEO.OGTitle}}">{{end}}
     {{if .SEO.OGDescription}}<meta name="twitter:description" content="{{.SEO.OGDescription}}">{{end}}

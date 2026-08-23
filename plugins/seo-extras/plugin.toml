@@ -1,6 +1,6 @@
 [plugin]
 slug = "seo-extras"
 name = "SEO Extras"
-version = "1.0.0"
+version = "1.0.1"
 description = "Yoast-style per-content SEO overrides: custom title, meta description, og:image, and robots directive per content row, layered on top of the default SEOBuilder output."
 author = "GoPress Team"

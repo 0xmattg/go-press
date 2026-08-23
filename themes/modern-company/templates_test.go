@@ -66,11 +66,14 @@ func TestBaseTemplateFallsBackWhenSEOTitleEmpty(t *testing.T) {
 	}
 }
 
-func TestBaseTemplateScopesXCardToBlogArticles(t *testing.T) {
+func TestBaseTemplateEmitsXCardForArticleSEO(t *testing.T) {
 	tmpl := newBaseTemplateTest(t)
 	article := PageData{
 		Title:      "Cleanroom Testing",
-		ActivePage: "blog",
+		// Core's generic single-content renderer identifies blog posts by their
+		// registered content type ("post"), not the archive presentation name
+		// ("blog"). X Card output therefore follows the generic SEO contract.
+		ActivePage: "post",
 		Settings:   map[string]string{"site_name": "Hurricane Techs"},
 		SEO: rewrite.SEOMeta{
 			OGType:        "article",
@@ -95,13 +98,13 @@ func TestBaseTemplateScopesXCardToBlogArticles(t *testing.T) {
 		}
 	}
 
-	article.ActivePage = "product"
+	article.SEO.OGType = "website"
 	out.Reset()
 	if err := tmpl.ExecuteTemplate(&out, "base", article); err != nil {
-		t.Fatalf("execute non-blog template: %v", err)
+		t.Fatalf("execute non-article template: %v", err)
 	}
 	if strings.Contains(out.String(), `name="twitter:`) {
-		t.Fatalf("non-blog page should not emit theme-specific X Card tags: %s", out.String())
+		t.Fatalf("non-article page should not emit theme-specific X Card tags: %s", out.String())
 	}
 }
 
