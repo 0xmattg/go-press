@@ -1,6 +1,7 @@
 package multilang
 
 import (
+	"errors"
 	"fmt"
 
 	"gorm.io/gorm"
@@ -18,7 +19,10 @@ func NewRepository(db *gorm.DB) *Repository {
 
 // AutoMigrate creates or updates the plugin tables.
 func (r *Repository) AutoMigrate() error {
-	return r.db.AutoMigrate(&Translation{}, &Language{}, &StringTranslation{}, &MenuTranslation{})
+	return r.db.AutoMigrate(
+		&Translation{}, &Language{}, &StringTranslation{}, &MenuTranslation{},
+		&TaxonomyTranslationGroup{}, &TaxonomyTranslation{},
+	)
 }
 
 // ---- Language CRUD ----
@@ -264,4 +268,131 @@ func (r *Repository) ListAllMenuTranslations() ([]MenuTranslation, error) {
 	var mts []MenuTranslation
 	err := r.db.Order("trid ASC, language_code ASC").Find(&mts).Error
 	return mts, err
+}
+
+// ---- Taxonomy Translation CRUD ----
+
+func (r *Repository) GetTaxonomyTranslation(taxonomyID uint) (*TaxonomyTranslation, error) {
+	var item TaxonomyTranslation
+	err := r.db.Where("taxonomy_id = ?", taxonomyID).First(&item).Error
+	if err != nil {
+		return nil, err
+	}
+	return &item, nil
+}
+
+func (r *Repository) GetTaxonomyTranslationsByGroup(groupID uint) ([]TaxonomyTranslation, error) {
+	var items []TaxonomyTranslation
+	err := r.db.Where("group_id = ?", groupID).Order("language_code ASC").Find(&items).Error
+	return items, err
+}
+
+func (r *Repository) FindTaxonomyTranslation(groupID uint, languageCode string) (*TaxonomyTranslation, error) {
+	var item TaxonomyTranslation
+	err := r.db.Where("group_id = ? AND language_code = ?", groupID, languageCode).First(&item).Error
+	if err != nil {
+		return nil, err
+	}
+	return &item, nil
+}
+
+func (r *Repository) ListTaxonomyTranslations() ([]TaxonomyTranslation, error) {
+	var items []TaxonomyTranslation
+	err := r.db.Order("group_id ASC, language_code ASC").Find(&items).Error
+	return items, err
+}
+
+func (r *Repository) CountTaxonomyTranslations() (int64, error) {
+	var count int64
+	err := r.db.Model(&TaxonomyTranslation{}).Count(&count).Error
+	return count, err
+}
+
+func (r *Repository) CountTaxonomyTranslationsByType(taxonomyType string) (int64, error) {
+	var count int64
+	err := r.db.Model(&TaxonomyTranslation{}).
+		Joins("JOIN "+TaxonomyTranslationGroup{}.TableName()+" taxonomy_groups ON taxonomy_groups.id = "+TaxonomyTranslation{}.TableName()+".group_id").
+		Where("taxonomy_groups.taxonomy_type = ?", taxonomyType).
+		Count(&count).Error
+	return count, err
+}
+
+// EnsureTaxonomyTranslation creates a group for an unlinked source when
+// needed and atomically links the requested language variant.
+func (r *Repository) EnsureTaxonomyTranslation(taxonomyType string, taxonomyID uint, languageCode, sourceLanguageCode string, sourceTaxonomyID uint) (*TaxonomyTranslation, error) {
+	var result TaxonomyTranslation
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		var groupID uint
+		if existingErr := tx.Where("taxonomy_id = ?", taxonomyID).First(&result).Error; existingErr == nil {
+			return nil
+		} else if !errors.Is(existingErr, gorm.ErrRecordNotFound) {
+			return existingErr
+		}
+		if sourceTaxonomyID > 0 {
+			var source TaxonomyTranslation
+			if err := tx.Where("taxonomy_id = ?", sourceTaxonomyID).First(&source).Error; err == nil {
+				groupID = source.GroupID
+			} else if err != gorm.ErrRecordNotFound {
+				return err
+			}
+		}
+		if groupID == 0 {
+			group := TaxonomyTranslationGroup{TaxonomyType: taxonomyType}
+			if err := tx.Create(&group).Error; err != nil {
+				return err
+			}
+			groupID = group.ID
+			if sourceTaxonomyID > 0 && sourceTaxonomyID != taxonomyID {
+				source := TaxonomyTranslation{
+					GroupID: groupID, TaxonomyID: sourceTaxonomyID,
+					LanguageCode: sourceLanguageCode, SourceLanguageCode: sourceLanguageCode,
+				}
+				if err := tx.Create(&source).Error; err != nil {
+					return err
+				}
+			}
+		}
+		result = TaxonomyTranslation{
+			GroupID: groupID, TaxonomyID: taxonomyID,
+			LanguageCode: languageCode, SourceLanguageCode: sourceLanguageCode,
+		}
+		return tx.Create(&result).Error
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func (r *Repository) LinkTaxonomyTranslation(groupID, taxonomyID uint, languageCode, sourceLanguageCode string) error {
+	return r.db.Create(&TaxonomyTranslation{
+		GroupID: groupID, TaxonomyID: taxonomyID,
+		LanguageCode: languageCode, SourceLanguageCode: sourceLanguageCode,
+	}).Error
+}
+
+func (r *Repository) DeleteTaxonomyTranslation(taxonomyID uint) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		var item TaxonomyTranslation
+		if err := tx.Where("taxonomy_id = ?", taxonomyID).First(&item).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil
+			}
+			return err
+		}
+		if err := tx.Delete(&item).Error; err != nil {
+			return err
+		}
+		var count int64
+		if err := tx.Model(&TaxonomyTranslation{}).Where("group_id = ?", item.GroupID).Count(&count).Error; err != nil {
+			return err
+		}
+		if count <= 1 {
+			if err := tx.Where("group_id = ?", item.GroupID).Delete(&TaxonomyTranslation{}).Error; err != nil {
+				return err
+			}
+			return tx.Delete(&TaxonomyTranslationGroup{}, item.GroupID).Error
+		}
+		return nil
+	})
 }

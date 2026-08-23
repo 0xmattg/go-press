@@ -1,82 +1,135 @@
-# Content Scope API
+# 内容与分类 Scope API
 
-GoPress 引擎提供了核心级的请求上下文内容过滤机制，实现**插件与主题的完全解耦**。
+GoPress 为内容与 taxonomy 查询分别提供请求级 Scope API。插件可以据此注入
+语言、租户、频道、可见性或预览约束，而无需让 core 仓储理解某个具体扩展。
 
-## 为什么需要 Scope
+两组 Scope 相互独立，因为内容行与 taxonomy identity 的查询和写入规则不同，
+但整体数据流一致：
 
-很多 CMS 扩展都需要改变内容可见性，例如按语言过滤内容、隐藏私有变体、
-应用租户或频道边界，以及只向已登录用户开放草稿预览。与其让每一个仓储
-方法理解所有插件，GoPress 把过滤条件保存在当前请求上下文中。
-
-## 设计模式
-
-```
-                   ┌─────────────────────────┐
-                   │   Plugin (e.g. multilang)│
-                   │ content.AddContentScope()│  ← 注册 scope（core API）
-                   └────────────┬────────────┘
-                                ▼
-                   ┌─────────────────────────┐
-           core    │  gin.Context 中间件链     │  ← scope 存储在请求上下文
-                   └────────────┬────────────┘
-                                ▼
-                   ┌─────────────────────────┐
-                   │  BaseTheme / PageService │
-                   │  content.ScopedDB(c, db) │  ← 读取 scope（core API）
-                   └─────────────────────────┘
+```text
+插件中间件
+  -> core AddScope API
+  -> 请求 Context
+  -> Admin / REST / BaseTheme / 自定义 PageService
+  -> 带 Scope 的仓储与命令服务
 ```
 
-## 核心 API
+没有注册 Scope 时，两套 API 都保持原来的单语言行为。
 
-- **`content.AddContentScope(c, fn)`** — 插件在中间件中注册 GORM scope 到 `gin.Context`
-- **`content.ScopedDB(c, db)`** — 返回应用了所有注册 scope 的 `*gorm.DB`（带 Session 隔离，避免查询污染）
-- **BaseTheme 动态渲染** — core 的 archive / single / taxonomy 渲染路径会通过 `content.ScopedDB(c, db)` 和 `FindBySlugScoped(c, ...)` 读取内容，所以配置驱动路由天然支持多语言 scope
-- **`PageService.ForRequest(c)`** — 主题的自定义 PageService 现在嵌入 `coreTheme.BasePageService`，`ForRequest(c)` 返回带请求级过滤的克隆，并把 `*gin.Context` 存到继承来的 `ReqCtx` 字段；详情页 `Get*Detail(slug)` 用 `s.Content.FindBySlugScoped(s.ReqCtx, ...)` 读取，就复用了同一套 scope —— 否则绕过 scope 会导致 WPML 同 slug 场景下错取默认语言行
+## Content Scope
 
-## 关键属性
-
-- **主题零感知** — 主题只调 core API，不知道有哪些插件。如果没有任何 scope 注册，`ScopedDB` 原样返回 DB，零开销
-- **可扩展** — 任何需要请求级内容过滤的功能（多语言、RBAC 内容可见性、草稿预览等）都走同一通道
-- **后台列表也走 scope** — `admin.Service.ListContentScoped(c, ...)` 用同一 API，所以插件只需一次注册（基于 `?lang=` 等 query 参数），前台列表和后台列表同时生效
-
-## 行为契约
-
-- Scope 只在当前请求内有效，不得泄露到其它请求。
-- Core 仓储保持通用，不包含特定插件条件。
-- 插件只能通过公开 API 注入 scope。
-- 自定义主题服务需要把当前请求传给 `ForRequest(c)`；BaseTheme 动态路由已
-  自动完成这一步。
-- 没有注册任何 scope 时，`ScopedDB` 保持原查询行为。
-- Scope 的提供者和消费者只通过 core 交互，双方都不需要对具体插件或主题
-  编写特判。
-
-## 使用示例
-
-插件侧（注入 scope）：
+在当前 Gin 请求上注册内容过滤器：
 
 ```go
-e.Hooks.AddAction("middleware.early", func(ctx context.Context, args ...interface{}) {
-    r := args[0].(*gin.Engine)
-    r.Use(func(c *gin.Context) {
-        // 通过 core API 注册过滤条件
-        content.AddContentScope(c, func(db *gorm.DB) *gorm.DB {
-            return db.Where("visible = ?", true)
-        })
-        c.Next()
-    })
-}, 5)
+content.AddContentScope(c, func(db *gorm.DB) *gorm.DB {
+    return db.Where("visible = ?", true)
+})
 ```
 
-主题侧（消费 scope，自定义 PageService 才需要；走 BaseTheme 动态渲染时 core 已经处理）：
+主要内容 API：
 
-下面以主题声明的 `product` 内容类型为例。`product` 不是 core 内置类型，只是演示 PageService 如何消费 scope。
+- `content.AddContentScope(c, fn)` — 追加请求级 GORM filter。
+- `content.RequestContext(c)` — 把 Gin 状态桥接到 core 服务使用的标准
+  `context.Context`。
+- `content.ScopedDB(c, db)` / `ScopedDBContext(ctx, db)` — 在隔离 Session 上
+  应用全部 Scope。
+- `Repository.FindBySlugScoped` 及其它 context-aware 仓储方法 — 让详情查询
+  与列表查询处于相同 Scope。
+- `EnsureUniqueSlugScoped` — 在当前 Scope 内校验 Slug 唯一性。
+
+同 Slug 的多语言内容依赖这项一致性：列表、详情、保存和后台操作必须消费同一
+请求 Context。
+
+## Taxonomy Scope
+
+Taxonomy Scope 同时携带 opaque key 与查询函数：
+
+```go
+taxonomy.AddScope(c, taxonomy.Scope{
+    Key: "variant-a",
+    Apply: func(db *gorm.DB) *gorm.DB {
+        return db.Where("taxonomies.id IN (?)", visibleTaxonomyIDs)
+    },
+})
+```
+
+Core 不解释 `Scope.Key`。扩展可以用它把新 taxonomy 行关联到约束当前请求的
+同一个变体。
+
+公开 taxonomy Scope 能力包括：
+
+- `taxonomy.AddScope(c, scope)` — 同时写入 Gin 请求及其标准 Context。
+- `taxonomy.WithScope(ctx, scope)` — 在不依赖 Gin 的路径追加 Scope。
+- `taxonomy.RequestContext(c)` — 获取仓储和命令服务消费的标准 Context。
+- `taxonomy.Scopes(ctx)` / `ScopeKey(ctx)` — 读取通用 Scope 链；key 仍由扩展
+  自己解释。
+- `taxonomy.ScopedDB` / `ScopedDBContext` — 应用完整 Scope 链。
+- `Repository.WithContext(ctx)` — 克隆请求级 taxonomy repository。
+
+带 Scope 的仓储读取覆盖：
+
+- 按 Slug 查找 term；
+- 按 ID 或 taxonomy type + Slug 查找 taxonomy identity；
+- 扁平列表与层级树；
+- 实时内容引用次数；
+- 某条内容关联的 taxonomy 项。
+
+BaseTheme taxonomy 归档、归档筛选数据、内容徽标、REST term 解析、后台分类/
+标签列表及内容表单选择器都会走这些 context-aware 路径。
+
+## Scope 安全的分类写入
+
+`taxonomy.CommandService` 是统一写入边界。后台和扩展工作流把
+`taxonomy.RequestContext(c)` 传给创建、更新、删除及内容关系操作。
+
+命令服务统一校验：
+
+- taxonomy 类型已经注册；
+- 名称和 Slug 非空；
+- Slug 在当前 Scope 内唯一；
+- 层级父项属于相同 taxonomy 类型与 Scope，且不会产生循环；
+- 提交的关系 ID 均属于允许的 taxonomy 类型与当前 Scope；
+- 写入在事务完成后才通知 mutation observer。
+
+这些属于领域校验，不代替授权。HTTP/Admin transport 调用命令服务前仍必须
+分别检查 `taxonomy.read`、`taxonomy.create`、`taxonomy.update` 或
+`taxonomy.delete` capability。
+
+## 主题如何消费
+
+使用 BaseTheme 配置驱动路由的主题不需要添加 Scope 代码。自定义主题服务应
+嵌入 `coreTheme.BasePageService`，并为每个请求创建克隆：
 
 ```go
 func (h *Handler) ProductsList(c *gin.Context) {
-    svc := h.pageService.ForRequest(c)  // 拿到带 scope 的 PageService 克隆
-    data, _ := svc.GetProductsData()    // 内部使用 ScopedDB(c, db)，自动过滤
+    service := h.pageService.ForRequest(c)
+    data, _ := service.GetProductsData()
     c.HTML(http.StatusOK, "products", data)
 }
 ```
 
-主题不需要知道 multilang 插件存在，也不需要写"如果是多语言模式则……"的分支。对于新主题，优先使用 BaseTheme 的配置驱动动态路由；只有确实需要自定义服务层时才维护 `PageService.ForRequest(c)`。**core 是唯一交汇点**。
+`ForRequest(c)` 会同时携带 content 与 taxonomy Context。自定义详情查询应使用
+带 Scope 的仓储方法，不能用裸 DB 重新创建无 Scope repository。
+
+## 插件与后台接入
+
+内置 multilang 展示了完整组合方式，core 与插件之间没有硬编码耦合：
+
+1. Early middleware 判断当前规范 URL 的语言。
+2. 它注册 Content Scope，并为启用独立翻译的 taxonomy 注册 Taxonomy Scope。
+3. Core 后台列表/选择器、BaseTheme、REST、SEO 和命令服务消费这些通用 Scope。
+4. `admin.content_list.tabs` 与 `admin.taxonomy_list.tabs` 提供语言 Tab，core
+   不需要知道“语言”的含义。
+5. 通用 taxonomy mutation 通知让插件维护自己的翻译组数据。
+
+Category/Tag 翻译策略与 URL 行为见[多语言插件](../plugins/multilang.md)。
+
+## 契约检查表
+
+- Scope 只在当前请求内有效，不能跨请求泄漏。
+- 列表与详情读取都必须应用 Scope。
+- 写入服务必须接收同一个标准 Context。
+- 前端过滤不是授权；transport 负责 RBAC，领域服务负责所有权、类型与 Scope
+  不变量。
+- 主题与插件只通过 core 的 Scope、仓储、Hook、命令和模板 helper 交互。
+- 没有注册 Scope 时，现有单语言数据与 URL 保持历史行为。

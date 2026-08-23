@@ -20,8 +20,8 @@ GoPress 引擎是 CMS 的运行时容器，负责装配存储、内容仓储、R
 
 - **统一模型** — `Content`、`ContentMeta` 与 `ContentType` 注册表共同驱动
   所有编辑型内容。
-- **核心类型** — `post`、`page`、`contact_message`、`category` 和 `tag`
-  由引擎注册，切换主题时仍然保留。
+- **核心内容类型与分类法** — `post`、`page`、`contact_message` 是核心内容
+  类型；`category`、`tag` 是核心 taxonomy，切换主题时都会保留。
 - **主题类型** — 主题在 `theme.toml` 的 `[[content_types]]` 中声明自定义
   类型，core 在主题激活时统一注册。
 - **前台用户提交** — 主题内容类型可以声明 `public_submission` 策略。主题激活期间，Core 提供通用的所有者范围写服务和临时的内容类型 RBAC 授权，路由与 UI 仍由主题负责。详见[前台用户内容提交](public-content-submission.md)。
@@ -33,6 +33,12 @@ GoPress 引擎是 CMS 的运行时容器，负责装配存储、内容仓储、R
   `ContentQuery.Type("product").Published().Taxonomy("category", "hepa").Paginate(1, 20)`。
 - **分类法系统** — 层级分类与扁平标签支持多对多关系和自动计数；主题通过
   `taxonomies = ["category", "tag"]` 挂载到内容类型。
+- **Taxonomy 请求 Scope** — `taxonomy.Scope`、`AddScope`、`WithScope` 和
+  `RequestContext` 允许扩展约束 term 列表、树、详情查找、引用次数及内容关系，
+  core 不解释其中的 opaque key；没有 Scope 时保持原单语言行为。
+- **安全分类命令服务** — 统一的事务型 `taxonomy.CommandService` 校验已注册
+  taxonomy 类型、作用域内 Slug 唯一性、层级父项、提交的关系 ID 与写入边界，
+  防止后台或 API 的作用域请求选择、修改其它作用域中的 term。
 - **规范 term 归档** — `/category/{slug}` 与 `/tag/{slug}` 跨已注册内容
   类型聚合。类型徽标优先读取当前主题的 `content_type.<name>` locale key，
   缺失时回退到注册表 label。
@@ -43,6 +49,11 @@ GoPress 引擎是 CMS 的运行时容器，负责装配存储、内容仓储、R
 `product`、`service`、`showcase` 只是部分主题采用的命名约定，不是 core
 要求。主题可以声明 `module`、`project`、`case_study` 或任意其它类型，并
 获得相同的后台、API、路由和模板能力。
+
+Core 不包含任何特定语言的 taxonomy 分支。内置多语言插件组合通用 Scope、
+命令观察器、后台 Tab、SEO Filter 与 Sitemap Transformer，实现 Category 和
+Tag 的独立翻译 identity。详见[内容与分类 Scope API](content-scope.md)和
+[多语言插件](../plugins/multilang.md)。
 
 ## Hook 事件总线
 

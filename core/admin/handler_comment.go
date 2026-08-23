@@ -7,8 +7,6 @@ import (
 	"strings"
 
 	"github.com/0xmattg/go-press/core/comment"
-	"github.com/0xmattg/go-press/core/content"
-	"github.com/0xmattg/go-press/core/rewrite"
 
 	"github.com/gin-gonic/gin"
 )
@@ -103,23 +101,6 @@ func (h *Handler) adminCommentRows(c *gin.Context, items []comment.Comment) []ad
 		rows = append(rows, row)
 	}
 	return rows
-}
-
-func (h *Handler) adminPublicContentURL(c *gin.Context, item *content.Content) string {
-	if item == nil {
-		return ""
-	}
-	base := "/" + strings.Trim(item.Type, "/") + "/" + strings.Trim(item.Slug, "/")
-	if h.registry != nil {
-		base = rewrite.NewEngine(h.registry).BuildURL(item.Type, item.Slug)
-	}
-	prefix := ""
-	if h.hooks != nil {
-		if value := h.hooks.ApplyFilter(HookContentPermalinkPrefix, "", c, item); value != nil {
-			prefix, _ = value.(string)
-		}
-	}
-	return strings.TrimRight(strings.TrimSpace(prefix), "/") + base
 }
 
 func adminCommentExcerpt(body string, maxRunes int) string {

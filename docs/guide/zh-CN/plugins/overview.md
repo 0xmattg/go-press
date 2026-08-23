@@ -24,10 +24,12 @@ Core 在 `core/admin/content_tabs.go` 和 `core/hook/constants.go` 集中暴露�
 | Hook | 用途 |
 |---|---|
 | `admin.HookContentListTabs` | 内容列表上方过滤 Tab（数据结构 + filter 名） |
+| `admin.HookTaxonomyListTabs` | 分类/标签列表上方的请求级语言或其它变体 Tab |
 | `admin.HookContentPermalinkPrefix` | 内容编辑页永久链接前缀注入 |
 | `hook.AdminContentFormFields` | 内容编辑/创建页的 meta box 插槽 |
 | `hook.AdminContentSaved` | 内容行保存后的 action hook |
 | `hook.SEOContentMeta` | 内容详情页 `SEOMeta` 渲染前的 filter |
+| `hook.SEOTaxonomyMeta` | taxonomy 归档页 `SEOMeta` 渲染前的 filter |
 | `hook.ThemeHeadEnd` | `</head>` 前 HTML 插槽 |
 | `hook.ThemeBodyOpen` | `<body>` 后立即 HTML 插槽 |
 | `hook.ThemeFooterEnd` | `</body>` 前 HTML 插槽 |
@@ -38,7 +40,7 @@ Core 在 `core/admin/content_tabs.go` 和 `core/hook/constants.go` 集中暴露�
 
 | 插件 | 功能 |
 |---|---|
-| **multilang (WPML-like)** | 完整的内容翻译系统 + 支持完整热拔插（停用后主题语言切换器/admin 语言 Tab/sitemap hreflang/菜单翻译全部实时消失），详见 [多语言插件](multilang.md) |
+| **multilang (WPML-like)** | 内容翻译、可选 Category/Tag 独立翻译、菜单/设置翻译与规范语言 URL；支持完整热拔插，但存在 taxonomy 翻译 identity 时会保护性阻止停用，详见 [多语言插件](multilang.md) |
 | **seo-extras (Yoast-like)** | 给每条内容加 4 个独立 SEO 覆盖字段（`_seo_title` / `_seo_description` / `_seo_image` / `_seo_robots`），激活后内容编辑页底部出现可折叠的「SEO 设置（可选）」面板。零核心改动、零插件表。详见 [SEO Extras 插件](seo-extras.md) |
 | **code-snippets (WPCode-like)** | 通过 `theme.head.end` / `theme.body.open` / `theme.footer.end` 三个主题插槽注入站点级 HTML/JS，适合 Analytics、GTM、站点验证、客服 widget。详见 [Code Snippets 插件](code-snippets.md) |
 | **gopress-analytics** | GoPress 官方自托管访问统计，异步采集 PV、UV、新访客、趋势和热门页面，数据存储在插件自有表。详见 [GoPress Analytics](gopress-analytics.md) |

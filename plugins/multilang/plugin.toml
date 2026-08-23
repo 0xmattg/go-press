@@ -1,6 +1,6 @@
 [plugin]
 slug = "multi-language"
 name = "Multi-Language"
-version = "2.0.0"
+version = "2.0.2"
 description = "WPML-like multi-language support with per-content translations, language-prefixed URLs, admin language management, and theme-side language switcher."
 author = "GoPress Team"

@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/BurntSushi/toml"
 	"github.com/0xmattg/go-press/core/comment"
 	"github.com/0xmattg/go-press/core/content"
 	"github.com/0xmattg/go-press/core/hook"
@@ -17,6 +16,7 @@ import (
 	"github.com/0xmattg/go-press/core/rewrite"
 	"github.com/0xmattg/go-press/core/taxonomy"
 	"github.com/0xmattg/go-press/core/user"
+	"github.com/BurntSushi/toml"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

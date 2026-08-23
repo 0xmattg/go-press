@@ -128,6 +128,257 @@ function adminFormat(template) {
         });
     }
 
+    // Wide-screen content editor columns can be resized without permanently
+    // exposing a visual divider. The preferred sidebar width is kept locally
+    // per browser; narrow layouts continue to use the responsive stacked view.
+    var contentEditLayout = document.querySelector('[data-content-edit-layout]');
+    var contentEditResizer = document.querySelector('[data-content-edit-resizer]');
+    var contentEditSidebar = document.querySelector('[data-content-edit-sidebar]');
+    if (contentEditLayout && contentEditResizer && contentEditSidebar) {
+        var editorSidebarStorageKey = 'gopress.admin.contentEditorSidebarWidth';
+        var editorSidebarDefault = 390;
+        var editorSidebarMin = parseInt(contentEditResizer.getAttribute('aria-valuemin') || '340', 10);
+        var editorSidebarMax = parseInt(contentEditResizer.getAttribute('aria-valuemax') || '560', 10);
+        var editorMainMin = 560;
+        var editorStacked = window.matchMedia('(max-width: 1280px)');
+        var preferredSidebarWidth = editorSidebarDefault;
+
+        try {
+            var savedSidebarWidth = parseInt(window.localStorage.getItem(editorSidebarStorageKey) || '', 10);
+            if (Number.isFinite(savedSidebarWidth)) preferredSidebarWidth = savedSidebarWidth;
+        } catch (ignoreStorageRead) {
+            // Storage can be unavailable in hardened/private browser contexts.
+        }
+
+        function editorSidebarBounds() {
+            var layoutWidth = contentEditLayout.getBoundingClientRect().width;
+            var handleWidth = contentEditResizer.getBoundingClientRect().width || 18;
+            var availableMax = Math.floor(layoutWidth - editorMainMin - handleWidth);
+            return {
+                min: editorSidebarMin,
+                max: Math.max(editorSidebarMin, Math.min(editorSidebarMax, availableMax))
+            };
+        }
+
+        function applyEditorSidebarWidth(width, persist) {
+            var bounds = editorSidebarBounds();
+            var nextWidth = Math.max(bounds.min, Math.min(bounds.max, Math.round(width)));
+            contentEditLayout.style.setProperty('--content-editor-sidebar-width', nextWidth + 'px');
+            contentEditResizer.setAttribute('aria-valuemin', String(bounds.min));
+            contentEditResizer.setAttribute('aria-valuemax', String(bounds.max));
+            contentEditResizer.setAttribute('aria-valuenow', String(nextWidth));
+            if (persist) {
+                preferredSidebarWidth = nextWidth;
+                try {
+                    window.localStorage.setItem(editorSidebarStorageKey, String(nextWidth));
+                } catch (ignoreStorageWrite) {
+                    // Width adjustment still works for the current page load.
+                }
+            }
+            return nextWidth;
+        }
+
+        if (!editorStacked.matches) applyEditorSidebarWidth(preferredSidebarWidth, false);
+
+        var editorResizeActive = false;
+        var editorResizeStartX = 0;
+        var editorResizeStartWidth = 0;
+
+        contentEditResizer.addEventListener('pointerdown', function(event) {
+            if (editorStacked.matches || event.button !== 0) return;
+            event.preventDefault();
+            editorResizeActive = true;
+            editorResizeStartX = event.clientX;
+            editorResizeStartWidth = contentEditSidebar.getBoundingClientRect().width;
+            contentEditLayout.classList.add('is-resizing');
+            document.body.classList.add('content-editor-resizing');
+            contentEditResizer.setPointerCapture(event.pointerId);
+        });
+
+        contentEditResizer.addEventListener('pointermove', function(event) {
+            if (!editorResizeActive) return;
+            applyEditorSidebarWidth(editorResizeStartWidth + editorResizeStartX - event.clientX, false);
+        });
+
+        function finishEditorResize(event) {
+            if (!editorResizeActive) return;
+            editorResizeActive = false;
+            contentEditLayout.classList.remove('is-resizing');
+            document.body.classList.remove('content-editor-resizing');
+            applyEditorSidebarWidth(contentEditSidebar.getBoundingClientRect().width, true);
+            if (event && contentEditResizer.hasPointerCapture(event.pointerId)) {
+                contentEditResizer.releasePointerCapture(event.pointerId);
+            }
+        }
+
+        contentEditResizer.addEventListener('pointerup', finishEditorResize);
+        contentEditResizer.addEventListener('pointercancel', finishEditorResize);
+        contentEditResizer.addEventListener('lostpointercapture', finishEditorResize);
+
+        contentEditResizer.addEventListener('keydown', function(event) {
+            if (editorStacked.matches) return;
+            var bounds = editorSidebarBounds();
+            var currentWidth = contentEditSidebar.getBoundingClientRect().width;
+            var step = event.shiftKey ? 32 : 16;
+            var nextWidth = currentWidth;
+            if (event.key === 'ArrowLeft') nextWidth += step;
+            else if (event.key === 'ArrowRight') nextWidth -= step;
+            else if (event.key === 'Home') nextWidth = bounds.min;
+            else if (event.key === 'End') nextWidth = bounds.max;
+            else return;
+            event.preventDefault();
+            applyEditorSidebarWidth(nextWidth, true);
+        });
+
+        contentEditResizer.addEventListener('dblclick', function() {
+            if (!editorStacked.matches) applyEditorSidebarWidth(editorSidebarDefault, true);
+        });
+
+        var editorLayoutResizeTimer;
+        window.addEventListener('resize', function() {
+            window.clearTimeout(editorLayoutResizeTimer);
+            editorLayoutResizeTimer = window.setTimeout(function() {
+                if (!editorStacked.matches) applyEditorSidebarWidth(preferredSidebarWidth, false);
+            }, 120);
+        });
+    }
+
+    // Searchable token picker for non-hierarchical taxonomies (tag-like).
+    // Selected terms are submitted through hidden inputs, keeping the existing
+    // server-side form protocol unchanged while removing checkbox clutter.
+    document.querySelectorAll('[data-taxonomy-picker]').forEach(function(picker) {
+        var selection = picker.querySelector('[data-taxonomy-selection]');
+        var placeholder = picker.querySelector('[data-taxonomy-placeholder]');
+        var search = picker.querySelector('[data-taxonomy-search]');
+        var candidateList = picker.querySelector('[data-taxonomy-candidates]');
+        var empty = picker.querySelector('[data-taxonomy-empty]');
+        var inputName = picker.getAttribute('data-input-name') || '';
+        var removeTemplate = picker.getAttribute('data-remove-label') || 'Remove %s';
+        if (!selection || !search || !candidateList || !inputName) return;
+
+        var candidates = {};
+        var candidateButtons = Array.prototype.slice.call(candidateList.querySelectorAll('[data-taxonomy-candidate]'));
+        var maxReferenceCount = candidateButtons.reduce(function(max, button) {
+            var count = parseInt(button.getAttribute('data-reference-count') || '0', 10);
+            return Math.max(max, Number.isFinite(count) ? count : 0);
+        }, 0);
+        candidateButtons.forEach(function(button) {
+            var id = button.getAttribute('data-taxonomy-id');
+            var item = button.closest('[data-taxonomy-candidate-item]');
+            var count = parseInt(button.getAttribute('data-reference-count') || '0', 10);
+            var level = 1;
+            if (count > 0 && maxReferenceCount <= 1) level = 3;
+            else if (count > 0) {
+                level = 2 + Math.round(3 * Math.log(count) / Math.log(maxReferenceCount));
+            }
+            button.classList.add('taxonomy-popularity-' + level);
+            candidates[id] = { button: button, item: item };
+        });
+
+        function selectedIDs() {
+            var ids = {};
+            selection.querySelectorAll('[data-taxonomy-token]').forEach(function(token) {
+                ids[token.getAttribute('data-taxonomy-id')] = true;
+            });
+            return ids;
+        }
+
+        function syncPlaceholder() {
+            if (!placeholder) return;
+            placeholder.hidden = selection.querySelector('[data-taxonomy-token]') !== null;
+        }
+
+        function filterCandidates() {
+            var query = search.value.trim().toLocaleLowerCase();
+            var selected = selectedIDs();
+            var visible = 0;
+            Object.keys(candidates).forEach(function(id) {
+                var entry = candidates[id];
+                var text = (entry.button.getAttribute('data-taxonomy-search-text') || '').toLocaleLowerCase();
+                var show = !selected[id] && (!query || text.indexOf(query) !== -1);
+                if (entry.item) entry.item.hidden = !show;
+                entry.button.setAttribute('aria-pressed', selected[id] ? 'true' : 'false');
+                if (show) visible++;
+            });
+            if (empty) empty.hidden = visible > 0;
+        }
+
+        function addCandidate(button) {
+            var id = button.getAttribute('data-taxonomy-id');
+            if (!id || selectedIDs()[id]) return;
+            var name = button.getAttribute('data-taxonomy-name') || button.textContent.trim();
+
+            var token = document.createElement('span');
+            token.className = 'taxonomy-token';
+            token.setAttribute('role', 'listitem');
+            token.setAttribute('data-taxonomy-token', '');
+            token.setAttribute('data-taxonomy-id', id);
+
+            var label = document.createElement('span');
+            label.className = 'taxonomy-token-name';
+            label.textContent = name;
+            token.appendChild(label);
+
+            var remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'taxonomy-token-remove';
+            remove.setAttribute('data-taxonomy-token-remove', '');
+            remove.setAttribute('aria-label', adminFormat(removeTemplate, name));
+            remove.title = adminFormat(removeTemplate, name);
+            remove.textContent = '×';
+            token.appendChild(remove);
+
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = inputName;
+            input.value = id;
+            token.appendChild(input);
+
+            selection.insertBefore(token, placeholder || null);
+            syncPlaceholder();
+            filterCandidates();
+            search.focus();
+        }
+
+        candidateList.addEventListener('click', function(event) {
+            var button = event.target.closest('[data-taxonomy-candidate]');
+            if (button && candidateList.contains(button)) addCandidate(button);
+        });
+        selection.addEventListener('click', function(event) {
+            var remove = event.target.closest('[data-taxonomy-token-remove]');
+            if (!remove || !selection.contains(remove)) return;
+            var token = remove.closest('[data-taxonomy-token]');
+            if (token) token.remove();
+            syncPlaceholder();
+            filterCandidates();
+            search.focus();
+        });
+        search.addEventListener('input', filterCandidates);
+        search.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && search.value) {
+                event.preventDefault();
+                search.value = '';
+                filterCandidates();
+                return;
+            }
+            if (event.key !== 'ArrowDown' && event.key !== 'Enter') return;
+            var first = Array.prototype.find.call(
+                candidateList.querySelectorAll('[data-taxonomy-candidate]'),
+                function(button) {
+                    var item = button.closest('[data-taxonomy-candidate-item]');
+                    return item && !item.hidden;
+                }
+            );
+            if (!first) return;
+            event.preventDefault();
+            if (event.key === 'Enter') addCandidate(first);
+            else first.focus();
+        });
+
+        syncPlaceholder();
+        filterCandidates();
+    });
+
     // Copy media URL on click
     document.querySelectorAll('.media-url').forEach(function(el) {
         el.addEventListener('click', function() {

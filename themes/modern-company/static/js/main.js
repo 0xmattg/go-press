@@ -212,3 +212,86 @@
         }
     });
 })();
+
+// ===========================
+// Post Social Sharing
+// ===========================
+(function () {
+    var share = document.querySelector('.post-share');
+    if (!share) return;
+
+    share.querySelectorAll('.post-share-platform').forEach(function (link) {
+        link.addEventListener('click', function (event) {
+            if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                return;
+            }
+
+            var popup = window.open(
+                link.href,
+                'gopress-social-share',
+                'width=720,height=640,resizable=yes,scrollbars=yes'
+            );
+            if (popup) {
+                event.preventDefault();
+                popup.opener = null;
+                popup.focus();
+            }
+        });
+    });
+
+    var copyButton = share.querySelector('.post-share-copy');
+    var status = share.querySelector('.post-share-status');
+    var statusTimer;
+    if (!copyButton || !status) return;
+
+    function showStatus(message) {
+        window.clearTimeout(statusTimer);
+        status.textContent = message;
+        status.classList.add('is-visible');
+        statusTimer = window.setTimeout(function () {
+            status.classList.remove('is-visible');
+        }, 2400);
+    }
+
+    function fallbackCopy(value) {
+        var input = document.createElement('textarea');
+        input.value = value;
+        input.setAttribute('readonly', '');
+        input.style.position = 'fixed';
+        input.style.opacity = '0';
+        document.body.appendChild(input);
+        input.select();
+        var copied = document.execCommand('copy');
+        document.body.removeChild(input);
+        if (!copied) throw new Error('copy command failed');
+    }
+
+    copyButton.addEventListener('click', function () {
+        var value = copyButton.dataset.shareUrl || window.location.href;
+        var onSuccess = function () {
+            showStatus(copyButton.dataset.copySuccess || 'Link copied');
+        };
+        var onError = function () {
+            showStatus(copyButton.dataset.copyError || 'Copy failed');
+        };
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(value).then(onSuccess, function () {
+                try {
+                    fallbackCopy(value);
+                    onSuccess();
+                } catch (error) {
+                    onError();
+                }
+            });
+            return;
+        }
+
+        try {
+            fallbackCopy(value);
+            onSuccess();
+        } catch (error) {
+            onError();
+        }
+    });
+})();

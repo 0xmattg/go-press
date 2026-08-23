@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/taxonomy"
 )
 
 // response wraps standardized API responses.
@@ -97,11 +98,16 @@ func toDTO(c *content.Content) contentDTO {
 type Handler struct {
 	registry *content.Registry
 	repo     *content.Repository
+	taxRepo  *taxonomy.Repository
 }
 
 // NewHandler creates a new API handler.
-func NewHandler(registry *content.Registry, repo *content.Repository) *Handler {
-	return &Handler{registry: registry, repo: repo}
+func NewHandler(registry *content.Registry, repo *content.Repository, taxonomyRepos ...*taxonomy.Repository) *Handler {
+	h := &Handler{registry: registry, repo: repo}
+	if len(taxonomyRepos) > 0 {
+		h.taxRepo = taxonomyRepos[0]
+	}
+	return h
 }
 
 // RegisterRoutes dynamically registers REST API routes for all content types.
@@ -174,7 +180,7 @@ func (h *Handler) List(c *gin.Context) {
 		return
 	}
 
-	q := h.repo.Query().Published()
+	q := h.repo.QueryContext(content.RequestContext(c)).Published()
 	if t, ok := typeName.(string); ok && t != "" {
 		q = q.Type(t)
 	} else {
@@ -189,7 +195,20 @@ func (h *Handler) List(c *gin.Context) {
 	// Taxonomy filter
 	if tax := c.Query("taxonomy"); tax != "" {
 		if term := c.Query("term"); term != "" {
-			q = q.Taxonomy(tax, term)
+			if h.registry.GetTaxonomy(tax) == nil {
+				respondError(c, http.StatusBadRequest, "invalid_taxonomy", "Taxonomy not found")
+				return
+			}
+			if h.taxRepo != nil {
+				item, err := h.taxRepo.FindByTypeAndSlugContext(taxonomy.RequestContext(c), tax, term)
+				if err != nil {
+					respondPaginated(c, []contentDTO{}, &pagination{Page: 1, PerPage: 20})
+					return
+				}
+				q = q.TaxonomyID(item.ID)
+			} else {
+				q = q.Taxonomy(tax, term)
+			}
 		}
 	}
 
@@ -267,7 +286,7 @@ func (h *Handler) Get(c *gin.Context) {
 	// Try as numeric ID first
 	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err == nil {
-		item, err := h.repo.FindByID(uint(id))
+		item, err := h.repo.QueryContext(content.RequestContext(c)).ID(uint(id)).WithMeta().First()
 		if err != nil || !h.canExpose(item, requestedType) {
 			respondError(c, http.StatusNotFound, "not_found", "Content not found")
 			return
@@ -276,7 +295,7 @@ func (h *Handler) Get(c *gin.Context) {
 		return
 	}
 
-	// Try as slug — scoped so multilang's per-language WHERE applies when
+	// Try as slug — scoped so extension-provided request constraints apply when
 	// the request carries a language hint (?lang=zh, /zh/api/... etc).
 	typeName, _ := c.Get("api_type")
 	if t, ok := typeName.(string); ok && t != "" {

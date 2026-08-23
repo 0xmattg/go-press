@@ -79,6 +79,9 @@ func (b BasePageService) ForRequest(c *gin.Context) BasePageService {
 	if scoped != b.DB {
 		b.DB = scoped
 	}
+	if b.Tax != nil {
+		b.Tax = b.Tax.WithContext(taxonomy.RequestContext(c))
+	}
 	return b
 }
 

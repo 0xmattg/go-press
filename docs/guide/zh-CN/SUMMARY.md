@@ -13,7 +13,7 @@
 * [引擎核心](architecture/engine-core.md)
 * [URL 与 SEO](architecture/url-seo.md)
 * [缓存与 i18n](architecture/caching-and-i18n.md)
-* [Content Scope API](architecture/content-scope.md)
+* [内容与分类 Scope API](architecture/content-scope.md)
 * [Hook 系统](architecture/hooks.md)
 * [前台用户注册与身份登录](architecture/public-authentication.md)
 * [前台用户内容提交](architecture/public-content-submission.md)
@@ -35,7 +35,6 @@
 * [身份、授权与安全](agent/security.md)
 * [扩展开发](agent/extension-development.md)
 * [运维与测试](agent/operations-and-testing.md)
-* [Phase 规划与决策记录](architecture/mcp-agent-capability-plan.md)
 
 ## 主题开发
 

@@ -67,9 +67,9 @@ root Go source file. A plugin can register hooks, settings pages, protected
 routes, database tables, admin templates, middleware, identity providers, and
 frontend output through core extension points.
 
-Bundled examples cover multilingual content, per-content SEO, code injection,
-self-hosted analytics, the disabled-by-default MCP adapter, and external
-identity. Plugin-owned tables use
+Bundled examples cover multilingual content and Category/Tag identities,
+per-content SEO, code injection, self-hosted analytics, the disabled-by-default
+MCP adapter, and external identity. Plugin-owned tables use
 `dbprefix.PluginTable`; runtime implementations do not import themes.
 
 `plugins/gopress-mcp` owns only MCP transport, protocol compatibility, Bearer

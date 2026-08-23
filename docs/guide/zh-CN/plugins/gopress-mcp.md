@@ -315,4 +315,4 @@ Token 添加 `gopress:content:write`。发布和移入回收站不会因选择 `
 
 更完整的设计实现见 [Agent 与 MCP 模块](../agent/overview.md)；Phase 决策、威胁
 模型和后续路线见
-[框架级 Agent 与 MCP 能力规划](../architecture/mcp-agent-capability-plan.md)。
+[路线图与贡献](../reference/roadmap.md)。

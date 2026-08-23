@@ -798,9 +798,11 @@ func (h *Handler) buildMenuItems(lang, role string) []AdminMenuItem {
 	items = append(items, AdminMenuItem{Label: adminT(lang, "nav.redirects"), URL: "/admin/redirects", Active: "redirects", Icon: menuIcon("redirects")})
 	items = append(items, AdminMenuItem{Label: adminT(lang, "nav.media"), URL: "/admin/media", Active: "media", Icon: menuIcon("media")})
 	items = append(items, AdminMenuItem{Label: adminT(lang, "nav.mail"), URL: "/admin/mail", Active: "mail", Icon: menuIcon("mail")})
-	items = append(items, AdminMenuItem{Label: adminT(lang, "nav.settings"), URL: "/admin/settings", Active: "settings", Icon: menuIcon("settings")})
 	items = append(items, AdminMenuItem{Label: adminT(lang, "nav.users"), URL: "/admin/users", Active: "users", Icon: menuIcon("users")})
 	items = append(items, AdminMenuItem{Label: adminT(lang, "nav.comments"), URL: "/admin/comments", Active: "comments", Icon: menuIcon("comments")})
+	// System Settings is the stable final navigation entry. Keep new core-owned
+	// entries above it; plugin-contributed entries have already been merged.
+	items = append(items, AdminMenuItem{Label: adminT(lang, "nav.settings"), URL: "/admin/settings", Active: "settings", Icon: menuIcon("settings")})
 
 	return items
 }

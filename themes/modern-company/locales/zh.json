@@ -66,6 +66,14 @@
 
   "sidebar_categories": "分类",
   "sidebar_tags": "标签",
+  "share_label": "分享",
+  "share_x": "分享到 X",
+  "share_facebook": "分享到 Facebook",
+  "share_linkedin": "分享到 LinkedIn",
+  "share_pinterest": "保存到 Pinterest",
+  "share_copy": "复制文章链接",
+  "share_copied": "链接已复制",
+  "share_copy_failed": "复制失败",
   "filter_all": "全部",
 
   "form_label_name": "姓名 *",

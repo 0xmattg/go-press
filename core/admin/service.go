@@ -51,6 +51,7 @@ type Service struct {
 	comments      CommentService
 	audit         *audit.Service
 	commands      *content.CommandService
+	taxCommands   *taxonomy.CommandService
 
 	mediaVariantJobMu sync.Mutex
 	mediaVariantJob   MediaVariantJob
@@ -112,6 +113,7 @@ func NewService(
 		registry:      registry,
 		audit:         audit.NewService(db),
 		commands:      content.NewCommandService(db, registry),
+		taxCommands:   taxonomy.NewCommandService(db, registry),
 	}
 }
 
@@ -119,6 +121,9 @@ func (s *Service) SetCommentService(service CommentService) { s.comments = servi
 func (s *Service) SetAuditService(service *audit.Service)   { s.audit = service }
 func (s *Service) SetContentCommandService(service *content.CommandService) {
 	s.commands = service
+}
+func (s *Service) SetTaxonomyCommandService(service *taxonomy.CommandService) {
+	s.taxCommands = service
 }
 
 func (s *Service) SiteName() string {
@@ -397,6 +402,10 @@ func (s *Service) ReorderContentContext(ctx context.Context, contentType string,
 // ToDynamicContentView converts a content.Content to a DynamicContentView
 // using the ContentTypeDef to load relevant meta fields and taxonomies.
 func (s *Service) ToDynamicContentView(c content.Content, typeDef *content.ContentTypeDef) DynamicContentView {
+	return s.ToDynamicContentViewContext(context.Background(), c, typeDef)
+}
+
+func (s *Service) ToDynamicContentViewContext(ctx context.Context, c content.Content, typeDef *content.ContentTypeDef) DynamicContentView {
 	view := DynamicContentView{
 		ID:            c.ID,
 		Title:         c.Title,
@@ -431,7 +440,7 @@ func (s *Service) ToDynamicContentView(c content.Content, typeDef *content.Conte
 
 	// Load taxonomy data for each taxonomy associated with this type
 	for _, taxName := range typeDef.Taxonomies {
-		items, _ := s.taxRepo.GetContentTaxonomies(c.ID, taxName)
+		items, _ := s.taxRepo.GetContentTaxonomiesContext(ctx, c.ID, taxName)
 		taxViews := make([]TaxonomyItemView, len(items))
 		for i, t := range items {
 			taxViews[i] = TaxonomyItemView{ID: t.ID, Name: t.Term.Name, Slug: t.Term.Slug}
@@ -444,10 +453,14 @@ func (s *Service) ToDynamicContentView(c content.Content, typeDef *content.Conte
 
 // ToDynamicContentViews batch-converts content items.
 func (s *Service) ToDynamicContentViews(items []content.Content, typeDef *content.ContentTypeDef) []DynamicContentView {
+	return s.ToDynamicContentViewsContext(context.Background(), items, typeDef)
+}
+
+func (s *Service) ToDynamicContentViewsContext(ctx context.Context, items []content.Content, typeDef *content.ContentTypeDef) []DynamicContentView {
 	views := make([]DynamicContentView, len(items))
 	authorIDs := make(map[uint]struct{})
 	for i, c := range items {
-		views[i] = s.ToDynamicContentView(c, typeDef)
+		views[i] = s.ToDynamicContentViewContext(ctx, c, typeDef)
 		if c.AuthorID > 0 {
 			authorIDs[c.AuthorID] = struct{}{}
 		}
@@ -516,11 +529,33 @@ func (s *Service) ToDynamicContentViews(items []content.Content, typeDef *conten
 	return views
 }
 
+func (s *Service) SetContentTaxonomiesContext(ctx context.Context, contentID uint, allowedTypes []string, taxonomyIDs []uint) error {
+	if s == nil || s.taxCommands == nil {
+		return taxonomy.ErrCommandUnavailable
+	}
+	return s.taxCommands.SetContentTaxonomies(ctx, contentID, allowedTypes, taxonomyIDs)
+}
+
+func (s *Service) ValidateContentTaxonomiesContext(ctx context.Context, allowedTypes []string, taxonomyIDs []uint) error {
+	if s == nil || s.taxCommands == nil {
+		return taxonomy.ErrCommandUnavailable
+	}
+	return s.taxCommands.ValidateContentTaxonomies(ctx, allowedTypes, taxonomyIDs)
+}
+
 // ToTaxonomyItemViews converts taxonomy.Taxonomy slice to generic views.
 func (s *Service) ToTaxonomyItemViews(items []taxonomy.Taxonomy) []TaxonomyItemView {
 	views := make([]TaxonomyItemView, len(items))
+	names := make(map[uint]string, len(items))
+	for _, item := range items {
+		names[item.ID] = item.Term.Name
+	}
 	for i, t := range items {
-		views[i] = TaxonomyItemView{ID: t.ID, Name: t.Term.Name, Slug: t.Term.Slug}
+		views[i] = TaxonomyItemView{ID: t.ID, Name: t.Term.Name, Slug: t.Term.Slug, Description: t.Description}
+		if t.ParentID != nil {
+			views[i].ParentID = *t.ParentID
+			views[i].ParentName = names[*t.ParentID]
+		}
 	}
 	return views
 }
@@ -528,18 +563,26 @@ func (s *Service) ToTaxonomyItemViews(items []taxonomy.Taxonomy) []TaxonomyItemV
 // ==================== Taxonomy ====================
 
 func (s *Service) ListTaxonomy(taxType string) ([]taxonomy.Taxonomy, error) {
-	return s.taxRepo.ListByTaxonomy(taxType)
+	return s.ListTaxonomyContext(context.Background(), taxType)
+}
+
+func (s *Service) ListTaxonomyContext(ctx context.Context, taxType string) ([]taxonomy.Taxonomy, error) {
+	return s.taxRepo.ListByTaxonomyContext(ctx, taxType)
 }
 
 // ListTaxonomyItemViews returns admin taxonomy rows with a live, batched count
 // of active content references. The stable sort preserves the repository order
 // for equal counts while putting the most-used terms first.
 func (s *Service) ListTaxonomyItemViews(taxType string) ([]TaxonomyItemView, error) {
-	items, err := s.ListTaxonomy(taxType)
+	return s.ListTaxonomyItemViewsContext(context.Background(), taxType)
+}
+
+func (s *Service) ListTaxonomyItemViewsContext(ctx context.Context, taxType string) ([]TaxonomyItemView, error) {
+	items, err := s.ListTaxonomyContext(ctx, taxType)
 	if err != nil {
 		return nil, err
 	}
-	counts, err := s.taxRepo.ContentReferenceCounts(taxType)
+	counts, err := s.taxRepo.ContentReferenceCountsContext(ctx, taxType)
 	if err != nil {
 		return nil, err
 	}
@@ -559,36 +602,50 @@ func applyTaxonomyReferenceCounts(views []TaxonomyItemView, counts map[uint]int6
 }
 
 func (s *Service) CreateTaxonomyTerm(name, slug, taxType string) error {
-	term := &taxonomy.Term{Name: name, Slug: slug}
-	if err := s.taxRepo.CreateTerm(term); err != nil {
-		return err
+	return s.CreateTaxonomyTermContext(context.Background(), name, slug, taxType)
+}
+
+func (s *Service) CreateTaxonomyTermContext(ctx context.Context, name, slug, taxType string) error {
+	return s.CreateTaxonomyContext(ctx, &taxonomy.Taxonomy{Taxonomy: taxType, Term: taxonomy.Term{Name: name, Slug: slug}})
+}
+
+func (s *Service) CreateTaxonomyContext(ctx context.Context, item *taxonomy.Taxonomy) error {
+	if s == nil || s.taxCommands == nil {
+		return taxonomy.ErrCommandUnavailable
 	}
-	tax := &taxonomy.Taxonomy{TermID: term.ID, Taxonomy: taxType}
-	return s.taxRepo.CreateTaxonomy(tax)
+	return s.taxCommands.Create(ctx, item)
 }
 
 func (s *Service) UpdateTaxonomyTerm(taxID uint, taxType, name, slug string) error {
-	tax, err := s.taxRepo.GetTaxonomy(taxID)
-	if err != nil {
-		return err
-	}
-	if !taxonomyMatchesType(tax, taxType) {
+	return s.UpdateTaxonomyTermContext(context.Background(), taxID, taxType, name, slug)
+}
+
+func (s *Service) UpdateTaxonomyTermContext(ctx context.Context, taxID uint, taxType, name, slug string) error {
+	stored, err := s.taxRepo.GetTaxonomyContext(ctx, taxID)
+	if err != nil || stored.Taxonomy != taxType {
 		return gorm.ErrRecordNotFound
 	}
-	tax.Term.Name = name
-	tax.Term.Slug = slug
-	return s.db.Save(&tax.Term).Error
+	stored.Term.Name = name
+	stored.Term.Slug = slug
+	return s.UpdateTaxonomyContext(ctx, taxType, stored)
+}
+
+func (s *Service) UpdateTaxonomyContext(ctx context.Context, taxType string, item *taxonomy.Taxonomy) error {
+	if s == nil || s.taxCommands == nil {
+		return taxonomy.ErrCommandUnavailable
+	}
+	return s.taxCommands.Update(ctx, taxType, item)
 }
 
 func (s *Service) DeleteTaxonomyTerm(taxID uint, taxType string) error {
-	tax, err := s.taxRepo.GetTaxonomy(taxID)
-	if err != nil {
-		return err
+	return s.DeleteTaxonomyTermContext(context.Background(), taxID, taxType)
+}
+
+func (s *Service) DeleteTaxonomyTermContext(ctx context.Context, taxID uint, taxType string) error {
+	if s == nil || s.taxCommands == nil {
+		return taxonomy.ErrCommandUnavailable
 	}
-	if !taxonomyMatchesType(tax, taxType) {
-		return gorm.ErrRecordNotFound
-	}
-	return s.taxRepo.DeleteTaxonomy(taxID)
+	return s.taxCommands.Delete(ctx, taxType, taxID)
 }
 
 func taxonomyMatchesType(item *taxonomy.Taxonomy, taxType string) bool {

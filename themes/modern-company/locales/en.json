@@ -66,6 +66,14 @@
 
   "sidebar_categories": "Categories",
   "sidebar_tags": "Tags",
+  "share_label": "Share",
+  "share_x": "Share on X",
+  "share_facebook": "Share on Facebook",
+  "share_linkedin": "Share on LinkedIn",
+  "share_pinterest": "Save to Pinterest",
+  "share_copy": "Copy article link",
+  "share_copied": "Link copied",
+  "share_copy_failed": "Copy failed",
   "filter_all": "All",
 
   "form_label_name": "Name *",

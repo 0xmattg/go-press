@@ -13,6 +13,8 @@ import (
 
 	"github.com/0xmattg/go-press/core/content"
 	"github.com/0xmattg/go-press/core/hook"
+	"github.com/0xmattg/go-press/core/rewrite"
+	"github.com/0xmattg/go-press/core/taxonomy"
 
 	"github.com/gin-gonic/gin"
 )
@@ -229,7 +231,7 @@ func (h *Handler) contentListFilters(c *gin.Context, slug string, typeName strin
 			Label:    filters.TaxonomyLabel,
 			Selected: selectedTerm == "",
 		})
-		if items, err := h.svc.ListTaxonomy(taxDef.Name); err == nil {
+		if items, err := h.svc.ListTaxonomyContext(taxonomy.RequestContext(c), taxDef.Name); err == nil {
 			for _, item := range h.svc.ToTaxonomyItemViews(items) {
 				filters.TaxonomyOptions = append(filters.TaxonomyOptions, AdminListFilterOption{
 					Value:    item.Slug,
@@ -422,7 +424,8 @@ func (h *Handler) ContentList(c *gin.Context) {
 		return
 	}
 
-	views := h.svc.ToDynamicContentViews(result.Items, typeDef)
+	views := h.svc.ToDynamicContentViewsContext(content.RequestContext(c), result.Items, typeDef)
+	h.attachAdminContentPermalinks(c, result.Items, views)
 	pagination := buildAdminPagination(c, result)
 	filters := h.contentListFilters(c, slug, typeName, dateField, filterTax)
 	reorderQuery := cleanListQuery(c, false)
@@ -467,6 +470,20 @@ func (h *Handler) ContentList(c *gin.Context) {
 		"FilterHiddenInputs":  hiddenInputsFromQueryExcept(cleanListQuery(c, true), map[string]bool{"date": true, "term": true}),
 		"ReorderQuery":        template.URL(reorderQuery.Encode()),
 	})
+}
+
+// attachAdminContentPermalinks builds each row URL from the registered rewrite
+// definition and the row's own extension context. A multilingual extension can
+// therefore prefix every item according to its stored language even when the
+// list currently displays multiple languages at once.
+func (h *Handler) attachAdminContentPermalinks(c *gin.Context, items []content.Content, views []DynamicContentView) {
+	limit := len(items)
+	if len(views) < limit {
+		limit = len(views)
+	}
+	for i := 0; i < limit; i++ {
+		views[i].Permalink = h.adminPublicContentURL(c, &items[i])
+	}
 }
 
 // ==================== Content New ====================
@@ -592,7 +609,7 @@ func (h *Handler) ContentNew(c *gin.Context) {
 	}
 
 	// Load taxonomy forms for selectors
-	h.loadTaxonomyForms(typeDef, nil, data)
+	h.loadTaxonomyForms(c, typeDef, nil, data)
 	h.addPageAttributesData(c, typeName, typeDef, nil, data)
 
 	h.render(c, "content_form", data)
@@ -664,23 +681,29 @@ func (h *Handler) ContentCreate(c *gin.Context) {
 	filterQuery := listFilterQuery(c)
 
 	renderCreateError := func(msg string) {
-		view := h.svc.ToDynamicContentView(*item, typeDef)
+		view := h.svc.ToDynamicContentViewContext(content.RequestContext(c), *item, typeDef)
 		data := gin.H{
 			"Title": adminT(lang, "content.new", label), "Active": slug,
 			"TypeDef": typeDef, "TypeName": typeName, "Slug": slug,
 			"Item":       view,
+			"Permalink":  h.adminPublicContentURL(c, item),
 			"Error":      msg,
 			"HookItem":   item,
 			"BackURL":    listURLWithFilter(slug, filterQuery),
 			"BackQuery":  filterQuery,
 			"CanPublish": h.svc.rbac.Can(c.GetString("admin_role"), h.mapResource(typeName), "publish"),
 		}
-		h.loadTaxonomyForms(typeDef, &view, data)
+		h.loadTaxonomyForms(c, typeDef, &view, data)
 		h.addPageAttributesData(c, typeName, typeDef, item, data)
 		h.render(c, "content_form", data)
 	}
 
 	meta := contentMetaFromForm(c, typeDef, false)
+	taxonomyIDs := submittedTaxonomyIDs(c, typeDef, h.registry)
+	if err := h.svc.ValidateContentTaxonomiesContext(taxonomy.RequestContext(c), typeDef.Taxonomies, taxonomyIDs); err != nil {
+		renderCreateError(adminT(lang, "error.create_failed", err.Error()))
+		return
+	}
 	if err := h.svc.CreateContentContext(content.RequestContext(c), item, meta); err != nil {
 		if errors.Is(err, content.ErrReservedSlug) {
 			renderCreateError(adminT(lang, "error.slug_reserved", item.Slug))
@@ -691,7 +714,12 @@ func (h *Handler) ContentCreate(c *gin.Context) {
 	}
 
 	// Save taxonomy relationships
-	h.saveTaxonomyRelations(c, typeDef, item.ID)
+	if err := h.saveTaxonomyRelations(c, typeDef, item.ID, taxonomyIDs); err != nil {
+		message := adminT(lang, "error.update_failed", err.Error())
+		target := fmt.Sprintf("/admin/%s/%d/edit?error=%s", slug, item.ID, url.QueryEscape(message))
+		c.Redirect(http.StatusFound, target)
+		return
+	}
 
 	// Fire admin.content.saved so plugins can persist their own meta fields.
 	hookErr := runAdminContentSaved(h.hooks, c, item)
@@ -836,39 +864,27 @@ func (h *Handler) ContentEdit(c *gin.Context) {
 		return
 	}
 
-	view := h.svc.ToDynamicContentView(*item, typeDef)
-
-	// Resolve a permalink prefix via plugin filter (e.g. multilang prepends
-	// "/zh" for Chinese content). Empty when no plugin contributes — keeps
-	// single-language behavior unchanged.
-	permalinkPrefix := ""
-	if h.hooks != nil {
-		if v := h.hooks.ApplyFilter(HookContentPermalinkPrefix, "", c, item); v != nil {
-			if s, ok := v.(string); ok {
-				permalinkPrefix = s
-			}
-		}
-	}
+	view := h.svc.ToDynamicContentViewContext(content.RequestContext(c), *item, typeDef)
 
 	data := gin.H{
-		"Title":           adminT(lang, "content.edit", label),
-		"Active":          slug,
-		"TypeDef":         typeDef,
-		"TypeName":        typeName,
-		"Slug":            slug,
-		"Item":            view,
-		"PermalinkPrefix": permalinkPrefix,
-		"HookItem":        item,
-		"BackURL":         listURLWithFilter(slug, filterQuery),
-		"BackQuery":       filterQuery,
-		"CanPublish":      h.svc.rbac.Can(c.GetString("admin_role"), h.mapResource(typeName), "publish"),
+		"Title":      adminT(lang, "content.edit", label),
+		"Active":     slug,
+		"TypeDef":    typeDef,
+		"TypeName":   typeName,
+		"Slug":       slug,
+		"Item":       view,
+		"Permalink":  h.adminPublicContentURL(c, item),
+		"HookItem":   item,
+		"BackURL":    listURLWithFilter(slug, filterQuery),
+		"BackQuery":  filterQuery,
+		"CanPublish": h.svc.rbac.Can(c.GetString("admin_role"), h.mapResource(typeName), "publish"),
 	}
 	if message := strings.TrimSpace(c.Query("error")); message != "" {
 		data["Error"] = message
 	}
 
 	// Load taxonomy forms with selection state
-	h.loadTaxonomyForms(typeDef, &view, data)
+	h.loadTaxonomyForms(c, typeDef, &view, data)
 	h.addPageAttributesData(c, typeName, typeDef, item, data)
 
 	h.render(c, "content_form", data)
@@ -943,23 +959,29 @@ func (h *Handler) ContentUpdate(c *gin.Context) {
 	applyParentFromForm(c, typeDef, item)
 
 	renderUpdateError := func(msg string) {
-		view := h.svc.ToDynamicContentView(*item, typeDef)
+		view := h.svc.ToDynamicContentViewContext(content.RequestContext(c), *item, typeDef)
 		data := gin.H{
 			"Title": adminT(lang, "content.edit", label), "Active": slug,
 			"TypeDef": typeDef, "TypeName": typeName, "Slug": slug,
 			"Item":       view,
+			"Permalink":  h.adminPublicContentURL(c, item),
 			"Error":      msg,
 			"HookItem":   item,
 			"BackURL":    listURLWithFilter(slug, filterQuery),
 			"BackQuery":  filterQuery,
 			"CanPublish": h.svc.rbac.Can(c.GetString("admin_role"), h.mapResource(typeName), "publish"),
 		}
-		h.loadTaxonomyForms(typeDef, &view, data)
+		h.loadTaxonomyForms(c, typeDef, &view, data)
 		h.addPageAttributesData(c, typeName, typeDef, item, data)
 		h.render(c, "content_form", data)
 	}
 
 	meta := contentMetaFromForm(c, typeDef, true)
+	taxonomyIDs := submittedTaxonomyIDs(c, typeDef, h.registry)
+	if err := h.svc.ValidateContentTaxonomiesContext(taxonomy.RequestContext(c), typeDef.Taxonomies, taxonomyIDs); err != nil {
+		renderUpdateError(adminT(lang, "error.update_failed", err.Error()))
+		return
+	}
 	if err := h.svc.UpdateContentContext(content.RequestContext(c), typeName, item, meta); err != nil {
 		if errors.Is(err, content.ErrReservedSlug) {
 			renderUpdateError(adminT(lang, "error.slug_reserved", item.Slug))
@@ -970,7 +992,10 @@ func (h *Handler) ContentUpdate(c *gin.Context) {
 	}
 
 	// Update taxonomy relationships
-	h.saveTaxonomyRelations(c, typeDef, item.ID)
+	if err := h.saveTaxonomyRelations(c, typeDef, item.ID, taxonomyIDs); err != nil {
+		renderUpdateError(adminT(lang, "error.update_failed", err.Error()))
+		return
+	}
 
 	// Fire admin.content.saved so plugins can persist their own meta fields
 	// (e.g. seo-extras stores seo_title / seo_description / seo_image / seo_robots).
@@ -1013,7 +1038,7 @@ func (h *Handler) ContentDetail(c *gin.Context) {
 		_ = h.svc.UpdateContentContext(content.RequestContext(c), typeName, item, nil)
 	}
 
-	view := h.svc.ToDynamicContentView(*item, typeDef)
+	view := h.svc.ToDynamicContentViewContext(content.RequestContext(c), *item, typeDef)
 
 	h.render(c, "content_detail", gin.H{
 		"Title":     adminT(lang, "content.view", label),
@@ -1133,17 +1158,31 @@ func (h *Handler) ContentReorder(c *gin.Context) {
 // ==================== Taxonomy Helpers ====================
 
 // loadTaxonomyForms loads all taxonomy data for form selectors.
-func (h *Handler) loadTaxonomyForms(typeDef *content.ContentTypeDef, view *DynamicContentView, data gin.H) {
+func (h *Handler) loadTaxonomyForms(c *gin.Context, typeDef *content.ContentTypeDef, view *DynamicContentView, data gin.H) {
 	var forms []TaxonomyFormData
 	for _, taxName := range typeDef.Taxonomies {
 		taxDef := h.registry.GetTaxonomy(taxName)
 		if taxDef == nil {
 			continue
 		}
-		items, _ := h.svc.ListTaxonomy(taxName)
+		ctx := taxonomy.RequestContext(c)
+		var itemViews []TaxonomyItemView
+		if taxDef.Hierarchical {
+			items, _ := h.svc.ListTaxonomyContext(ctx, taxName)
+			itemViews = h.svc.ToTaxonomyItemViews(items)
+		} else {
+			// Non-hierarchical terms render as a searchable tag cloud. Use the
+			// live scoped reference aggregate so popular choices are ordered first
+			// and can be sized relative to their actual use in this language.
+			if popularViews, err := h.svc.ListTaxonomyItemViewsContext(ctx, taxName); err == nil {
+				itemViews = popularViews
+			} else if items, listErr := h.svc.ListTaxonomyContext(ctx, taxName); listErr == nil {
+				itemViews = h.svc.ToTaxonomyItemViews(items)
+			}
+		}
 		fd := TaxonomyFormData{
 			TaxDef:      taxDef,
-			AllItems:    h.svc.ToTaxonomyItemViews(items),
+			AllItems:    itemViews,
 			SelectedMap: make(map[uint]bool),
 		}
 		// Populate selections if editing
@@ -1165,10 +1204,10 @@ func (h *Handler) loadTaxonomyForms(typeDef *content.ContentTypeDef, view *Dynam
 }
 
 // saveTaxonomyRelations saves taxonomy relations from form submission.
-func (h *Handler) saveTaxonomyRelations(c *gin.Context, typeDef *content.ContentTypeDef, contentID uint) {
+func submittedTaxonomyIDs(c *gin.Context, typeDef *content.ContentTypeDef, registry *content.Registry) []uint {
 	var allTaxIDs []uint
 	for _, taxName := range typeDef.Taxonomies {
-		taxDef := h.registry.GetTaxonomy(taxName)
+		taxDef := registry.GetTaxonomy(taxName)
 		if taxDef == nil {
 			continue
 		}
@@ -1184,9 +1223,32 @@ func (h *Handler) saveTaxonomyRelations(c *gin.Context, typeDef *content.Content
 			allTaxIDs = append(allTaxIDs, tagIDs...)
 		}
 	}
-	if len(allTaxIDs) > 0 {
-		_ = h.svc.taxRepo.SetContentTaxonomies(contentID, allTaxIDs)
-	} else if len(typeDef.Taxonomies) > 0 {
-		_ = h.svc.taxRepo.SetContentTaxonomies(contentID, []uint{})
+	return allTaxIDs
+}
+
+func (h *Handler) saveTaxonomyRelations(c *gin.Context, typeDef *content.ContentTypeDef, contentID uint, allTaxIDs []uint) error {
+	if len(typeDef.Taxonomies) == 0 {
+		return nil
 	}
+	return h.svc.SetContentTaxonomiesContext(taxonomy.RequestContext(c), contentID, typeDef.Taxonomies, allTaxIDs)
+}
+
+// adminPublicContentURL resolves the registered public rewrite and then lets
+// extensions prepend a row-specific path segment such as a language code.
+// Core remains unaware of what the prefix represents.
+func (h *Handler) adminPublicContentURL(c *gin.Context, item *content.Content) string {
+	if item == nil {
+		return ""
+	}
+	base := "/" + strings.Trim(item.Type, "/") + "/" + strings.Trim(item.Slug, "/")
+	if h.registry != nil {
+		base = rewrite.NewEngine(h.registry).BuildURL(item.Type, item.Slug)
+	}
+	prefix := ""
+	if h.hooks != nil {
+		if value := h.hooks.ApplyFilter(HookContentPermalinkPrefix, "", c, item); value != nil {
+			prefix, _ = value.(string)
+		}
+	}
+	return strings.TrimRight(strings.TrimSpace(prefix), "/") + base
 }

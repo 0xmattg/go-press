@@ -85,6 +85,12 @@ func (p *Plugin) Description() string {
 	return "WPML-like 多语言内容翻译插件：独立URL、内容克隆、语言前缀路由"
 }
 
+// CanDeactivate prevents translated taxonomy identities from silently falling
+// back into an ambiguous single-language view.
+func (p *Plugin) CanDeactivate(app plugin.App) error {
+	return p.validateTaxonomyTranslationState()
+}
+
 // --- SettingsProvider interface ---
 
 func (p *Plugin) SettingsTemplatePath() string {
@@ -166,6 +172,29 @@ func (p *Plugin) OnSettingsSave(settings map[string]string) {
 	logger.Info("multi-language: synced languages from settings", "count", len(formLangs), "default", defaultLangCode)
 }
 
+// ValidateSettings prevents translated rows from being exposed through the
+// legacy shared namespace after an operator has started creating independent
+// taxonomy translations.
+func (p *Plugin) ValidateSettings(settings map[string]string) error {
+	if p.repo == nil {
+		return nil
+	}
+	for _, taxonomyType := range supportedTranslatedTaxonomies {
+		requested := strings.TrimSpace(settings[taxonomyModeOption(taxonomyType)])
+		if requested == taxonomyModeTranslatedOnly || p.taxonomyMode(taxonomyType) != taxonomyModeTranslatedOnly {
+			continue
+		}
+		count, err := p.repo.CountTaxonomyTranslationsByType(taxonomyType)
+		if err != nil {
+			return err
+		}
+		if count > 0 {
+			return fmt.Errorf("%s 仍有 %d 条独立翻译记录，不能直接切回共享模式", taxonomyType, count)
+		}
+	}
+	return nil
+}
+
 // --- Lifecycle ---
 
 // Activate wires the plugin into the GoPress engine.
@@ -197,6 +226,8 @@ func (p *Plugin) Activate(app plugin.App) {
 	core.RegisterPluginTable(pluginSlug, "languages")
 	core.RegisterPluginTable(pluginSlug, "string_translations")
 	core.RegisterPluginTable(pluginSlug, "menu_translations")
+	core.RegisterPluginTable(pluginSlug, "taxonomy_translation_groups")
+	core.RegisterPluginTable(pluginSlug, "taxonomy_translations")
 
 	// 2. Seed default languages if table is empty
 	p.seedDefaultLanguages()
@@ -209,6 +240,7 @@ func (p *Plugin) Activate(app plugin.App) {
 
 	// 3b. Register menu hooks for transparent menu translation.
 	p.registerMenuHooks(e)
+	p.registerTaxonomyHooks()
 
 	// 4. Register middleware via early hook (runs BEFORE page cache)
 	p.hookHandles = append(p.hookHandles, e.Hooks.AddAction("middleware.early", func(ctx context.Context, args ...interface{}) {
@@ -260,6 +292,7 @@ func (p *Plugin) Activate(app plugin.App) {
 		contentUpdate := admin.RequirePermission(e.Auth, e.RBAC, "content", "update")
 		menuUpdate := admin.RequirePermission(e.Auth, e.RBAC, "menu", "update")
 		pluginUpdate := admin.RequirePermission(e.Auth, e.RBAC, "plugin", "update")
+		adminAuth := admin.AuthMiddleware(e.Auth)
 		// Translation admin API.
 		r.POST("/admin/plugins/multi-language/translate", contentCreate, p.handleCreateTranslation)
 		r.POST("/admin/plugins/multi-language/unlink", contentUpdate, p.handleUnlinkTranslation)
@@ -271,6 +304,9 @@ func (p *Plugin) Activate(app plugin.App) {
 		// Option translation admin API
 		r.POST("/admin/plugins/multi-language/option-translate", pluginUpdate, p.handleOptionTranslationSave)
 		r.POST("/admin/plugins/multi-language/site-option-translate", pluginUpdate, p.handleSiteOptionTranslationSave)
+		// Taxonomy permission is resolved dynamically from the submitted source
+		// item; the handler verifies taxonomy.read + taxonomy.create after auth.
+		r.POST("/admin/plugins/multi-language/taxonomy-translate", adminAuth, p.handleCreateTaxonomyTranslation)
 	}, 5))
 
 	// 4c. Re-prime the i18n bundle whenever core admin reports a bulk option
@@ -389,6 +425,7 @@ func (p *Plugin) SettingsData() map[string]interface{} {
 	// Load default language
 	defaultLang := p.getDefaultLang()
 	data["DefaultLang"] = defaultLang
+	p.taxonomySettingsData(data, langs, defaultLang)
 
 	// Load all content with their translation status
 	if p.engine != nil {
@@ -780,6 +817,12 @@ func (p *Plugin) handleCreateTranslation(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?error=关联翻译失败: "+err.Error())
 		return
 	}
+	if typeDef := p.engine.Registry.GetType(original.Type); typeDef != nil {
+		if err := p.copyTranslatedTaxonomies(contentID, cloned.ID, targetLang, typeDef); err != nil {
+			c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?error="+url.QueryEscape("内容已克隆，但分类翻译关系同步失败: "+err.Error()))
+			return
+		}
+	}
 
 	logger.Info("Translation created", "original", contentID, "cloned", cloned.ID, "lang", targetLang, "status", clonedStatus)
 	statusLabel := "草稿"
@@ -973,9 +1016,12 @@ func (p *Plugin) loadDBOverrides() {
 
 // --- Language Prefix Middleware ---
 
-// LanguagePrefixMiddleware detects language from URL prefix, cookie, or Accept-Language.
-// For non-default languages, URLs have a prefix like /en/products/hepa-filters.
-// The middleware strips the prefix so the rewrite engine sees /products/hepa-filters.
+// LanguagePrefixMiddleware treats the public URL as the canonical language
+// selector: prefixed URLs use that language and unprefixed URLs use the default
+// language. Cookie/header preferences are only consulted at the site root,
+// where a non-default preference is redirected to its canonical prefix.
+// The middleware strips language prefixes so the rewrite engine sees the
+// language-neutral path (for example, /zh/products becomes /products).
 func (p *Plugin) LanguagePrefixMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Self-guard for runtime deactivation: Gin doesn't let us detach
@@ -987,7 +1033,7 @@ func (p *Plugin) LanguagePrefixMiddleware() gin.HandlerFunc {
 		}
 		path := c.Request.URL.Path
 
-		// Skip admin, API, static
+		// Admin and API keep their path but still receive request scopes.
 		if strings.HasPrefix(path, "/admin") ||
 			strings.HasPrefix(path, "/api/") ||
 			strings.HasPrefix(path, "/static/") ||
@@ -1007,7 +1053,11 @@ func (p *Plugin) LanguagePrefixMiddleware() gin.HandlerFunc {
 			if strings.HasPrefix(path, "/admin") {
 				if q := c.Query("lang"); q != "" && p.isSupported(q) {
 					p.registerLangContentScope(c, q)
+					p.registerLangTaxonomyScope(c, q)
 				}
+			} else if strings.HasPrefix(path, "/api/") {
+				p.registerLangContentScope(c, lang)
+				p.registerLangTaxonomyScope(c, lang)
 			}
 			c.Next()
 			return
@@ -1015,11 +1065,13 @@ func (p *Plugin) LanguagePrefixMiddleware() gin.HandlerFunc {
 
 		// Check URL prefix for language code: /en/... /ja/...
 		lang := ""
+		hadLanguagePrefix := false
 		langs, _ := p.repo.ActiveLanguages()
 		for _, l := range langs {
 			prefix := "/" + l.Code + "/"
 			if strings.HasPrefix(path, prefix) || path == "/"+l.Code {
 				lang = l.Code
+				hadLanguagePrefix = true
 				// Strip the language prefix from URL so rewrite engine works normally
 				newPath := strings.TrimPrefix(path, "/"+l.Code)
 				if newPath == "" {
@@ -1030,13 +1082,36 @@ func (p *Plugin) LanguagePrefixMiddleware() gin.HandlerFunc {
 			}
 		}
 
-		// If no prefix detected, try cookie/header, default to default language
+		// An unprefixed public content URL is always the default-language URL.
+		// Only the site root acts as a preference-aware entry point. This keeps a
+		// language cookie from changing the meaning of an explicit canonical URL
+		// such as /blog/example, while / can still lead a returning visitor to
+		// /zh/ (or another configured non-default language).
 		if lang == "" {
-			lang = p.detectFromCookieOrHeader(c)
+			lang = p.getDefaultLang()
+			if path == "/" && (c.Request.Method == http.MethodGet || c.Request.Method == http.MethodHead) {
+				preferredLang := p.detectFromCookieOrHeader(c)
+				if preferredLang != lang {
+					c.SetCookie(CookieName, preferredLang, 365*24*3600, "/", "", false, false)
+					destination := "/" + preferredLang + "/"
+					query := c.Request.URL.Query()
+					query.Del("lang")
+					if encoded := query.Encode(); encoded != "" {
+						destination += "?" + encoded
+					}
+					c.Redirect(http.StatusFound, destination)
+					c.Abort()
+					return
+				}
+			}
 		}
 
-		// Persist in cookie
-		c.SetCookie(CookieName, lang, 365*24*3600, "/", "", false, false)
+		// Persist an explicit prefix (and the default-language root), but do not
+		// let arbitrary unprefixed requests such as /favicon.ico overwrite a
+		// visitor's language preference.
+		if hadLanguagePrefix || path == "/" {
+			c.SetCookie(CookieName, lang, 365*24*3600, "/", "", false, false)
+		}
 		c.Set(coreI18n.CtxKeyLang, lang)
 
 		// Set per-goroutine language for menu translation hook
@@ -1046,10 +1121,14 @@ func (p *Plugin) LanguagePrefixMiddleware() gin.HandlerFunc {
 		// Register a content scope via core API for language-based content filtering.
 		// Any theme using content.ScopedDB(c, db) will automatically get filtered results.
 		p.registerLangContentScope(c, lang)
+		p.registerLangTaxonomyScope(c, lang)
 
 		// Override the core i18n localizer with language-aware one
 		if p.engine.I18n != nil {
 			c.Set(coreI18n.CtxKeyLocalizer, p.engine.I18n.NewLocalizer(lang))
+		}
+		if p.redirectLegacyTaxonomyAlias(c, c.Request.URL.Path, lang, hadLanguagePrefix) {
+			return
 		}
 
 		c.Next()
@@ -1307,6 +1386,15 @@ func (p *Plugin) resolveTranslatedURL(referer, targetLang string) (string, bool)
 			break
 		}
 	}
+	// Resolve taxonomy archives before generic archive fallback so translated
+	// term slugs, rather than source slugs, become canonical.
+	if translatedPath, matched := p.resolveTaxonomyTranslation(path, originalLang, targetLang); matched {
+		if translatedPath != "" {
+			return translatedPath, true
+		}
+		return sameRefererPath(parsed), false
+	}
+
 	// Try to find content from the path and resolve its translation.
 	// Detail page patterns: /products/{slug}, /services/{slug}, /blog/{slug}, etc.
 	// originalLang is needed so the source-side slug lookup picks the right

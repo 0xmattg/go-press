@@ -65,7 +65,7 @@ curl http://localhost:8080/api/v1/content \
 | `page` | 分页页码（从 1 开始） |
 | `per_page` | 每页条数（默认 20） |
 | `sort` | 排序字段 + 方向，如 `created_at:desc` |
-| `lang` | 语言代码（多语言插件启用时） |
+| `lang` | 语言代码（多语言插件启用时，内容与 taxonomy 过滤共享同一请求作用域） |
 
 ## 自动生成 Swagger 文档
 

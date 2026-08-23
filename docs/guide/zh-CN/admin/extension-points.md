@@ -58,6 +58,17 @@ e.Hooks.AddFilter(admin.HookContentListTabs,
 
 **如果没有插件注册 filter，hook 返回空切片，Tab 条区域不渲染，列表完全恢复旧行为**。
 
+## Taxonomy 列表过滤 Tab
+
+`admin.HookTaxonomyListTabs` 把同一套请求感知 Tab 契约开放给 Category、Tag
+以及其它已注册 taxonomy 列表。Filter 会收到当前 `*gin.Context` 与 taxonomy
+type；插件可以追加 `?lang=zh` 等 URL，并注册对应的
+[Taxonomy Scope](../architecture/content-scope.md)。
+
+计数、树、父级候选、内容引用次数、创建/更新/删除命令及内容编辑器选择器都
+必须消费同一个 Scope。Tab 只是导航和筛选控件，不是授权边界；每个受保护
+操作仍须检查对应的 taxonomy RBAC capability。
+
 ## 内容编辑页永久链接前缀
 
 让多语言/多站点等插件按需在 URL 前面插入 `/zh`、`/site-2` 之类的段：

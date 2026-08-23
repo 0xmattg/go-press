@@ -6,7 +6,7 @@
 
 ## GoPress 是什么？
 
-GoPress 旨在把传统 CMS 中经过验证的内容模型、主题系统、插件扩展和后台管理能力，放到 Go 的运行时与工程生态里重新组织。它提供统一的内容模型、数据驱动的后台 CRUD、主题模板引擎、Hook / Filter 扩展点、REST API、SEO 基础设施、多级缓存、媒体变体和多站点配置能力。
+GoPress 旨在把传统 CMS 中经过验证的内容模型、主题系统、插件扩展和后台管理能力，放到 Go 的运行时与工程生态里重新组织。它提供统一的内容与 taxonomy 模型、数据驱动的后台 CRUD、请求级 Content/Taxonomy Scope、主题模板引擎、Hook / Filter 扩展点、REST API、SEO 基础设施、多级缓存、媒体变体和多站点配置能力。
 
 框架同时提供 Provider-neutral 的前台用户、外部身份绑定、可撤销 Session 和注册策略；当前可通过独立 Google OIDC 插件或 MetaMask EIP-4361 SIWE 插件登录，两者复用同一套 core 账号与 Session 边界。
 
@@ -57,16 +57,18 @@ GoPress 当前处于 **beta** 阶段。核心内容模型、后台管理、主�
 ## 文档导航
 
 - **[快速开始](getting-started/installation.md)** — 安装、配置、第一次启动
-- **[架构](architecture/overview.md)** — 引擎结构、Hook 系统、URL/SEO、内容过滤
+- **[架构](architecture/overview.md)** — 引擎结构、Hook 系统、URL/SEO、内容与 taxonomy 过滤
+- **[内容与分类 Scope API](architecture/content-scope.md)** — 通用请求 Scope、带 Scope 的查询和安全写入边界
 - **[前台用户注册与身份登录](architecture/public-authentication.md)** — 用户/Identity/Session、注册策略、Google 插件、主题接入与钱包扩展
 - **[前台用户内容提交](architecture/public-content-submission.md)** — 声明式策略、所有者范围 RBAC、审核状态、限流和主题路由安全
 - **[评论与回复](architecture/comments.md)** — 评论模型、一级回复、登录/RBAC 与缓存契约
 - **[后台管理](admin/overview.md)** — 后台 CMS 功能、扩展点、菜单管理
 - **[主题开发](themes/overview.md)** — 主题接入、SEO 规范、图片管线、媒体变体
 - **[插件开发](plugins/overview.md)** — 创建插件、内置插件参考（multilang / seo-extras / code-snippets / gopress-analytics / google-identity / metamask-identity）
+- **[多语言插件](plugins/multilang.md)** — 内容、Category/Tag、菜单、设置翻译与规范 URL 行为
 - **[Agent 与 MCP](agent/overview.md)** — 设计原则、分层架构、Tool 执行、身份与授权、扩展开发、运维和测试
 - **[GoPress MCP 插件](plugins/gopress-mcp.md)** — Endpoint 启用、凭证、客户端连接、Safe Write 与排障
-- **[Agent 与 MCP Phase 规划](architecture/mcp-agent-capability-plan.md)** — Phase 0–5 决策记录与后续 OAuth 路线
+- **[路线图与贡献](reference/roadmap.md)** — Agent/MCP 后续 OAuth 阶段及其它演进计划
 - **[参考资料](reference/project-structure.md)** — 项目结构、表前缀、REST API、技术栈、路线图
 
 API 接口规范见独立的 [Swagger 文档](http://localhost:8080/swagger/index.html)（运行中的实例）或 `docs/swagger.yaml`。

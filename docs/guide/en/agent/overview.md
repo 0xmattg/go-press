@@ -83,4 +83,4 @@ flowchart LR
 For administrator-oriented instructions and full curl examples, see
 [GoPress MCP Plugin](../plugins/gopress-mcp.md). The Phase decision history is
 maintained in the
-[Chinese framework plan](../../zh-CN/architecture/mcp-agent-capability-plan.md).
+[Roadmap and Contributions](../reference/roadmap.md).

@@ -38,3 +38,27 @@ func TestForTaxonomyUsesTermCanonical(t *testing.T) {
 		t.Fatalf("Robots = %q", got.Robots)
 	}
 }
+
+func TestRenderHeadEmitsOpenGraphURLAndSiteName(t *testing.T) {
+	builder := NewSEOBuilder("https://example.com", "Example & Co", NewEngine(nil))
+
+	got := string(builder.RenderHead(SEOMeta{
+		CanonicalURL:  "https://example.com/blog/clean-room?ref=a&b=c",
+		OGTitle:       `Cleanroom "Testing"`,
+		OGDescription: "A practical guide & checklist.",
+		OGImage:       "https://example.com/uploads/cleanroom.jpg",
+		OGType:        "article",
+	}))
+
+	for _, want := range []string{
+		`<meta property="og:url" content="https://example.com/blog/clean-room?ref=a&amp;b=c">`,
+		`<meta property="og:site_name" content="Example &amp; Co">`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("RenderHead missing %q:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, `name="twitter:`) {
+		t.Fatalf("core should not emit provider-specific Twitter Card tags:\n%s", got)
+	}
+}

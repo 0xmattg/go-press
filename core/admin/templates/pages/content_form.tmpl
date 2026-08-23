@@ -7,8 +7,8 @@
 </div>
 <div class="card">
     <form method="POST" action="/admin/{{.Slug}}/{{if .Item}}{{.Item.ID}}/edit{{else}}new{{end}}{{if .BackQuery}}?{{.BackQuery}}{{end}}" id="contentForm">
-        <div class="content-edit-layout">
-        <div class="content-edit-main">
+        <div class="content-edit-layout" data-content-edit-layout>
+        <div class="content-edit-main" id="contentEditMain">
         <div class="form-group">
             <label for="title">{{T . "content.title"}} *</label>
             <input type="text" id="title" name="title" value="{{if .Item}}{{.Item.Title}}{{end}}" required>
@@ -20,10 +20,7 @@
                 <input type="text" id="slug" name="slug" value="{{if .Item}}{{.Item.Slug}}{{end}}" required>
             </div>
             {{if .Item}}
-            {{$base := printf "/%s/%s" (or .TypeDef.Rewrite.Slug .TypeName) .Item.Slug}}
-            {{if .TypeDef.Rewrite.Rootless}}{{$base = printf "/%s" .Item.Slug}}{{end}}
-            {{$full := printf "%s%s" .PermalinkPrefix $base}}
-            <small class="permalink-display">{{T . "content.permalink"}} <a href="{{$full}}" target="_blank">{{$full}}</a></small>
+            <small class="permalink-display">{{T . "content.permalink"}} <a href="{{.Permalink}}" target="_blank">{{.Permalink}}</a></small>
             {{end}}
         </div>
 
@@ -62,7 +59,18 @@
         {{end}}
 
         </div>
-        <aside class="content-edit-sidebar">
+        <div class="content-edit-resizer"
+            role="separator"
+            tabindex="0"
+            aria-label="{{T . "content.resize_editor_panels"}}"
+            aria-orientation="vertical"
+            aria-controls="contentEditMain contentEditSidebar"
+            aria-valuemin="340"
+            aria-valuemax="560"
+            aria-valuenow="390"
+            title="{{T . "content.resize_editor_panels"}}"
+            data-content-edit-resizer></div>
+        <aside class="content-edit-sidebar" id="contentEditSidebar" data-content-edit-sidebar>
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">{{T . "action.save"}}</button>
             <a href="{{.BackURL}}" class="btn">{{T . "action.cancel"}}</a>
@@ -168,7 +176,8 @@
         <div class="content-edit-panel content-edit-taxonomies-panel">
         {{range $tf := .TaxForms}}
         <div class="form-group">
-            <label>{{$tf.TaxDef.Label}}</label>
+            {{$taxLabel := adminTaxonomyLabel $.AdminLanguage $tf.TaxDef.Name $tf.TaxDef.LabelPlural}}
+            <label>{{$taxLabel}}</label>
             {{if $tf.TaxDef.Hierarchical}}
             <select name="{{$tf.TaxDef.Name}}_id">
                 <option value="">{{T $ "content.select"}}</option>
@@ -177,13 +186,45 @@
                 {{end}}
             </select>
             {{else}}
-            <div class="checkbox-group">
-                {{range $item := $tf.AllItems}}
-                <label class="checkbox-label">
-                    <input type="checkbox" name="{{$tf.TaxDef.Name}}_ids" value="{{$item.ID}}" {{if hasKey $tf.SelectedMap $item.ID}}checked{{end}}>
-                    {{$item.Name}}
+            <div class="taxonomy-token-picker"
+                data-taxonomy-picker
+                data-input-name="{{$tf.TaxDef.Name}}_ids"
+                data-remove-label="{{T $ "taxonomy.remove_selected"}}">
+                <div class="taxonomy-token-selection" role="list" aria-live="polite" aria-label="{{T $ "taxonomy.selected_items" $taxLabel}}" data-taxonomy-selection>
+                    {{range $item := $tf.AllItems}}
+                    {{if hasKey $tf.SelectedMap $item.ID}}
+                    <span class="taxonomy-token" role="listitem" data-taxonomy-token data-taxonomy-id="{{$item.ID}}">
+                        <span class="taxonomy-token-name">{{$item.Name}}</span>
+                        <button type="button" class="taxonomy-token-remove" data-taxonomy-token-remove aria-label="{{T $ "taxonomy.remove_selected" $item.Name}}" title="{{T $ "taxonomy.remove_selected" $item.Name}}">×</button>
+                        <input type="hidden" name="{{$tf.TaxDef.Name}}_ids" value="{{$item.ID}}">
+                    </span>
+                    {{end}}
+                    {{end}}
+                    <span class="taxonomy-token-placeholder" data-taxonomy-placeholder {{if gt (len $tf.SelectedMap) 0}}hidden{{end}}>{{T $ "taxonomy.none_selected" $taxLabel}}</span>
+                </div>
+                <label class="taxonomy-search-field">
+                    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                    <span class="taxonomy-search-label">{{T $ "taxonomy.search" $taxLabel}}</span>
+                    <input type="search" autocomplete="off" placeholder="{{T $ "taxonomy.search_placeholder" $taxLabel}}" aria-controls="taxonomy-candidates-{{$tf.TaxDef.Name}}" data-taxonomy-search>
                 </label>
+                <div class="taxonomy-candidate-list" id="taxonomy-candidates-{{$tf.TaxDef.Name}}" role="list" aria-label="{{T $ "taxonomy.available_items" $taxLabel}}" data-taxonomy-candidates>
+                {{range $item := $tf.AllItems}}
+                    <span role="listitem" class="taxonomy-candidate-item" data-taxonomy-candidate-item {{if hasKey $tf.SelectedMap $item.ID}}hidden{{end}}>
+                        <button type="button"
+                            class="taxonomy-candidate"
+                            data-taxonomy-candidate
+                            data-taxonomy-id="{{$item.ID}}"
+                            data-taxonomy-name="{{$item.Name}}"
+                            data-taxonomy-search-text="{{$item.Name}} {{$item.Slug}}"
+                            data-reference-count="{{$item.ReferenceCount}}"
+                            aria-pressed="{{if hasKey $tf.SelectedMap $item.ID}}true{{else}}false{{end}}"
+                            title="{{T $ "taxonomy.reference_count_title" $item.ReferenceCount}}">
+                            {{$item.Name}}
+                        </button>
+                    </span>
                 {{end}}
+                </div>
+                <p class="taxonomy-picker-empty" data-taxonomy-empty {{if gt (len $tf.AllItems) 0}}hidden{{end}}>{{T $ "taxonomy.no_matches" $taxLabel}}</p>
             </div>
             {{end}}
         </div>

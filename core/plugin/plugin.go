@@ -87,6 +87,13 @@ type DefaultInactiveProvider interface {
 	DefaultInactive() bool
 }
 
+// DeactivationGuard is implemented by plugins whose owned data would become
+// inaccessible or ambiguous if the plugin were stopped. It is consulted only
+// for an explicit runtime deactivation; process shutdown remains unconditional.
+type DeactivationGuard interface {
+	CanDeactivate(app App) error
+}
+
 // SettingsProvider is an optional interface that plugins can implement
 // to supply a custom admin settings page for plugin-specific configuration.
 type SettingsProvider interface {
@@ -193,6 +200,18 @@ func (m *Manager) Deactivate(name string, app App) bool {
 	p.Deactivate(app)
 	delete(m.active, name)
 	return true
+}
+
+// CanDeactivate asks an active plugin whether an explicit stop is safe.
+func (m *Manager) CanDeactivate(name string, app App) error {
+	p, ok := m.active[name]
+	if !ok {
+		return nil
+	}
+	if guard, ok := p.(DeactivationGuard); ok {
+		return guard.CanDeactivate(app)
+	}
+	return nil
 }
 
 // IsActive checks if a plugin is currently active.

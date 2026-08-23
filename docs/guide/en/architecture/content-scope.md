@@ -1,74 +1,115 @@
-# Content Scope API
+# Content and Taxonomy Scope APIs
 
-The Content Scope API lets plugins and themes add request-level filters to content queries without coupling themselves to repository internals. It is used by the multilingual plugin to restrict content by language, but the mechanism is generic.
+GoPress exposes request-local scope APIs for both content and taxonomy queries.
+They let plugins add language, tenant, channel, visibility, or preview
+constraints without teaching core repositories about a specific extension.
 
-## Why It Exists
+The two scope families are separate because content rows and taxonomy
+identities have different query and mutation rules, but they share the same
+architecture:
 
-Many CMS extensions need to alter content visibility:
+```text
+plugin middleware
+  -> core AddScope API
+  -> request context
+  -> admin / REST / BaseTheme / custom PageService
+  -> scoped repository and command service
+```
 
-- Filter content by language.
-- Hide private variants.
-- Apply tenant or channel constraints.
-- Restrict preview content to authenticated users.
+When no scope is registered, both APIs preserve ordinary single-language
+behavior.
 
-Instead of making every repository method know about every plugin, GoPress stores scope information in the request context.
+## Content Scope
 
-## Typical Flow
+Register a content filter on the current Gin request:
 
 ```go
 content.AddContentScope(c, func(db *gorm.DB) *gorm.DB {
     return db.Where("visible = ?", true)
 })
-
-db := content.ScopedDB(c, baseDB)
 ```
 
-Repository methods that use `ScopedDB` receive the active filters automatically.
+Important content APIs include:
 
-The request path is deliberately one-way:
+- `content.AddContentScope(c, fn)` — append a request-local GORM filter.
+- `content.RequestContext(c)` — bridge Gin state into the standard
+  `context.Context` used by core services.
+- `content.ScopedDB(c, db)` and `ScopedDBContext(ctx, db)` — apply every scope
+  to a session-isolated database handle.
+- `Repository.FindBySlugScoped` / context-aware repository methods — resolve a
+  detail row inside the same scope used by list queries.
+- `EnsureUniqueSlugScoped` — enforce slug uniqueness inside the active scope.
 
-```text
-plugin middleware
-  -> content.AddContentScope(gin.Context, scope)
-  -> scope stored in the request context
-  -> BaseTheme / PageService
-  -> content.ScopedDB or FindBySlugScoped
-```
+Same-slug language variants rely on this consistency: list, detail, save, and
+admin operations must all consume the same request context.
 
-## Core APIs
+## Taxonomy Scope
 
-- `content.AddContentScope(c, fn)` registers a GORM scope on the current
-  `gin.Context`.
-- `content.ScopedDB(c, db)` returns a session-isolated database handle with all
-  request scopes applied.
-- BaseTheme archive, single, and taxonomy paths use scoped reads automatically.
-- A custom service embeds `coreTheme.BasePageService` and calls
-  `ForRequest(c)`. The returned clone keeps the request in `ReqCtx`, allowing
-  detail lookups to use `FindBySlugScoped` as well as list queries.
-- Admin lists use `admin.Service.ListContentScoped`, so a plugin can apply the
-  same visibility rule to frontend and administrative queries.
-
-This detail matters when different scoped records share a slug. For example,
-language variants can both use `hepa-filter`; an unscoped detail lookup could
-otherwise return the default-language row.
-
-## Plugin and Theme Example
-
-Plugin middleware registers the condition:
+Taxonomy scopes carry both an opaque key and a query function:
 
 ```go
-e.Hooks.AddAction("middleware.early", func(_ context.Context, args ...interface{}) {
-    r := args[0].(*gin.Engine)
-    r.Use(func(c *gin.Context) {
-        content.AddContentScope(c, func(db *gorm.DB) *gorm.DB {
-            return db.Where("visible = ?", true)
-        })
-        c.Next()
-    })
-}, 5)
+taxonomy.AddScope(c, taxonomy.Scope{
+    Key: "variant-a",
+    Apply: func(db *gorm.DB) *gorm.DB {
+        return db.Where("taxonomies.id IN (?)", visibleTaxonomyIDs)
+    },
+})
 ```
 
-A custom theme service consumes it without knowing which plugin supplied it:
+Core never interprets `Scope.Key`. An extension may use it to associate a new
+taxonomy row with the same variant that constrained the request.
+
+The public taxonomy scope surface includes:
+
+- `taxonomy.AddScope(c, scope)` — add a scope to a Gin request and its standard
+  request context.
+- `taxonomy.WithScope(ctx, scope)` — add a scope without Gin.
+- `taxonomy.RequestContext(c)` — retrieve the standard context consumed by
+  repositories and commands.
+- `taxonomy.Scopes(ctx)` and `ScopeKey(ctx)` — inspect the generic scope chain;
+  the key remains extension-owned.
+- `taxonomy.ScopedDB` / `ScopedDBContext` — apply the complete scope chain.
+- `Repository.WithContext(ctx)` — clone a taxonomy repository for a request.
+
+Scoped repository reads cover:
+
+- term lookup by slug;
+- taxonomy lookup by ID or type plus slug;
+- flat lists and hierarchical trees;
+- live content-reference counts;
+- a content row's taxonomy relationships.
+
+BaseTheme taxonomy archives, archive filter data, content badges, REST term
+resolution, admin taxonomy lists, and content-form selectors all use these
+context-aware paths.
+
+## Scope-Safe Taxonomy Writes
+
+`taxonomy.CommandService` is the single mutation boundary. Admin and extension
+workflows pass `taxonomy.RequestContext(c)` into it for create, update, delete,
+and relationship changes.
+
+The service validates:
+
+- the taxonomy type is registered;
+- names and slugs are present;
+- a slug is unique inside the active scope;
+- a hierarchical parent belongs to the same taxonomy type and scope and does
+  not create a cycle;
+- every submitted relationship ID belongs to an allowed taxonomy type and the
+  active scope;
+- each mutation completes transactionally before observers are notified.
+
+These checks are domain validation, not authorization. HTTP/admin transports
+must still enforce the operation's `taxonomy.read`, `taxonomy.create`,
+`taxonomy.update`, or `taxonomy.delete` capability before calling the command
+service.
+
+## Theme Consumption
+
+Themes using BaseTheme's config-driven routes need no special scope code. A
+custom theme service should embed `coreTheme.BasePageService` and clone it for
+each request:
 
 ```go
 func (h *Handler) ProductsList(c *gin.Context) {
@@ -78,18 +119,36 @@ func (h *Handler) ProductsList(c *gin.Context) {
 }
 ```
 
-Themes using BaseTheme's config-driven dynamic routes do not need this custom
-handler; core already applies the request scopes.
+`ForRequest(c)` carries both content and taxonomy contexts. Custom detail
+lookups should use scoped repository methods rather than creating an unscoped
+repository from the raw database handle.
 
-## Contract
+## Extension and Admin Integration
 
-- Scopes are request-local.
-- Core repositories remain generic.
-- Plugins attach scope data through public APIs.
-- Themes pass the current request context into services when they need scoped reads.
-- BaseTheme dynamic archive, single, and taxonomy rendering uses scoped reads, so multilingual filtering works for config-driven content routes without theme-specific plugin code.
-- With no registered scope, `ScopedDB` returns the original query behavior.
-- Scope providers and consumers communicate only through core APIs; neither side
-  needs a plugin- or theme-specific branch.
+The bundled multilingual plugin demonstrates the complete composition without
+core/plugin coupling:
 
-This gives plugins meaningful control over query behavior while keeping the core content repository stable.
+1. Early middleware determines the canonical request language.
+2. It registers a content scope and, for configured taxonomy types, a taxonomy
+   scope.
+3. Core admin lists, selectors, BaseTheme, REST handlers, SEO, and command
+   services consume those generic scopes.
+4. `admin.content_list.tabs` and `admin.taxonomy_list.tabs` provide language
+   tabs without core knowing what a language is.
+5. Generic taxonomy mutation notifications let the plugin maintain its own
+   translation-group records.
+
+See the [Multilingual Plugin](../plugins/multilang.md) for the Category/Tag
+translation policy and URL behavior.
+
+## Contract Checklist
+
+- Scopes are request-local and must not leak between requests.
+- Apply scopes to both list and detail reads.
+- Pass the same standard context into mutation services.
+- Never treat a frontend filter as authorization; enforce RBAC at the transport
+  and ownership/type/scope invariants in the domain service.
+- Themes and plugins communicate only through core scope, repository, hook,
+  command, and template-helper contracts.
+- With no registered scope, existing single-language data and URLs retain their
+  historical behavior.

@@ -70,12 +70,13 @@ go-press/
 │   └── terra-trail/            #   户外旅行主题
 │
 ├── plugins/                    # ========== 插件目录 ==========
-│   ├── multilang/              #   WPML-like 多语言内容翻译 + 菜单翻译
-│   │   ├── plugin.go           #     插件逻辑（语言检测/翻译克隆/语言切换/Content Scope/菜单翻译Hook）
-│   │   ├── models.go           #     Translation/Language/StringTranslation/MenuTranslation 数据模型
-│   │   ├── repository.go       #     翻译/语言/字符串/菜单翻译 CRUD
+│   ├── multilang/              #   内容 + Category/Tag + 菜单/设置多语言
+│   │   ├── plugin.go           #     生命周期、语言解析、Content Scope、菜单/SEO/Sitemap Hook
+│   │   ├── taxonomy.go         #     Taxonomy Scope、翻译策略与后台工作流
+│   │   ├── models.go           #     内容/语言/字符串/菜单/Taxonomy 翻译模型
+│   │   ├── repository.go       #     内容、语言、字符串、菜单与 Taxonomy 翻译 CRUD
 │   │   ├── register.go         #     init() 自注册
-│   │   └── templates/admin/    #     语言、内容、菜单、字符串与设置翻译后台
+│   │   └── templates/admin/    #     语言、内容、Taxonomy、菜单、字符串与设置翻译后台
 │   ├── seo-extras/             #   Yoast-like per-content SEO 覆盖
 │   │   ├── plugin.go           #     3 个 hook 实现 + meta box HTML 构造
 │   │   └── register.go         #     init() 自注册

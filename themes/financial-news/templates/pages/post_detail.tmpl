@@ -5,7 +5,7 @@
             <article class="article-detail">
                 <div class="article-detail-header">
                     <div class="article-detail-meta">
-                        {{range .Categories}}<a href="/category/{{.Slug}}" class="badge">{{.Name}}</a>{{end}}
+                        {{range .Categories}}<a href="{{langPrefixURL $.Ctx (printf "/category/%s" .Slug)}}" class="badge">{{.Name}}</a>{{end}}
                         {{if .Item.PublishedAt}}<time>{{formatDate .Item.PublishedAt}}</time>{{end}}
                     </div>
                     <h1 class="article-detail-title">{{.Title}}</h1>
@@ -19,7 +19,7 @@
                 </div>
                 {{if .Tags}}
                 <div class="article-detail-tags">
-                    {{range .Tags}}<a href="/tag/{{.Slug}}" class="tag">{{.Name}}</a>{{end}}
+                    {{range .Tags}}<a href="{{langPrefixURL $.Ctx (printf "/tag/%s" .Slug)}}" class="tag">{{.Name}}</a>{{end}}
                 </div>
                 {{end}}
             </article>

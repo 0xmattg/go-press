@@ -150,6 +150,18 @@ func (q *ContentQuery) Taxonomy(taxonomy, termSlug string) *ContentQuery {
 	return q
 }
 
+// TaxonomyID filters by the stable taxonomy-row identity. Unlike the slug
+// helper it remains unambiguous when an extension stores translated variants
+// with equal or different slugs.
+func (q *ContentQuery) TaxonomyID(taxonomyID uint) *ContentQuery {
+	ct := dbprefix.Table("contents")
+	tr := dbprefix.Table("term_relationships")
+	q.db = q.db.
+		Joins(fmt.Sprintf("JOIN %s tr ON tr.content_id = %s.id", tr, ct)).
+		Where("tr.taxonomy_id = ?", taxonomyID)
+	return q
+}
+
 // Meta filters by an exact content_meta key/value pair.
 //
 // Meta values are stored as strings, so callers that need numeric or boolean

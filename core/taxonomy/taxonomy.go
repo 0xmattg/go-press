@@ -6,7 +6,7 @@ import "github.com/0xmattg/go-press/pkg/dbprefix"
 type Term struct {
 	ID   uint   `gorm:"primaryKey" json:"id"`
 	Name string `gorm:"size:200;not null" json:"name"`
-	Slug string `gorm:"size:200;uniqueIndex;not null" json:"slug"`
+	Slug string `gorm:"size:200;index;not null" json:"slug"`
 }
 
 func (Term) TableName() string { return dbprefix.Table("terms") }

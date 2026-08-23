@@ -676,6 +676,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
     border-radius: 4px;
     background: var(--admin-settings-bg);
 }
+.taxonomy-table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.taxonomy-table { min-width: 820px; }
+.taxonomy-table .inline-input {
+    width: 100% !important;
+    min-width: 110px;
+}
 .data-table code { background: #f1f5f9; padding: .15rem .4rem; border-radius: 3px; font-size: .8rem; }
 .empty-msg { text-align: center; color: var(--text-muted); padding: 2rem !important; }
 .actions { white-space: nowrap; }
@@ -1003,13 +1013,49 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 /* Content editor: keep writing/media work in the main column and collect
    publishing, extension meta boxes and taxonomies in a compact side column. */
 .content-edit-layout {
+    --content-editor-sidebar-width: 390px;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
-    gap: 1.25rem;
+    grid-template-columns: minmax(0, 1fr) 18px minmax(340px, var(--content-editor-sidebar-width));
+    gap: 0;
     align-items: start;
 }
 .content-edit-main,
 .content-edit-sidebar { min-width: 0; }
+.content-edit-resizer {
+    position: relative;
+    align-self: stretch;
+    min-height: 100%;
+    outline: none;
+    cursor: col-resize;
+    touch-action: none;
+}
+.content-edit-resizer::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 4px;
+    border-radius: 999px;
+    background: #94a3b8;
+    content: "";
+    opacity: 0;
+    transform: translateX(-50%);
+    transition: background-color .15s, opacity .15s, width .15s;
+}
+.content-edit-resizer:hover::before,
+.content-edit-resizer:focus-visible::before {
+    opacity: .72;
+}
+.content-edit-layout.is-resizing .content-edit-resizer::before {
+    width: 5px;
+    background: var(--primary);
+    opacity: 1;
+}
+body.content-editor-resizing,
+body.content-editor-resizing * {
+    cursor: col-resize !important;
+    user-select: none !important;
+}
 .content-edit-sidebar {
     display: flex;
     flex-direction: column;
@@ -1080,6 +1126,164 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .checkbox-group { display: flex; flex-wrap: wrap; gap: .5rem; }
 .checkbox-label { display: inline-flex; align-items: center; gap: .3rem; font-size: .85rem; cursor: pointer; }
 .checkbox-label input[type="checkbox"] { accent-color: var(--primary); }
+
+/* Searchable WordPress/GitHub-style token picker for tag-like taxonomies. */
+.taxonomy-token-picker { min-width: 0; }
+.taxonomy-token-selection {
+    display: flex;
+    min-height: 42px;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .35rem;
+    padding: .38rem .45rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+}
+.taxonomy-token {
+    display: inline-flex;
+    max-width: 100%;
+    align-items: center;
+    gap: .18rem;
+    padding: .2rem .3rem .2rem .5rem;
+    border: 1px solid #d7dee8;
+    border-radius: 999px;
+    background: #eef2f7;
+    color: #475569;
+    font-size: .74rem;
+    font-weight: 600;
+    line-height: 1.25;
+}
+.taxonomy-token-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.taxonomy-token-remove {
+    display: inline-flex;
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #64748b;
+    font: inherit;
+    font-size: .9rem;
+    line-height: 1;
+    cursor: pointer;
+}
+.taxonomy-token-remove:hover { background: #dbe3ed; color: #1e293b; }
+.taxonomy-token-remove:focus-visible,
+.taxonomy-candidate:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+.taxonomy-token-placeholder {
+    color: #94a3b8;
+    font-size: .75rem;
+}
+.taxonomy-token-placeholder[hidden],
+.taxonomy-candidate-item[hidden],
+.taxonomy-picker-empty[hidden] { display: none; }
+.taxonomy-search-field {
+    position: relative;
+    display: block;
+    margin-top: .55rem;
+    margin-bottom: 0;
+}
+.taxonomy-search-field svg {
+    position: absolute;
+    top: 50%;
+    left: .65rem;
+    color: #94a3b8;
+    pointer-events: none;
+    transform: translateY(-50%);
+}
+.taxonomy-search-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+.taxonomy-search-field input[type="search"] {
+    appearance: none;
+    width: 100%;
+    min-height: 36px;
+    padding: .4rem .65rem .4rem 2rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: #fff;
+    color: var(--text);
+    font-family: inherit;
+    font-size: .8rem;
+    line-height: 1.4;
+    box-shadow: none;
+    transition: border-color .15s, box-shadow .15s;
+}
+.taxonomy-search-field input[type="search"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .1);
+}
+.taxonomy-candidate-list {
+    display: flex;
+    height: 320px;
+    max-height: 320px;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: .18rem .42rem;
+    margin-top: .55rem;
+    overflow: auto;
+    padding: .55rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    scrollbar-color: #cbd5e1 transparent;
+    scrollbar-width: thin;
+}
+.taxonomy-candidate-list::-webkit-scrollbar { width: 6px; }
+.taxonomy-candidate-list::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: #cbd5e1;
+}
+.taxonomy-candidate-item { display: inline-flex; align-items: center; }
+.taxonomy-candidate {
+    padding: .08rem .15rem;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: #5b6f89;
+    line-height: 1.35;
+    text-align: left;
+    text-decoration: underline;
+    text-decoration-color: rgba(91, 111, 137, .48);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    transition: background-color .15s, color .15s, text-decoration-color .15s;
+}
+.taxonomy-candidate:hover {
+    background: #edf1f5;
+    color: #334155;
+    text-decoration-color: rgba(51, 65, 85, .72);
+}
+.taxonomy-popularity-1 { font-size: .72rem; font-weight: 450; }
+.taxonomy-popularity-2 { font-size: .78rem; font-weight: 500; }
+.taxonomy-popularity-3 { font-size: .86rem; font-weight: 550; }
+.taxonomy-popularity-4 { font-size: .95rem; font-weight: 600; }
+.taxonomy-popularity-5 { font-size: 1.06rem; font-weight: 650; }
+.taxonomy-picker-empty {
+    margin: .55rem 0 0;
+    color: var(--text-muted);
+    font-size: .76rem;
+}
 
 /* ==================== Messages ==================== */
 .message-detail { padding: 1.25rem; }
@@ -1901,6 +2105,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 /* ==================== Responsive ==================== */
 @media (max-width: 1280px) {
     .content-edit-layout { grid-template-columns: 1fr; }
+    .content-edit-resizer { display: none; }
     .content-edit-sidebar { width: 100%; }
     .content-edit-sidebar > .form-actions { margin-top: 0; }
 }

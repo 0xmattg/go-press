@@ -100,9 +100,10 @@ func (p *PageData) TranslateSettings(c *gin.Context, mgr *i18n.Manager) {
 
 ## 语言请求作用域
 
-多语言插件可以通过通用 [Content Scope API](content-scope.md) 添加语言查询
-条件，通过菜单 Hook 解析不同语言菜单，并通过 core helper 生成语言前缀。
-Core 与主题都不 import 或识别该插件；插件不存在时，同一套 API 保持单语言
-行为。
+多语言插件可以通过通用[内容与 Taxonomy Scope API](content-scope.md)添加
+内容及 Term 的语言查询条件，通过菜单 Hook 解析不同语言菜单，并通过 core
+helper 生成语言前缀。Core 与主题都不 import 或识别该插件；插件不存在时，
+同一套 API 保持单语言行为。
 
-详细多语言能力（内容翻译、菜单翻译、URL 路由、语言检测、智能跳转等）见 [多语言插件](../plugins/multilang.md)。
+内容与 Category/Tag 翻译、规范 URL 解析、菜单翻译、SEO alternate 和智能
+跳转等能力见[多语言插件](../plugins/multilang.md)。

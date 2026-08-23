@@ -9,7 +9,8 @@ It is not a line-by-line rewrite of WordPress, and it is not a claim that PHP-ba
 - Unified content and metadata models for posts, pages, theme-defined content types, and plugin-owned data.
 - A built-in admin CMS with data-driven CRUD pages, media library, menu management, theme settings, plugin settings, users, permissions, audit logs, cache controls, and system settings.
 - A theme runtime with config-driven content routing, dynamic template resolution, WordPress-like fallback hierarchy, SEO injection, responsive image helpers, menu locations, language-aware URLs, and frontend hook slots.
-- A plugin system based on Go interfaces, actions, filters, and optional settings providers.
+- A plugin system based on Go interfaces, actions, filters, request-local
+  content/taxonomy scopes, and optional settings providers.
 - Core services for caching, workers, URL rewriting, sitemap generation, redirects, REST APIs, i18n, and table-prefix isolation.
 - Provider-neutral public accounts, external identity bindings, revocable sessions, registration policy, Google OIDC login, and MetaMask EIP-4361 wallet login.
 - Policy-driven public content submission with active-account checks,
@@ -64,11 +65,13 @@ teams that want CMS workflows inside a Go architecture.
 - [Installation](getting-started/installation.md)
 - [Configuration](getting-started/configuration.md)
 - [Architecture Overview](architecture/overview.md)
+- [Content and Taxonomy Scope APIs](architecture/content-scope.md)
 - [Public Authentication](architecture/public-authentication.md)
 - [Public Content Submission](architecture/public-content-submission.md)
 - [Comments and Replies](architecture/comments.md)
 - [Theme Development](themes/overview.md)
 - [Plugin Development](plugins/overview.md)
+- [Multilingual Plugin](plugins/multilang.md)
 - [Agent and MCP](agent/overview.md)
 - [GoPress MCP Plugin Setup](plugins/gopress-mcp.md)
-- [Agent and MCP Phase Plan (Chinese)](../zh-CN/architecture/mcp-agent-capability-plan.md)
+- [Roadmap and Contributions](reference/roadmap.md)

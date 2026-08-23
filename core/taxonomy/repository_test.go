@@ -1,10 +1,13 @@
 package taxonomy
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"strings"
 	"testing"
 
+	"github.com/0xmattg/go-press/core/content"
 	"github.com/0xmattg/go-press/pkg/dbprefix"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -31,9 +34,11 @@ func taxonomyTestDB(t *testing.T) *gorm.DB {
 		t.Fatal(err)
 	}
 	for _, stmt := range []string{
-		`CREATE TABLE gp_taxonomies (id INTEGER PRIMARY KEY, taxonomy TEXT NOT NULL)`,
+		`CREATE TABLE gp_terms (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, slug TEXT NOT NULL)`,
+		`CREATE TABLE gp_taxonomies (id INTEGER PRIMARY KEY AUTOINCREMENT, term_id INTEGER NOT NULL DEFAULT 0, taxonomy TEXT NOT NULL, description TEXT, parent_id INTEGER, count INTEGER DEFAULT 0)`,
 		`CREATE TABLE gp_contents (id INTEGER PRIMARY KEY, status TEXT NOT NULL, deleted_at DATETIME)`,
 		`CREATE TABLE gp_term_relationships (content_id INTEGER NOT NULL, taxonomy_id INTEGER NOT NULL, PRIMARY KEY (content_id, taxonomy_id))`,
+		`CREATE TABLE gp_test_taxonomy_languages (taxonomy_id INTEGER PRIMARY KEY, language_code TEXT NOT NULL)`,
 	} {
 		if err := db.Exec(stmt).Error; err != nil {
 			if strings.Contains(err.Error(), "go-sqlite3 requires cgo") {
@@ -43,6 +48,102 @@ func taxonomyTestDB(t *testing.T) *gorm.DB {
 		}
 	}
 	return db
+}
+
+func taxonomyLanguageContext(lang string) context.Context {
+	return WithScope(context.Background(), Scope{
+		Key: lang,
+		Apply: func(db *gorm.DB) *gorm.DB {
+			return db.Where("gp_taxonomies.id IN (SELECT taxonomy_id FROM gp_test_taxonomy_languages WHERE language_code = ?)", lang)
+		},
+	})
+}
+
+func taxonomyCommandRuntime(t *testing.T) (*gorm.DB, *CommandService) {
+	t.Helper()
+	db := taxonomyTestDB(t)
+	registry := content.NewRegistry()
+	registry.RegisterTaxonomy(content.TaxonomyDef{Name: "category", Hierarchical: true})
+	registry.RegisterTaxonomy(content.TaxonomyDef{Name: "tag"})
+	commands := NewCommandService(db, registry)
+	commands.SetMutationObserver(func(ctx context.Context, mutation Mutation) {
+		if mutation.Kind == MutationCreated && mutation.Item != nil && ScopeKey(ctx) != "" {
+			if err := db.Exec(`INSERT INTO gp_test_taxonomy_languages (taxonomy_id, language_code) VALUES (?, ?)`, mutation.Item.ID, ScopeKey(ctx)).Error; err != nil {
+				t.Fatalf("record taxonomy language: %v", err)
+			}
+		}
+	})
+	return db, commands
+}
+
+func TestCommandServiceAllowsSameSlugAcrossScopesButNotInsideOneScope(t *testing.T) {
+	_, commands := taxonomyCommandRuntime(t)
+	en := &Taxonomy{Taxonomy: "category", Term: Term{Name: "News", Slug: "news"}}
+	zh := &Taxonomy{Taxonomy: "category", Term: Term{Name: "新闻", Slug: "news"}}
+	if err := commands.Create(taxonomyLanguageContext("en"), en); err != nil {
+		t.Fatal(err)
+	}
+	if err := commands.Create(taxonomyLanguageContext("zh"), zh); err != nil {
+		t.Fatalf("cross-language slug was rejected: %v", err)
+	}
+	duplicate := &Taxonomy{Taxonomy: "tag", Term: Term{Name: "重复", Slug: "news"}}
+	if err := commands.Create(taxonomyLanguageContext("zh"), duplicate); !errors.Is(err, ErrTaxonomySlugConflict) {
+		t.Fatalf("same-scope duplicate error = %v", err)
+	}
+}
+
+func TestCommandServiceRejectsOutOfScopeRelationshipID(t *testing.T) {
+	db, commands := taxonomyCommandRuntime(t)
+	en := &Taxonomy{Taxonomy: "category", Term: Term{Name: "News", Slug: "news"}}
+	zh := &Taxonomy{Taxonomy: "category", Term: Term{Name: "新闻", Slug: "xinwen"}}
+	if err := commands.Create(taxonomyLanguageContext("en"), en); err != nil {
+		t.Fatal(err)
+	}
+	if err := commands.Create(taxonomyLanguageContext("zh"), zh); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Exec(`INSERT INTO gp_contents (id, status) VALUES (10, 'draft')`).Error; err != nil {
+		t.Fatal(err)
+	}
+	err := commands.SetContentTaxonomies(taxonomyLanguageContext("zh"), 10, []string{"category"}, []uint{en.ID})
+	if !errors.Is(err, ErrInvalidTaxonomySelection) {
+		t.Fatalf("out-of-scope relationship error = %v", err)
+	}
+	var count int64
+	if err := db.Model(&TermRelationship{}).Count(&count).Error; err != nil || count != 0 {
+		t.Fatalf("rejected relationship persisted: count=%d err=%v", count, err)
+	}
+}
+
+func TestCommandServiceKeepsHierarchyInsideLanguageScope(t *testing.T) {
+	_, commands := taxonomyCommandRuntime(t)
+	enParent := &Taxonomy{Taxonomy: "category", Term: Term{Name: "Parent", Slug: "parent"}}
+	zhParent := &Taxonomy{Taxonomy: "category", Term: Term{Name: "父级", Slug: "fuji"}}
+	if err := commands.Create(taxonomyLanguageContext("en"), enParent); err != nil {
+		t.Fatal(err)
+	}
+	if err := commands.Create(taxonomyLanguageContext("zh"), zhParent); err != nil {
+		t.Fatal(err)
+	}
+	child := &Taxonomy{
+		Taxonomy: "category", ParentID: &zhParent.ID, Description: "中文描述",
+		Term: Term{Name: "子级", Slug: "ziji"},
+	}
+	if err := commands.Create(taxonomyLanguageContext("zh"), child); err != nil {
+		t.Fatal(err)
+	}
+	child.ParentID = &enParent.ID
+	if err := commands.Update(taxonomyLanguageContext("zh"), "category", child); !errors.Is(err, ErrInvalidTaxonomyParent) {
+		t.Fatalf("cross-language parent error = %v", err)
+	}
+	zhParent.ParentID = &child.ID
+	if err := commands.Update(taxonomyLanguageContext("zh"), "category", zhParent); !errors.Is(err, ErrInvalidTaxonomyParent) {
+		t.Fatalf("hierarchy cycle error = %v", err)
+	}
+	tag := &Taxonomy{Taxonomy: "tag", ParentID: &zhParent.ID, Term: Term{Name: "标签", Slug: "biaoqian"}}
+	if err := commands.Create(taxonomyLanguageContext("zh"), tag); !errors.Is(err, ErrInvalidTaxonomyParent) {
+		t.Fatalf("non-hierarchical parent error = %v", err)
+	}
 }
 
 func TestContentReferenceCountsUsesCurrentActiveRelationships(t *testing.T) {

@@ -101,3 +101,87 @@ func TestTaxonomyListTemplateRendersReferenceCount(t *testing.T) {
 		t.Fatalf("reference-count column missing from rendered taxonomy list: %s", html)
 	}
 }
+
+func TestContentFormRendersSearchableTagPicker(t *testing.T) {
+	registry := content.NewRegistry()
+	categoryDef := content.TaxonomyDef{
+		Name:         "category",
+		Label:        "Category",
+		LabelPlural:  "Categories",
+		Hierarchical: true,
+	}
+	tagDef := content.TaxonomyDef{
+		Name:        "tag",
+		Label:       "Tag",
+		LabelPlural: "Tags",
+	}
+	registry.RegisterTaxonomy(categoryDef)
+	registry.RegisterTaxonomy(tagDef)
+
+	h := &Handler{svc: &Service{rbac: user.NewRBAC()}, registry: registry}
+	h.buildFuncMap()
+	tmpl, err := template.New("content_form_test").Funcs(h.funcMap).
+		ParseFiles(filepath.Join("templates", "pages", "content_form.tmpl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	typeDef := &content.ContentTypeDef{
+		Name:        "post",
+		Label:       "Post",
+		LabelPlural: "Posts",
+		Taxonomies:  []string{"category", "tag"},
+		Rewrite:     content.RewriteRule{Slug: "blog"},
+	}
+	var out bytes.Buffer
+	err = tmpl.ExecuteTemplate(&out, "content", gin.H{
+		"AdminLanguage": "zh-CN",
+		"CurrentRole":   user.RoleSuperAdmin,
+		"BackURL":       "/admin/posts",
+		"Title":         "编辑文章",
+		"Slug":          "posts",
+		"TypeName":      "post",
+		"TypeDef":       typeDef,
+		"CanPublish":    true,
+		"TaxForms": []TaxonomyFormData{
+			{
+				TaxDef:     &categoryDef,
+				AllItems:   []TaxonomyItemView{{ID: 3, Name: "新闻", Slug: "news"}},
+				SelectedID: 3,
+			},
+			{
+				TaxDef: &tagDef,
+				AllItems: []TaxonomyItemView{
+					{ID: 7, Name: "热门", Slug: "popular", ReferenceCount: 12},
+					{ID: 8, Name: "普通", Slug: "normal", ReferenceCount: 1},
+				},
+				SelectedMap: map[uint]bool{7: true},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	html := out.String()
+	for _, want := range []string{
+		`data-content-edit-layout`,
+		`data-content-edit-resizer`,
+		`role="separator"`,
+		`aria-valuenow="390"`,
+		`data-content-edit-sidebar`,
+		`data-taxonomy-picker`,
+		`data-taxonomy-search`,
+		`data-taxonomy-candidate`,
+		`data-reference-count="12"`,
+		`name="tag_ids" value="7"`,
+		`name="category_id"`,
+	} {
+		if !strings.Contains(html, want) {
+			t.Fatalf("content form is missing %q: %s", want, html)
+		}
+	}
+	if strings.Contains(html, `type="checkbox" name="tag_ids"`) {
+		t.Fatalf("tag candidates unexpectedly rendered as checkboxes: %s", html)
+	}
+}

@@ -36,6 +36,18 @@ Tabs normally compose with the [Content Scope API](../architecture/content-scope
 the selected query parameter registers a request scope, and totals, filters, and
 pagination all use the scoped query.
 
+## Taxonomy List Tabs
+
+`admin.HookTaxonomyListTabs` exposes the same request-aware tab pattern above
+Category, Tag, and other registered taxonomy lists. The filter receives the
+current `*gin.Context` and taxonomy type, so an extension can append a URL such
+as `?lang=zh` and register the matching [Taxonomy Scope](../architecture/content-scope.md).
+
+Counts, trees, parent choices, content-reference totals, create/update/delete
+commands, and content-editor selectors must consume that same scope. A tab is a
+navigation control, not an authorization boundary; each protected operation
+still requires its specific taxonomy RBAC capability.
+
 ## Content Permalink Prefix
 
 `admin.HookContentPermalinkPrefix` lets an extension prepend a contextual

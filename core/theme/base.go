@@ -586,7 +586,7 @@ func (b *BaseTheme) renderArchive(c *gin.Context, route *rewrite.ResolvedRoute) 
 	data[pluralAlias(route.ContentType)] = items
 	addLegacyListAliases(data, items)
 	data["Pagination"] = result
-	b.addArchiveTaxonomyData(data)
+	b.addArchiveTaxonomyData(c, data)
 	if rw := b.App.RewriteEngine(); rw != nil {
 		data["ArchiveURL"] = rw.BuildArchiveURL(route.ContentType)
 	}
@@ -621,7 +621,7 @@ func (b *BaseTheme) renderArchive(c *gin.Context, route *rewrite.ResolvedRoute) 
 
 // renderSingle renders a single content item with template hierarchy.
 func (b *BaseTheme) renderSingle(c *gin.Context, route *rewrite.ResolvedRoute) {
-	// Use scoped lookup so plugins like multilang can disambiguate same-slug
+	// Use scoped lookup so extensions can disambiguate same-slug variants.
 	// rows by language: /products/foo and /zh/products/foo each resolve to the
 	// row that matches the active request scope.
 	item, err := b.App.ContentRepo().FindBySlugScoped(c, route.ContentType, route.Slug)
@@ -652,17 +652,14 @@ func (b *BaseTheme) renderSingle(c *gin.Context, route *rewrite.ResolvedRoute) {
 	// Load taxonomies
 	var categories, tags []map[string]interface{}
 	if b.App.TaxonomyRepo() != nil {
-		cats, _ := b.App.TaxonomyRepo().GetContentTaxonomies(item.ID, "category")
+		taxRepo := b.App.TaxonomyRepo().WithContext(taxonomy.RequestContext(c))
+		cats, _ := taxRepo.GetContentTaxonomies(item.ID, "category")
 		for _, cat := range cats {
-			categories = append(categories, map[string]interface{}{
-				"ID": cat.ID, "Name": cat.Term.Name, "Slug": cat.Term.Slug,
-			})
+			categories = append(categories, taxonomyView(c, b.App, cat))
 		}
-		tagItems, _ := b.App.TaxonomyRepo().GetContentTaxonomies(item.ID, "tag")
+		tagItems, _ := taxRepo.GetContentTaxonomies(item.ID, "tag")
 		for _, tag := range tagItems {
-			tags = append(tags, map[string]interface{}{
-				"ID": tag.ID, "Name": tag.Term.Name, "Slug": tag.Term.Slug,
-			})
+			tags = append(tags, taxonomyView(c, b.App, tag))
 		}
 	}
 
@@ -736,6 +733,16 @@ func (b *BaseTheme) renderSingle(c *gin.Context, route *rewrite.ResolvedRoute) {
 
 // renderTaxonomy renders a taxonomy term archive.
 func (b *BaseTheme) renderTaxonomy(c *gin.Context, route *rewrite.ResolvedRoute) {
+	if b.App.TaxonomyRepo() == nil {
+		b.render404(c)
+		return
+	}
+	taxItem, err := b.App.TaxonomyRepo().FindByTypeAndSlugContext(taxonomy.RequestContext(c), route.TaxSlug, route.TermSlug)
+	if err != nil || taxItem == nil {
+		b.render404(c)
+		return
+	}
+
 	pageTmpl := b.resolvePageTemplate([]string{
 		"taxonomy-" + route.TaxSlug + "-" + route.TermSlug,
 		"taxonomy-" + route.TaxSlug,
@@ -752,7 +759,7 @@ func (b *BaseTheme) renderTaxonomy(c *gin.Context, route *rewrite.ResolvedRoute)
 	items, err := content.NewQuery(content.ScopedDB(c, b.App.Database())).
 		Published().
 		Types(b.registeredTypeNames()).
-		Taxonomy(route.TaxSlug, route.TermSlug).
+		TaxonomyID(taxItem.ID).
 		OrderBy("published_at", "DESC").
 		Get()
 	if err != nil {
@@ -761,13 +768,8 @@ func (b *BaseTheme) renderTaxonomy(c *gin.Context, route *rewrite.ResolvedRoute)
 	}
 
 	// Resolve term display name
-	termName := route.TermSlug
+	termName := taxItem.Term.Name
 	taxLabel := route.TaxSlug
-	if b.App.TaxonomyRepo() != nil {
-		if term, terr := b.App.TaxonomyRepo().GetTermBySlug(route.TermSlug); terr == nil && term != nil {
-			termName = term.Name
-		}
-	}
 	if taxDef := b.App.ContentRegistry().GetTaxonomy(route.TaxSlug); taxDef != nil {
 		taxLabel = taxDef.Label
 	}
@@ -786,6 +788,13 @@ func (b *BaseTheme) renderTaxonomy(c *gin.Context, route *rewrite.ResolvedRoute)
 	if b.App.SEOBuilder() != nil {
 		seo := b.App.SEOBuilder().ForTaxonomy(route.TaxSlug, termName, route.TermSlug)
 		ApplySiteOptionOverridesForRequest(c, b.App, &seo)
+		if hooks := b.App.HookBus(); hooks != nil {
+			if filtered := hooks.ApplyFilter(hook.SEOTaxonomyMeta, seo, c, taxItem); filtered != nil {
+				if value, ok := filtered.(rewrite.SEOMeta); ok {
+					seo = value
+				}
+			}
+		}
 		data["SEO"] = seo
 	}
 
@@ -1104,8 +1113,8 @@ func (b *BaseTheme) contentViews(c *gin.Context, items []content.Content) []map[
 
 func (b *BaseTheme) contentView(c *gin.Context, item content.Content) map[string]interface{} {
 	meta, _ := b.App.ContentRepo().GetMeta(item.ID)
-	categories := b.termViews(item.ID, "category")
-	tags := b.termViews(item.ID, "tag")
+	categories := b.termViews(c, item.ID, "category")
+	tags := b.termViews(c, item.ID, "tag")
 
 	view := map[string]interface{}{
 		"ID":          item.ID,
@@ -1210,35 +1219,43 @@ func (b *BaseTheme) recentPostViews(c *gin.Context, limit int) []map[string]inte
 	return b.contentViews(c, items)
 }
 
-func (b *BaseTheme) termViews(contentID uint, taxName string) []map[string]interface{} {
+func (b *BaseTheme) termViews(c *gin.Context, contentID uint, taxName string) []map[string]interface{} {
 	if b.App == nil || b.App.TaxonomyRepo() == nil {
 		return nil
 	}
-	items, _ := b.App.TaxonomyRepo().GetContentTaxonomies(contentID, taxName)
-	return taxonomyViews(items)
+	items, _ := b.App.TaxonomyRepo().GetContentTaxonomiesContext(taxonomy.RequestContext(c), contentID, taxName)
+	return taxonomyViews(c, b.App, items)
 }
 
-func taxonomyViews(items []taxonomy.Taxonomy) []map[string]interface{} {
+func taxonomyViews(c *gin.Context, app App, items []taxonomy.Taxonomy) []map[string]interface{} {
 	views := make([]map[string]interface{}, len(items))
 	for i, item := range items {
-		views[i] = map[string]interface{}{
-			"ID":   item.ID,
-			"Name": item.Term.Name,
-			"Slug": item.Term.Slug,
-		}
+		views[i] = taxonomyView(c, app, item)
 	}
 	return views
 }
 
-func (b *BaseTheme) addArchiveTaxonomyData(data gin.H) {
+func taxonomyView(c *gin.Context, app App, item taxonomy.Taxonomy) map[string]interface{} {
+	url := rewrite.BuildTaxonomyURL(item.Taxonomy, item.Term.Slug)
+	if app != nil && app.I18nManager() != nil {
+		url = LanguagePrefixURL(c, app.I18nManager(), url)
+	}
+	return map[string]interface{}{
+		"ID": item.ID, "Name": item.Term.Name, "Slug": item.Term.Slug,
+		"Taxonomy": item.Taxonomy, "URL": url,
+	}
+}
+
+func (b *BaseTheme) addArchiveTaxonomyData(c *gin.Context, data gin.H) {
 	if b.App == nil || b.App.TaxonomyRepo() == nil {
 		return
 	}
-	if cats, err := b.App.TaxonomyRepo().ListByTaxonomy("category"); err == nil {
-		data["Categories"] = taxonomyViews(cats)
+	ctx := taxonomy.RequestContext(c)
+	if cats, err := b.App.TaxonomyRepo().ListByTaxonomyContext(ctx, "category"); err == nil {
+		data["Categories"] = taxonomyViews(c, b.App, cats)
 	}
-	if tags, err := b.App.TaxonomyRepo().ListByTaxonomy("tag"); err == nil {
-		data["Tags"] = taxonomyViews(tags)
+	if tags, err := b.App.TaxonomyRepo().ListByTaxonomyContext(ctx, "tag"); err == nil {
+		data["Tags"] = taxonomyViews(c, b.App, tags)
 	}
 }
 

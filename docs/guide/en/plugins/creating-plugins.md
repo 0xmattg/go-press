@@ -145,13 +145,16 @@ Use standard theme hook slots:
 
 The plugin output must match the semantic location. For example, `header.nav.after` should normally output navigation list items, not a floating widget.
 
-## Request-level Content Filtering
+## Request-level Content and Taxonomy Filtering
 
 Extensions that implement language, visibility, tenant, or preview rules should
 register a request-local scope through `content.AddContentScope` in
 `middleware.early`. Core repositories, BaseTheme, custom `PageService` clones,
 and scoped admin lists can then consume the condition without plugin-specific
-code. See the [Content Scope API](../architecture/content-scope.md).
+code. Extensions that own variant-specific Category/Tag identities should also
+register `taxonomy.Scope` and route taxonomy writes through
+`taxonomy.CommandService`; do not add language or tenant branches to core. See
+the [Content and Taxonomy Scope APIs](../architecture/content-scope.md).
 
 ## Common Hooks
 

@@ -130,6 +130,12 @@ const (
 	// module) so a first-class admin module can appear without core knowing the
 	// plugin. Deactivating the plugin removes the filter and the nav entries.
 	AdminNavItems = "admin.nav.items"
+
+	// TaxonomyCreated, TaxonomyUpdated, and TaxonomyDeleted fire after a
+	// framework-owned taxonomy command commits. Args: (*taxonomy.Taxonomy).
+	TaxonomyCreated = "taxonomy.created"
+	TaxonomyUpdated = "taxonomy.updated"
+	TaxonomyDeleted = "taxonomy.deleted"
 )
 
 // Comment hooks expose the framework-owned comment lifecycle without coupling
@@ -188,4 +194,8 @@ const (
 	// pages only — home and archive use SEOContentMeta-equivalent overrides
 	// only when a plugin extends them in the future.
 	SEOContentMeta = "seo.content.meta"
+
+	// SEOTaxonomyMeta filters metadata for one resolved taxonomy archive.
+	// Args: (*gin.Context, *taxonomy.Taxonomy).
+	SEOTaxonomyMeta = "seo.taxonomy.meta"
 )

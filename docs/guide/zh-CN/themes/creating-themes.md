@@ -207,6 +207,11 @@ archive
 
 上述查询参数应只作为兼容入口或不参与索引的界面筛选。可索引的 term 落地页必须使用 `taxonomyURL`，并按需套用 `langPrefixURL`，让站内链接、taxonomy canonical 与 sitemap 统一指向 `/category/{term}` 或 `/tag/{term}`。
 
+BaseTheme 提供给模板的 taxonomy 行已经应用当前请求 Scope。插件启用独立 term
+翻译时，`.Name`、`.Slug`、父级关系与 `.URL` 都代表当前语言 identity；主题不得
+自行用无 Scope 的 ID 查询，也不得解析翻译组。保持稳定的 `category` / `tag`
+基础路径，由 `taxonomyURL` 与 `langPrefixURL` 组合规范 URL。
+
 导航当前页状态同样应走 core helper，让模板只关心菜单 URL，不关心业务内容类型名或菜单标题：
 
 ```gotemplate

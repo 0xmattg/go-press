@@ -50,11 +50,14 @@ type SitemapURLSet struct {
 // use ContentID and Slug to look up related rows, then mutate URL or append
 // Extra entries without replacing the core generator.
 type SitemapEntry struct {
-	ContentType string       // e.g. "post", "product", "" for non-content URLs
-	ContentID   uint         // 0 for non-content URLs
-	Slug        string       // empty for non-content URLs
-	URL         SitemapURL   // current URL (mutable)
-	Extra       []SitemapURL // additional URLs (e.g. translated variants)
+	ContentType  string       // e.g. "post", "product", "" for non-content URLs
+	ContentID    uint         // 0 for non-content URLs
+	Slug         string       // empty for non-content URLs
+	TaxonomyType string       // non-empty for taxonomy archive URLs
+	TaxonomyID   uint         // stable taxonomy-row identity
+	URL          SitemapURL   // current URL (mutable)
+	Extra        []SitemapURL // additional URLs (e.g. translated variants)
+	Skip         bool         // transformer may suppress the core URL
 }
 
 // SitemapTransformer lets plugins augment generated sitemap entries.
@@ -185,7 +188,9 @@ func (sg *SitemapGenerator) applyTransformers(urls *[]SitemapURL, entry SitemapE
 	for _, e := range sg.transformers {
 		e.fn(&entry)
 	}
-	*urls = append(*urls, entry.URL)
+	if !entry.Skip {
+		*urls = append(*urls, entry.URL)
+	}
 	if len(entry.Extra) > 0 {
 		*urls = append(*urls, entry.Extra...)
 	}
@@ -260,7 +265,8 @@ func (sg *SitemapGenerator) Generate() []SitemapURL {
 			for _, tax := range items {
 				termURL := "/" + taxDef.Name + "/" + tax.Term.Slug
 				sg.applyTransformers(&urls, SitemapEntry{
-					ContentType: "",
+					TaxonomyType: taxDef.Name,
+					TaxonomyID:   tax.ID,
 					URL: SitemapURL{
 						Loc:        sg.siteURL + termURL,
 						ChangeFreq: "weekly",

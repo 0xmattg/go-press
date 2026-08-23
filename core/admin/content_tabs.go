@@ -27,11 +27,16 @@ type ContentListTab struct {
 // HookContentListTabs is the filter hook name plugins use to contribute tabs.
 const HookContentListTabs = "admin.content_list.tabs"
 
-// HookContentPermalinkPrefix lets plugins prepend a URL prefix (e.g. "/zh")
-// to the permalink shown on the admin content edit form. The base permalink
-// is `/<rewrite-or-type>/<slug>`; the prefix is prepended verbatim, so it
-// should already include a leading slash and no trailing slash. Empty string
-// (the default) means no prefix.
+// HookTaxonomyListTabs lets plugins add request-aware tabs above a taxonomy
+// list without core knowing what those variants represent. The filter value is
+// []ContentListTab; args are (*gin.Context, taxonomyType string).
+const HookTaxonomyListTabs = "admin.taxonomy_list.tabs"
+
+// HookContentPermalinkPrefix lets plugins prepend a row-specific URL prefix
+// (e.g. "/zh") to public content links rendered throughout the admin. The base
+// permalink comes from the registered rewrite definition; the prefix is
+// prepended verbatim, so it should already include a leading slash and no
+// trailing slash. Empty string (the default) means no prefix.
 //
 // Filter signature:
 //

@@ -87,11 +87,12 @@ require hard-coded link changes.
 
 ## Language Scope
 
-A multilingual plugin can add language-aware queries through the generic
-[Content Scope API](content-scope.md), resolve per-language menus through menu
-hooks, and add URL prefixes through core helpers. Core and themes do not import
-or inspect that plugin; without it, the same APIs retain single-language
-behavior.
+A multilingual plugin can add language-aware content and term queries through
+the generic [Content and Taxonomy Scope APIs](content-scope.md), resolve
+per-language menus through menu hooks, and add URL prefixes through core
+helpers. Core and themes do not import or inspect that plugin; without it, the
+same APIs retain single-language behavior.
 
-See the [Multilingual Plugin](../plugins/multilang.md) for content translation,
-menu assignment, URL detection, and language-switching behavior.
+See the [Multilingual Plugin](../plugins/multilang.md) for content and
+Category/Tag translation, canonical URL detection, menu assignment, SEO
+alternates, and language-switching behavior.

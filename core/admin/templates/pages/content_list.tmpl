@@ -147,7 +147,7 @@
             <tr {{if hasSupport $.TypeDef.Supports "sort_order"}}data-id="{{$item.ID}}" draggable="true"{{end}}>
                 {{if hasSupport $.TypeDef.Supports "sort_order"}}<td class="drag-handle" title="{{T $ "content.drag_to_sort"}}">⋮⋮</td>{{end}}
                 {{if $.CanBulkActions}}<td class="bulk-select-col"><input type="checkbox" name="ids" value="{{$item.ID}}" form="contentBulkForm" class="content-bulk-check" aria-label="{{T $ "content.select_item" $item.Title}}"></td>{{end}}
-                {{if index $.VisibleColumns "title"}}<td class="title-cell" data-title="{{$item.Title}}"><a href="{{if $.TypeDef.Rewrite.Rootless}}/{{$item.Slug}}{{else if $.TypeDef.Rewrite.Slug}}/{{$.TypeDef.Rewrite.Slug}}/{{$item.Slug}}{{else}}/{{$.TypeName}}/{{$item.Slug}}{{end}}" target="_blank" class="content-title-link">{{$item.Title}}</a></td>{{end}}
+                {{if index $.VisibleColumns "title"}}<td class="title-cell" data-title="{{$item.Title}}"><a href="{{$item.Permalink}}" target="_blank" class="content-title-link">{{$item.Title}}</a></td>{{end}}
                 {{if index $.VisibleColumns "status"}}<td><span class="badge badge-{{$item.Status}}">{{if eq $item.Status "published"}}{{T $ "content.status.published"}}{{else if eq $item.Status "pending"}}{{T $ "content.status.pending"}}{{else if eq $item.Status "draft"}}{{T $ "content.status.draft"}}{{else if eq $item.Status "archived"}}{{T $ "content.status.archived"}}{{else}}{{$item.Status}}{{end}}</span></td>{{end}}
                 {{if hasSupport $.TypeDef.Supports "sort_order"}}
                 {{if index $.VisibleColumns "sort_order"}}<td class="sort-order-cell">{{$item.SortOrder}}</td>{{end}}

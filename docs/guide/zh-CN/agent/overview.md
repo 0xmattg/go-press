@@ -112,4 +112,4 @@ GoPress 不为每个主题 ContentType 生成一套 Tool。通用 Tool 使用
 
 实际的管理员操作和完整 curl 示例也可直接查看
 [GoPress MCP 插件指南](../plugins/gopress-mcp.md)；Phase 决策历史见
-[框架级 Agent 与 MCP 能力规划](../architecture/mcp-agent-capability-plan.md)。
+[路线图与贡献](../reference/roadmap.md)。
