@@ -100,6 +100,16 @@ func TestTaxonomyListTemplateRendersReferenceCount(t *testing.T) {
 	if !strings.Contains(html, "引用次数") || !strings.Contains(html, "taxonomy-reference-count\">12</span>") {
 		t.Fatalf("reference-count column missing from rendered taxonomy list: %s", html)
 	}
+	for _, want := range []string{
+		`class="taxonomy-name-editor"`,
+		`class="tax-link-icon"`,
+		`rel="noopener noreferrer"`,
+		`aria-label="查看网站 — 热门"`,
+	} {
+		if !strings.Contains(html, want) {
+			t.Fatalf("editable taxonomy name is missing %q: %s", want, html)
+		}
+	}
 }
 
 func TestContentFormRendersSearchableTagPicker(t *testing.T) {
