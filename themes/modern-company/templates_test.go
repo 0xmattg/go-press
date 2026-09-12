@@ -218,6 +218,75 @@ func TestBlogTemplateLinksCardImagesToPost(t *testing.T) {
 	}
 }
 
+func TestTaxonomyArchiveLinksPreserveRequestLanguage(t *testing.T) {
+	body, err := os.ReadFile("templates/pages/taxonomy-archive.tmpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Count(string(body), `href="{{langPrefixURL $.Ctx .DetailURL}}"`); got != 4 {
+		t.Fatalf("language-aware detail link expressions = %d, want 4", got)
+	}
+
+	mgr := coreI18n.NewManager("en")
+	tmpl, err := template.New("taxonomy-archive").Funcs(template.FuncMap{
+		"T": func(_ *gin.Context, key string) string { return key },
+		"langPrefixURL": func(c *gin.Context, path string) string {
+			return coreTheme.LanguagePrefixURL(c, mgr, path)
+		},
+		"responsiveImage": func(string, string, string, string, string) template.HTML {
+			return ""
+		},
+	}).Parse(string(body))
+	if err != nil {
+		t.Fatalf("parse taxonomy archive template: %v", err)
+	}
+
+	for _, taxonomyType := range []string{"tag", "category"} {
+		t.Run(taxonomyType, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(recorder)
+			c.Request = httptest.NewRequest(http.MethodGet, "https://example.test/es/"+taxonomyType+"/cleanroom", nil)
+			c.Set(coreI18n.CtxKeyLang, "es")
+
+			data := gin.H{
+				"Ctx":      c,
+				"TaxSlug":  taxonomyType,
+				"TermName": "Cleanroom",
+				"Items": []map[string]interface{}{
+					{
+						"DetailURL":   "/blog/cleanroom-design",
+						"ContentType": "post",
+						"TypeLabel":   "Article",
+						"Title":       "Cleanroom design",
+						"Excerpt":     "Example",
+					},
+					{
+						"DetailURL":   "/services/cleanroom-testing",
+						"ContentType": "service",
+						"TypeLabel":   "Service",
+						"Title":       "Cleanroom testing",
+						"ImageURL":    "/static/uploads/cleanroom.jpg",
+					},
+				},
+			}
+
+			var out bytes.Buffer
+			if err := tmpl.ExecuteTemplate(&out, "content", data); err != nil {
+				t.Fatalf("render taxonomy archive template: %v", err)
+			}
+			rendered := out.String()
+			for _, path := range []string{"/es/blog/cleanroom-design", "/es/services/cleanroom-testing"} {
+				if got := strings.Count(rendered, `href="`+path+`"`); got != 3 {
+					t.Fatalf("localized detail link count for %q = %d, want 3: %s", path, got, rendered)
+				}
+			}
+			if strings.Contains(rendered, `href="/blog/cleanroom-design"`) || strings.Contains(rendered, `href="/services/cleanroom-testing"`) {
+				t.Fatalf("taxonomy archive rendered an unprefixed detail link: %s", rendered)
+			}
+		})
+	}
+}
+
 func TestPostDetailTemplateProvidesSocialShareActions(t *testing.T) {
 	body, err := os.ReadFile("templates/pages/post-detail.tmpl")
 	if err != nil {
