@@ -328,6 +328,33 @@ func TestPostShareRailDoesNotConsumeArticleGridWidth(t *testing.T) {
 	}
 }
 
+func TestRichTextListsRestoreSemanticMarkers(t *testing.T) {
+	body, err := os.ReadFile("static/css/style.css")
+	if err != nil {
+		t.Fatal(err)
+	}
+	stylesheet := string(body)
+	for _, want := range []string{
+		`ul { list-style:none; }`,
+		`.detail-body ul { list-style: disc outside; }`,
+		`.detail-body ol { list-style: decimal outside; }`,
+		`.post-body ul { list-style: disc outside; }`,
+		`.post-body ol { list-style: decimal outside; }`,
+	} {
+		if !strings.Contains(stylesheet, want) {
+			t.Fatalf("rich-text list styles are missing %q", want)
+		}
+	}
+
+	base, err := os.ReadFile("templates/layouts/base.tmpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(base), `/static/css/style.css?v=85`) {
+		t.Fatal("base template must invalidate the cached stylesheet after the list marker fix")
+	}
+}
+
 func newArchiveURLTestEngine() *core.Engine {
 	registry := content.NewRegistry()
 	registry.RegisterType(content.ContentTypeDef{

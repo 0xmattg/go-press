@@ -2680,6 +2680,8 @@ h1,h2,h3,h4,h5 { line-height:1.25; color: var(--primary); font-weight:700; }
     margin: 12px 0 12px 20px;
     color: var(--text-secondary);
 }
+.detail-body ul { list-style: disc outside; }
+.detail-body ol { list-style: decimal outside; }
 .detail-body li { margin-bottom: 6px; }
 .detail-body strong { color: var(--text-dark); }
 .detail-body img {
@@ -2865,6 +2867,8 @@ h1,h2,h3,h4,h5 { line-height:1.25; color: var(--primary); font-weight:700; }
 .post-body ul, .post-body ol {
     margin: 12px 0 16px 20px;
 }
+.post-body ul { list-style: disc outside; }
+.post-body ol { list-style: decimal outside; }
 .post-body li { margin-bottom: 8px; }
 .post-body img {
     max-width: 100%;
