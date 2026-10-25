@@ -42,25 +42,33 @@ func TestSanitizeSVGEmpty(t *testing.T) {
 
 // The bundled theme and plugin logos must survive sanitization intact (viewBox
 // preserved, shapes kept) so the admin cards render them.
+// TestBundledLogosSurviveSanitization checks every logo shipped by a theme or
+// plugin in this checkout. Logos are discovered by glob rather than listed, so
+// core does not hard-code module names and builds that omit some modules
+// (for example the public repository) still pass.
 func TestBundledLogosSurviveSanitization(t *testing.T) {
 	root := filepath.Join("..", "..")
-	dirs := []string{
-		"themes/modern-company", "themes/atelier-slate", "themes/atelier-slate-gp",
-		"themes/axis-form", "themes/bitcuz-mag", "themes/civic-estate",
-		"themes/financial-news", "themes/florafi", "themes/go-press-landing",
-		"themes/shop-starter", "themes/terra-trail",
-		"plugins/code-snippets", "plugins/gopress-analytics", "plugins/multilang",
-		"plugins/seo-extras", "plugins/google-identity", "plugins/metamask-identity",
-	}
-	for _, d := range dirs {
-		raw, err := os.ReadFile(filepath.Join(root, d, "static", "logo.svg"))
+	var logos []string
+	for _, pattern := range []string{"themes/*/static/logo.svg", "plugins/*/static/logo.svg"} {
+		matches, err := filepath.Glob(filepath.Join(root, filepath.FromSlash(pattern)))
 		if err != nil {
-			t.Errorf("%s: missing logo.svg: %v", d, err)
+			t.Fatal(err)
+		}
+		logos = append(logos, matches...)
+	}
+	if len(logos) == 0 {
+		t.Fatal("no bundled theme or plugin logos found")
+	}
+	for _, path := range logos {
+		name, _ := filepath.Rel(root, path)
+		raw, err := os.ReadFile(path)
+		if err != nil {
+			t.Errorf("%s: %v", name, err)
 			continue
 		}
 		out := SanitizeSVG(string(raw))
 		if !strings.Contains(out, "<svg") || !strings.Contains(out, "viewBox=") {
-			t.Errorf("%s: logo did not survive sanitization: %s", d, out)
+			t.Errorf("%s: logo did not survive sanitization: %s", name, out)
 		}
 	}
 }
