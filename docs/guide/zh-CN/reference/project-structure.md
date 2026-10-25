@@ -37,7 +37,7 @@ go-press/
 │   ├── media/                  # 媒体库（上传/尺寸记录/响应式变体/WebP + JSON API）
 │   ├── hook/                   # Hook/Filter 事件总线（WordPress 风格）
 │   ├── cache/                  # L1 内存 + L2 Redis 多级缓存 + 页面缓存中间件
-│   ├── worker/                 # Goroutine 工作池 + Cron 定时调度
+│   ├── worker/                 # Goroutine 工作池 + 固定间隔调度器（panic 隔离、有序关闭）
 │   ├── rewrite/                # URL 重写 + 永久链接 + SEO + Sitemap + 重定向
 │   ├── api/                    # REST API（自动端点 + JWT/APIKey 双认证 + 限流 + CORS）
 │   ├── installer/              # Web 安装器（DB 配置 + 站点信息 + 热切换）
@@ -106,7 +106,7 @@ go-press/
 │   └── config.toml             #   配置模板（密钥留空，非运行时配置；实际站点用 sites/<host>/config.toml）
 │
 ├── docs/                       # 文档
-│   ├── guide/                  #   MkDocs 文字文档（你正在看的部分）
+│   ├── guide/                  #   双语 Markdown 文字文档（你正在看的部分，由 gopress.xyz 文档站直接读取渲染）
 │   ├── docs.go                 #   Swagger Go 包（main.go 通过 _ "go-press/docs" 引用）
 │   ├── swagger.json            #   OpenAPI 规范
 │   └── swagger.yaml

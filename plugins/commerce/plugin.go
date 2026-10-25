@@ -2,6 +2,7 @@ package commerce
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -27,8 +28,11 @@ type Plugin struct {
 	grants        []user.CapabilityGrant
 	sweepStop     chan struct{}    // stops the stale-reservation sweeper on Deactivate
 	reconcileStop chan struct{}    // stops pull-based payment reconciliation on Deactivate
+	loops         sync.WaitGroup   // tracks the background loops so Stop can wait for them
 	trackThrottle *attemptThrottle // rate-limits the guest /order-tracking lookup
 }
+
+var _ plugin.Stopper = (*Plugin)(nil)
 
 // New constructs the commerce plugin.
 func New() *Plugin {
@@ -160,6 +164,33 @@ func (p *Plugin) Deactivate(app plugin.App) {
 	for _, g := range p.grants {
 		e.RBAC.RevokeCapabilityGrant(g)
 	}
+	p.stopBackgroundLoops()
+	p.actions, p.filters, p.grants = nil, nil, nil
+	logger.Info("commerce deactivated")
+}
+
+// Stop implements plugin.Stopper for process shutdown. It ends the reservation
+// sweeper and payment reconciler and waits, bounded by ctx, for an in-flight
+// pass to finish before core closes the database. Unlike Deactivate it is not
+// subject to the DeactivationGuard.
+func (p *Plugin) Stop(ctx context.Context) error {
+	p.stopBackgroundLoops()
+	done := make(chan struct{})
+	go func() {
+		p.loops.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+// stopBackgroundLoops signals the plugin-owned loops to exit. Engine
+// serializes lifecycle calls, so the channels are never closed twice.
+func (p *Plugin) stopBackgroundLoops() {
 	if p.sweepStop != nil {
 		close(p.sweepStop)
 		p.sweepStop = nil
@@ -168,8 +199,6 @@ func (p *Plugin) Deactivate(app plugin.App) {
 		close(p.reconcileStop)
 		p.reconcileStop = nil
 	}
-	p.actions, p.filters, p.grants = nil, nil, nil
-	logger.Info("commerce deactivated")
 }
 
 // contributeNav appends the Commerce admin nav section (admin.nav.items filter).

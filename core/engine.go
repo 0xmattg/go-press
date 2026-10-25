@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -141,6 +143,7 @@ type Engine struct {
 	// Theme and plugin runtime state. Themes are initialized once, while the
 	// active theme slug can change at runtime through the admin panel.
 	mu                    sync.RWMutex
+	lifecycleMu           sync.Mutex                 // serializes theme switches and plugin toggles
 	themes                map[string]coreTheme.Theme // all initialized theme instances
 	activeThemeName       string                     // slug of the currently active theme
 	PluginManager         *plugin.Manager
@@ -152,6 +155,18 @@ type Engine struct {
 	// HTTP runtime. Router can be rebuilt when theme/plugin state changes.
 	Router *gin.Engine
 	server *http.Server
+
+	// apiLimiter is created once and reused across router rebuilds so the REST
+	// rate budget survives theme switches and its cleanup goroutine is not leaked.
+	apiLimiter *api.RateLimiter
+
+	// Readiness: ready flips once BuildAndBootstrap has assembled the runtime;
+	// shuttingDown flips as soon as shutdown begins so load balancers stop
+	// routing new traffic before connections are drained.
+	ready        atomic.Bool
+	shuttingDown atomic.Bool
+	shutdownOnce sync.Once
+	shutdownErr  error
 
 	// OnRouterRebuild is called after the router is rebuilt, for example after a
 	// theme switch. cmd/server uses it to swap the active HTTP handler without
@@ -187,10 +202,11 @@ func New(cfg *config.Config, db *gorm.DB) *Engine {
 	// L2: try connecting to Redis if configured
 	if cfg.Redis.Host != "" {
 		addr := fmt.Sprintf("%s:%d", cfg.Redis.Host, cfg.Redis.Port)
-		rc := cache.NewRedisCache(addr, cfg.Redis.Password, cfg.Redis.DB)
+		namespace := cfg.CacheNamespace()
+		rc := cache.NewNamespacedRedisCache(addr, cfg.Redis.Password, cfg.Redis.DB, namespace)
 		if rc != nil {
 			l2 = rc
-			logger.Info("Cache L2 (Redis) enabled", "addr", addr)
+			logger.Info("Cache L2 (Redis) enabled", "addr", addr, "namespace", namespace)
 		} else {
 			logger.Info("Cache L2 (Redis) unavailable — running without distributed cache", "addr", addr)
 		}
@@ -488,6 +504,14 @@ func (e *Engine) revokePublicSubmissionCapabilities() {
 // is toggled so its content types, admin nav, and routes appear or disappear
 // cleanly without a process restart.
 func (e *Engine) RefreshActiveTheme() error {
+	e.lifecycleMu.Lock()
+	defer e.lifecycleMu.Unlock()
+	return e.refreshActiveThemeLocked()
+}
+
+// refreshActiveThemeLocked is RefreshActiveTheme for callers that already hold
+// lifecycleMu.
+func (e *Engine) refreshActiveThemeLocked() error {
 	name := e.ActiveThemeName()
 	if name == "" {
 		return nil
@@ -569,38 +593,69 @@ func (e *Engine) registerCoreTypes() {
 // The change takes effect immediately: the registry is rebuilt, page and
 // fragment caches are flushed, the Gin router is rebuilt so dynamic admin routes
 // match the new registry, and future front-end requests are dispatched to the
-// new active theme.
+// new active theme. If the new theme cannot be activated or recorded, the
+// previous theme and any auto-activated dependencies are restored so the running
+// process and the next boot agree.
 func (e *Engine) SwitchTheme(name string) error {
+	e.lifecycleMu.Lock()
+	defer e.lifecycleMu.Unlock()
+
 	// Pre-flight the target theme's declared dependencies. Missing/incompatible
 	// (non-optional) plugins or an unmet core constraint block the switch.
 	report := e.ThemeDependencies(name)
 	if err := report.BlockingError(); err != nil {
 		return fmt.Errorf("cannot switch to theme %q: %w", name, err)
 	}
+	previous := e.ActiveThemeName()
 	// Auto-activate present-but-inactive required plugins first so the new theme
 	// works immediately. Roll them back if theme activation then fails.
 	activated := e.ActivateThemeDependencies(report)
 
 	if err := e.activateTheme(name); err != nil {
-		for _, pn := range activated {
-			e.PluginManager.Deactivate(pn, e)
-			if e.Options != nil {
-				_ = e.Options.Set("plugin_active_"+pn, "false")
-			}
-		}
+		e.restoreThemeLocked(previous, name, activated)
 		return err
 	}
-	// Flush page + fragment caches so the new theme renders fresh
-	e.Cache.L1.DeleteByPrefix("page:")
-	e.Cache.L2.DeleteByPrefix("page:")
-	e.Cache.L1.DeleteByPrefix("frag:")
-	e.Cache.L2.DeleteByPrefix("frag:")
+	if err := e.Options.Set("active_theme", name); err != nil {
+		e.restoreThemeLocked(previous, name, activated)
+		return fmt.Errorf("failed to persist active theme %q: %w", name, err)
+	}
+	e.flushThemeCaches()
 	logger.Info("Caches flushed after theme switch", "theme", name)
 
 	// Rebuild router so dynamic admin routes reflect the new registry.
 	e.rebuildRouter()
+	return nil
+}
 
-	return e.Options.Set("active_theme", name)
+// restoreThemeLocked undoes a failed SwitchTheme: it stops dependencies that
+// were auto-activated for the target theme and re-activates the previous theme,
+// whose registry may already have been cleared by the failed attempt.
+func (e *Engine) restoreThemeLocked(previous, failed string, activated []string) {
+	for _, pn := range activated {
+		e.PluginManager.Deactivate(pn, e)
+		if e.Options != nil {
+			if err := e.Options.Set("plugin_active_"+pn, "false"); err != nil {
+				logger.Error("Failed to persist dependency rollback", "plugin", pn, "error", err)
+			}
+		}
+	}
+	if previous != "" && previous != failed {
+		if err := e.activateTheme(previous); err != nil {
+			logger.Error("Failed to restore previous theme", "theme", previous, "error", err)
+		}
+	}
+	e.flushThemeCaches()
+	e.rebuildRouter()
+}
+
+// flushThemeCaches drops rendered page and fragment caches after the active
+// presentation changes.
+func (e *Engine) flushThemeCaches() {
+	if e.Cache == nil {
+		return
+	}
+	e.Cache.DeleteByPrefix("page:")
+	e.Cache.DeleteByPrefix("frag:")
 }
 
 // ActiveTheme returns the currently active theme instance.
@@ -867,7 +922,8 @@ func (e *Engine) SetupRouter() *gin.Engine {
 		logger.Info("Page cache middleware enabled")
 	}
 
-	// Health check (engine-level)
+	// Liveness (engine-level): the process is up and serving HTTP. Readiness,
+	// which also checks required dependencies, is served at /readyz.
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status": "ok",
@@ -876,6 +932,9 @@ func (e *Engine) SetupRouter() *gin.Engine {
 			"time":   time.Now().Format(time.RFC3339),
 		})
 	})
+
+	r.GET("/readyz", e.serveReadiness)
+	r.HEAD("/readyz", e.serveReadiness)
 
 	// XML Sitemap (shared generator on engine — plugins may register transformers)
 	serveSitemap := e.Sitemap.Handler()
@@ -910,8 +969,10 @@ func (e *Engine) SetupRouter() *gin.Engine {
 	// REST API (/api/v1/...)
 	apiGroup := r.Group("/api/v1")
 	apiGroup.Use(api.CORSMiddleware("*"))
-	rl := api.NewRateLimiter(100, 1*time.Minute)
-	apiGroup.Use(rl.Middleware())
+	if e.apiLimiter == nil {
+		e.apiLimiter = api.NewRateLimiter(100, 1*time.Minute)
+	}
+	apiGroup.Use(e.apiLimiter.Middleware())
 	// API Key auth — pass-through when no keys configured
 	apiKeyMap := make(map[string]bool, len(e.Config.CMS.APIKeys))
 	for _, k := range e.Config.CMS.APIKeys {
@@ -952,9 +1013,6 @@ func (e *Engine) rebuildRouter() {
 	e.SetupRouter()
 	if e.OnRouterRebuild != nil {
 		e.OnRouterRebuild(e.Router)
-	}
-	if e.server != nil {
-		e.server.Handler = e.Router
 	}
 }
 
@@ -1221,51 +1279,8 @@ func (e *Engine) SetupAdmin() {
 			}
 			return result
 		},
-		ActivateFn: func(name string) error {
-			if e.PluginManager.IsActive(name) {
-				return fmt.Errorf("插件「%s」已处于激活状态", name)
-			}
-			if !e.PluginManager.Activate(name, e) {
-				return fmt.Errorf("未找到插件「%s」", name)
-			}
-			e.Options.Set("plugin_active_"+name, "true")
-			if e.Cache != nil {
-				e.Cache.Flush()
-			}
-			// Rebuild the registry (re-fires content.register_types so the
-			// plugin's content types/admin nav/routes appear) then the router.
-			if err := e.RefreshActiveTheme(); err != nil {
-				e.rebuildRouter()
-			}
-			return nil
-		},
-		DeactivateFn: func(name string) error {
-			if !e.PluginManager.IsActive(name) {
-				return fmt.Errorf("插件「%s」未激活", name)
-			}
-			// Guard: the active theme may declare a hard dependency on this plugin.
-			if e.ActiveThemeRequiresPlugin(name) {
-				return fmt.Errorf("当前主题「%s」依赖插件「%s」，请先切换主题再停用", e.ActiveThemeName(), name)
-			}
-			if err := e.PluginManager.CanDeactivate(name, e); err != nil {
-				return err
-			}
-			if !e.PluginManager.Deactivate(name, e) {
-				return fmt.Errorf("停用插件「%s」失败", name)
-			}
-			// Persist as "false" rather than deleting, so LoadPlugin can
-			// distinguish "user deactivated" from "first run".
-			e.Options.Set("plugin_active_"+name, "false")
-			if e.Cache != nil {
-				e.Cache.Flush()
-			}
-			// Rebuild the registry so the plugin's content types/nav/routes are
-			// dropped, then the router.
-			if err := e.RefreshActiveTheme(); err != nil {
-				e.rebuildRouter()
-			}
-			return nil
-		},
+		ActivateFn:   e.activatePluginFromAdmin,
+		DeactivateFn: e.deactivatePluginFromAdmin,
 		SettingsTemplateFn: func(slug string) string {
 			for _, p := range e.PluginManager.ActivePlugins() {
 				if plugin.Slug(p) == slug {
@@ -1411,6 +1426,80 @@ func (e *Engine) SetupAdmin() {
 	logger.Info("Admin module initialized")
 }
 
+// activatePluginFromAdmin is the admin toggle for enabling a plugin. Runtime
+// state, the persisted option, and the rebuilt registry/router are kept in step:
+// a failure to persist rolls the activation back instead of reporting success.
+func (e *Engine) activatePluginFromAdmin(name string) error {
+	e.lifecycleMu.Lock()
+	defer e.lifecycleMu.Unlock()
+
+	if e.PluginManager.IsActive(name) {
+		return fmt.Errorf("插件「%s」已处于激活状态", name)
+	}
+	if !e.PluginManager.Activate(name, e) {
+		return fmt.Errorf("未找到插件「%s」", name)
+	}
+	if err := e.Options.Set("plugin_active_"+name, "true"); err != nil {
+		e.PluginManager.Deactivate(name, e)
+		if refreshErr := e.refreshActiveThemeLocked(); refreshErr != nil {
+			logger.Error("Failed to refresh runtime after plugin activation rollback", "plugin", name, "error", refreshErr)
+			e.rebuildRouter()
+		}
+		return fmt.Errorf("插件「%s」激活状态保存失败：%w", name, err)
+	}
+	if e.Cache != nil {
+		e.Cache.Flush()
+	}
+	// Rebuild the registry (re-fires content.register_types so the plugin's
+	// content types/admin nav/routes appear) then the router.
+	if err := e.refreshActiveThemeLocked(); err != nil {
+		e.rebuildRouter()
+		return fmt.Errorf("插件「%s」已激活，但刷新主题运行时失败：%w", name, err)
+	}
+	return nil
+}
+
+// deactivatePluginFromAdmin is the admin toggle for disabling a plugin.
+func (e *Engine) deactivatePluginFromAdmin(name string) error {
+	e.lifecycleMu.Lock()
+	defer e.lifecycleMu.Unlock()
+
+	if !e.PluginManager.IsActive(name) {
+		return fmt.Errorf("插件「%s」未激活", name)
+	}
+	// Guard: the active theme may declare a hard dependency on this plugin.
+	if e.ActiveThemeRequiresPlugin(name) {
+		return fmt.Errorf("当前主题「%s」依赖插件「%s」，请先切换主题再停用", e.ActiveThemeName(), name)
+	}
+	if err := e.PluginManager.CanDeactivate(name, e); err != nil {
+		return err
+	}
+	if !e.PluginManager.Deactivate(name, e) {
+		return fmt.Errorf("停用插件「%s」失败", name)
+	}
+	// Persist as "false" rather than deleting, so LoadPlugin can distinguish
+	// "user deactivated" from "first run". If that write fails the plugin is
+	// re-activated: otherwise it would silently come back on the next restart.
+	if err := e.Options.Set("plugin_active_"+name, "false"); err != nil {
+		e.PluginManager.Activate(name, e)
+		if refreshErr := e.refreshActiveThemeLocked(); refreshErr != nil {
+			logger.Error("Failed to refresh runtime after plugin deactivation rollback", "plugin", name, "error", refreshErr)
+			e.rebuildRouter()
+		}
+		return fmt.Errorf("插件「%s」停用状态保存失败：%w", name, err)
+	}
+	if e.Cache != nil {
+		e.Cache.Flush()
+	}
+	// Rebuild the registry so the plugin's content types/nav/routes are
+	// dropped, then the router.
+	if err := e.refreshActiveThemeLocked(); err != nil {
+		e.rebuildRouter()
+		return fmt.Errorf("插件「%s」已停用，但刷新主题运行时失败：%w", name, err)
+	}
+	return nil
+}
+
 // convertMenuItems converts menu.Item slice to admin.MenuItemInfo slice.
 func convertMenuItems(items []menu.Item) []admin.MenuItemInfo {
 	result := make([]admin.MenuItemInfo, len(items))
@@ -1464,48 +1553,184 @@ func extensionBaseFromSettingsTemplate(tmplPath string) string {
 }
 
 // Start starts the HTTP server.
+//
+// It serves through the same HandlerSwitcher path as cmd/server, so router
+// rebuilds after theme switches or plugin toggles take effect without a
+// restart. Start blocks until the server stops; it returns nil after a
+// graceful Shutdown and the listener error otherwise.
 func (e *Engine) Start() error {
 	if e.Router == nil {
 		e.SetupRouter()
 	}
+	switcher := &HandlerSwitcher{}
+	switcher.Set(e.Router)
+	previous := e.OnRouterRebuild
+	e.OnRouterRebuild = func(next http.Handler) {
+		switcher.Set(next)
+		if previous != nil {
+			previous(next)
+		}
+	}
 
 	addr := fmt.Sprintf("%s:%d", e.Config.Server.Host, e.Config.Server.Port)
-	e.server = &http.Server{
+	server := &http.Server{
 		Addr:         addr,
-		Handler:      e.Router,
+		Handler:      switcher,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
+	e.mu.Lock()
+	e.server = server
+	e.mu.Unlock()
 
 	logger.Info("GoPress starting", "addr", addr)
 	e.Hooks.DoAction(context.Background(), "engine.start")
 
-	return e.server.ListenAndServe()
+	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+	return nil
+}
+
+// MarkReady reports that the runtime is fully assembled. BuildAndBootstrap
+// calls it as its last step; custom composition roots should do the same.
+func (e *Engine) MarkReady() {
+	e.ready.Store(true)
+}
+
+// BeginShutdown flips readiness to false without tearing anything down, so a
+// caller can stop advertising the instance before draining connections.
+func (e *Engine) BeginShutdown() {
+	e.shuttingDown.Store(true)
+}
+
+// Readiness reports whether the engine can serve traffic: it is assembled,
+// not shutting down, and the database answers a ping. The returned reason is
+// a stable, non-sensitive token suitable for a public probe response.
+func (e *Engine) Readiness(ctx context.Context) (bool, string) {
+	switch {
+	case e.shuttingDown.Load():
+		return false, "shutting_down"
+	case !e.ready.Load():
+		return false, "starting"
+	case e.DB == nil:
+		return false, "database"
+	}
+	sqlDB, err := e.DB.DB()
+	if err != nil {
+		return false, "database"
+	}
+	pingCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	if err := sqlDB.PingContext(pingCtx); err != nil {
+		return false, "database"
+	}
+	return true, ""
+}
+
+func (e *Engine) serveReadiness(c *gin.Context) {
+	c.Header("Cache-Control", "no-store")
+	if ok, reason := e.Readiness(c.Request.Context()); !ok {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not_ready", "reason": reason})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }
 
 // Shutdown gracefully stops the engine.
+//
+// Order matters: readiness flips first, then the server owned by Start (if
+// any) drains in-flight requests, then extensions stop producing work
+// (engine.shutdown hook and plugin.Stopper), then the scheduler and worker
+// pool drain within ctx, and finally caches and the database close. Callers
+// that run their own http.Server (cmd/server) must shut it down before calling
+// this. Shutdown is idempotent; later calls return the first result.
 func (e *Engine) Shutdown(ctx context.Context) error {
-	logger.Info("GoPress shutting down...")
-	e.Hooks.DoAction(ctx, "engine.shutdown")
+	e.shutdownOnce.Do(func() {
+		e.shutdownErr = e.shutdown(ctx)
+	})
+	return e.shutdownErr
+}
 
-	// Stop scheduler and workers
+func (e *Engine) shutdown(ctx context.Context) error {
+	e.BeginShutdown()
+	logger.Info("GoPress shutting down...")
+	var errs []error
+
+	e.mu.RLock()
+	server := e.server
+	e.mu.RUnlock()
+	if server != nil {
+		if err := server.Shutdown(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			errs = append(errs, fmt.Errorf("http server: %w", err))
+		}
+	}
+
+	if e.Hooks != nil {
+		e.Hooks.DoAction(ctx, "engine.shutdown")
+	}
+	if err := e.stopPlugins(ctx); err != nil {
+		errs = append(errs, err)
+	}
+
+	// Stop producers before draining the queue they feed.
 	if e.Sched != nil {
 		e.Sched.Stop()
 	}
 	if e.Workers != nil {
-		e.Workers.Shutdown()
+		if err := e.Workers.ShutdownContext(ctx); err != nil {
+			errs = append(errs, fmt.Errorf("worker pool: %w", err))
+		}
+	}
+	if e.apiLimiter != nil {
+		e.apiLimiter.Stop()
 	}
 
-	// Close Redis connection if L2 is Redis
-	if rc, ok := e.Cache.L2.(*cache.RedisCache); ok {
-		_ = rc.Close()
+	if e.Cache != nil {
+		for _, level := range []cache.Cache{e.Cache.L1, e.Cache.L2} {
+			if closer, ok := level.(interface{ Close() error }); ok {
+				if err := closer.Close(); err != nil {
+					errs = append(errs, fmt.Errorf("cache: %w", err))
+				}
+			}
+		}
 	}
+	if e.DB != nil {
+		if sqlDB, err := e.DB.DB(); err == nil {
+			if err := sqlDB.Close(); err != nil {
+				errs = append(errs, fmt.Errorf("database: %w", err))
+			}
+		}
+	}
+	return errors.Join(errs...)
+}
 
-	if e.server != nil {
-		return e.server.Shutdown(ctx)
+// stopPlugins calls Stop on every active plugin implementing plugin.Stopper,
+// in reverse registration order. It holds lifecycleMu so an admin toggle
+// cannot race the shutdown, and a panicking Stop is contained.
+func (e *Engine) stopPlugins(ctx context.Context) error {
+	if e.PluginManager == nil {
+		return nil
 	}
-	return nil
+	e.lifecycleMu.Lock()
+	defer e.lifecycleMu.Unlock()
+
+	active := e.PluginManager.ActivePlugins()
+	var errs []error
+	for i := len(active) - 1; i >= 0; i-- {
+		stopper, ok := active[i].(plugin.Stopper)
+		if !ok {
+			continue
+		}
+		name := active[i].Name()
+		err := worker.RunTask(ctx, worker.Task{Name: "plugin-stop:" + name, Fn: stopper.Stop})
+		if err != nil {
+			logger.Error("Plugin stop failed", "plugin", name, "error", err)
+			errs = append(errs, fmt.Errorf("plugin %s: %w", name, err))
+		}
+	}
+	return errors.Join(errs...)
 }
 
 // --- App interface implementation ---

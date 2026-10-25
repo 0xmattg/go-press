@@ -82,7 +82,7 @@ Commerce 先提交本地订单、库存预留、订单行/地址快照和 pendin
 **流程：**
 
 1. `StartPayment` 从一个 watch-only `xpub` **为每个订单派生唯一收款地址**（BIP-32 非硬化，服务器无花费权限），记录含精确应付 token 金额的 invoice，返回 `DisplayAction`（网络、币种、收款地址、精确金额、二维码、到期）。commerce 将订单置 `on_hold`。
-2. **watcher goroutine**（Activate 时启动，非 core Scheduler）增量扫描已确认的 ERC-20 `Transfer` 日志。保存设置时及每轮扫描前都会验证 RPC 的 chain id、代币合约字节码和 `decimals()`；返回日志还会逐项复核合约、事件签名、目标地址集合、区块范围、哈希、topic 与金额。
+2. **watcher goroutine**（Activate 时启动，非 core Scheduler；停用及进程停机时经 `plugin.Stopper` 停止）增量扫描已确认的 ERC-20 `Transfer` 日志。保存设置时及每轮扫描前都会验证 RPC 的 chain id、代币合约字节码和 `decimals()`；返回日志还会逐项复核合约、事件签名、目标地址集合、区块范围、哈希、topic 与金额。
 3. 入账与扫描游标在同一数据库事务中提交，并按 `(EVM chain id + 代币合约, tx_hash, log_index)` 去重。即便没有新区块范围，也会从持久化入账重试结算，因此“扫描已提交、结算前崩溃”不会永久漏款。每张 invoice 快照网络、合约、币种、汇率、dust 容差和确认阈值；只要仍处于正常或迟到账观察窗口，设置页就禁止停用或切换结算身份。
 4. 到期判断使用“最后安全扫描区块”的链上时间，而不是应用服务器时钟；每笔转账也按其确认区块时间判定是否按时。按时全额结算为 `paid`/`overpaid`，按时部分金额为 `underpaid`，没有按时资金为 `expired`。迟到资金继续观察七天，并进入 Commerce 的明确 reconciliation 路径，不会静默接受或丢失。结算键按 invoice 与结果保持稳定。
 5. 网关只声明支持 USD。其他币种在结算页被过滤，伪造的非 USD `StartPayment` 请求也会被拒绝。代币换算全程使用定点整数和 invoice 的不可变汇率快照。

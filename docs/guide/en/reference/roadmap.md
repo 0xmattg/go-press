@@ -41,6 +41,10 @@
 - **Delivery tooling** — web installer with live handler switch, `gopress`
   autoload/build workflow, Swagger generation, site-scoped configuration, and
   generated public artifacts.
+- **Runtime stability** — concurrency-safe plugin lifecycle and i18n snapshots,
+  liveness and readiness probes, ordered graceful shutdown, per-site Redis cache
+  namespaces, and Go CI covering formatting, vet, build, tests, and race
+  regressions.
 
 ## Planned
 
@@ -51,7 +55,8 @@
   step-up scopes, OpenTelemetry, metrics, alerts, and audit retention.
 - **Agent/MCP Phase 5** — Resources, Prompts, Tasks, MCP Apps, subscriptions,
   registry publication, and third-party Tool governance.
-- CI/CD pipeline hardening.
+- CI/CD hardening: real PostgreSQL integration tests, database upgrade tests,
+  and a release pipeline.
 - Benchmark suite and performance tuning.
 - Theme and plugin version migration hooks.
 - Online theme marketplace and one-click installation.
@@ -60,7 +65,8 @@
 
 1. Fork the repository.
 2. Create a focused feature branch.
-3. Add tests and documentation for the affected public contract.
+3. Add tests and documentation for the affected public contract, and run
+   `make lint`, `make test`, and `make test-race` before submitting.
 4. Commit focused changes and push the branch.
 5. Open a pull request with behavior, migration, security, and compatibility
    notes where applicable.

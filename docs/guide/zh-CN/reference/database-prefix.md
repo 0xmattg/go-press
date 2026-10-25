@@ -61,6 +61,10 @@ table_prefix = "shop_"
 
 实例间的内容、用户、设置完全隔离，但可以共享 PG 实例的连接池和运维成本。
 
+这些实例也可以共用同一个 Redis DB：缓存 Key 按 `[redis].namespace` 隔离，
+未配置时会根据数据库连接与 `table_prefix` 自动派生，因此不同前缀的站点不会
+读取或清理彼此的缓存。详见[配置](../getting-started/configuration.md)。
+
 ## 表注册表
 
 `core.RegisterPluginTable()` / `core.RegisterThemeTable()` 不仅用于命名约定，还把表归属信息存到内存注册表，用于：

@@ -7,10 +7,14 @@ ifeq ($(GOBIN),)
 GOBIN := $(shell go env GOPATH)/bin
 endif
 
+# Packages whose concurrency contracts (plugin lifecycle, i18n snapshots,
+# worker/scheduler shutdown, cache, hooks, engine runtime) carry race regressions.
+RACE_PKGS := ./core ./core/plugin/... ./core/i18n/... ./core/worker/... ./core/cache/... ./core/hook/... ./core/api/...
+
 # `make` with no target prints help.
 .DEFAULT_GOAL := help
 
-.PHONY: gopress server gen install uninstall clean help
+.PHONY: gopress server gen install uninstall clean help test test-race fmt-check lint
 
 help:
 	@echo "GoPress — Make targets"
@@ -21,6 +25,9 @@ help:
 	@echo "  make install     Install gopress to $(GOBIN)"
 	@echo "  make uninstall   Remove gopress from $(GOBIN)"
 	@echo "  make clean       Remove $(BUILD_DIR)/"
+	@echo "  make test        Run all Go tests"
+	@echo "  make test-race   Run concurrency regressions with the race detector"
+	@echo "  make lint        Check gofmt and run go vet"
 	@echo "  make help        Show this message"
 	@echo ""
 	@echo "Quickstart (no global install required):"
@@ -77,3 +84,19 @@ uninstall:
 clean:
 	@rm -rf $(BUILD_DIR)
 	@echo "Removed $(BUILD_DIR)/"
+
+test:
+	@go test ./...
+
+test-race:
+	@go test -race $(RACE_PKGS)
+
+# Only tracked files are checked so local, ignored workspaces do not fail CI.
+fmt-check:
+	@unformatted=$$(gofmt -l $$(git ls-files '*.go')); \
+	if [ -n "$$unformatted" ]; then \
+		echo "gofmt needed:"; echo "$$unformatted"; exit 1; \
+	fi
+
+lint: fmt-check
+	@go vet ./...

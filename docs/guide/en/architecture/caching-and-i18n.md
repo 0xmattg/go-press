@@ -21,6 +21,12 @@ operations.
 Redis is optional. When it is missing or unavailable, GoPress continues with the
 in-process cache and database rather than making the site unavailable.
 
+Redis keys are namespaced per site as `gopress:<namespace>:`, and clearing all
+caches or invalidating by prefix only touches the current site's keys. The
+namespace comes from `[redis].namespace` or, when unset, is derived from the
+database connection and table prefix, so several sites can safely share one
+Redis database. See [Configuration](../getting-started/configuration.md).
+
 ## Core i18n Architecture
 
 Core owns localization primitives; an optional multilingual plugin contributes
@@ -28,7 +34,8 @@ database overrides and management UI through public contracts:
 
 ```text
 core/i18n.Manager
-  -> load core, plugin, and theme locale files
+  -> layered messages published as immutable bundle snapshots
+  -> LoadThemeLocales / LoadLocalesFS / AddMessages
   -> T(ctx, key)
   -> TranslateOption / TranslateSettings
 
@@ -37,11 +44,22 @@ core/option registry
   -> IsTranslatable / AllTranslatableKeys
 
 resolution priority
-  1. database StringTranslation override
+  1. override layer: database StringTranslation via AddMessages
      domain="theme" for UI; domain="option" for settings
-  2. component locale file
-  3. original message ID
+  2. extension layer: namespaced plugin locale catalogs (LoadLocalesFS)
+  3. theme layer: the active theme's locales/ files
+  4. original message ID
 ```
+
+A go-i18n bundle must not change while it is being read, so the manager never
+mutates the bundle in use. After any layer changes it builds a new bundle from
+all layers and publishes it atomically. Localizers keep the snapshot they were
+created with, so in-flight requests finish consistently while new requests use
+the new snapshot. Theme activation replaces the whole theme layer: after
+switching to a theme that lacks a key (or has no `locales/` directory), the
+previous theme's text no longer leaks through. The database override layer
+survives theme switches. `Bundle()` returns a read-only snapshot; extensions
+change translations through `AddMessages` or `LoadLocalesFS`.
 
 This fallback chain keeps a page usable when a translation is incomplete. Core
 remains a complete single-language CMS when no plugin supplies database

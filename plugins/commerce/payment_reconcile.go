@@ -22,7 +22,9 @@ func (p *Plugin) registerPaymentReconciler() {
 	}
 	stop := make(chan struct{})
 	p.reconcileStop = stop
+	p.loops.Add(1)
 	go func() {
+		defer p.loops.Done()
 		ticker := time.NewTicker(paymentReconcileInterval)
 		defer ticker.Stop()
 		for {

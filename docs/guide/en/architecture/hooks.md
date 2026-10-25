@@ -35,6 +35,7 @@ no subscribers must have no effect.
 | `middleware.early` | Before page-cache middleware. | `*gin.Engine` |
 | `routes.register` | After admin routes and before the frontend catch-all. | `*gin.Engine` |
 | `options.bulk_updated` | After admin saves options in bulk. | None |
+| `engine.shutdown` | During shutdown, after HTTP requests drain and before plugin `Stop` and worker shutdown. | None (`ctx` carries the shutdown deadline) |
 
 ## Theme Template Slots
 

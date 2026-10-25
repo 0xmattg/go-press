@@ -60,7 +60,7 @@ func (t *MyTheme) SettingsTemplatePath() string {
 
 后台会把该模板渲染进后台外壳，并提供 `.Settings`（所有选项）；用 `{{index .Settings "home_hero_title"}}` 读值。表单 POST 到 `/admin/themes/<slug>/settings`。
 
-**键前缀规则：** `ThemeSettingsSave` 只持久化「注册为可翻译」**或**匹配已识别前缀的键 —— `site_`、`home_`、`about_`、`company_`、`social_`、`footer_`、`nav_`、`contact_`、`showcase_`、`package_`。请据此命名（如 `home_hero_title`、`site_name`、`company_email`），否则会被静默丢弃。`shop-starter` 以此暴露店铺身份、公告栏、Hero 文案 + 插画、商品区域文案、页脚联系信息与可选社交链接。
+**键前缀规则：** `ThemeSettingsSave` 只持久化「注册为可翻译」**或**匹配已识别前缀的键 —— `site_`、`home_`、`about_`、`company_`、`social_`、`footer_`、`nav_`、`contact_`、`showcase_`、`package_`。请据此命名（如 `home_hero_title`、`site_name`、`company_email`），否则会被静默丢弃。表单中的 `site_name`、`site_timezone`、`site_icon` 等**核心系统设置项**沿用「系统设置」页的规则：只读项被拒绝、时区等取值会校验、`site_icon` 会同步生成 favicon。所有字段在同一个事务里保存，任一字段校验或写入失败时整次保存不生效，并在设置页显示错误。`shop-starter` 以此暴露店铺身份、公告栏、Hero 文案 + 插画、商品区域文案、页脚联系信息与可选社交链接。
 
 ## 图片
 

@@ -29,6 +29,9 @@ host = "localhost"
 port = 6379
 password = ""
 db = 0
+# Optional: isolates cache keys when several sites share one Redis database.
+# Empty derives a stable namespace from the PostgreSQL host/port/database/schema/table_prefix.
+# namespace = "my-site"
 
 [cms]
 # REQUIRED: set a unique, random secret (e.g. `openssl rand -base64 32`).

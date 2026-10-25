@@ -193,6 +193,23 @@ The plugin settings page contains:
 If a theme or plugin provides only one admin locale, the UI falls back to that
 available locale instead of hiding its settings.
 
+### Permissions for Translation Writes
+
+Every translation write is authorized server-side with core RBAC, regardless of
+whether the settings page is visible to the user:
+
+| Operation | Required capability and checks |
+|---|---|
+| Clone content into a language | `content.create`; the source must be a registered, non-read-only type outside the trash; roles without `content.update` may translate only content they authored (`content.update_own`); "publish immediately" also needs `content.publish`; the target language must be enabled. |
+| Unlink a content translation | `content.update` |
+| Category and Tag translations | `taxonomy.read` + `taxonomy.create` |
+| Menu translation and unlinking | `menu.update` |
+| String, theme-setting, and site-setting translations | `plugin.update` |
+
+Requests that fail these checks receive `403` and create nothing. The cloned
+translation is authored by the administrator who created it, so roles limited
+to `update_own` can keep editing their own translations.
+
 ## Plugin Tables
 
 | Table | Purpose |

@@ -1,0 +1,50 @@
+name: Go CI
+
+on:
+  push:
+    branches: [dev, main]
+    paths-ignore:
+      - 'docs/guide/**'
+      - '**/*.md'
+  pull_request:
+    paths-ignore:
+      - 'docs/guide/**'
+      - '**/*.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: go-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # Every check runs over ./... or tracked files, never a hand-written module
+      # list, so this workflow does not name individual themes or plugins.
+      - name: Check formatting
+        run: make fmt-check
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: make test
+
+      - name: Race regressions
+        run: make test-race

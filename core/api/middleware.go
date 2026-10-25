@@ -12,12 +12,18 @@ import (
 )
 
 // RateLimiter implements a simple token bucket rate limiter per IP.
+//
+// A limiter owns a background goroutine that evicts idle buckets. Long-lived
+// owners (Engine, plugins) should create one limiter and reuse it across router
+// rebuilds so budgets are not reset, and call Stop when it is retired.
 type RateLimiter struct {
-	mu      sync.Mutex
-	buckets map[string]*bucket
-	rate    int           // tokens per interval
-	burst   int           // max burst
-	window  time.Duration // time window
+	mu       sync.Mutex
+	buckets  map[string]*bucket
+	rate     int           // tokens per interval
+	burst    int           // max burst
+	window   time.Duration // time window
+	stop     chan struct{}
+	stopOnce sync.Once
 }
 
 type bucket struct {
@@ -32,10 +38,18 @@ func NewRateLimiter(rate int, window time.Duration) *RateLimiter {
 		rate:    rate,
 		burst:   rate * 2,
 		window:  window,
+		stop:    make(chan struct{}),
 	}
 	// Cleanup old buckets periodically
 	go rl.cleanup()
 	return rl
+}
+
+// Stop ends the bucket cleanup goroutine. The middleware keeps enforcing
+// limits afterwards; Stop only releases the background worker. It is safe to
+// call more than once.
+func (rl *RateLimiter) Stop() {
+	rl.stopOnce.Do(func() { close(rl.stop) })
 }
 
 func (rl *RateLimiter) allow(ip string) bool {
@@ -65,7 +79,13 @@ func (rl *RateLimiter) allow(ip string) bool {
 
 func (rl *RateLimiter) cleanup() {
 	ticker := time.NewTicker(5 * time.Minute)
-	for range ticker.C {
+	defer ticker.Stop()
+	for {
+		select {
+		case <-rl.stop:
+			return
+		case <-ticker.C:
+		}
 		rl.mu.Lock()
 		cutoff := time.Now().Add(-10 * time.Minute)
 		for ip, b := range rl.buckets {

@@ -58,3 +58,5 @@ reports/
 
 # OS junk
 Thumbs.db
+
+/docs/audits/

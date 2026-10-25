@@ -78,6 +78,8 @@ plugin can remove its actions and filters during runtime deactivation. See the
 
 - **L1 memory + optional L2 Redis** — cache keys include the language dimension,
   and missing Redis degrades safely to the in-process cache.
+- **Site namespaces** — Redis keys are isolated as `gopress:<namespace>:`, so
+  sites sharing one Redis database neither read nor clear each other's entries.
 - **Tag invalidation** — related entries can be invalidated in batches.
 - **Full-page cache** — middleware can return a complete cached HTML response
   before theme rendering.
@@ -86,8 +88,24 @@ See [Caching and i18n](caching-and-i18n.md).
 
 ## Asynchronous Work
 
-The worker pool combines goroutine workers with cron-style scheduling for
-background tasks that should not block page rendering.
+`Workers` (`worker.Pool`) is a bounded goroutine pool, and `Sched`
+(`worker.Scheduler`) dispatches fixed-interval jobs into it, for background work
+that should not block page rendering:
+
+- **Best effort, not a durable queue** — when the queue is full a task runs
+  inline on the caller's goroutine; tasks still queued when the shutdown
+  deadline expires are dropped. Side effects that must be delivered reliably
+  should not depend on the in-memory queue alone.
+- **Panic isolation** — a panicking task is recovered and logged as an error; it
+  cannot terminate the process or its worker.
+- **Shutdown semantics** — once shutdown starts, `Submit` / `SubmitFunc` return
+  `worker.ErrPoolClosed` and accept no new work; queued tasks finish within the
+  deadline.
+- **Runtime registration** — `Sched.AddJob(name, interval, fn)` returns a
+  `worker.JobHandle`. On a running scheduler the job starts ticking immediately,
+  and `Sched.RemoveJob(handle)` stops and removes it, which suits plugins that
+  register on activation and remove on deactivation. `Stop` is idempotent and
+  waits for scheduler goroutines to exit.
 
 ## Agent Capability Layer
 
@@ -150,7 +168,9 @@ keys; runtime code reads them through core option and i18n helpers.
 The core i18n manager loads core, theme, and plugin locale files and exposes the
 `T` template helper. Optional database translations can override UI strings,
 theme options, and site settings without introducing direct theme/plugin
-dependencies.
+dependencies. Messages are kept in theme, extension, and override layers and
+every change publishes a new immutable snapshot, so a theme switch leaves no
+stale text behind. See [Caching and i18n](caching-and-i18n.md).
 
 ## Demo Data
 

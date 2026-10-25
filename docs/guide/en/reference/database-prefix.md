@@ -44,6 +44,11 @@ table_prefix = "blog_"
 
 Another site can use the same database with a different prefix such as `shop_`.
 
+Such sites can also share one Redis database. Cache keys are isolated by
+`[redis].namespace`, which is derived from the database connection and
+`table_prefix` when unset, so sites with different prefixes never read or clear
+each other's cache. See [Configuration](../getting-started/configuration.md).
+
 ## Table Registry
 
 The table registry records table ownership for admin database tooling, future uninstall workflows, and debugging.

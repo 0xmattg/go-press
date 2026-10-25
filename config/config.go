@@ -1,6 +1,8 @@
 package config
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"os"
 	"path/filepath"
 	"strings"
@@ -58,6 +60,55 @@ type RedisConfig struct {
 	Port     int    `mapstructure:"port" toml:"port"`
 	Password string `mapstructure:"password" toml:"password"`
 	DB       int    `mapstructure:"db" toml:"db"`
+	// Namespace isolates this site's cache keys from other sites sharing the
+	// same Redis database. Leave empty to derive one from the database
+	// identity (see Config.CacheNamespace).
+	Namespace string `mapstructure:"namespace" toml:"namespace,omitempty"`
+}
+
+// maxCacheNamespaceLen bounds the namespace so it stays a short key prefix.
+const maxCacheNamespaceLen = 64
+
+// CacheNamespace returns the stable, site-unique namespace used to prefix
+// shared cache keys.
+//
+// An explicit redis.namespace wins (sanitized to [A-Za-z0-9._-]). Otherwise
+// the namespace is a short hash of the PostgreSQL identity — host, port,
+// database, schema, and table prefix — which already uniquely identifies a
+// site's data, so two sites never share keys unless they share data.
+func (c *Config) CacheNamespace() string {
+	if c == nil {
+		return "default"
+	}
+	if ns := sanitizeCacheNamespace(c.Redis.Namespace); ns != "" {
+		return ns
+	}
+	identity := strings.Join([]string{
+		strings.ToLower(strings.TrimSpace(c.PG.Hostname)),
+		strings.TrimSpace(c.PG.Port),
+		strings.TrimSpace(c.PG.Database),
+		strings.TrimSpace(c.PG.Schema),
+		strings.TrimSpace(c.PG.TablePrefix),
+	}, "|")
+	sum := sha256.Sum256([]byte(identity))
+	return "s" + hex.EncodeToString(sum[:6])
+}
+
+func sanitizeCacheNamespace(raw string) string {
+	raw = strings.TrimSpace(raw)
+	var b strings.Builder
+	for _, r := range raw {
+		if b.Len() >= maxCacheNamespaceLen {
+			break
+		}
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '.', r == '-', r == '_':
+			b.WriteRune(r)
+		default:
+			b.WriteByte('_')
+		}
+	}
+	return strings.Trim(b.String(), "_")
 }
 
 type CMSConfig struct {

@@ -182,8 +182,55 @@ The complete contract, Google OIDC and MetaMask SIWE examples, provider icons, a
 
 - Remove every action/filter handle.
 - Stop middleware or route behavior from affecting requests.
+- Stop plugin-owned goroutines and tickers, and remove scheduler jobs.
 - Leave stored data in place unless the user explicitly uninstalls the plugin.
 - Clear relevant cache paths after activation state changes.
+
+## Lifecycle Concurrency and Shutdown
+
+- Core serializes plugin activation, deactivation, and theme switches.
+  Activating an already-active plugin is a no-op; `Activate` is not called twice.
+- Do **not** call `PluginManager.Activate` or `Deactivate` from inside a
+  lifecycle callback (it would deadlock). `PluginManager.IsActive` is lock-free
+  and safe on every request's hot path.
+- Prefer the core scheduler for periodic work: `e.Sched.AddJob(name, interval,
+  fn)` takes effect immediately even after boot and returns a
+  `worker.JobHandle` to pass to `e.Sched.RemoveJob` during deactivation.
+- Plugins that must own a long-running loop should stop it in `Deactivate` and
+  also implement the optional `plugin.Stopper` interface. Core calls
+  `Stop(ctx)` on every active plugin during process shutdown, after HTTP
+  requests drain and before workers and the database close. Shutdown bypasses
+  `DeactivationGuard`, so a "must not be disabled" policy never blocks it.
+  `Stop` must return within the context deadline and be safe to call twice.
+- Once shutdown starts, `Workers.Submit` and `SubmitFunc` return
+  `worker.ErrPoolClosed`. Core recovers panics in background tasks, but tasks
+  should still return explicit errors.
+
+```go
+func (p *Plugin) Activate(app plugin.App) {
+    p.engine = app.(*core.Engine)
+    p.job = p.engine.Sched.AddJob("my-plugin:cleanup", time.Hour, p.cleanup)
+    p.stop, p.done = make(chan struct{}), make(chan struct{})
+    go p.loop(p.stop, p.done)
+}
+
+func (p *Plugin) Deactivate(_ plugin.App) {
+    p.engine.Sched.RemoveJob(p.job)
+    p.stopLoop() // close stop if set, wait for done, reset both
+}
+
+// Stop implements plugin.Stopper for process shutdown.
+func (p *Plugin) Stop(ctx context.Context) error {
+    finished := make(chan struct{})
+    go func() { p.stopLoop(); close(finished) }()
+    select {
+    case <-finished:
+        return nil
+    case <-ctx.Done():
+        return ctx.Err()
+    }
+}
+```
 
 Core rebuilds the Gin router after plugin activation or deactivation, so active
 `middleware.early` and `routes.register` hooks are applied immediately. Plugins

@@ -7,7 +7,8 @@ GoPress generates REST endpoints for registered content types and ships Swagger 
 - Automatic endpoints for public core and theme-declared content types.
 - Generic content query endpoint.
 - JWT Bearer token and API key authentication.
-- IP-based rate limiting.
+- IP-based rate limiting; the limiter is reused when theme switches or plugin
+  changes rebuild the router, so budgets are not reset.
 - Configurable CORS.
 - Swagger UI at `/swagger/index.html`.
 
@@ -93,7 +94,9 @@ artifacts.
 
 The guide and API specification are separate products:
 
-- `docs/guide/` contains the bilingual Markdown documentation.
+- `docs/guide/` contains the bilingual Markdown documentation. Each language's
+  `SUMMARY.md` defines the navigation, and the gopress.xyz documentation site
+  renders the files directly, with no separate build step.
 - `docs/docs.go`, `docs/swagger.json`, and `docs/swagger.yaml` contain the
   generated Swagger package and OpenAPI definitions.
 

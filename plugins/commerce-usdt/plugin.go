@@ -7,6 +7,7 @@
 package commerceusdt
 
 import (
+	"context"
 	"embed"
 	"net/http"
 	"path/filepath"
@@ -121,6 +122,25 @@ func (p *Plugin) Deactivate(app plugin.App) {
 	p.filters = nil
 	p.stopWatcher()
 	logger.Info("commerce-usdt deactivated")
+}
+
+var _ plugin.Stopper = (*Plugin)(nil)
+
+// Stop implements plugin.Stopper for process shutdown: it stops the chain
+// watcher and waits for an in-flight scan, bounded by ctx, so the scan cursor
+// is not left mid-update when core closes the database.
+func (p *Plugin) Stop(ctx context.Context) error {
+	done := make(chan struct{})
+	go func() {
+		p.stopWatcher()
+		close(done)
+	}()
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 // t translates a storefront message id to the request language.

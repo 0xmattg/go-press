@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"log"
@@ -80,12 +81,8 @@ func (h *Handler) SettingUpdate(c *gin.Context) {
 				newValue = "1"
 			}
 		}
-		if s.Key == "site_timezone" && !config.IsValidTimezone(newValue) {
-			c.Redirect(http.StatusFound, "/admin/settings?error="+url.QueryEscape(adminT(adminLang, "error.invalid_timezone")))
-			return
-		}
-		if !h.svc.IsValidSystemSettingValue(s.Key, newValue) {
-			c.Redirect(http.StatusFound, "/admin/settings?error="+url.QueryEscape(adminT(adminLang, "error.invalid_registration_role")))
+		if err := h.validateSystemSettingValue(s.Key, newValue, adminLang); err != nil {
+			c.Redirect(http.StatusFound, "/admin/settings?error="+url.QueryEscape(err.Error()))
 			return
 		}
 		if newValue != s.Value {
@@ -704,17 +701,29 @@ func (h *Handler) ThemeSettings(c *gin.Context) {
 }
 
 // ThemeSettingsSave saves theme-specific settings.
+//
+// Theme forms may also edit core-owned keys (for example site_name). Those
+// keys keep the system settings page's rules — read-only keys are rejected,
+// values are validated, and site_icon regenerates the favicon — no matter which
+// form submits them. All accepted values are written in one transaction so a
+// failure never reports success or leaves a partial save.
 func (h *Handler) ThemeSettingsSave(c *gin.Context) {
 	if !h.checkPermission(c, "setting", "update") {
 		return
 	}
 	slug := c.Param("slug")
+	lang := h.svc.AdminLanguage()
+	settingsURL := "/admin/themes/" + url.PathEscape(slug) + "/settings"
+	fail := func(message string) {
+		c.Redirect(http.StatusFound, settingsURL+"?error="+url.QueryEscape(message))
+	}
 
+	values := make(map[string]string)
 	// Save color scheme. Core does not know which palette names a theme defines,
 	// so we only sanity-check the shape (CSS-class-safe token) and let the theme
 	// own the list of valid values.
 	if cs := c.PostForm("color_scheme"); isSafeSchemeToken(cs) {
-		h.svc.UpdateSetting("theme_color_scheme", cs)
+		values["theme_color_scheme"] = cs
 	}
 
 	// Save all theme-related settings from form. A key is accepted if it is
@@ -725,20 +734,54 @@ func (h *Handler) ThemeSettingsSave(c *gin.Context) {
 		c.Request.ParseForm()
 	}
 	themeSettingPrefixes := []string{"home_", "about_", "company_", "social_", "footer_", "showcase_", "site_", "nav_", "contact_", "package_"}
-	for key, values := range c.Request.PostForm {
-		if len(values) == 0 {
+	for key, formValues := range c.Request.PostForm {
+		if len(formValues) == 0 {
 			continue
 		}
 		if !option.IsTranslatable(key) && !hasAnyPrefix(key, themeSettingPrefixes) {
 			continue
 		}
-		h.svc.UpdateSetting(key, values[0])
+		if err := h.validateSystemSettingValue(key, formValues[0], lang); err != nil {
+			fail(err.Error())
+			return
+		}
+		values[key] = formValues[0]
+	}
+	if icon, ok := values["site_icon"]; ok && icon != h.svc.options.Get("site_icon") {
+		if err := h.svc.SyncSiteIcon(icon); err != nil {
+			fail(err.Error())
+			return
+		}
+	}
+	if err := h.svc.UpdateSettings(values); err != nil {
+		fail(adminT(lang, "error.update_failed", err.Error()))
+		return
 	}
 
 	h.invalidatePageCache()
 	h.fireOptionsBulkUpdated(c)
 	h.logAction(c, "update", "theme_settings", 0, "theme settings updated")
-	c.Redirect(http.StatusFound, "/admin/themes/"+slug+"/settings?success="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "notice.theme_settings_saved")))
+	c.Redirect(http.StatusFound, settingsURL+"?success="+url.QueryEscape(adminT(lang, "notice.theme_settings_saved")))
+}
+
+// validateSystemSettingValue applies the system settings rules to a write of
+// a core-owned option. Keys that core does not own are always accepted here;
+// their shape is the owning theme's or plugin's concern.
+func (h *Handler) validateSystemSettingValue(key, value, lang string) error {
+	def, ok := option.SystemDefinition(key)
+	if !ok {
+		return nil
+	}
+	if def.ReadOnly {
+		return errors.New(adminT(lang, "error.permission_denied"))
+	}
+	if key == "site_timezone" && !config.IsValidTimezone(value) {
+		return errors.New(adminT(lang, "error.invalid_timezone"))
+	}
+	if !h.svc.IsValidSystemSettingValue(key, value) {
+		return errors.New(adminT(lang, "error.invalid_registration_role"))
+	}
+	return nil
 }
 
 // hasAnyPrefix reports whether s has any of the given prefixes.

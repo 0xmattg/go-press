@@ -1,8 +1,10 @@
 package core
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
+	"time"
 
 	"github.com/0xmattg/go-press/config"
 	"github.com/0xmattg/go-press/pkg/dbprefix"
@@ -15,7 +17,10 @@ import (
 // subsystems, loading themes and plugins, and setting up the router.
 //
 // This is the standard way to construct a production-ready Engine from a config.
-func BuildAndBootstrap(cfg *config.Config, configPath string, seed bool) (*Engine, error) {
+// If any step after the database connection fails, the partially built engine
+// is shut down so its workers, tickers, cache sweepers, and connections do not
+// leak (the installer retries bootstrap inside the same process).
+func BuildAndBootstrap(cfg *config.Config, configPath string, seed bool) (_ *Engine, err error) {
 	// Refuse to start with an empty or placeholder admin token secret: with a
 	// known secret anyone can forge admin sessions. The installer generates a
 	// unique random secret, so a completed install should never hit this.
@@ -34,6 +39,16 @@ func BuildAndBootstrap(cfg *config.Config, configPath string, seed bool) (*Engin
 	}
 
 	engine := New(cfg, database)
+	defer func() {
+		if err == nil {
+			return
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if shutdownErr := engine.Shutdown(ctx); shutdownErr != nil {
+			logger.Error("Failed to release partially bootstrapped engine", "error", shutdownErr)
+		}
+	}()
 	engine.SiteDir = filepath.Dir(configPath)
 	engine.ConfigPath = configPath
 
@@ -70,5 +85,6 @@ func BuildAndBootstrap(cfg *config.Config, configPath string, seed bool) (*Engin
 
 	engine.SetupAdmin()
 	engine.SetupRouter()
+	engine.MarkReady()
 	return engine, nil
 }

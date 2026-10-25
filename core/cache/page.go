@@ -76,7 +76,7 @@ func PageCacheMiddleware(mgr *Manager, ttl time.Duration) gin.HandlerFunc {
 			strings.HasPrefix(path, "/auth/") ||
 			strings.HasPrefix(path, "/static/") ||
 			path == "/login" || path == "/logout" ||
-			path == "/health" {
+			path == "/health" || path == "/readyz" {
 			c.Next()
 			return
 		}

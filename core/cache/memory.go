@@ -19,6 +19,9 @@ type MemoryCache struct {
 	maxSize int
 	ll      *list.List               // front = most recently used
 	items   map[string]*list.Element // key -> element holding *memEntry
+
+	stop      chan struct{}
+	closeOnce sync.Once
 }
 
 type memEntry struct {
@@ -34,6 +37,7 @@ func NewMemoryCache(maxSize int) *MemoryCache {
 		maxSize: maxSize,
 		ll:      list.New(),
 		items:   make(map[string]*list.Element),
+		stop:    make(chan struct{}),
 	}
 	// Start background cleanup goroutine
 	go mc.cleanup()
@@ -122,10 +126,23 @@ func (m *MemoryCache) removeElement(el *list.Element) {
 	delete(m.items, el.Value.(*memEntry).key)
 }
 
-// cleanup runs periodically to remove expired entries.
+// Close stops the background sweeper. The cache stays usable; expired entries
+// are then only evicted lazily on access. It is safe to call more than once.
+func (m *MemoryCache) Close() error {
+	m.closeOnce.Do(func() { close(m.stop) })
+	return nil
+}
+
+// cleanup runs periodically to remove expired entries until Close is called.
 func (m *MemoryCache) cleanup() {
 	ticker := time.NewTicker(1 * time.Minute)
-	for range ticker.C {
+	defer ticker.Stop()
+	for {
+		select {
+		case <-m.stop:
+			return
+		case <-ticker.C:
+		}
 		now := time.Now()
 		m.mu.Lock()
 		for _, el := range m.items {

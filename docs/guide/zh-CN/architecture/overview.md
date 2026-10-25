@@ -72,18 +72,52 @@ main.go
        │    └→ theme.Setup()                    //    主题运行时初始化（菜单位置、设置、hook）
        ├→ engine.LoadAllPlugins()               // 7. 注册插件 + 激活已启用插件
        ├→ engine.SetupAdmin()                   // 8. 后台 CMS 路由
-       └→ engine.SetupRouter()                  // 9. 组装 Gin 路由
-             ├→ 中间件链
-             ├→ /health、/sitemap.xml
-             ├→ /api/v1/* (REST API)
-             ├→ /admin/* (后台 CMS)
-             ├→ /swagger/* (API 文档)
-             └→ NoRoute → ActiveTheme.ServeHTTP (前台)
+       ├→ engine.SetupRouter()                  // 9. 组装 Gin 路由
+       │     ├→ 中间件链
+       │     ├→ /health、/readyz、/sitemap.xml
+       │     ├→ /api/v1/* (REST API)
+       │     ├→ /admin/* (后台 CMS)
+       │     ├→ /swagger/* (API 文档)
+       │     └→ NoRoute → ActiveTheme.ServeHTTP (前台)
+       └→ engine.MarkReady()                    // 10. 标记就绪，/readyz 开始返回 200
 ```
+
+任一步骤失败时，`BuildAndBootstrap` 会关闭已创建的 worker、调度器、缓存
+清理器和数据库连接后再返回错误，安装器在同一进程内重试启动也不会泄漏资源。
 
 主题激活会清理旧主题注册项、恢复核心内容类型、读取当前 `theme.toml`、注册
 内容类型与菜单位置并执行主题 Setup。随后插件通过公开扩展点挂载 Hook、
 中间件、路由和设置 Provider；core 还会协调当前主题声明的插件依赖。
+
+运行期的主题切换、插件启用和停用由 core 串行执行。后台启停插件或切换主题时，
+如果状态无法写入数据库，core 会撤回这次变更（恢复原主题、回滚插件激活状态）
+并向管理员报告错误，保证运行中的进程与下次启动读取的持久化状态一致。
+
+## 存活、就绪与停机
+
+| 端点 | 含义 | 响应 |
+|---|---|---|
+| `/health` | 存活（liveness）：进程在运行并能处理 HTTP | 始终 `200`，含当前主题与缓存状态 |
+| `/readyz` | 就绪（readiness）：装配完成、未在停机、数据库可连通 | `200 {"status":"ready"}`；否则 `503`，`reason` 为 `starting`、`shutting_down` 或 `database` |
+
+两个端点都不进入整页缓存。`/readyz` 同时支持 `GET` 与 `HEAD`，带
+`Cache-Control: no-store`，响应中不包含任何配置信息。负载均衡与编排系统应使用
+`/readyz` 判断是否转发流量。
+
+服务进程收到 `SIGINT` / `SIGTERM` 后按固定顺序停机：
+
+```text
+撤销就绪（/readyz → 503）
+  -> 停止接收新连接并排空进行中的 HTTP 请求（最长 10 秒）
+  -> engine.Shutdown（最长 10 秒）
+       -> 触发 engine.shutdown Hook
+       -> 按注册逆序调用实现 plugin.Stopper 的插件 Stop(ctx)
+       -> 停止调度器 -> 在截止时间内排空 Worker 队列
+       -> 关闭缓存与数据库连接
+```
+
+`engine.Shutdown` 可重复调用，只执行一次。若 HTTP 端口监听失败（例如端口被
+占用），进程会记录错误、回收资源并以非零状态码退出，便于编排系统发现并重启。
 
 ## 安装器模式
 

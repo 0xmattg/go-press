@@ -32,6 +32,9 @@
   双协议 MCP 插件、6 个只读 Tool 和 6 个受控写 Tool。
 - **交付工具** — 支持 Handler 热切换的 Web 安装器、`gopress` autoload/
   build 流程、Swagger 生成、站点级配置和站点级公开生成物。
+- **运行时稳定性** — 并发安全的插件生命周期与 i18n 快照、存活/就绪探针、
+  有序优雅停机、站点级 Redis 缓存命名空间，以及运行格式检查、vet、构建、测试
+  和竞态回归的 Go CI。
 
 ## 进行中 / 计划中
 
@@ -42,7 +45,7 @@
   Step-up Scope、OpenTelemetry、指标、告警和审计保留策略。
 - **Agent / MCP Phase 5** — Resources、Prompts、Tasks、MCP Apps、订阅、
   Registry 发布与第三方 Tool 治理。
-- CI/CD 流水线加固。
+- CI/CD 加固：真实 PostgreSQL 集成测试、数据库升级测试与发布流水线。
 - Benchmark 与性能调优。
 - 主题/插件版本迁移 Hook。
 - 在线主题市场与一键安装。
@@ -51,7 +54,7 @@
 
 1. Fork 本仓库。
 2. 创建聚焦单一问题的特性分支。
-3. 为受影响的公开契约补充测试和文档。
+3. 为受影响的公开契约补充测试和文档，提交前运行 `make lint`、`make test` 和 `make test-race`。
 4. 提交聚焦的改动并推送分支。
 5. 创建 Pull Request；涉及迁移、安全或兼容性时说明对应影响。
 

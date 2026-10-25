@@ -371,6 +371,7 @@ func (t *MyTheme) DemoSeedPath() string {
 主题通常会提供一个「主题设置」页让运营调内容（hero 图、品牌名、CTA 文案等）。约定：
 
 - 设置 key 用 `home_` / `about_` / `social_` / `footer_` 等前缀，引擎才会持久化
+- 如果设置页也提供 `site_name`、`site_timezone`、`site_icon` 等核心系统设置项，它们沿用「系统设置」页的校验；整张表单在一个事务里保存，任一字段失败时不会部分写入，错误会显示在设置页
 - 全主题共用的"站点名称 / 简介" **不要** 用 `company_name` 之类的本地 key 收集，统一走 admin「系统设置 > 网站设置」的 `site_name` / `site_description`。详见 [SEO 接入规范](seo-integration.md)
 - 把 `home_logo_image` / `home_logo_combined_image` 这类图片字段配上「选择图片」按钮调用 `openMediaPicker(callback)`
 

@@ -7,7 +7,9 @@ GoPress 的插件系统借鉴 WordPress 的 hook 模型，但用 Go 接口实现
 - **Plugin 接口** — 实现 `Name()` / `Activate()` / `Deactivate()` 即可
 - **Hook 驱动** — 通过 `middleware.early` / `routes.register` / `engine.init` 等生命周期钩子注入功能，也可通过 `theme.head.end` / `theme.body.open` / `theme.footer.end` / `header.nav.after` 等模板插槽向前台主题贡献局部 HTML
 - **Hook Remove API（热插拔基石）** — `Bus.AddAction` / `AddFilter` 返回 `hook.Handle`，`RemoveAction(Handle)` / `RemoveFilter(Handle)` 按 id 精准摘除；`SitemapGenerator.AddTransformer` 对称返回 `TransformerHandle` + `RemoveTransformer()`。插件在 `Deactivate` 中统一回收所有 handle，运行时即可完整下线，无需重启服务
-- **插件状态持久化** — 启用状态写入 `plugin_active_<name>` option：`"true"` 启用 / `"false"` 停用 / 缺失 = 首次加载默认启用。`LoadPlugin` 启动时按此决定是否调用 `Activate`，所以用户停用某插件后重启服务，它仍保持停用
+- **插件状态持久化** — 启用状态写入 `plugin_active_<name>` option：`"true"` 启用 / `"false"` 停用 / 缺失 = 首次加载默认启用。`LoadPlugin` 启动时按此决定是否调用 `Activate`，所以用户停用某插件后重启服务，它仍保持停用。后台启停时如果状态写入失败，core 会撤回这次启停并显示错误，运行状态与持久化状态始终一致
+- **串行生命周期** — 插件启停与主题切换由 core 串行执行，重复启用是幂等的；`PluginManager.IsActive` 无锁，可在请求热路径安全调用
+- **停机接口** — 拥有后台 goroutine 的插件可实现 `plugin.Stopper`，进程停机时 core 在 HTTP 排空之后、Worker 与数据库关闭之前调用 `Stop(ctx)`。详见[创建插件](creating-plugins.md)中的「生命周期并发约定」
 - **启停缓存刷新** — 后台激活/停用插件后 core 统一 `Cache.Flush()`，避免页面缓存保留旧插件输出（如导航语言切换器），保证运行时热切换即时体现在前台
 - **Router 热重建** — 后台启用或停用插件后，core 会重建 Gin Router，重新应用当前有效的 `middleware.early` 和 `routes.register` 注册；中间件仍建议保留运行态自守卫，覆盖关停并发窗口
 - **Sitemap Transformer Hook** — 插件可通过 `engine.Sitemap.AddTransformer()` 拦截每条 URL 条目，追加 hreflang 备选链接或衍生多语言副本（多语言插件据此实现 sitemap 翻译组）

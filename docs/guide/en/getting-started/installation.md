@@ -120,6 +120,30 @@ If the target database does not exist, GoPress attempts to connect to `postgres`
 | `make install` | `go install ./cmd/gopress` (puts `gopress` into `$GOBIN`). |
 | `make uninstall` | Remove the installed `gopress` binary. |
 | `make clean` | Remove the `build/` directory. |
+| `make test` | Run all Go tests (`go test ./...`). |
+| `make test-race` | Run lifecycle and concurrency regressions with the race detector. |
+| `make fmt-check` | Check tracked Go files against `gofmt`. |
+| `make lint` | `fmt-check` plus `go vet ./...`. |
+
+The repository's Go CI (`.github/workflows/go.yml`) runs `make fmt-check`,
+`go vet ./...`, `go build ./...`, `make test`, and `make test-race` on pushes and
+pull requests; run the same targets locally before submitting changes.
+
+## Health Probes and Shutdown
+
+- `/health` is the liveness probe and only says the process is running.
+  `/readyz` is the readiness probe: it returns `200` once assembly has finished
+  and the database is reachable, and `503` while starting, shutting down, or
+  when the database is unavailable. Point load-balancer or Kubernetes readiness
+  checks at `/readyz`.
+- Send `SIGTERM` for a graceful stop: the server withdraws readiness, drains
+  in-flight requests, stops plugin background work and workers, and finally
+  closes caches and the database. The two phases take up to 10 seconds each, so
+  give orchestrators a termination grace period of at least 25 seconds.
+- A listener failure such as a port already in use makes the process exit with
+  a non-zero status instead of leaving a process that serves nothing.
+
+See the [Architecture Overview](../architecture/overview.md#liveness-readiness-and-shutdown).
 
 ## Common Development Commands
 
