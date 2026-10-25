@@ -12,6 +12,7 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go)](https://go.dev)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Build](https://img.shields.io/github/actions/workflow/status/0xmattg/go-press/go.yml?branch=main&label=build&logo=github)](https://github.com/0xmattg/go-press/actions/workflows/go.yml)
 
 ---
 
