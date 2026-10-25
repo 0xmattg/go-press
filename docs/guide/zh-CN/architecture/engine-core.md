@@ -66,6 +66,8 @@ filter。详见 [Hook 系统](hooks.md)。
 
 - **L1 内存 + 可选 L2 Redis** — 缓存 Key 包含语言维度；Redis 不可用时
   安全降级到进程内缓存。
+- **站点命名空间** — Redis Key 以 `gopress:<namespace>:` 隔离，多站点共用
+  同一个 Redis DB 时互不读取、互不清理。
 - **标签失效** — 可按标签批量清理相关缓存。
 - **整页缓存** — 中间件可在主题渲染前直接返回完整 HTML 响应。
 
@@ -73,8 +75,18 @@ filter。详见 [Hook 系统](hooks.md)。
 
 ## 异步任务
 
-Worker Pool 组合 goroutine worker 与 Cron 风格调度器，用于执行不应阻塞
-页面渲染的后台任务。
+`Workers`（`worker.Pool`）是有界的 goroutine 池，`Sched`（`worker.Scheduler`）
+按固定间隔把任务投递进池，用于执行不应阻塞页面渲染的后台任务：
+
+- **尽力而为，非持久队列** — 队列满时任务在调用方 goroutine 内联执行；进程
+  停机超过截止时间时，尚未执行的任务会被丢弃。需要可靠送达的副作用不要只
+  依赖内存队列。
+- **panic 隔离** — 单个任务 panic 会被捕获并记录为错误，不会终止进程或 worker。
+- **关闭语义** — 停机开始后 `Submit` / `SubmitFunc` 返回 `worker.ErrPoolClosed`，
+  不再接受新任务；已在队列中的任务在截止时间内执行完毕。
+- **运行期注册** — `Sched.AddJob(name, interval, fn)` 返回 `worker.JobHandle`；
+  调度器已启动时新任务立即开始计时，`Sched.RemoveJob(handle)` 停止并移除它，
+  适合插件在激活/停用时成对调用。`Stop` 可重复调用，并等待调度 goroutine 退出。
 
 ## Agent 能力层
 
@@ -128,7 +140,9 @@ Options Repository 保存站点设置、主题设置、插件设置及主题/插
 
 Core i18n Manager 加载核心、主题和插件 locale 文件，并向模板提供 `T`
 helper。可选的数据库翻译可覆盖 UI 字符串、主题设置和网站设置，同时不引入
-主题与插件之间的直接依赖。
+主题与插件之间的直接依赖。消息按主题层、扩展层、覆盖层维护，每次变化都会
+发布新的不可变快照，切换主题时不会残留旧主题文案，详见
+[缓存与 i18n](caching-and-i18n.md)。
 
 ## 演示数据
 

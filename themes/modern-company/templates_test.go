@@ -69,7 +69,7 @@ func TestBaseTemplateFallsBackWhenSEOTitleEmpty(t *testing.T) {
 func TestBaseTemplateEmitsXCardForArticleSEO(t *testing.T) {
 	tmpl := newBaseTemplateTest(t)
 	article := PageData{
-		Title:      "Cleanroom Testing",
+		Title: "Cleanroom Testing",
 		// Core's generic single-content renderer identifies blog posts by their
 		// registered content type ("post"), not the archive presentation name
 		// ("blog"). X Card output therefore follows the generic SEO contract.

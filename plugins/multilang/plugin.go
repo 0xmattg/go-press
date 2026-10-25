@@ -702,6 +702,12 @@ func (p *Plugin) SettingsData() map[string]interface{} {
 // --- Translation Admin Handlers ---
 
 // handleCreateTranslation clones a content item to a target language.
+//
+// The route only proves the caller holds content.create. Because the source
+// item comes from the form, the handler re-applies the core editor rules
+// server-side: the source must be an editable registered type outside the
+// trash, update_own roles may only translate their own items, and publishing
+// the clone requires content.publish.
 func (p *Plugin) handleCreateTranslation(c *gin.Context) {
 	// Verify admin session (parse JWT from admin_token cookie)
 	if !p.isAdmin(c) {
@@ -711,22 +717,35 @@ func (p *Plugin) handleCreateTranslation(c *gin.Context) {
 	}
 
 	contentIDStr := c.PostForm("content_id")
-	targetLang := c.PostForm("target_lang")
+	targetLang := strings.ToLower(strings.TrimSpace(c.PostForm("target_lang")))
 	if contentIDStr == "" || targetLang == "" {
-		c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?error=参数不完整")
+		redirectSettings(c, "error", "参数不完整")
 		return
 	}
 
 	var contentID uint
 	if _, err := fmt.Sscanf(contentIDStr, "%d", &contentID); err != nil {
-		c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?error=无效的内容ID")
+		redirectSettings(c, "error", "无效的内容ID")
+		return
+	}
+	if p.repo == nil || !p.isSupported(targetLang) {
+		redirectSettings(c, "error", "不支持的目标语言")
 		return
 	}
 
 	// Load original content
 	original, err := p.engine.Content.FindByID(contentID)
 	if err != nil {
-		c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?error=内容不存在")
+		redirectSettings(c, "error", "内容不存在")
+		return
+	}
+	if !p.authorizeContentTranslation(c, original) {
+		c.AbortWithStatus(http.StatusForbidden)
+		return
+	}
+	publish := c.PostForm("publish") == "1"
+	if publish && !p.engine.RBAC.Can(c.GetString("admin_role"), "content", "publish") {
+		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
 
@@ -736,20 +755,24 @@ func (p *Plugin) handleCreateTranslation(c *gin.Context) {
 		// Not yet linked — create a translation group for the original
 		defLang := p.getDefaultLang()
 		if linkErr := p.LinkTranslation(contentID, defLang, nil); linkErr != nil {
-			c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?error=创建翻译组失败: "+linkErr.Error())
+			redirectSettings(c, "error", "创建翻译组失败: "+linkErr.Error())
 			return
 		}
 		// If the target language IS the default language, we just linked it — done
 		if targetLang == defLang {
-			c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?success=已将内容关联到"+targetLang)
+			redirectSettings(c, "success", "已将内容关联到"+targetLang)
 			return
 		}
-		origTrans, _ = p.repo.GetTranslation(contentID)
+		origTrans, err = p.repo.GetTranslation(contentID)
+		if err != nil || origTrans == nil {
+			redirectSettings(c, "error", "创建翻译组失败")
+			return
+		}
 	}
 
 	// Check if target language already has a translation
 	if _, err := p.repo.FindTranslation(origTrans.Trid, targetLang); err == nil {
-		c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?error=该语言的翻译已存在")
+		redirectSettings(c, "error", "该语言的翻译已存在")
 		return
 	}
 
@@ -771,10 +794,15 @@ func (p *Plugin) handleCreateTranslation(c *gin.Context) {
 
 	// Determine status: "publish" form field controls draft vs published
 	clonedStatus := contentPkg.StatusDraft
-	if c.PostForm("publish") == "1" {
+	if publish {
 		clonedStatus = contentPkg.StatusPublished
 	}
 
+	// The translator owns the clone so update_own roles can keep editing it.
+	authorID := c.GetUint("admin_user_id")
+	if authorID == 0 {
+		authorID = original.AuthorID
+	}
 	cloned := &contentPkg.Content{
 		Type:          original.Type,
 		Status:        clonedStatus,
@@ -783,7 +811,7 @@ func (p *Plugin) handleCreateTranslation(c *gin.Context) {
 		Content:       original.Content,
 		Excerpt:       original.Excerpt,
 		ImageURL:      original.ImageURL,
-		AuthorID:      original.AuthorID,
+		AuthorID:      authorID,
 		ParentID:      original.ParentID,
 		SortOrder:     original.SortOrder,
 		CommentStatus: original.CommentStatus,
@@ -795,7 +823,7 @@ func (p *Plugin) handleCreateTranslation(c *gin.Context) {
 	}
 
 	if err := p.engine.Content.Create(cloned); err != nil {
-		c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?error=克隆内容失败: "+err.Error())
+		redirectSettings(c, "error", "克隆内容失败: "+err.Error())
 		return
 	}
 
@@ -814,12 +842,12 @@ func (p *Plugin) handleCreateTranslation(c *gin.Context) {
 		LanguageCode:    targetLang,
 		SourceContentID: &sourceID,
 	}); err != nil {
-		c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?error=关联翻译失败: "+err.Error())
+		redirectSettings(c, "error", "关联翻译失败: "+err.Error())
 		return
 	}
 	if typeDef := p.engine.Registry.GetType(original.Type); typeDef != nil {
 		if err := p.copyTranslatedTaxonomies(contentID, cloned.ID, targetLang, typeDef); err != nil {
-			c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?error="+url.QueryEscape("内容已克隆，但分类翻译关系同步失败: "+err.Error()))
+			redirectSettings(c, "error", "内容已克隆，但分类翻译关系同步失败: "+err.Error())
 			return
 		}
 	}
@@ -829,7 +857,35 @@ func (p *Plugin) handleCreateTranslation(c *gin.Context) {
 	if clonedStatus == contentPkg.StatusPublished {
 		statusLabel = "已发布"
 	}
-	c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?success=已创建"+targetLang+"翻译（"+statusLabel+"），请编辑翻译内容")
+	redirectSettings(c, "success", "已创建"+targetLang+"翻译（"+statusLabel+"），请编辑翻译内容")
+}
+
+// authorizeContentTranslation mirrors the core editor's object-level checks
+// for a form-supplied source item. Every registered content type maps to the
+// core "content" RBAC resource, exactly as the admin content handlers do.
+func (p *Plugin) authorizeContentTranslation(c *gin.Context, original *contentPkg.Content) bool {
+	if p.engine == nil || p.engine.RBAC == nil || p.engine.Registry == nil || original == nil {
+		return false
+	}
+	def := p.engine.Registry.GetType(original.Type)
+	if def == nil || def.ReadOnly || original.Status == contentPkg.StatusTrash {
+		return false
+	}
+	role := c.GetString("admin_role")
+	if !p.engine.RBAC.Can(role, "content", "create") {
+		return false
+	}
+	if p.engine.RBAC.Can(role, "content", "update") {
+		return true
+	}
+	userID := c.GetUint("admin_user_id")
+	return userID != 0 && original.AuthorID == userID && p.engine.RBAC.Can(role, "content", "update_own")
+}
+
+// redirectSettings returns to the plugin settings page with a query-escaped
+// status message; error text may contain arbitrary database messages.
+func redirectSettings(c *gin.Context, key, message string) {
+	c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?"+key+"="+url.QueryEscape(message))
 }
 
 // handleUnlinkTranslation removes a content item from its translation group.
@@ -842,22 +898,22 @@ func (p *Plugin) handleUnlinkTranslation(c *gin.Context) {
 
 	contentIDStr := c.PostForm("content_id")
 	if contentIDStr == "" {
-		c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?error=参数不完整")
+		redirectSettings(c, "error", "参数不完整")
 		return
 	}
 
 	var contentID uint
 	if _, err := fmt.Sscanf(contentIDStr, "%d", &contentID); err != nil {
-		c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?error=无效的内容ID")
+		redirectSettings(c, "error", "无效的内容ID")
 		return
 	}
 
 	if err := p.repo.DeleteTranslation(contentID); err != nil {
-		c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?error=取消关联失败: "+err.Error())
+		redirectSettings(c, "error", "取消关联失败: "+err.Error())
 		return
 	}
 
-	c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?success=已取消翻译关联")
+	redirectSettings(c, "success", "已取消翻译关联")
 }
 
 // isAdmin checks if the current request has a valid admin JWT token.
@@ -2054,11 +2110,11 @@ func (p *Plugin) handleMenuUnlink(c *gin.Context) {
 	fmt.Sscanf(menuIDStr, "%d", &menuID)
 
 	if err := p.repo.UnlinkMenuTranslation(menuID); err != nil {
-		c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?error=取消关联失败: "+err.Error())
+		redirectSettings(c, "error", "取消关联失败: "+err.Error())
 		return
 	}
 
-	c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?success=已取消菜单翻译关联")
+	redirectSettings(c, "success", "已取消菜单翻译关联")
 }
 
 // --- String Translation Admin ---

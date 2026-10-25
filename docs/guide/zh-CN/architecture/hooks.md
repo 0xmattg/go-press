@@ -30,6 +30,7 @@ payload；不要把主题私有 struct 或插件 SDK 类型暴露给另一侧。
 | `middleware.early` | 页面缓存中间件之前 | `*gin.Engine` |
 | `routes.register` | Admin 路由注册后、catch-all 之前 | `*gin.Engine` |
 | `options.bulk_updated` | admin 批量保存设置后 | 无参 |
+| `engine.shutdown` | 停机时，HTTP 请求排空之后、插件 `Stop` 与 Worker 关闭之前 | 无参（`ctx` 携带停机截止时间） |
 
 ## 主题模板插槽
 

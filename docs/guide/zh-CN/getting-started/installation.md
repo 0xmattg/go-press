@@ -116,6 +116,26 @@ go build -p 1 -v -o build/gopress-server ./cmd/server
 | `make install` | `go install ./cmd/gopress`（把 `gopress` 放到 `$GOBIN`）。 |
 | `make uninstall` | 移除已安装的 `gopress` 二进制。 |
 | `make clean` | 清掉 `build/` 目录。 |
+| `make test` | 运行全部 Go 测试（`go test ./...`）。 |
+| `make test-race` | 用 race 检测器运行生命周期与并发相关的回归测试。 |
+| `make fmt-check` | 检查已跟踪的 Go 文件是否符合 `gofmt`。 |
+| `make lint` | `fmt-check` + `go vet ./...`。 |
+
+仓库的 Go CI（`.github/workflows/go.yml`）在 push 与 Pull Request 时依次执行
+`make fmt-check`、`go vet ./...`、`go build ./...`、`make test` 和 `make test-race`；
+提交前在本地跑同样的目标即可提前发现问题。
+
+## 运行探测与停机
+
+- `/health` 是存活探针，只表示进程在运行；`/readyz` 是就绪探针，装配完成且数据库
+  可连通时返回 `200`，启动中、停机中或数据库不可用时返回 `503`。部署到负载均衡
+  或 Kubernetes 时，就绪探针请指向 `/readyz`。
+- 发送 `SIGTERM` 即可优雅停机：服务先撤销就绪，再排空进行中的请求、停止插件后台
+  任务和 Worker，最后关闭缓存与数据库。整个过程分两段、各最长 10 秒，编排系统的
+  终止宽限期建议不少于 25 秒。
+- 端口被占用等监听失败会让进程以非零状态码退出，而不是留下一个不提供服务的进程。
+
+详见[架构总览](../architecture/overview.md)中的「存活、就绪与停机」一节。
 
 ## 常用开发命令
 

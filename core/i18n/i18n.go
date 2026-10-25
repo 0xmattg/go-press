@@ -22,6 +22,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/0xmattg/go-press/pkg/logger"
 
@@ -43,10 +44,47 @@ const (
 )
 
 // Manager is the core i18n manager. One instance per Engine.
+//
+// go-i18n bundles are not safe to modify while localizers read them, and
+// requests localize concurrently with theme switches and translation saves.
+// Manager therefore keeps the source messages in three layers and publishes a
+// freshly built, never-mutated bundle through an atomic pointer after every
+// change. Localizers keep the bundle they were created with, so in-flight
+// requests finish against a consistent snapshot.
+//
+// Layers are applied lowest to highest priority:
+//   - theme: the active theme's locale files, replaced wholesale on activation
+//     so messages from a previous theme never linger;
+//   - extension: namespaced plugin locale catalogs;
+//   - override: runtime overrides such as database-managed translations.
 type Manager struct {
-	mu          sync.RWMutex
-	bundle      *goi18n.Bundle
+	mu          sync.Mutex // serializes layer updates and bundle rebuilds
+	bundle      atomic.Pointer[goi18n.Bundle]
 	defaultLang string
+
+	themeLayer     messageLayer
+	extensionLayer messageLayer
+	overrideLayer  messageLayer
+}
+
+// messageLayer maps language code → message ID → message.
+type messageLayer map[string]map[string]goi18n.Message
+
+func (l messageLayer) merge(langCode string, msgs []*goi18n.Message) messageLayer {
+	if l == nil {
+		l = make(messageLayer)
+	}
+	byID := l[langCode]
+	if byID == nil {
+		byID = make(map[string]goi18n.Message, len(msgs))
+		l[langCode] = byID
+	}
+	for _, msg := range msgs {
+		if msg != nil && msg.ID != "" {
+			byID[msg.ID] = *msg
+		}
+	}
+	return l
 }
 
 // NewManager creates a new i18n Manager with the given default language.
@@ -54,11 +92,10 @@ func NewManager(defaultLang string) *Manager {
 	if defaultLang == "" {
 		defaultLang = "en"
 	}
-	m := &Manager{
-		defaultLang: defaultLang,
-		bundle:      goi18n.NewBundle(language.Make(defaultLang)),
-	}
-	m.bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
+	m := &Manager{defaultLang: defaultLang}
+	m.mu.Lock()
+	m.rebuildLocked()
+	m.mu.Unlock()
 	return m
 }
 
@@ -67,15 +104,69 @@ func (m *Manager) DefaultLang() string {
 	return m.defaultLang
 }
 
-// Bundle returns the underlying go-i18n Bundle (for plugins to extend).
+// Bundle returns the current go-i18n Bundle snapshot. The snapshot is shared
+// with in-flight requests and must be treated as read-only; use AddMessages or
+// LoadLocalesFS to change translations.
 func (m *Manager) Bundle() *goi18n.Bundle {
-	return m.bundle
+	return m.current()
+}
+
+// current returns the published bundle, building an empty one for a
+// zero-value Manager.
+func (m *Manager) current() *goi18n.Bundle {
+	if b := m.bundle.Load(); b != nil {
+		return b
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if b := m.bundle.Load(); b == nil {
+		m.rebuildLocked()
+	}
+	return m.bundle.Load()
+}
+
+// rebuildLocked builds a new bundle from all layers and publishes it. Callers
+// hold m.mu.
+func (m *Manager) rebuildLocked() {
+	b := goi18n.NewBundle(language.Make(m.defaultLang))
+	b.RegisterUnmarshalFunc("json", json.Unmarshal)
+	for _, layer := range []messageLayer{m.themeLayer, m.extensionLayer, m.overrideLayer} {
+		langs := make([]string, 0, len(layer))
+		for langCode := range layer {
+			langs = append(langs, langCode)
+		}
+		sort.Strings(langs)
+		for _, langCode := range langs {
+			byID := layer[langCode]
+			msgs := make([]*goi18n.Message, 0, len(byID))
+			for _, msg := range byID {
+				msg := msg
+				msgs = append(msgs, &msg)
+			}
+			if err := b.AddMessages(language.Make(langCode), msgs...); err != nil {
+				logger.Warn("i18n: failed to add messages", "lang", langCode, "error", err)
+			}
+		}
+	}
+	m.bundle.Store(b)
 }
 
 // LoadThemeLocales loads all locale JSON files from a theme's locales/ directory.
 // Expected format: locales/en.json, locales/zh.json, etc.
 // Each file contains a flat map: {"key": "value", ...}
+//
+// The result replaces the whole theme layer, so switching to a theme without
+// a given key (or without locales at all) no longer falls back to the previous
+// theme's text.
 func (m *Manager) LoadThemeLocales(themeDir string) {
+	layer := make(messageLayer)
+	defer func() {
+		m.mu.Lock()
+		m.themeLayer = layer
+		m.rebuildLocked()
+		m.mu.Unlock()
+	}()
+
 	localesDir := filepath.Join(themeDir, "locales")
 	entries, err := os.ReadDir(localesDir)
 	if err != nil {
@@ -110,11 +201,7 @@ func (m *Manager) LoadThemeLocales(themeDir string) {
 			msgs = append(msgs, &goi18n.Message{ID: k, Other: v})
 		}
 
-		tag := language.Make(langCode)
-		if err := m.bundle.AddMessages(tag, msgs...); err != nil {
-			logger.Warn("i18n: failed to add messages", "lang", langCode, "error", err)
-			continue
-		}
+		layer.merge(langCode, msgs)
 		logger.Info("i18n: loaded theme locale", "lang", langCode, "keys", len(msgs))
 	}
 }
@@ -130,19 +217,19 @@ func (m *Manager) LoadLocalesFS(localeFS fs.FS, dir string) {
 		langs = append(langs, langCode)
 	}
 	sort.Strings(langs)
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	for _, langCode := range langs {
 		flat := flatByLang[langCode]
-		keys := make([]string, 0, len(flat))
-		for key := range flat {
-			keys = append(keys, key)
+		msgs := make([]*goi18n.Message, 0, len(flat))
+		for key, value := range flat {
+			msgs = append(msgs, &goi18n.Message{ID: key, Other: value})
 		}
-		sort.Strings(keys)
-		msgs := make([]*goi18n.Message, 0, len(keys))
-		for _, key := range keys {
-			msgs = append(msgs, &goi18n.Message{ID: key, Other: flat[key]})
-		}
-		m.AddMessages(langCode, msgs)
+		m.extensionLayer = m.extensionLayer.merge(langCode, msgs)
 		logger.Info("i18n: loaded extension locale", "lang", langCode, "keys", len(msgs))
+	}
+	if len(langs) > 0 {
+		m.rebuildLocked()
 	}
 }
 
@@ -154,10 +241,8 @@ func (m *Manager) AddMessages(langCode string, msgs []*goi18n.Message) {
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	tag := language.Make(langCode)
-	if err := m.bundle.AddMessages(tag, msgs...); err != nil {
-		logger.Warn("i18n: failed to add override messages", "lang", langCode, "error", err)
-	}
+	m.overrideLayer = m.overrideLayer.merge(langCode, msgs)
+	m.rebuildLocked()
 }
 
 // Translate looks up a message for the current request language.
@@ -175,7 +260,7 @@ func (m *Manager) Translate(c *gin.Context, msgID string) string {
 	}
 
 	// Fallback: try default language localizer
-	localizer := goi18n.NewLocalizer(m.bundle, m.defaultLang)
+	localizer := goi18n.NewLocalizer(m.current(), m.defaultLang)
 	msg, err := localizer.Localize(&goi18n.LocalizeConfig{MessageID: msgID})
 	if err == nil {
 		return msg
@@ -186,7 +271,7 @@ func (m *Manager) Translate(c *gin.Context, msgID string) string {
 
 // NewLocalizer creates a localizer for the given language code.
 func (m *Manager) NewLocalizer(lang string) *goi18n.Localizer {
-	return goi18n.NewLocalizer(m.bundle, lang, m.defaultLang)
+	return goi18n.NewLocalizer(m.current(), lang, m.defaultLang)
 }
 
 // TranslateOption returns a translated value for a theme setting key.
@@ -239,7 +324,7 @@ func (m *Manager) TranslateSettings(c *gin.Context, settings map[string]string, 
 func (m *Manager) Middleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if _, exists := c.Get(CtxKeyLocalizer); !exists {
-			localizer := goi18n.NewLocalizer(m.bundle, m.defaultLang)
+			localizer := goi18n.NewLocalizer(m.current(), m.defaultLang)
 			c.Set(CtxKeyLocalizer, localizer)
 		}
 		if _, exists := c.Get(CtxKeyLang); !exists {

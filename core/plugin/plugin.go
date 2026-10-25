@@ -1,6 +1,10 @@
 package plugin
 
 import (
+	"context"
+	"sync"
+	"sync/atomic"
+
 	"github.com/0xmattg/go-press/core/agent"
 	"github.com/0xmattg/go-press/core/user"
 
@@ -66,6 +70,10 @@ type AgentHost interface {
 // according to persisted admin state. Activate should wire hooks, routes,
 // middleware, repositories, or settings providers. Deactivate should undo
 // runtime registrations, especially hook and sitemap transformer handles.
+//
+// Manager serializes lifecycle transitions, so Activate and Deactivate must
+// not call Manager.Activate or Manager.Deactivate themselves. Read-only
+// queries such as IsActive are safe from any goroutine, including callbacks.
 type Plugin interface {
 	// Metadata
 	Name() string
@@ -85,6 +93,18 @@ type Plugin interface {
 // this interface default to active, preserving existing behavior.
 type DefaultInactiveProvider interface {
 	DefaultInactive() bool
+}
+
+// Stopper is implemented by plugins that own background goroutines, tickers,
+// or other producers that must be drained when the process shuts down.
+//
+// Engine calls Stop on every active plugin during shutdown, after the HTTP
+// server stops accepting requests and before workers and storage close. Unlike
+// an explicit deactivation it bypasses DeactivationGuard: shutdown is never
+// blocked by "must not be disabled" policies. Stop must honor ctx's deadline
+// and be safe to call more than once.
+type Stopper interface {
+	Stop(ctx context.Context) error
 }
 
 // DeactivationGuard is implemented by plugins whose owned data would become
@@ -155,16 +175,26 @@ func Slug(p Plugin) string {
 // It does not persist activation state; Engine stores that in options and calls
 // Activate or Deactivate as needed. Manager only owns the in-memory lifecycle
 // bookkeeping.
+//
+// Request paths read activation state on every request while the admin can
+// toggle plugins concurrently, so the active set is an immutable map published
+// through an atomic pointer (copy-on-write). Transitions are serialized by a
+// separate mutex that is held across the plugin's lifecycle callback but never
+// blocks readers.
 type Manager struct {
+	mu         sync.RWMutex // guards registered
 	registered []Plugin
-	active     map[string]Plugin
+
+	transition sync.Mutex
+	active     atomic.Pointer[map[string]Plugin]
 }
 
 // NewManager creates a new plugin Manager.
 func NewManager() *Manager {
-	return &Manager{
-		active: make(map[string]Plugin),
-	}
+	m := &Manager{}
+	empty := make(map[string]Plugin)
+	m.active.Store(&empty)
+	return m
 }
 
 // Register adds a plugin to the registered list.
@@ -172,39 +202,48 @@ func NewManager() *Manager {
 // Register does not activate the plugin. Engine.LoadPlugin handles activation
 // after checking persisted plugin_active_* options.
 func (m *Manager) Register(p Plugin) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.registered = append(m.registered, p)
 }
 
 // Activate activates a registered plugin by name.
 //
-// It returns false when no registered plugin matches name. If Activate returns
-// true, the plugin is stored in the active map immediately after its lifecycle
-// method completes.
+// It returns false when no registered plugin matches name. Activating an
+// already-active plugin is a no-op that returns true, so lifecycle hooks are
+// never wired twice. The plugin becomes visible to IsActive only after its
+// Activate callback returns.
 func (m *Manager) Activate(name string, app App) bool {
-	for _, p := range m.registered {
-		if p.Name() == name {
-			p.Activate(app)
-			m.active[name] = p
-			return true
-		}
+	m.transition.Lock()
+	defer m.transition.Unlock()
+	if _, ok := m.snapshot()[name]; ok {
+		return true
 	}
-	return false
+	p, ok := m.find(func(candidate Plugin) bool { return candidate.Name() == name })
+	if !ok {
+		return false
+	}
+	p.Activate(app)
+	m.publish(func(next map[string]Plugin) { next[name] = p })
+	return true
 }
 
 // Deactivate deactivates an active plugin.
 func (m *Manager) Deactivate(name string, app App) bool {
-	p, ok := m.active[name]
+	m.transition.Lock()
+	defer m.transition.Unlock()
+	p, ok := m.snapshot()[name]
 	if !ok {
 		return false
 	}
 	p.Deactivate(app)
-	delete(m.active, name)
+	m.publish(func(next map[string]Plugin) { delete(next, name) })
 	return true
 }
 
 // CanDeactivate asks an active plugin whether an explicit stop is safe.
 func (m *Manager) CanDeactivate(name string, app App) error {
-	p, ok := m.active[name]
+	p, ok := m.snapshot()[name]
 	if !ok {
 		return nil
 	}
@@ -214,37 +253,44 @@ func (m *Manager) CanDeactivate(name string, app App) error {
 	return nil
 }
 
-// IsActive checks if a plugin is currently active.
+// IsActive checks if a plugin is currently active. It is lock-free and safe to
+// call on every request.
 func (m *Manager) IsActive(name string) bool {
-	_, ok := m.active[name]
+	_, ok := m.snapshot()[name]
 	return ok
 }
 
-// ActivePlugins returns all active plugins.
+// ActivePlugins returns all active plugins in registration order.
 func (m *Manager) ActivePlugins() []Plugin {
-	var out []Plugin
-	for _, p := range m.active {
-		out = append(out, p)
+	active := m.snapshot()
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]Plugin, 0, len(active))
+	for _, p := range m.registered {
+		if _, ok := active[p.Name()]; ok {
+			out = append(out, p)
+		}
 	}
 	return out
 }
 
-// RegisteredPlugins returns all registered plugins.
+// RegisteredPlugins returns a copy of all registered plugins.
 func (m *Manager) RegisteredPlugins() []Plugin {
-	return m.registered
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return append([]Plugin(nil), m.registered...)
 }
 
 // IsDefaultInactive reports whether the registered plugin with the given slug
 // declares itself default-inactive (an opt-in module). False when the plugin is
 // absent or does not implement DefaultInactiveProvider.
 func (m *Manager) IsDefaultInactive(slug string) bool {
-	for _, p := range m.registered {
-		if Slug(p) == slug {
-			if dp, ok := p.(DefaultInactiveProvider); ok {
-				return dp.DefaultInactive()
-			}
-			return false
-		}
+	p, ok := m.FindBySlug(slug)
+	if !ok {
+		return false
+	}
+	if dp, ok := p.(DefaultInactiveProvider); ok {
+		return dp.DefaultInactive()
 	}
 	return false
 }
@@ -252,10 +298,36 @@ func (m *Manager) IsDefaultInactive(slug string) bool {
 // FindBySlug returns the registered plugin whose identity (Name/Slug) matches,
 // or false when no such plugin is compiled into this build.
 func (m *Manager) FindBySlug(slug string) (Plugin, bool) {
+	return m.find(func(candidate Plugin) bool { return Slug(candidate) == slug })
+}
+
+func (m *Manager) find(match func(Plugin) bool) (Plugin, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	for _, p := range m.registered {
-		if Slug(p) == slug {
+		if match(p) {
 			return p, true
 		}
 	}
 	return nil, false
+}
+
+// snapshot returns the current immutable active set. Callers must not mutate it.
+func (m *Manager) snapshot() map[string]Plugin {
+	if current := m.active.Load(); current != nil {
+		return *current
+	}
+	return nil
+}
+
+// publish copies the active set, applies change, and swaps the new map in.
+// Callers hold m.transition, so there is a single writer.
+func (m *Manager) publish(change func(next map[string]Plugin)) {
+	current := m.snapshot()
+	next := make(map[string]Plugin, len(current)+1)
+	for name, p := range current {
+		next[name] = p
+	}
+	change(next)
+	m.active.Store(&next)
 }

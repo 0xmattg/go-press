@@ -60,7 +60,7 @@ func (t *MyTheme) SettingsTemplatePath() string {
 
 The admin renders that template inside the admin chrome with `.Settings` (all options) available; read a value with `{{index .Settings "home_hero_title"}}`. The form posts to `/admin/themes/<slug>/settings`.
 
-**Key-prefix rule:** `ThemeSettingsSave` only persists keys that are registered translatable **or** match a recognized prefix — `site_`, `home_`, `about_`, `company_`, `social_`, `footer_`, `nav_`, `contact_`, `showcase_`, `package_`. Name your settings accordingly (e.g. `home_hero_title`, `site_name`, `company_email`) or they will be silently dropped. `shop-starter` exposes identity, announcement, hero copy + illustration, product-section copy, footer contact, and optional social links this way.
+**Key-prefix rule:** `ThemeSettingsSave` only persists keys that are registered translatable **or** match a recognized prefix — `site_`, `home_`, `about_`, `company_`, `social_`, `footer_`, `nav_`, `contact_`, `showcase_`, `package_`. Name your settings accordingly (e.g. `home_hero_title`, `site_name`, `company_email`) or they will be silently dropped. Core-owned system settings submitted from the form, such as `site_name`, `site_timezone`, and `site_icon`, keep the System Settings rules: read-only keys are rejected, values such as the timezone are validated, and `site_icon` regenerates the favicon. All fields are saved in one transaction; if any field fails validation or cannot be written, nothing is saved and the settings page shows the error. `shop-starter` exposes identity, announcement, hero copy + illustration, product-section copy, footer contact, and optional social links this way.
 
 ## Images
 

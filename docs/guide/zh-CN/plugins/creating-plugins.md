@@ -174,6 +174,52 @@ GoPress 支持插件运行时完全热拔插。要做到这一点，插件实现
 2. **`Deactivate` 中按 handle 摘除全部** — 调 `RemoveAction` + `RemoveFilter`（不知道是 action 还是 filter 时两个都调，方法对零值或不匹配的 handle 是 no-op）
 3. **Gin Router 会在插件启停后重建** — 当前有效插件的 `middleware.early` / `routes.register` 会重新应用；长生命周期或异步插件仍应维护运行态开关，覆盖正在处理的旧请求
 4. **Sitemap transformer / 其他对称 Add/Remove API** — 同样保存 handle，对称摘除
+5. **后台 goroutine 必须可停止** — `Deactivate` 中停止插件自己的 ticker / 循环；同时实现可选接口 `plugin.Stopper`，进程停机时 core 会调用 `Stop(ctx)`（不经过 `DeactivationGuard`，停机不会被“禁止停用”策略阻塞）。`Stop` 应在 `ctx` 截止时间内返回，并且可以重复调用
+6. **周期任务优先用 core 调度器** — `e.Sched.AddJob(name, interval, fn)` 在运行期调用也会立即生效，返回的 `worker.JobHandle` 在 `Deactivate` 中交给 `e.Sched.RemoveJob`；停机时调度器由 core 统一停止
+
+### 生命周期并发约定
+
+- core 串行执行插件启用、停用和主题切换；同一插件重复启用是幂等的，`Activate` 不会被二次调用
+- `Activate` / `Deactivate` 内**不要**调用 `PluginManager.Activate` / `Deactivate`（会死锁）；`PluginManager.IsActive` 无锁、可在每个请求的热路径上安全调用
+- 停机开始后 `Workers.Submit` / `SubmitFunc` 返回 `worker.ErrPoolClosed`，异步副作用应处理该错误；任务 panic 会被 core 捕获记录，但仍应在任务内返回明确错误
+
+```go
+type MyPlugin struct {
+    engine *core.Engine
+    job    worker.JobHandle
+    stop   chan struct{}
+    done   chan struct{}
+}
+
+func (p *MyPlugin) Activate(app plugin.App) {
+    p.engine = app.(*core.Engine)
+    // 周期任务：交给 core 调度器
+    p.job = p.engine.Sched.AddJob("my-plugin:cleanup", time.Hour, p.cleanup)
+    // 必须自管的长循环：保留 stop/done 以便停用与停机
+    p.stop, p.done = make(chan struct{}), make(chan struct{})
+    go p.loop(p.stop, p.done)
+}
+
+func (p *MyPlugin) Deactivate(_ plugin.App) {
+    p.engine.Sched.RemoveJob(p.job)
+    p.stopLoop()
+}
+
+// Stop 实现 plugin.Stopper，进程停机时调用。
+func (p *MyPlugin) Stop(ctx context.Context) error {
+    finished := make(chan struct{})
+    go func() { p.stopLoop(); close(finished) }()
+    select {
+    case <-finished:
+        return nil
+    case <-ctx.Done():
+        return ctx.Err()
+    }
+}
+```
+
+`stopLoop` 只需在 `stop` 非空时关闭它、等待 `done` 并置空；core 串行调用
+`Deactivate` 与 `Stop`，不会并发执行。
 
 参考 [multilang 插件](multilang.md) 是完整的热拔插实现样板。
 

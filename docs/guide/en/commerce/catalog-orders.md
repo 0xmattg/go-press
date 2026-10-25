@@ -62,7 +62,7 @@ Storefront routes: `GET /checkout`, `POST /checkout` (same-origin/CSRF enforced)
 
 Product admin forms carry an optimistic `product_data.version`. Every reserve/release advances it, so a stale form cannot restore stock just reserved by checkout. Demo metadata only creates missing product data; repeated imports or plugin activation never reset live price or inventory.
 
-Abandoned unpaid orders are released by a TTL sweeper. Because core's `Scheduler` starts its tickers at boot (before a default-inactive plugin activates), Commerce runs the sweeper as its **own goroutine**, started on activation and stopped on deactivation, rather than registering with the core scheduler.
+Abandoned unpaid orders are released by a TTL sweeper. The sweeper and the payment reconciler run as Commerce's **own goroutines**, started on activation and stopped on deactivation. Commerce also implements `plugin.Stopper`, so on process shutdown core stops both loops and waits, within the shutdown deadline, for an in-flight pass to finish before closing the database.
 
 ## Order state machine
 

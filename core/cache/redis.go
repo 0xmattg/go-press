@@ -8,14 +8,26 @@ import (
 )
 
 // RedisCache is an L2 distributed cache backed by Redis.
+//
+// Every key, including the ones removed by DeleteByPrefix and Flush, lives
+// under "gopress:<namespace>:", so sites sharing a Redis database neither read
+// each other's pages nor clear each other's caches.
 type RedisCache struct {
 	client *redis.Client
 	prefix string // key prefix to avoid collisions
 }
 
-// NewRedisCache creates a Redis-backed cache. Returns nil if connection fails.
-// The caller should fall back to noop if this returns nil.
+// NewRedisCache creates a Redis-backed cache with the legacy, site-unscoped
+// "gopress:" prefix. Returns nil if connection fails. Prefer
+// NewNamespacedRedisCache whenever more than one site may share the database.
 func NewRedisCache(addr, password string, db int) *RedisCache {
+	return NewNamespacedRedisCache(addr, password, db, "")
+}
+
+// NewNamespacedRedisCache creates a Redis-backed cache whose keys are scoped
+// to namespace. Returns nil if connection fails; the caller should fall back
+// to noop. An empty namespace keeps the legacy "gopress:" prefix.
+func NewNamespacedRedisCache(addr, password string, db int, namespace string) *RedisCache {
 	client := redis.NewClient(&redis.Options{
 		Addr:         addr,
 		Password:     password,
@@ -36,8 +48,15 @@ func NewRedisCache(addr, password string, db int) *RedisCache {
 
 	return &RedisCache{
 		client: client,
-		prefix: "gopress:",
+		prefix: redisKeyPrefix(namespace),
 	}
+}
+
+func redisKeyPrefix(namespace string) string {
+	if namespace == "" {
+		return "gopress:"
+	}
+	return "gopress:" + namespace + ":"
 }
 
 func (r *RedisCache) key(k string) string {

@@ -5,7 +5,14 @@ Plugins extend GoPress through public core contracts. They can register hooks, a
 ## Core Ideas
 
 - Plugins register themselves with `core.RegisterPlugin`.
-- Activation state is stored in options and can be changed from the admin.
+- Activation state is stored in options and can be changed from the admin. If
+  the new state cannot be persisted, core reverts the toggle and reports an
+  error, so runtime and persisted state always agree.
+- Core serializes activation changes and theme switches; activating an active
+  plugin is a no-op, and `PluginManager.IsActive` is lock-free for request paths.
+- Plugins that own background goroutines can implement `plugin.Stopper`; core
+  calls `Stop(ctx)` during process shutdown after HTTP requests drain. See
+  [Creating Plugins](creating-plugins.md#lifecycle-concurrency-and-shutdown).
 - Hooks returned during activation must be removed during deactivation.
 - Plugin database tables should use `dbprefix.PluginTable`.
 - Plugin admin UI should use core settings-provider interfaces and locale files.

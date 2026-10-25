@@ -46,19 +46,59 @@ cmd/server
      6. load themes, restore core content types, and activate the configured theme
      7. load plugins and reconcile the active theme's declared requirements
      8. register the admin surface and build the Gin router
+     9. mark the runtime ready so /readyz starts returning 200
 ```
+
+If any step fails, `BuildAndBootstrap` shuts down the workers, scheduler, cache
+sweeper, and database connection it already created before returning the error,
+so the installer can retry bootstrap in the same process without leaking
+resources.
 
 Theme activation clears the previous theme-owned registry entries, restores
 core types, reads the active `theme.toml`, registers its content types and menu
 locations, and runs theme setup. Plugin activation then attaches hooks,
 middleware, routes, settings providers, and other public extension points.
 
+Core serializes runtime theme switches and plugin activation changes. When an
+admin toggles a plugin or switches themes and the new state cannot be written
+to the database, core undoes the change (restoring the previous theme or
+reverting the plugin's activation) and reports the error, so the running
+process and the state read at next boot always agree.
+
 ## Router Surface
 
-The built router contains, in order, the shared middleware chain, health and
-public generated-file routes, `/api/v1/*`, `/admin/*`, `/swagger/*`, plugin
-routes, and the active theme's catch-all frontend handler. Activation changes
-that affect routes rebuild the router and clear relevant cache paths.
+The built router contains, in order, the shared middleware chain, health,
+readiness, and public generated-file routes, `/api/v1/*`, `/admin/*`,
+`/swagger/*`, plugin routes, and the active theme's catch-all frontend handler.
+Activation changes that affect routes rebuild the router and clear relevant
+cache paths.
+
+## Liveness, Readiness, and Shutdown
+
+| Endpoint | Meaning | Response |
+|---|---|---|
+| `/health` | Liveness: the process is running and serving HTTP. | Always `200`, with the active theme and cache status. |
+| `/readyz` | Readiness: assembly finished, not shutting down, database reachable. | `200 {"status":"ready"}`, otherwise `503` with `reason` set to `starting`, `shutting_down`, or `database`. |
+
+Both endpoints bypass the full-page cache. `/readyz` answers `GET` and `HEAD`,
+sends `Cache-Control: no-store`, and never includes configuration details. Load
+balancers and orchestrators should route traffic based on `/readyz`.
+
+On `SIGINT` or `SIGTERM` the server shuts down in a fixed order:
+
+```text
+withdraw readiness (/readyz -> 503)
+  -> stop accepting connections and drain in-flight HTTP requests (up to 10s)
+  -> engine.Shutdown (up to 10s)
+       -> fire the engine.shutdown hook
+       -> call Stop(ctx) on plugins implementing plugin.Stopper, in reverse registration order
+       -> stop the scheduler, then drain the worker queue within the deadline
+       -> close caches and the database connection
+```
+
+`engine.Shutdown` is idempotent. If the HTTP listener fails (for example the
+port is already in use), the process logs the error, releases its resources,
+and exits with a non-zero status so orchestrators can detect and restart it.
 
 ## Installer Mode
 

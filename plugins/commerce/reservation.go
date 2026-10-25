@@ -25,7 +25,9 @@ func (p *Plugin) registerReservationSweeper() {
 	}
 	stop := make(chan struct{})
 	p.sweepStop = stop
+	p.loops.Add(1)
 	go func() {
+		defer p.loops.Done()
 		t := time.NewTicker(sweepInterval)
 		defer t.Stop()
 		for {

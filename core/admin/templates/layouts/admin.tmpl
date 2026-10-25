@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}} - {{.SiteName}} CMS</title>
-    <link rel="stylesheet" href="/static/admin/css/admin.css?v=68">
+    <link rel="stylesheet" href="/static/admin/css/admin.css?v=74">
 </head>
 <body class="admin-body">
     <aside class="sidebar" id="sidebar">
@@ -28,7 +28,7 @@
             {{end}}
         </nav>
         <div class="sidebar-version">
-            <span class="sidebar-version-current">GoPress v{{.GoPressVersion}}</span>
+            <span class="sidebar-version-current">GoPress <span class="sidebar-version-tag">v{{.GoPressVersion}}</span></span>
             {{with .CoreUpdate}}
                 {{if .HasUpdate}}
                 <a class="sidebar-update-badge sidebar-update-{{.Severity}}" href="{{.ReleaseURL}}" target="_blank" rel="noopener noreferrer" aria-label="{{T $ "update.available_aria" .LatestVersion}}">

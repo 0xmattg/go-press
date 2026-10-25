@@ -7,7 +7,7 @@ GoPress 为具有公开归档页的 ContentType 自动生成 REST 端点：
 - **自动端点** — 公开核心类型和 `theme.toml` 中 `has_archive = true` 的 ContentType 会自动生成 `GET /api/v1/{type}` 和 `GET /api/v1/{type}/:id`
 - **通用查询** — 下面以主题声明的 `product` 内容类型为例：`GET /api/v1/content?type=product&status=published&search=hepa&page=1`
 - **认证** — JWT Bearer Token + API Key 双模式
-- **限流** — 基于 IP 的令牌桶限流
+- **限流** — 基于 IP 的令牌桶限流；限流器在主题切换、插件启停重建路由后继续沿用，计数不会被重置
 - **CORS** — 可配置跨域策略
 - **Swagger 文档** — 代码注解自动生成，内置 Swagger UI（`/swagger/index.html`）
 
@@ -97,7 +97,7 @@ func (h *Handler) ListContent(c *gin.Context) { ... }
 
 文字文档（你正在看的这部分）和 Swagger API 规范是**独立的两份产物**：
 
-- `docs/guide/` — Markdown 文字文档（GitBook / MkDocs / Docusaurus 等都能读）
+- `docs/guide/` — 双语 Markdown 文字文档，各语言目录的 `SUMMARY.md` 定义导航，由 gopress.xyz 文档站直接读取渲染，无需单独构建
 - `docs/{docs.go, swagger.json, swagger.yaml}` — Swagger Go 包 + OpenAPI 规范
 
 两者不互相依赖，不会冲突。新机器克隆 repo 后跑一次 `go run ./cmd/gendoc/` 即可同步 Swagger，文字文档则直接读 markdown 文件。

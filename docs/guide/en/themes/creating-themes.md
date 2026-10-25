@@ -342,7 +342,10 @@ themes/my-theme/
 Themes can expose settings for presentation and content such as hero media,
 brand copy, social links, and calls to action. Use section-oriented prefixes
 such as `home_`, `about_`, `social_`, and `footer_` so the engine recognizes and
-persists theme-owned keys.
+persists theme-owned keys. If the form also edits core system settings such as
+`site_name`, `site_timezone`, or `site_icon`, those keys keep the System
+Settings validation. The whole form is saved in one transaction, so a failing
+field never leaves a partial save and the error is shown on the settings page.
 
 Do not create theme-local alternatives for shared site identity. Document
 titles, default descriptions, and favicons use `site_name`, `site_description`,

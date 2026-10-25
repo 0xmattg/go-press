@@ -50,6 +50,7 @@ host = "localhost"
 port = 6379
 password = ""
 db = 0
+# namespace = "my-site"     # optional cache namespace when sites share one Redis DB
 
 [cms]
 jwt_secret = ""             # required; installer generates a unique value
@@ -101,6 +102,19 @@ lifetime; tune them to the PostgreSQL deployment. See
 Redis is optional. Remove the section or leave it unavailable to use the
 in-process L1 cache only; core falls back without making the site unavailable.
 
+`namespace` is optional. Every Redis cache key starts with
+`gopress:<namespace>:`, and admin cache clearing and page-cache invalidation
+delete only keys under that namespace. When it is empty, core derives a stable
+short hash (for example `s1a2b3c4d5e6f`) from the `[pg]` `hostname`, `port`,
+`database`, `schema`, and `table_prefix`, so sites with different data never
+share a namespace. Explicit values keep only letters, digits, `.`, `-`, and `_`,
+up to 64 characters.
+
+Several sites can therefore share one Redis database: pages with the same path
+and language stay separate, and clearing one site's cache leaves the others
+intact. Set `namespace` explicitly if it must stay the same when database
+connection settings change, for example after moving the database host.
+
 ## CMS and Security
 
 - `jwt_secret` signs admin sessions and API bearer tokens. It must be a unique
@@ -151,6 +165,8 @@ uploads/
   YYYY/MM/             originals and generated media variants
 ```
 
-Use `-config sites/example.com/config.toml` to choose a site explicitly. Keep
+Use `-config sites/example.com/config.toml` to choose a site explicitly. Sites
+may share one PostgreSQL database through different table prefixes and one
+Redis database through separate cache namespaces. Keep
 site configuration, credentials, uploads, and generated public artifacts out of
 public source control unless a deployment policy explicitly says otherwise.

@@ -46,6 +46,7 @@ host = "localhost"
 port = 6379
 password = ""
 db = 0
+# namespace = "my-site"      # 可选：多个站点共用同一 Redis DB 时的缓存命名空间
 
 [cms]
 jwt_secret = ""              # 必填：安装器自动生成；留空或用示例占位值时应用拒绝启动
@@ -87,6 +88,9 @@ completed = true
 ### `[redis]`
 
 可选段。完全删除或留空，引擎自动降级为纯内存 LRU（L1 缓存）。
+
+- `namespace` — 可选。所有 Redis 缓存 Key 都以 `gopress:<namespace>:` 开头，后台「清理缓存」、整页缓存失效等操作也只删除本命名空间下的 Key。留空时 core 会根据 `[pg]` 的 `hostname`、`port`、`database`、`schema`、`table_prefix` 派生一个稳定的短哈希（形如 `s1a2b3c4d5e6f`），因此只要站点数据不同，命名空间就不同。显式填写时只保留字母、数字、`.`、`-`、`_`，最长 64 个字符
+- 多个站点共用同一个 Redis DB 时，同路径、同语言的页面互不串用，一个站点清理缓存也不会影响其他站点。若希望命名空间不随数据库连接参数变化（例如迁移数据库主机），请显式设置 `namespace`
 
 ### `[cms]`
 
@@ -132,6 +136,6 @@ sites/
 └── prod.gopress.xyz/config.toml
 ```
 
-启动时通过 `-config <path>` 指定具体哪个生效。多站点可指向同一 PG 实例不同 `database` 或同一 `database` 不同 `table_prefix`。
+启动时通过 `-config <path>` 指定具体哪个生效。多站点可指向同一 PG 实例不同 `database` 或同一 `database` 不同 `table_prefix`。多个站点也可以共用同一个 Redis DB，缓存按 `[redis].namespace`（未配置时自动派生）隔离。
 
 后台生成的 `sitemap.xml` 会写入当前站点目录下的 `public/`，例如 `sites/prod.gopress.xyz/public/sitemap.xml`。后续 `robots.txt`、`llms.txt` 等站点级公开生成物也应放在同一目录，避免多个站点共享应用根目录时互相覆盖。

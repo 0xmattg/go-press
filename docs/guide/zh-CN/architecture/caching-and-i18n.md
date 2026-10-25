@@ -19,6 +19,8 @@ GoPress 把缓存当作**架构基础**而不是优化手段：
 
 **Redis 可选** — 配置中删除 `[redis]` 段即降级为纯内存缓存，单实例部署完全可用。
 
+**按站点隔离的 Redis 命名空间** — Redis Key 统一以 `gopress:<namespace>:` 开头，清理全部缓存、按前缀失效都只作用于当前站点。命名空间来自 `[redis].namespace`，未配置时由数据库连接与表前缀派生，因此多个站点可以安全共用同一个 Redis DB。详见[配置](../getting-started/configuration.md)。
+
 ## 核心 i18n 系统
 
 GoPress 的国际化能力由 **Core 层** 提供，多语言插件负责数据库覆盖和管理后台，两者通过接口解耦：
@@ -31,7 +33,7 @@ GoPress 的国际化能力由 **Core 层** 提供，多语言插件负责数据�
 │  Core 层                                                            │
 │                                                                     │
 │  core/i18n/                                                         │
-│  ├── Manager           # i18n 管理器（go-i18n Bundle + Localizer）  │
+│  ├── Manager           # 分层消息 + 不可变 Bundle 快照 + Localizer  │
 │  ├── T(c, key)         # 模板函数：翻译 UI 字符串                   │
 │  ├── TranslateOption() # 翻译单个主题设置项                         │
 │  └── TranslateSettings()  # 批量翻译所有可翻译设置项                │
@@ -41,18 +43,21 @@ GoPress 的国际化能力由 **Core 层** 提供，多语言插件负责数据�
 │  ├── IsTranslatable(key)                        # 判断是否可翻译    │
 │  └── AllTranslatableKeys()                      # 返回所有注册键    │
 └────────────────────────────────┬────────────────────────────────────┘
-                                 │ LoadMessageFileFS() / AddMessages()
+                                 │ AddMessages() / LoadLocalesFS() / LoadThemeLocales()
                                  ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │  数据来源（优先级从高到低）                                          │
 │                                                                     │
-│  1. DB StringTranslation   ← multilang 插件 loadDBOverrides()      │
+│  1. 覆盖层：DB StringTranslation ← multilang 插件经 AddMessages()  │
 │     domain="theme"  → UI 字符串覆盖                                 │
 │     domain="option" → 主题设置翻译（_opt. 前缀，防 ID 碰撞）        │
-│  2. 主题 locale 文件       ← themes/xxx/locales/en.json, zh.json   │
-│  3. message ID 原样返回    ← 兜底                                   │
+│  2. 扩展层：插件 locale 目录     ← LoadLocalesFS()，ID 带命名空间   │
+│  3. 主题层：当前主题 locale 文件 ← themes/xxx/locales/en.json 等    │
+│  4. message ID 原样返回          ← 兜底                             │
 └─────────────────────────────────────────────────────────────────────┘
 ```
+
+**并发与主题切换** — go-i18n 的 Bundle 不允许在读取时修改，因此 Manager 不直接改写正在使用的 Bundle：任意一层变化后，都会用全部三层重新构建一个新 Bundle 并原子发布。已经创建的 Localizer 继续使用创建时的快照，正在处理的请求不受影响；新请求使用新快照。主题激活时**整层替换**主题层，切换到没有某个 key（或没有 `locales/`）的主题后，不会再回退显示上一个主题的文案；数据库覆盖层则跨主题保留。`Bundle()` 返回的是只读快照，扩展应通过 `AddMessages` 或 `LoadLocalesFS` 修改翻译。
 
 ### UI 字符串翻译
 

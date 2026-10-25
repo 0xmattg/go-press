@@ -158,29 +158,49 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
+	// A listener failure (for example the port is taken) must end the process
+	// with a non-zero status instead of leaving a live process that serves
+	// nothing, so orchestrators can see and restart it.
+	serverErr := make(chan error, 1)
 	go func() {
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Error("HTTP server stopped unexpectedly", "error", err)
+			serverErr <- err
 		}
 	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	exitCode := 0
+	select {
+	case <-quit:
+	case err := <-serverErr:
+		logger.Error("HTTP server stopped unexpectedly", "error", err)
+		exitCode = 1
+	}
 
 	engineMu.RLock()
 	engine := currentEngine
 	engineMu.RUnlock()
+
+	// Shutdown order: stop advertising readiness, drain HTTP so no request is
+	// mid-flight, then stop extensions, workers, caches, and the database.
 	if engine != nil {
-		if err := engine.Shutdown(ctx); err != nil {
+		engine.BeginShutdown()
+	}
+	httpCtx, cancelHTTP := context.WithTimeout(context.Background(), 10*time.Second)
+	if err := server.Shutdown(httpCtx); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		logger.Error("HTTP shutdown error", "error", err)
+	}
+	cancelHTTP()
+
+	if engine != nil {
+		engineCtx, cancelEngine := context.WithTimeout(context.Background(), 10*time.Second)
+		if err := engine.Shutdown(engineCtx); err != nil {
 			logger.Error("Engine shutdown error", "error", err)
 		}
+		cancelEngine()
 	}
-
-	if err := server.Shutdown(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		logger.Error("HTTP shutdown error", "error", err)
+	if exitCode != 0 {
+		os.Exit(exitCode)
 	}
 }
