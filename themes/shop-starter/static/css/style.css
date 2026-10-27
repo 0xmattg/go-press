@@ -44,6 +44,12 @@ button { color: inherit; }
 .ss-nav > ul > li > a:hover, .ss-nav > ul > li > a.is-active { color: var(--ss-ink); }
 .ss-nav > ul > li > a.is-active::after { content: ""; position: absolute; right: 0; bottom: 3px; left: 0; height: 2px; background: var(--ss-accent); border-radius: 99px; }
 .ss-nav > ul > li > ul { position: absolute; top: calc(100% + 8px); right: 0; min-width: 180px; margin: 0; padding: 8px; list-style: none; background: #fff; border: 1px solid var(--ss-line); border-radius: 12px; box-shadow: var(--ss-shadow); }
+/* Dropdowns sit 8px below their item. This invisible bridge covers that gap so
+   the pointer stays inside the item on its way to the menu (plugin dropdowns
+   such as the language switcher open on :hover). :focus-within opens them for
+   keyboard users. */
+.ss-nav > ul > li > ul::before { content: ""; position: absolute; top: -10px; right: 0; left: 0; height: 10px; }
+.ss-nav > ul > li:focus-within > ul { display: block; }
 .ss-nav > ul > li > ul a { display: block; padding: 9px 11px; border-radius: 8px; color: var(--ss-muted); font-size: 13px; }
 .ss-nav > ul > li > ul a:hover { color: var(--ss-ink); background: var(--ss-bg); }
 .ss-nav .commerce-mini-cart > a { color: var(--ss-ink); }
@@ -250,6 +256,7 @@ button { color: inherit; }
   .ss-account-actions > a, .ss-account-actions button { font-size: 15px; }
   .ss-nav > ul > li > ul { position: static !important; display: none !important; min-width: 0; margin: 0 0 10px; box-shadow: none; }
   .ss-nav > ul > li.is-submenu-open > ul { display: block !important; }
+  .ss-nav > ul > li > ul::before { display: none; }
   .ss-hero { padding-top: 28px; }
   .ss-hero-grid { grid-template-columns: 1fr; }
   .ss-hero-art { min-height: 390px; order: -1; }
