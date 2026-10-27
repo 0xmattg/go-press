@@ -237,6 +237,33 @@ The language switcher is contributed through `header.nav.after`. Themes place
 that generic slot inside the primary navigation and support nested extension
 menus on mobile; they must not inspect plugin classes, tables, or option keys.
 
+> **Integration note: leave no gap between the dropdown and its trigger.**
+>
+> The switcher renders a plain `li > a + ul`, and on desktop the menu opens on
+> the `li`'s `:hover`, so a theme's generic submenu styles (for example
+> `nav > ul > li > ul`) apply to it as well. If the theme separates the menu
+> from the trigger with `top: calc(100% + 8px)`, `margin-top`, or `transform`,
+> the pointer leaves the `li` while crossing that gap and the menu disappears
+> before a language can be chosen.
+>
+> A menu that touches its trigger (`top: 100%`) has no such problem. For visual
+> spacing, either:
+>
+> - add `padding-top` to the menu, or
+> - add a transparent `::before` bridge on the menu that covers the gap.
+>
+> Also open the menu on `:focus-within` for keyboard users, and disable the
+> bridge where mobile switches to tap-to-expand so it cannot cover the adjacent
+> item. The Shop Starter theme's navigation is a working example:
+>
+> ```css
+> .site-nav > ul > li > ul { position: absolute; top: calc(100% + 8px); }
+> .site-nav > ul > li > ul::before {
+>   content: ""; position: absolute; top: -10px; right: 0; left: 0; height: 10px;
+> }
+> .site-nav > ul > li:focus-within > ul { display: block; }
+> ```
+
 BaseTheme themes automatically receive translated site settings and taxonomy
 URLs. Custom services should clone `BasePageService.ForRequest(c)` and use
 scoped repositories. See [Theme SEO Integration](../themes/seo-integration.md)

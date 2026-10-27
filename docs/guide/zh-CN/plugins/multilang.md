@@ -211,6 +211,30 @@ Alternate 链接来自真实翻译组，不通过猜测路径生成：
 并在移动端支持嵌套扩展菜单；主题不能检查插件 class、数据表或私有 Option
 Key。
 
+> **接入注意：下拉菜单与触发项之间不要留空隙。**
+>
+> 切换器输出普通的 `li > a + ul` 结构，桌面端靠 `li` 的 `:hover` 显示菜单，所以
+> 主题的通用二级菜单样式（例如 `nav > ul > li > ul`）也会作用到它上面。如果
+> 主题用 `top: calc(100% + 8px)`、`margin-top` 或 `transform` 把菜单与触发项
+> 拉开距离，鼠标经过这段空隙时就离开了 `li`，菜单会立刻消失，无法选择语言。
+>
+> 菜单紧贴触发项（`top: 100%`）时不会有这个问题。需要视觉间距时，任选一种
+> 处理方式：
+>
+> - 用菜单的 `padding-top` 留白；
+> - 在菜单上加一层透明的 `::before` 桥，盖住这段间距。
+>
+> 同时建议用 `:focus-within` 让键盘也能展开菜单。移动端改为点击展开时，记得
+> 关闭桥接层，避免它遮挡相邻菜单项。可参考 Shop Starter 主题的导航样式：
+>
+> ```css
+> .site-nav > ul > li > ul { position: absolute; top: calc(100% + 8px); }
+> .site-nav > ul > li > ul::before {
+>   content: ""; position: absolute; top: -10px; right: 0; left: 0; height: 10px;
+> }
+> .site-nav > ul > li:focus-within > ul { display: block; }
+> ```
+
 BaseTheme 主题会自动获得已翻译的网站设置和 taxonomy URL。自定义服务应通过
 `BasePageService.ForRequest(c)` 克隆请求服务，并使用带 Scope 的仓储。完全
 手写 `SEOMeta` 的主题可参考[主题 SEO 接入规范](../themes/seo-integration.md)。
