@@ -113,7 +113,8 @@ Core enforces the following rules even if browser validation is bypassed:
   and 1,000 excerpt runes;
 - slugs are normalized to Unicode letters and numbers, limited to 120
   characters, and made globally unique without inheriting request content
-  scopes;
+  scopes; the slug is reserved under a lock inside the write transaction, so
+  different users submitting the same title at once never share a slug;
 - creates are limited to 3 per minute and 20 per rolling 24 hours for each
   user/content-type pair; trashed rows still count;
 - content is persisted through the normal sanitized content repository path.

@@ -38,10 +38,22 @@ Important content APIs include:
   to a session-isolated database handle.
 - `Repository.FindBySlugScoped` / context-aware repository methods — resolve a
   detail row inside the same scope used by list queries.
-- `EnsureUniqueSlugScoped` — enforce slug uniqueness inside the active scope.
+- `content.ReserveUniqueSlug(ctx, tx, type, slug, excludeID)` — inside the
+  write transaction, pick the first free slug (`slug`, `slug-1`, `slug-2`, …)
+  within the active scope. Every candidate it examines is advisory-locked for
+  the rest of the transaction, so concurrent writers of the same slug run one
+  after another instead of both seeing it free.
+- `Repository.CreateWithUniqueSlug(ctx, item)` and the `content.WithUniqueSlug()`
+  option of `CommandService` — convenience entry points that reserve the slug
+  and write the row in one transaction.
+- `EnsureUniqueSlugScoped` / `EnsureUniqueSlugContext` — deprecated: the check
+  runs outside the write transaction and can hand the same slug to concurrent
+  writers. Kept for compatibility only.
 
 Same-slug language variants rely on this consistency: list, detail, save, and
-admin operations must all consume the same request context.
+admin operations must all consume the same request context. Slugs are unique
+per content type; trashed content keeps its slug so it can be restored without
+a conflict.
 
 ## Taxonomy Scope
 

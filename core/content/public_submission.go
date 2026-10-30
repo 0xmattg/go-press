@@ -1,6 +1,7 @@
 package content
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"sync"
@@ -81,14 +82,6 @@ func (s *PublicSubmissionService) CreateOwn(c *gin.Context, input PublicSubmissi
 	if slug == "" {
 		return nil, ErrPublicSubmissionInvalid
 	}
-	// Public submissions do not carry an extension-specific translation record,
-	// so uniqueness must be global. Request-scoped uniqueness could otherwise
-	// create duplicate canonical slugs when a scope hides an existing row.
-	slug, err = s.repo.EnsureUniqueSlug(input.ContentType, slug, 0)
-	if err != nil {
-		return nil, err
-	}
-
 	status, publishedAt := publicSubmissionState(def.PublicSubmission.DefaultStatus, input.PublishImmediately, s.now().UTC())
 	item := &Content{
 		Type:          input.ContentType,
@@ -101,7 +94,17 @@ func (s *PublicSubmissionService) CreateOwn(c *gin.Context, input PublicSubmissi
 		CommentStatus: "open",
 		PublishedAt:   publishedAt,
 	}
-	if err := s.repo.CreateWithMeta(c.Request.Context(), item, input.Meta); err != nil {
+	// Public submissions do not carry an extension-specific translation record,
+	// so uniqueness must be global. Request-scoped uniqueness could otherwise
+	// create duplicate canonical slugs when a scope hides an existing row. The
+	// slug is reserved in the insert transaction so concurrent submitters of
+	// the same title cannot both claim it.
+	reserveSlug := func(tx *gorm.DB) error {
+		unique, err := ReserveUniqueSlug(context.Background(), tx, input.ContentType, slug, 0)
+		item.Slug = unique
+		return err
+	}
+	if err := s.repo.createWithMeta(c.Request.Context(), item, input.Meta, reserveSlug); err != nil {
 		return nil, err
 	}
 	return item, nil
@@ -136,25 +139,31 @@ func (s *PublicSubmissionService) UpdateOwn(c *gin.Context, id uint, input Publi
 	if slug == "" {
 		return nil, ErrPublicSubmissionInvalid
 	}
-	slug, err = s.repo.EnsureUniqueSlug(input.ContentType, slug, item.ID)
-	if err != nil {
-		return nil, err
-	}
 	item.Title = strings.TrimSpace(input.Title)
-	item.Slug = slug
 	item.Content = strings.TrimSpace(input.Content)
 	item.Excerpt = strings.TrimSpace(input.Excerpt)
 	item.Status, item.PublishedAt = publicSubmissionState(def.PublicSubmission.DefaultStatus, input.PublishImmediately, s.now().UTC())
-	if err := s.repo.Update(item); err != nil {
-		return nil, err
-	}
+	meta := make(map[string]string, len(input.Meta))
 	for key, value := range input.Meta {
-		if strings.TrimSpace(key) == "" {
-			continue
+		if strings.TrimSpace(key) != "" {
+			meta[key] = value
 		}
-		if err := s.repo.SaveMeta(item.ID, key, value); err != nil {
-			return nil, err
+	}
+	sanitizeContent(item)
+	// The row and its meta commit together, so a failed meta write cannot
+	// leave the submission half updated.
+	if err := s.repo.db.Transaction(func(tx *gorm.DB) error {
+		unique, err := ReserveUniqueSlug(context.Background(), tx, input.ContentType, slug, item.ID)
+		if err != nil {
+			return err
 		}
+		item.Slug = unique
+		if err := tx.Save(item).Error; err != nil {
+			return err
+		}
+		return saveMeta(tx, item.ID, meta)
+	}); err != nil {
+		return nil, err
 	}
 	return item, nil
 }

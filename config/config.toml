@@ -10,6 +10,10 @@ host = "0.0.0.0"
 port = 8080
 # Use "release" in production; "debug" enables verbose Gin logging locally.
 mode = "release"
+# Reverse proxies (IPs or CIDRs) whose X-Forwarded-For / X-Real-IP headers are
+# trusted for the client IP. Leave unset to trust only loopback (a proxy on the
+# same host); add a remote proxy's address or CDN ranges when they sit in front.
+# trusted_proxies = ["127.0.0.1", "::1"]
 
 [pg]
 user = "pguser"

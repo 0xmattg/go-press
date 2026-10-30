@@ -163,7 +163,7 @@ func TestStartPageRendersCSPChainAndEncodedLoginReturn(t *testing.T) {
 	body := recorder.Body.String()
 	if !strings.Contains(recorder.Header().Get("Content-Security-Policy"), "default-src 'none'") ||
 		!strings.Contains(body, `data-chain-id="1"`) ||
-		!strings.Contains(body, `signin.js?v=1.0.1`) ||
+		!strings.Contains(body, `signin.js?v=`+pluginVersion) ||
 		!strings.Contains(body, `/login?return_to=%2Faccount%3Ftab%3Dwallet`) {
 		t.Fatalf("start page security/config output missing: %s", body)
 	}

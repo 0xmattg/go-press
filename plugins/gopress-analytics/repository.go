@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0xmattg/go-press/core/dbschema"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -74,7 +76,9 @@ type Repository struct {
 func NewRepository(db *gorm.DB) *Repository { return &Repository{db: db} }
 
 func (r *Repository) AutoMigrate() error {
-	if err := r.db.AutoMigrate(
+	// dbschema keeps the named idx_gpa_* indexes on this site's tables when
+	// several sites share one schema.
+	if err := dbschema.AutoMigrate(r.db,
 		&Event{},
 		&Visitor{},
 		&Session{},

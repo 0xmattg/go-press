@@ -98,6 +98,15 @@ var pluginTOML string
 var pluginMeta = plugin.ParseMetaString(pluginTOML)
 ```
 
+## 插件数据表
+
+插件自有表用 `dbprefix.PluginTable(slug, name)` 命名，并通过
+`core.RegisterPluginTable` 登记归属。迁移模型时请调用 `core/dbschema` 的
+`dbschema.AutoMigrate(db, models...)`，不要直接调用 `db.AutoMigrate`：
+`uniqueIndex:idx_my_plugin_key` 这类固定索引名在 PostgreSQL 的一个 schema 内唯一，
+多个站点共用 schema 时只有第一个站点能拿到；`dbschema.AutoMigrate` 会在缺失的
+站点表上补建等价的本站索引。详见[数据库表前缀](../reference/database-prefix.md)。
+
 ## Plugin 接口可选扩展
 
 ```go

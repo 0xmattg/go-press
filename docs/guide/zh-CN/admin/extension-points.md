@@ -118,11 +118,31 @@ e.Hooks.AddAction(hook.AdminContentSaved, func(_ context.Context, args ...interf
     c := args[0].(*gin.Context)
     item := args[1].(*content.Content)
     // 用 c.PostForm("my_key") 读自己的字段，存到 gp_content_meta
-    engine.Content.SaveMeta(item.ID, "my_key", c.PostForm("my_key"))
+    if err := engine.Content.SaveMeta(item.ID, "my_key", c.PostForm("my_key")); err != nil {
+        _ = c.Error(err) // 让后台显示保存失败，而不是提示成功
+    }
 }, 50)
 ```
 
 `ContentCreate` 和 `ContentUpdate` 都会触发此 action，所以创建和编辑场景一致。
+
+`SaveMeta` 在独立事务中执行，并按「内容 + key」加锁：同一个 key 并发首次保存只会
+留下一行；已有的多行重复数据会被统一更新为新值；数据库错误会原样返回，不会被
+当作「记录不存在」再插入一行。请检查返回的错误并通过 `c.Error(err)` 上报。
+
+保存顺序与事务边界：
+
+1. 内容行、内容类型声明的 meta 字段、分类/标签关系在**同一个事务**内提交；任一步
+   失败都会整体回滚，后台重新显示表单和错误，不会留下半成品。
+2. 事务提交后才触发 `admin.content.saved`。插件字段在这里保存，失败时内容本身已经
+   保存，所以必须用 `c.Error(err)` 报告，后台才会提示失败而不是成功。
+3. 插件一次写多个字段时，应放在一个事务里（例如 `engine.DB.Transaction` 中用
+   `content.NewRepository(tx)` 写入），避免只保存了一部分字段。
+
+直接调用 `CommandService.Create` / `Update` 的扩展，可以用
+`content.WithTxParticipant(func(tx *gorm.DB, item *content.Content) error)` 把自己的写入
+加入同一个事务：参与者在内容行和 meta 写入之后执行，返回错误会回滚整次保存，且不会
+触发内容事件。
 
 ## 邮件与通知 Hook
 

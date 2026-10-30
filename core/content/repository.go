@@ -3,8 +3,11 @@ package content
 import (
 	"context"
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 
+	"github.com/0xmattg/go-press/core/dblock"
 	"github.com/0xmattg/go-press/core/hook"
 
 	"github.com/gin-gonic/gin"
@@ -107,11 +110,22 @@ func (r *Repository) Create(c *Content) error {
 // and then emits content.created. It is useful for front-end workflows such as
 // contact forms where downstream notifications need the saved meta values.
 func (r *Repository) CreateWithMeta(ctx context.Context, c *Content, meta map[string]string) error {
+	return r.createWithMeta(ctx, c, meta, nil)
+}
+
+// createWithMeta is CreateWithMeta with an optional step that runs inside the
+// insert transaction first, such as reserving a unique slug.
+func (r *Repository) createWithMeta(ctx context.Context, c *Content, meta map[string]string, beforeInsert func(tx *gorm.DB) error) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	sanitizeContent(c)
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
+		if beforeInsert != nil {
+			if err := beforeInsert(tx); err != nil {
+				return err
+			}
+		}
 		if err := tx.Create(c).Error; err != nil {
 			return err
 		}
@@ -165,20 +179,51 @@ func (r *Repository) Restore(id uint) error {
 
 // SaveMeta creates or updates a meta key-value pair for a content item.
 func (r *Repository) SaveMeta(contentID uint, key, value string) error {
-	var meta ContentMeta
-	result := r.db.Where("content_id = ? AND meta_key = ?", contentID, key).First(&meta)
-	if result.Error != nil {
-		// Create new
-		meta = ContentMeta{
-			ContentID: contentID,
-			MetaKey:   key,
-			MetaValue: value,
-		}
-		return r.db.Create(&meta).Error
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		return saveMeta(tx, contentID, map[string]string{key: value})
+	})
+}
+
+// saveMeta upserts meta for contentID inside tx. It first advisory-locks every
+// (content, key) pair, in a stable order so concurrent multi-key writers cannot
+// deadlock, so two first-time saves of the same key cannot both insert a row.
+// It then updates every existing row for each key and inserts one only when
+// none exists: legacy duplicate rows stay in agreement instead of diverging,
+// and a failed write is returned rather than mistaken for a missing row.
+func saveMeta(tx *gorm.DB, contentID uint, meta map[string]string) error {
+	if len(meta) == 0 {
+		return nil
 	}
-	// Update existing
-	meta.MetaValue = value
-	return r.db.Save(&meta).Error
+	keys := make([]string, 0, len(meta))
+	lockKeys := make([]string, 0, len(meta))
+	for key := range meta {
+		keys = append(keys, key)
+		lockKeys = append(lockKeys, metaLockKey(contentID, key))
+	}
+	sort.Strings(keys)
+	if err := dblock.XactLock(tx, lockKeys...); err != nil {
+		return err
+	}
+	for _, key := range keys {
+		result := tx.Model(&ContentMeta{}).
+			Where("content_id = ? AND meta_key = ?", contentID, key).
+			Update("meta_value", meta[key])
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected > 0 {
+			continue
+		}
+		if err := tx.Create(&ContentMeta{ContentID: contentID, MetaKey: key, MetaValue: meta[key]}).Error; err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// metaLockKey names the advisory lock for one meta key of one content item.
+func metaLockKey(contentID uint, key string) string {
+	return fmt.Sprintf("gopress:content-meta:%s:%d:%s", ContentMeta{}.TableName(), contentID, key)
 }
 
 // DeleteMeta removes a meta entry.
@@ -240,9 +285,12 @@ func (r *Repository) ListByType(contentType string, limit, offset int) ([]Conten
 }
 
 // EnsureUniqueSlug appends a suffix if the slug already exists for the given type.
-// Unscoped variant — checks against ALL rows regardless of language. New code
-// should prefer EnsureUniqueSlugScoped so per-language uniqueness works (WPML
-// semantics: same slug allowed across languages).
+// Unscoped variant — checks against ALL rows regardless of language.
+//
+// Deprecated: the check runs outside the write transaction, so concurrent
+// writers can both receive the same slug. Use ReserveUniqueSlug inside the
+// write transaction, CreateWithUniqueSlug, or CommandService with
+// WithUniqueSlug.
 func (r *Repository) EnsureUniqueSlug(contentType, slug string, excludeID uint) (string, error) {
 	return ensureUnique(r.db, contentType, slug, excludeID)
 }
@@ -253,19 +301,64 @@ func (r *Repository) EnsureUniqueSlug(contentType, slug string, excludeID uint) 
 // collision exists *within the same language*. Different languages can share
 // the exact same slug — disambiguation is handled at request time by the URL
 // language prefix + the same scope mechanism in FindBySlugScoped.
+//
+// Deprecated: racy for the same reason as EnsureUniqueSlug; use
+// ReserveUniqueSlug or CreateWithUniqueSlug with RequestContext(ctx).
 func (r *Repository) EnsureUniqueSlugScoped(ctx *gin.Context, contentType, slug string, excludeID uint) (string, error) {
 	return r.EnsureUniqueSlugContext(RequestContext(ctx), contentType, slug, excludeID)
 }
 
 // EnsureUniqueSlugContext applies request scopes carried by a standard
 // context, allowing command services to remain independent from Gin.
+//
+// Deprecated: racy for the same reason as EnsureUniqueSlug; use
+// ReserveUniqueSlug or CommandService with WithUniqueSlug.
 func (r *Repository) EnsureUniqueSlugContext(ctx context.Context, contentType, slug string, excludeID uint) (string, error) {
 	return ensureUnique(ScopedDBContext(ctx, r.db), contentType, slug, excludeID)
 }
 
+// ReserveUniqueSlug picks the first free slug derived from slug for
+// contentType, applying the request scopes carried by ctx exactly like
+// EnsureUniqueSlugContext. It must run in the transaction that then writes the
+// row: every candidate it examines is advisory-locked until that transaction
+// ends, so concurrent writers of the same slug are serialized instead of both
+// seeing it free.
+func ReserveUniqueSlug(ctx context.Context, tx *gorm.DB, contentType, slug string, excludeID uint) (string, error) {
+	if strings.TrimSpace(slug) == "" {
+		return "", ErrSlugRequired
+	}
+	return reserveUnique(ScopedDBContext(nonNilContext(ctx), tx), tx, contentType, slug, excludeID)
+}
+
+// CreateWithUniqueSlug inserts c after reserving a unique slug derived from
+// c.Slug within the request scopes carried by ctx, in one transaction.
+func (r *Repository) CreateWithUniqueSlug(ctx context.Context, c *Content) error {
+	sanitizeContent(c)
+	return r.db.WithContext(nonNilContext(ctx)).Transaction(func(tx *gorm.DB) error {
+		slug, err := ReserveUniqueSlug(ctx, tx, c.Type, c.Slug, 0)
+		if err != nil {
+			return err
+		}
+		c.Slug = slug
+		return tx.Create(c).Error
+	})
+}
+
 func ensureUnique(db *gorm.DB, contentType, slug string, excludeID uint) (string, error) {
+	return reserveUnique(db, nil, contentType, slug, excludeID)
+}
+
+// reserveUnique returns slug or the first free "slug-N" for contentType. When
+// lockTx is set, each candidate is locked in that transaction before it is
+// checked, so a concurrent writer cannot claim it between check and write.
+func reserveUnique(db, lockTx *gorm.DB, contentType, slug string, excludeID uint) (string, error) {
 	original := slug
 	for i := 1; ; i++ {
+		if lockTx != nil {
+			if err := dblock.XactLock(lockTx, slugLockKey(contentType, slug)); err != nil {
+				return "", err
+			}
+		}
 		var count int64
 		q := db.Model(&Content{}).Where("type = ? AND slug = ?", contentType, slug)
 		if excludeID > 0 {
@@ -279,4 +372,12 @@ func ensureUnique(db *gorm.DB, contentType, slug string, excludeID uint) (string
 		}
 		slug = fmt.Sprintf("%s-%d", original, i)
 	}
+}
+
+// slugLockKey names the advisory lock for one candidate slug. The table name
+// carries the site prefix, so sites sharing a database never wait on each
+// other; scopes such as language are left out on purpose, which only
+// serializes same-slug writes across languages without changing the result.
+func slugLockKey(contentType, slug string) string {
+	return "gopress:content-slug:" + Content{}.TableName() + ":" + contentType + ":" + slug
 }

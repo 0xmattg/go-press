@@ -8,6 +8,7 @@ import (
 	"github.com/0xmattg/go-press/core/audit"
 	"github.com/0xmattg/go-press/core/comment"
 	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/dbschema"
 	coreMedia "github.com/0xmattg/go-press/core/media"
 	"github.com/0xmattg/go-press/core/menu"
 	"github.com/0xmattg/go-press/core/option"
@@ -26,7 +27,7 @@ func (e *Engine) Migrate() error {
 // MigrateDB runs database auto-migration for all GoPress core tables.
 func MigrateDB(db *gorm.DB) error {
 	logger.Info("Running GoPress core table migration...")
-	if err := db.AutoMigrate(coreModels()...); err != nil {
+	if err := dbschema.AutoMigrate(db, coreModels()...); err != nil {
 		return err
 	}
 	if err := migrateTaxonomySlugIndex(db); err != nil {

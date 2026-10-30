@@ -100,6 +100,13 @@ core.RegisterPluginTable("my-plugin", "items")
 
 This keeps plugin tables isolated from core and theme tables, and allows admin database tooling to identify table ownership.
 
+Migrate plugin models with `dbschema.AutoMigrate(db, models...)` from
+`core/dbschema` rather than `db.AutoMigrate`. Fixed index names such as
+`uniqueIndex:idx_my_plugin_key` are unique per PostgreSQL schema, so when sites
+share a schema only the first one would get them; `dbschema.AutoMigrate` adds a
+site-owned equivalent wherever it is missing. See
+[Database Prefixes](../reference/database-prefix.md#indexes-and-prefixes).
+
 ## Settings Pages
 
 Plugins that need admin configuration should implement the settings provider interfaces used by the admin plugin page. The plugin owns the UI, data loading, and save handling, while the admin owns routing, permissions, layout, and language context.

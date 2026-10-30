@@ -295,18 +295,18 @@ func (s *Service) DeleteContent(id uint) error {
 	return s.DeleteContentContext(context.Background(), item.Type, id)
 }
 
-func (s *Service) CreateContentContext(ctx context.Context, item *content.Content, meta map[string]string) error {
+func (s *Service) CreateContentContext(ctx context.Context, item *content.Content, meta map[string]string, opts ...content.MutationOption) error {
 	if s == nil || s.commands == nil {
 		return content.ErrCommandUnavailable
 	}
-	return s.commands.Create(ctx, item, meta)
+	return s.commands.Create(ctx, item, meta, opts...)
 }
 
-func (s *Service) UpdateContentContext(ctx context.Context, contentType string, item *content.Content, meta map[string]string) error {
+func (s *Service) UpdateContentContext(ctx context.Context, contentType string, item *content.Content, meta map[string]string, opts ...content.MutationOption) error {
 	if s == nil || s.commands == nil {
 		return content.ErrCommandUnavailable
 	}
-	return s.commands.Update(ctx, contentType, item, meta)
+	return s.commands.Update(ctx, contentType, item, meta, opts...)
 }
 
 func (s *Service) DeleteContentContext(ctx context.Context, contentType string, id uint) error {
@@ -529,11 +529,13 @@ func (s *Service) ToDynamicContentViewsContext(ctx context.Context, items []cont
 	return views
 }
 
-func (s *Service) SetContentTaxonomiesContext(ctx context.Context, contentID uint, allowedTypes []string, taxonomyIDs []uint) error {
+// SetContentTaxonomiesTx writes a content item's taxonomy relationships inside
+// the caller's transaction, typically the content save itself.
+func (s *Service) SetContentTaxonomiesTx(ctx context.Context, tx *gorm.DB, contentID uint, allowedTypes []string, taxonomyIDs []uint) error {
 	if s == nil || s.taxCommands == nil {
 		return taxonomy.ErrCommandUnavailable
 	}
-	return s.taxCommands.SetContentTaxonomies(ctx, contentID, allowedTypes, taxonomyIDs)
+	return s.taxCommands.SetContentTaxonomiesTx(ctx, tx, contentID, allowedTypes, taxonomyIDs)
 }
 
 func (s *Service) ValidateContentTaxonomiesContext(ctx context.Context, allowedTypes []string, taxonomyIDs []uint) error {

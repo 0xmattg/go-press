@@ -31,6 +31,7 @@ theme = "mono-journal"
 host = "0.0.0.0"
 port = 8080
 mode = "release"
+# trusted_proxies = ["127.0.0.1", "::1"]  # reverse proxies to trust; empty = loopback only
 
 [pg]
 user = "postgres"
@@ -87,8 +88,36 @@ completed = true
 
 ## Server
 
-`host` and `port` form the HTTP listen address. Use `release` in production;
-`debug` enables verbose Gin logging for local development.
+`host` and `port` form the HTTP listen address. Behind a reverse proxy on the
+same machine (such as Nginx), prefer `host = "127.0.0.1"` so only the proxy can
+reach the application port. Use `release` in production; `debug` enables
+verbose Gin logging, including the route table on every router rebuild, and is
+meant for local development.
+
+`trusted_proxies` lists the IPs or CIDRs of reverse proxies whose
+`X-Forwarded-For` / `X-Real-IP` headers are used to identify the client. Every
+other request is attributed to its TCP peer address. **When empty, only
+loopback (`127.0.0.1`, `::1`) is trusted**, which fits a reverse proxy running
+on the same host. Invalid entries are logged and fall back to loopback-only, so
+a typo never reopens spoofing.
+
+The client IP drives the admin login limiter, REST API rate limiting, identity
+plugin limiters, audit logs, and analytics. Trusting the wrong peers lets
+clients forge their IP to bypass those limits, so:
+
+- Reverse proxy on the same host: keep the default. In Nginx, overwrite the
+  forwarding headers with the connection address instead of appending to them:
+
+  ```nginx
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $remote_addr;
+  ```
+
+- Reverse proxy on another host: add its private address, for example
+  `["10.0.0.5"]`.
+- A CDN in front: also add the CDN's origin-pull ranges. GoPress walks
+  `X-Forwarded-For` from right to left, skips trusted proxies, and uses the
+  first untrusted address as the client IP.
 
 ## PostgreSQL
 
@@ -135,6 +164,9 @@ Core also enables these protections without extra configuration:
   `Origin`/`Referer` checks.
 - Failed admin logins are rate-limited per source IP and recorded in the audit
   log.
+- Client IPs cannot be spoofed: `X-Forwarded-For` / `X-Real-IP` are honored
+  only from `[server].trusted_proxies` (loopback by default), so direct clients
+  cannot forge headers to evade the limits above.
 - Public user sessions are database-backed and revalidate the active account on
   every request. Disabling the account revokes the stored session and clears
   its cookie on the next request.

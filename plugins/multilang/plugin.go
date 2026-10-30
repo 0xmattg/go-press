@@ -780,17 +780,11 @@ func (p *Plugin) handleCreateTranslation(c *gin.Context) {
 	//
 	// WPML semantics: same slug allowed across languages — uniqueness is
 	// scoped to the target language only. We register the language scope
-	// against this gin.Context first so EnsureUniqueSlugScoped sees only
-	// rows of `targetLang`. The original slug then almost always survives
-	// unchanged (great for SEO: /products/foo + /zh/products/foo); a "-2"
+	// against this gin.Context first so the slug reservation sees only rows
+	// of `targetLang`. The original slug then almost always survives
+	// unchanged (great for SEO: /products/foo + /zh/products/foo); a "-1"
 	// suffix is only added on a real same-language collision.
 	p.registerLangContentScope(c, targetLang)
-	clonedSlug, err := p.engine.Content.EnsureUniqueSlugScoped(c, original.Type, original.Slug, 0)
-	if err != nil {
-		// Fall back to the source slug; collisions surface as a save error
-		// downstream rather than silently appending a language suffix.
-		clonedSlug = original.Slug
-	}
 
 	// Determine status: "publish" form field controls draft vs published
 	clonedStatus := contentPkg.StatusDraft
@@ -807,7 +801,7 @@ func (p *Plugin) handleCreateTranslation(c *gin.Context) {
 		Type:          original.Type,
 		Status:        clonedStatus,
 		Title:         original.Title + " [" + targetLang + "]",
-		Slug:          clonedSlug,
+		Slug:          original.Slug,
 		Content:       original.Content,
 		Excerpt:       original.Excerpt,
 		ImageURL:      original.ImageURL,
@@ -822,34 +816,42 @@ func (p *Plugin) handleCreateTranslation(c *gin.Context) {
 		cloned.PublishedAt = &now
 	}
 
-	if err := p.engine.Content.Create(cloned); err != nil {
-		redirectSettings(c, "error", "克隆内容失败: "+err.Error())
-		return
-	}
-
-	// Copy meta fields
-	if meta, err := p.engine.Content.GetMeta(contentID); err == nil {
-		for k, v := range meta {
-			p.engine.Content.SaveMeta(cloned.ID, k, v)
-		}
-	}
-
-	// Link cloned content to the same translation group
+	// The clone, its meta, the translation link, and its taxonomy relations
+	// commit together, so a failure never leaves an orphaned half translation.
 	sourceID := contentID
-	if err := p.repo.CreateTranslation(&Translation{
-		Trid:            origTrans.Trid,
-		ContentID:       cloned.ID,
-		LanguageCode:    targetLang,
-		SourceContentID: &sourceID,
-	}); err != nil {
-		redirectSettings(c, "error", "关联翻译失败: "+err.Error())
-		return
-	}
-	if typeDef := p.engine.Registry.GetType(original.Type); typeDef != nil {
-		if err := p.copyTranslatedTaxonomies(contentID, cloned.ID, targetLang, typeDef); err != nil {
-			redirectSettings(c, "error", "内容已克隆，但分类翻译关系同步失败: "+err.Error())
-			return
+	typeDef := p.engine.Registry.GetType(original.Type)
+	err = p.engine.DB.Transaction(func(tx *gorm.DB) error {
+		contents := contentPkg.NewRepository(tx)
+		if err := contents.CreateWithUniqueSlug(contentPkg.RequestContext(c), cloned); err != nil {
+			return fmt.Errorf("克隆内容失败: %w", err)
 		}
+		meta, err := contents.GetMeta(contentID)
+		if err != nil {
+			return fmt.Errorf("读取原文字段失败: %w", err)
+		}
+		for key, value := range meta {
+			if err := contents.SaveMeta(cloned.ID, key, value); err != nil {
+				return fmt.Errorf("复制字段失败: %w", err)
+			}
+		}
+		if err := NewRepository(tx).CreateTranslation(&Translation{
+			Trid:            origTrans.Trid,
+			ContentID:       cloned.ID,
+			LanguageCode:    targetLang,
+			SourceContentID: &sourceID,
+		}); err != nil {
+			return fmt.Errorf("关联翻译失败: %w", err)
+		}
+		if typeDef != nil {
+			if err := p.copyTranslatedTaxonomies(tx, contentID, cloned.ID, targetLang, typeDef); err != nil {
+				return fmt.Errorf("分类翻译关系同步失败: %w", err)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		redirectSettings(c, "error", err.Error())
+		return
 	}
 
 	logger.Info("Translation created", "original", contentID, "cloned", cloned.ID, "lang", targetLang, "status", clonedStatus)

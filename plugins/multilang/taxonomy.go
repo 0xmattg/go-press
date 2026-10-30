@@ -371,7 +371,10 @@ func (p *Plugin) reconcileTaxonomyRelationships(sourceTaxonomyID, targetTaxonomy
 	}
 }
 
-func (p *Plugin) copyTranslatedTaxonomies(sourceContentID, targetContentID uint, targetLang string, definition *content.ContentTypeDef) error {
+// copyTranslatedTaxonomies gives a new translation the source's taxonomy
+// relations, mapped to the target language where translations are separate.
+// It writes inside tx so the relations commit with the translation itself.
+func (p *Plugin) copyTranslatedTaxonomies(tx *gorm.DB, sourceContentID, targetContentID uint, targetLang string, definition *content.ContentTypeDef) error {
 	if definition == nil || p.engine == nil || p.engine.TaxonomyCommands == nil {
 		return nil
 	}
@@ -394,7 +397,7 @@ func (p *Plugin) copyTranslatedTaxonomies(sourceContentID, targetContentID uint,
 			ids = append(ids, target.TaxonomyID)
 		}
 	}
-	return p.engine.TaxonomyCommands.SetContentTaxonomies(p.taxonomyContext(targetLang, true), targetContentID, definition.Taxonomies, ids)
+	return p.engine.TaxonomyCommands.SetContentTaxonomiesTx(p.taxonomyContext(targetLang, true), tx, targetContentID, definition.Taxonomies, ids)
 }
 
 func (p *Plugin) resolveTaxonomyTranslation(path, sourceLang, targetLang string) (string, bool) {

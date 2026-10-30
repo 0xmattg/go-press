@@ -49,6 +49,28 @@ Such sites can also share one Redis database. Cache keys are isolated by
 `table_prefix` when unset, so sites with different prefixes never read or clear
 each other's cache. See [Configuration](../getting-started/configuration.md).
 
+## Indexes and Prefixes
+
+PostgreSQL index names are unique per schema, not per table. A fixed index name
+in a model (for example `uniqueIndex:idx_user_identity_key`) lands only on the
+**first** site in the schema to migrate. GORM creates indexes with
+`CREATE INDEX IF NOT EXISTS`, so the same table under every other prefix is
+skipped silently and loses its uniqueness guarantee.
+
+Core's `dbschema.AutoMigrate(db, models...)` checks each of the current site's
+tables after GORM AutoMigrate. When a table lacks an index equivalent to the
+declaration (same column order, uniqueness, and full or partial coverage), it
+creates a site-owned index named after the table plus the declared name,
+truncated with a short hash beyond 63 characters. It only adds indexes, never
+drops or renames them, so the previous binary still runs on the repaired
+database. If existing duplicate rows block a unique index, it logs a warning and
+retries on the next start instead of preventing the site from booting; the
+uniqueness protection takes effect once the duplicates are cleaned up.
+
+Core tables already use this. Plugins that declare fixed index names should
+migrate with `dbschema.AutoMigrate` instead of calling `db.AutoMigrate`
+directly.
+
 ## Table Registry
 
 The table registry records table ownership for admin database tooling, future uninstall workflows, and debugging.

@@ -182,6 +182,16 @@ func (s *CommandService) Delete(ctx context.Context, taxonomyType string, id uin
 // verifying every submitted taxonomy ID belongs to one of those types and the
 // active request scope. Relationships for unrelated taxonomy types survive.
 func (s *CommandService) SetContentTaxonomies(ctx context.Context, contentID uint, allowedTypes []string, taxonomyIDs []uint) error {
+	ctx = nonNilContext(ctx)
+	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		return s.SetContentTaxonomiesTx(ctx, tx, contentID, allowedTypes, taxonomyIDs)
+	})
+}
+
+// SetContentTaxonomiesTx is SetContentTaxonomies inside a caller-owned
+// transaction, so the relationships commit or roll back together with the
+// content save that owns them.
+func (s *CommandService) SetContentTaxonomiesTx(ctx context.Context, tx *gorm.DB, contentID uint, allowedTypes []string, taxonomyIDs []uint) error {
 	if contentID == 0 {
 		return ErrInvalidTaxonomySelection
 	}
@@ -196,28 +206,26 @@ func (s *CommandService) SetContentTaxonomies(ctx context.Context, contentID uin
 	}
 	taxonomyIDs = uniqueUint(taxonomyIDs)
 	ctx = nonNilContext(ctx)
-	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := validateContentTaxonomyIDs(ctx, tx, allowedTypes, taxonomyIDs); err != nil {
-			return err
-		}
+	if err := validateContentTaxonomyIDs(ctx, tx, allowedTypes, taxonomyIDs); err != nil {
+		return err
+	}
 
-		deleteQuery := tx.Where("content_id = ?", contentID)
-		if len(allowedTypes) > 0 {
-			deleteQuery = deleteQuery.Where("taxonomy_id IN (?)",
-				tx.Model(&Taxonomy{}).Select("id").Where("taxonomy IN ?", allowedTypes))
-		}
-		if err := deleteQuery.Delete(&TermRelationship{}).Error; err != nil {
-			return err
-		}
-		if len(taxonomyIDs) == 0 {
-			return nil
-		}
-		relations := make([]TermRelationship, 0, len(taxonomyIDs))
-		for index, taxonomyID := range taxonomyIDs {
-			relations = append(relations, TermRelationship{ContentID: contentID, TaxonomyID: taxonomyID, SortOrder: index})
-		}
-		return tx.Create(&relations).Error
-	})
+	deleteQuery := tx.Where("content_id = ?", contentID)
+	if len(allowedTypes) > 0 {
+		deleteQuery = deleteQuery.Where("taxonomy_id IN (?)",
+			tx.Model(&Taxonomy{}).Select("id").Where("taxonomy IN ?", allowedTypes))
+	}
+	if err := deleteQuery.Delete(&TermRelationship{}).Error; err != nil {
+		return err
+	}
+	if len(taxonomyIDs) == 0 {
+		return nil
+	}
+	relations := make([]TermRelationship, 0, len(taxonomyIDs))
+	for index, taxonomyID := range taxonomyIDs {
+		relations = append(relations, TermRelationship{ContentID: contentID, TaxonomyID: taxonomyID, SortOrder: index})
+	}
+	return tx.Create(&relations).Error
 }
 
 // ValidateContentTaxonomies performs the same type/scope checks as the setter

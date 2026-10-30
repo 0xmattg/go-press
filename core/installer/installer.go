@@ -135,6 +135,9 @@ func New(configPath string, initialConfig *config.Config, bootErr error, activat
 	i.templates = template.Must(template.New("layout").Funcs(funcMap).Parse(layoutTemplate + welcomeTemplate + databaseTemplate + siteTemplate + successTemplate))
 
 	r := gin.New()
+	// The installer runs before any site config exists, so it trusts only a
+	// same-host reverse proxy, matching the application default.
+	_ = r.SetTrustedProxies(config.DefaultTrustedProxies)
 	r.Use(gin.Recovery())
 	r.Use(middleware.SecurityHeaders())
 

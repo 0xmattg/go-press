@@ -86,7 +86,7 @@ item, err := submissions.CreateOwn(c, content.PublicSubmissionInput{
 - 内容类型必须启用策略、明确允许当前角色，并具备对应 RBAC action；
 - 更新和删除必须同时匹配内容类型与所有者；访问他人资源统一返回未找到，降低资源枚举风险；
 - 标题和正文必填；标题最多 240 个字符、正文 100,000 个字符、摘要 1,000 个字符；
-- Slug 只保留 Unicode 字母和数字，最多 120 个字符；唯一性检查不继承请求 Content Scope，避免产生重复 canonical slug；
+- Slug 只保留 Unicode 字母和数字，最多 120 个字符；唯一性检查不继承请求 Content Scope，避免产生重复 canonical slug，并在写入事务内加锁完成，不同用户同时提交相同标题也不会得到重复的 Slug；
 - 每个用户、每种内容类型每分钟最多创建 3 条、滚动 24 小时最多 20 条；移入回收站的数据仍计入限流；
 - 内容通过标准的安全内容仓储路径清理并保存。
 

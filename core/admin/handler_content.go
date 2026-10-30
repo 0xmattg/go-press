@@ -17,6 +17,7 @@ import (
 	"github.com/0xmattg/go-press/core/taxonomy"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // getContentType reads the content type from the gin context (set by middleware).
@@ -704,20 +705,15 @@ func (h *Handler) ContentCreate(c *gin.Context) {
 		renderCreateError(adminT(lang, "error.create_failed", err.Error()))
 		return
 	}
-	if err := h.svc.CreateContentContext(content.RequestContext(c), item, meta); err != nil {
+	// The row, its core meta, and its taxonomy relationships commit together;
+	// on any failure nothing is persisted and the form is shown again.
+	opts := append(slugReservation("", item.Slug), h.taxonomyRelations(c, typeDef, taxonomyIDs)...)
+	if err := h.svc.CreateContentContext(content.RequestContext(c), item, meta, opts...); err != nil {
 		if errors.Is(err, content.ErrReservedSlug) {
 			renderCreateError(adminT(lang, "error.slug_reserved", item.Slug))
 			return
 		}
 		renderCreateError(adminT(lang, "error.create_failed", err.Error()))
-		return
-	}
-
-	// Save taxonomy relationships
-	if err := h.saveTaxonomyRelations(c, typeDef, item.ID, taxonomyIDs); err != nil {
-		message := adminT(lang, "error.update_failed", err.Error())
-		target := fmt.Sprintf("/admin/%s/%d/edit?error=%s", slug, item.ID, url.QueryEscape(message))
-		c.Redirect(http.StatusFound, target)
 		return
 	}
 
@@ -744,6 +740,16 @@ func commentStatusFromForm(value string) string {
 		return "closed"
 	}
 	return "open"
+}
+
+// slugReservation asks the command service to make a new or edited slug unique
+// within the request's content scopes, appending -1, -2, ... like WordPress.
+// Unchanged slugs are left alone so saving an existing item never renames it.
+func slugReservation(previous, submitted string) []content.MutationOption {
+	if submitted == "" || submitted == previous {
+		return nil
+	}
+	return []content.MutationOption{content.WithUniqueSlug()}
 }
 
 func ensurePublishedAtForPublished(item *content.Content) {
@@ -912,6 +918,7 @@ func (h *Handler) ContentUpdate(c *gin.Context) {
 		return
 	}
 	previousStatus := item.Status
+	previousSlug := item.Slug
 
 	item.Title = c.PostForm("title")
 	item.Slug = c.PostForm("slug")
@@ -982,17 +989,13 @@ func (h *Handler) ContentUpdate(c *gin.Context) {
 		renderUpdateError(adminT(lang, "error.update_failed", err.Error()))
 		return
 	}
-	if err := h.svc.UpdateContentContext(content.RequestContext(c), typeName, item, meta); err != nil {
+	// The row, its core meta, and its taxonomy relationships commit together.
+	opts := append(slugReservation(previousSlug, item.Slug), h.taxonomyRelations(c, typeDef, taxonomyIDs)...)
+	if err := h.svc.UpdateContentContext(content.RequestContext(c), typeName, item, meta, opts...); err != nil {
 		if errors.Is(err, content.ErrReservedSlug) {
 			renderUpdateError(adminT(lang, "error.slug_reserved", item.Slug))
 			return
 		}
-		renderUpdateError(adminT(lang, "error.update_failed", err.Error()))
-		return
-	}
-
-	// Update taxonomy relationships
-	if err := h.saveTaxonomyRelations(c, typeDef, item.ID, taxonomyIDs); err != nil {
 		renderUpdateError(adminT(lang, "error.update_failed", err.Error()))
 		return
 	}
@@ -1226,11 +1229,17 @@ func submittedTaxonomyIDs(c *gin.Context, typeDef *content.ContentTypeDef, regis
 	return allTaxIDs
 }
 
-func (h *Handler) saveTaxonomyRelations(c *gin.Context, typeDef *content.ContentTypeDef, contentID uint, allTaxIDs []uint) error {
+// taxonomyRelations makes the submitted taxonomy selection part of the content
+// save transaction, so a failure leaves neither the row nor its relationships
+// half written.
+func (h *Handler) taxonomyRelations(c *gin.Context, typeDef *content.ContentTypeDef, taxonomyIDs []uint) []content.MutationOption {
 	if len(typeDef.Taxonomies) == 0 {
 		return nil
 	}
-	return h.svc.SetContentTaxonomiesContext(taxonomy.RequestContext(c), contentID, typeDef.Taxonomies, allTaxIDs)
+	ctx := taxonomy.RequestContext(c)
+	return []content.MutationOption{content.WithTxParticipant(func(tx *gorm.DB, item *content.Content) error {
+		return h.svc.SetContentTaxonomiesTx(ctx, tx, item.ID, typeDef.Taxonomies, taxonomyIDs)
+	})}
 }
 
 // adminPublicContentURL resolves the registered public rewrite and then lets

@@ -65,6 +65,23 @@ table_prefix = "shop_"
 未配置时会根据数据库连接与 `table_prefix` 自动派生，因此不同前缀的站点不会
 读取或清理彼此的缓存。详见[配置](../getting-started/configuration.md)。
 
+## 索引与表前缀
+
+PostgreSQL 的索引名在同一个 schema 内唯一，而不是在每张表内唯一。模型里写死的
+索引名（例如 `uniqueIndex:idx_user_identity_key`）只会落到同一 schema 中**第一个**
+完成迁移的站点表上；GORM 用 `CREATE INDEX IF NOT EXISTS` 创建索引，其他前缀的
+同类表会被静默跳过，唯一性约束随之失效。
+
+core 的 `dbschema.AutoMigrate(db, models...)` 在 GORM AutoMigrate 之后检查当前
+站点的每张表：如果缺少与声明等价的索引（相同的列顺序、唯一性、是否为部分索引），
+就以「表名 + 声明名」创建一个本站专属索引，超过 63 个字符时截断并追加短哈希。
+它只做加法，不删除或重命名已有索引，旧版本二进制仍可直接运行在补建后的数据库上。
+若已有重复数据导致唯一索引无法建立，它会记录警告并在下次启动时重试，不会阻止
+站点启动；需要先清理重复数据，相关唯一性保护才会生效。
+
+core 表已经使用这一机制。插件声明了带固定名称的索引时，迁移应调用
+`dbschema.AutoMigrate`，而不是直接调用 `db.AutoMigrate`。
+
 ## 表注册表
 
 `core.RegisterPluginTable()` / `core.RegisterThemeTable()` 不仅用于命名约定，还把表归属信息存到内存注册表，用于：
