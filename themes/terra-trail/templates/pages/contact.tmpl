@@ -8,8 +8,8 @@
 
 <section class="tt-contact-grid">
     <div class="tt-contact-card">
-        <h2>{{settingOr $s "company_name" "TerraTrail"}}</h2>
-        <p>{{settingOr $s "company_description" "Curated mountain travel and destination planning for thoughtful travelers."}}</p>
+        <h2>{{settingOr $s "company_name" (settingOr $s "site_name" "TerraTrail")}}</h2>
+        <p>{{settingOr $s "company_description" (settingOr $s "site_description" "Curated mountain travel and destination planning for thoughtful travelers.")}}</p>
         <span>{{settingOr $s "company_email" "hello@terratrail.example"}}</span>
         <span>{{settingOr $s "company_phone" "+1 212 555 0188"}}</span>
         <span>{{settingOr $s "company_address" "Remote planning studio"}}</span>

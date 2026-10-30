@@ -5,7 +5,7 @@
   <section class="mj-login-dialog" role="dialog" aria-modal="true" aria-labelledby="mj-login-title" aria-describedby="mj-login-desc" tabindex="-1">
     <button class="mj-login-close" type="button" data-login-close aria-label="{{T .Ctx "auth.close"}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
     <span class="mj-login-eyebrow">{{T .Ctx "auth.eyebrow"}}</span>
-    <h2 id="mj-login-title" class="mj-login-title">{{T .Ctx "auth.title"}} {{settingOr .Settings "home_logo_text" "Mono Journal"}}</h2>
+    <h2 id="mj-login-title" class="mj-login-title">{{T .Ctx "auth.title"}} {{settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "Mono Journal")}}</h2>
     <p id="mj-login-desc" class="mj-login-desc">{{T .Ctx "auth.description"}}</p>
     {{$providers := loginProviders}}
     {{if $providers}}

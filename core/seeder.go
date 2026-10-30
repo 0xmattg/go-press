@@ -1,3 +1,27 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
+// Declarative seeding from seed.toml files.
+//
+// A seed file describes settings, taxonomy terms, and content items (with meta,
+// taxonomy references, and remote images) in plain TOML, so themes can ship
+// demo data without code. There are two entry points:
+//
+//   - SeedFromFile is first-run seeding. It does nothing when the file is
+//     absent or any content already exists.
+//   - ForceSeedFromFile backs theme demo imports. It replaces the site's
+//     content, content meta, taxonomies, term relationships, media rows, and
+//     options in one transaction, keeping users, core site options, and the
+//     demo_imported_* and plugin_active_* flags.
+//
+// The whole file is parsed and checked against the active content registry
+// before any row is read or deleted, so a malformed seed, an undeclared term,
+// or a content type from an inactive extension leaves the site untouched.
+// Remote images are downloaded into the media library. After a successful
+// commit the seed.completed hook fires, letting plugins derive their own
+// satellite rows from the seeded content and meta without core knowing their
+// schema.
+
 package core
 
 import (

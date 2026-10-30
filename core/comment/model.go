@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 // Package comment owns GoPress comments independently from editorial content.
 // Comments remain available across theme switches and are rendered by themes
 // through the generic core/theme comment contract.

@@ -1,3 +1,24 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
+// Admin route table.
+//
+// SetupRoutes is the single map of /admin. Content routes are generated from
+// the active registry, one group per type under its admin slug: list, bulk
+// actions, and delete for every type, full create, edit, and reorder for
+// editable types, and a read-only detail view for ingest-only types such as
+// contact_message. Taxonomies get list, create, edit, and delete in the same
+// way. System screens (settings, mail, media, users, comments, themes,
+// plugins, cache, redirects, menus) are registered by hand below. The table is
+// rebuilt with the router whenever the registry changes.
+//
+// Security is layered. AuthMiddleware rejects cross-origin state-changing
+// requests and requires a live admin session, but it does not authorize: each
+// handler checks its own "resource.action" capability through checkPermission,
+// which maps every registered content type to "content" and every taxonomy to
+// "taxonomy". Extension pages registered through routes.register must wrap
+// RequirePermission, which applies the same session, CSRF, and RBAC rules.
+
 package admin
 
 import (

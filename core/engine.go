@@ -1,3 +1,41 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
+// Engine assembly and runtime lifecycle.
+//
+// Engine is the composition root of a GoPress site. New wires every
+// long-lived service in dependency order (cache tiers, hook bus, content
+// registry, repositories and command services, the Agent runtime, URL/SEO
+// services, admin JWT auth, and public authentication) without loading
+// themes, plugins, or routes. BuildAndBootstrap (bootstrap.go) then drives the
+// boot sequence: Migrate, optional seed, Bootstrap, LoadAllThemes,
+// LoadAllPlugins, ReconcileActiveThemeDependencies, SetupAdmin, SetupRouter,
+// and MarkReady.
+//
+// The content registry is rebuilt, never patched. Activating a theme clears
+// it, re-registers the core types (page, post, contact_message, category,
+// tag), loads the theme's embedded theme.toml, and fires
+// content.register_types so active plugins can contribute types that survive
+// theme switches. SwitchTheme, the admin plugin toggles, and
+// RefreshActiveTheme all funnel through that path and finish by rebuilding the
+// Gin router, which the running server adopts through OnRouterRebuild and
+// HandlerSwitcher without a restart.
+//
+// Front-end pages are never registered as Gin routes. SetupRouter registers
+// framework endpoints (health, readiness, sitemap, static files, REST, admin,
+// and plugin routes from routes.register) and leaves every other path to a
+// NoRoute dispatcher that hands the request to whichever theme is active at
+// that moment.
+//
+// lifecycleMu serializes theme switches, plugin toggles, and plugin shutdown
+// so registry and router rebuilds never interleave; mu guards the active theme
+// name and the HTTP server. Shutdown runs the boot order in reverse so
+// producers stop before the queues and connections they feed are closed.
+//
+// Themes and plugins should use the narrow accessor methods at the end of this
+// file, or the theme.App and plugin capability interfaces, instead of reaching
+// into Engine fields.
+
 package core
 
 import (
@@ -188,8 +226,9 @@ func (e *Engine) SitePublicPath(parts ...string) string {
 //
 // New constructs in-memory services and repositories but does not load themes,
 // plugins, options, menus, redirects, or routes. Callers should follow the
-// boot sequence in BuildAndBootstrap or explicitly call LoadAllThemes,
-// SetupAdmin, Bootstrap, LoadAllPlugins, and SetupRouter in the same order.
+// boot sequence in BuildAndBootstrap or explicitly call Migrate, Bootstrap,
+// LoadAllThemes, LoadAllPlugins, ReconcileActiveThemeDependencies, SetupAdmin,
+// SetupRouter, and MarkReady in the same order.
 func New(cfg *config.Config, db *gorm.DB) *Engine {
 	// --- Cache: detect available backends, degrade gracefully ---
 	var l1 cache.Cache
@@ -840,7 +879,8 @@ func (e *Engine) LoadAllPlugins() {
 	}
 }
 
-// Bootstrap loads runtime state after core, themes, and admin are configured.
+// Bootstrap loads persisted runtime state after migrations and before themes,
+// plugins, and admin are loaded.
 //
 // It refreshes memory-backed stores, creates the redirect manager, starts
 // scheduled jobs, and fires the engine init hook. It does not build the router;

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 package theme
 
 import (
@@ -6,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/0xmattg/go-press/core/content"
 	coreI18n "github.com/0xmattg/go-press/core/i18n"
@@ -80,6 +84,21 @@ func TestBaseFuncMapExposesCurrentCoreVersion(t *testing.T) {
 	}
 	if got := fn(); got != version.String() {
 		t.Fatalf("goPressVersion() = %q, want %q", got, version.String())
+	}
+}
+
+func TestBaseFuncMapExposesCurrentYear(t *testing.T) {
+	var base BaseTheme
+	base.InitBase(nil, "", "", nil)
+
+	fn, ok := base.BaseFuncMap()["currentYear"].(func() int)
+	if !ok {
+		t.Fatal("currentYear helper is missing or has the wrong signature")
+	}
+	before := time.Now().Year()
+	got := fn()
+	if after := time.Now().Year(); got != before && got != after {
+		t.Fatalf("currentYear() = %d, want %d", got, before)
 	}
 }
 

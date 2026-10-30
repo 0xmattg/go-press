@@ -1,3 +1,22 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
+// Package taxonomy stores categories, tags, and any other taxonomy declared in
+// the content registry.
+//
+// The schema follows WordPress: a Term holds the name and slug, a Taxonomy row
+// places a term in one taxonomy (with an optional parent for hierarchical
+// ones), and TermRelationship links content items to taxonomy rows. Which
+// taxonomies exist, and which content types may use them, is decided by
+// content.Registry, not by this package.
+//
+// Repository handles reads and CommandService handles writes. CommandService
+// requires a registered taxonomy, a valid parent, and a free slug, and
+// relationship updates may only reference taxonomy rows of the types the
+// caller allows for the content item. SetContentTaxonomiesTx lets a content
+// save update relationships inside its own transaction. Like content,
+// taxonomy queries honor request Scopes, so plugins such as multilang can keep
+// per-language terms apart or share them.
 package taxonomy
 
 import "github.com/0xmattg/go-press/pkg/dbprefix"

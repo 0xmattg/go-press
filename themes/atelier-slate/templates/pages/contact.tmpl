@@ -25,8 +25,8 @@
         </form>
         <aside class="as-contact-card">
             <div class="as-index-line"><span>01</span><span>02 03 04</span></div>
-            <h2>{{settingOr $s "company_name" "Atelier Slate"}}</h2>
-            <p>{{settingOr $s "company_description" "A strategy-led digital studio for brand worlds, product interfaces, and campaign launches."}}</p>
+            <h2>{{settingOr $s "company_name" (settingOr $s "site_name" "Atelier Slate")}}</h2>
+            <p>{{settingOr $s "company_description" (settingOr $s "site_description" "A strategy-led digital studio for brand worlds, product interfaces, and campaign launches.")}}</p>
             <ul>
                 <li>{{settingOr $s "company_email" "hello@atelier.example"}}</li>
                 <li>{{settingOr $s "company_phone" "+1 415 000 0198"}}</li>

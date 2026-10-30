@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 package theme
 
 import (
@@ -25,6 +28,9 @@ func CommonFuncMap() template.FuncMap {
 			}
 			return t.Format("Jan 2, 2006")
 		},
+		// currentYear lets copyright lines stay current without a stored
+		// setting. BaseFuncMap rebinds it to the site timezone.
+		"currentYear": func() int { return time.Now().Year() },
 		"formatDateTime": func(t *time.Time) string {
 			if t == nil {
 				return ""

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 // Package hook provides GoPress's action and filter bus.
 //
 // Actions are fire-and-forget notifications. Filters receive a value, return a

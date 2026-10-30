@@ -1,9 +1,9 @@
 {{define "header"}}
 {{$s := .Settings}}
 <header class="ce-header">
-    <a class="ce-brand" href="{{langPrefixURL .Ctx "/"}}" aria-label="{{settingOr $s "company_name" "Civic Estate"}} home">
+    <a class="ce-brand" href="{{langPrefixURL .Ctx "/"}}" aria-label="{{settingOr $s "company_name" (settingOr $s "site_name" "Civic Estate")}} home">
         <span class="ce-brand-mark" aria-hidden="true"></span>
-        {{settingOr $s "home_logo_text" "Civic Estate"}}
+        {{settingOr $s "home_logo_text" (settingOr $s "site_name" "Civic Estate")}}
     </a>
     <button class="ce-nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false">
         <span></span><span></span>

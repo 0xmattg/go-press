@@ -18,13 +18,13 @@
                     {{$combinedImage := $footerCombined}}
                     {{if not $combinedImage}}{{$combinedImage = $headerCombined}}{{end}}
                     {{if and $combined $combinedImage}}
-                    <img class="as-brand-combined" src="{{$combinedImage}}" alt="{{settingOr .Settings "home_logo_text" "Atelier Slate"}}">
+                    <img class="as-brand-combined" src="{{$combinedImage}}" alt="{{settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "Atelier Slate")}}">
                     {{else}}
                     <span class="as-brand-mark">{{settingOr .Settings "home_logo_glyph" "A"}}</span>
-                    <span>{{settingOr .Settings "home_logo_text" "Atelier Slate"}}</span>
+                    <span>{{settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "Atelier Slate")}}</span>
                     {{end}}
                 </div>
-                <p>{{settingOr .Settings "company_description" "A digital guild for founders who need strategy, design, content, and launch systems to move as one."}}</p>
+                <p>{{settingOr .Settings "company_description" (settingOr .Settings "site_description" "A digital guild for founders who need strategy, design, content, and launch systems to move as one.")}}</p>
                 {{$socialLinks := socialLinks .Settings}}
                 {{if $socialLinks}}
                 <div class="as-social">
@@ -48,7 +48,7 @@
             </div>
         </div>
         <div class="as-footer-bottom">
-            <span>{{settingOr .Settings "footer_text" "© 2026 Atelier Slate. All rights reserved."}}</span>
+            <span>{{settingOr .Settings "footer_text" (printf "© %d %s" currentYear (settingOr .Settings "site_name" "Atelier Slate"))}}</span>
             <span>01 / 04</span>
         </div>
     </div>

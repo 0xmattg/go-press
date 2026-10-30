@@ -11,10 +11,16 @@ endif
 # worker/scheduler shutdown, cache, hooks, engine runtime) carry race regressions.
 RACE_PKGS := ./core ./core/plugin/... ./core/i18n/... ./core/worker/... ./core/cache/... ./core/hook/... ./core/api/...
 
+# Every Go file under core/ starts with this two-line license header. The year
+# is the project's first publication year and does not change per file.
+LICENSE_COPYRIGHT := // Copyright (c) 2026 0xmattg and GoPress contributors
+LICENSE_SPDX := // SPDX-License-Identifier: MIT
+LICENSE_FILES = git ls-files --cached --others --exclude-standard -- 'core/*.go'
+
 # `make` with no target prints help.
 .DEFAULT_GOAL := help
 
-.PHONY: gopress server gen install uninstall clean help test test-race fmt-check lint
+.PHONY: gopress server gen install uninstall clean help test test-race fmt-check lint license license-check
 
 help:
 	@echo "GoPress — Make targets"
@@ -28,6 +34,8 @@ help:
 	@echo "  make test        Run all Go tests"
 	@echo "  make test-race   Run concurrency regressions with the race detector"
 	@echo "  make lint        Check gofmt and run go vet"
+	@echo "  make license     Add the license header to core/ Go files missing it"
+	@echo "  make license-check  Fail if a core/ Go file lacks the license header"
 	@echo "  make help        Show this message"
 	@echo ""
 	@echo "Quickstart (no global install required):"
@@ -100,3 +108,24 @@ fmt-check:
 
 lint: fmt-check
 	@go vet ./...
+
+# A file that already starts with a different "// Copyright" line is reported
+# instead of getting a second header.
+license:
+	@hdr=$$(printf '%s\n%s' "$(LICENSE_COPYRIGHT)" "$(LICENSE_SPDX)"); \
+	for f in $$($(LICENSE_FILES)); do \
+		[ "$$(head -n 2 "$$f")" = "$$hdr" ] && continue; \
+		if head -n 1 "$$f" | grep -q '^// Copyright'; then \
+			echo "unexpected license header, fix by hand: $$f"; continue; \
+		fi; \
+		{ printf '%s\n\n' "$$hdr"; cat "$$f"; } > "$$f.tmp" && mv "$$f.tmp" "$$f" && echo "added license header: $$f"; \
+	done
+
+license-check:
+	@hdr=$$(printf '%s\n%s' "$(LICENSE_COPYRIGHT)" "$(LICENSE_SPDX)"); \
+	missing=$$(for f in $$($(LICENSE_FILES)); do \
+		[ "$$(head -n 2 "$$f")" = "$$hdr" ] || echo "$$f"; \
+	done); \
+	if [ -n "$$missing" ]; then \
+		echo "license header missing (run 'make license'):"; echo "$$missing"; exit 1; \
+	fi

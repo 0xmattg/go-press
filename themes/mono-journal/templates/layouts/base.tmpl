@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    {{$brand := settingOr .Settings "home_logo_text" "Mono Journal"}}
+    {{$brand := settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "Mono Journal")}}
     <title>{{pageTitleFor . (printf "%s | %s" .Title $brand)}}</title>
     {{with seoHeadFor .}}{{.}}{{else}}<meta name="description" content="{{settingOr $.Settings "site_description" "Independent notes on craft, systems, and a considered life."}}">{{faviconLinks (settingOr $.Settings "site_icon" "")}}{{end}}
     <link rel="preconnect" href="https://fonts.googleapis.com">

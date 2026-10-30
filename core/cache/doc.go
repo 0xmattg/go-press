@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 // Package cache contains GoPress's layered cache primitives.
 //
 // The cache Manager reads through an in-process L1 cache first and an optional

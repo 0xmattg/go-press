@@ -2,7 +2,7 @@
 <footer class="ff-footer">
     <div class="ff-footer-brand">
         <span class="ff-logo-mark" aria-hidden="true"><span></span></span>
-        <span>{{settingOr .Settings "home_logo_text" "FloraFi"}}</span>
+        <span>{{settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "FloraFi")}}</span>
     </div>
     <p>{{settingOr .Settings "footer_text" "Built for stability. Designed for growth."}}</p>
     <div class="ff-footer-links">

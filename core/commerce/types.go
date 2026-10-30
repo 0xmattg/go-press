@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 package commerce
 
 // Address is a customer billing or shipping address. Flat and provider-neutral;

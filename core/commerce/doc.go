@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 // Package commerce defines the generic e-commerce extension contracts that the
 // GoPress core exposes to a commerce engine plugin and its satellite plugins
 // (payment gateways, shipping carriers, tax providers).

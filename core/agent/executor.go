@@ -1,3 +1,32 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
+// Package agent is the protocol-neutral runtime for machine clients of GoPress.
+//
+// Core and extensions register Tools (a name, a JSON input schema, mutability,
+// a risk level, and a permission requirement or resolver) in a Registry.
+// Transport plugins such as gopress-mcp only translate their protocol into a
+// Call; they make no authorization decisions. Executor is the one enforcement
+// point every call passes through, in this order:
+//
+//  1. Reload the Principal from its credential, so revoked credentials and
+//     changed roles apply immediately.
+//  2. Validate the arguments against the tool schema, within size and depth
+//     limits.
+//  3. Authorize with the credential's scopes AND the account's current RBAC
+//     role. *_own actions count only when the resolved resource owner is the
+//     principal.
+//  4. Apply the site-wide risk policy: read-only by default, with write tools
+//     enabled one by one.
+//  5. Record an audit event before anything runs.
+//  6. For write tools, require an idempotency key and replay the stored result
+//     for a repeated key instead of executing twice.
+//  7. Run the handler under a timeout and audit the outcome.
+//
+// Credentials keep only a digest of their bearer secret, and audit events
+// never store argument values. Tools reuse core domain services such as the
+// content command service instead of writing tables directly, so agents are
+// held to the same invariants as the admin.
 package agent
 
 import (

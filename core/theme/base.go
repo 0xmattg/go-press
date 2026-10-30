@@ -1,3 +1,30 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
+// Default front-end runtime shared by themes.
+//
+// BaseTheme turns the core content model into rendered pages so a theme only
+// supplies templates, assets, and its own custom routes. ServeHTTP is the
+// front controller the Engine's NoRoute dispatcher calls for every public
+// request. It tries, in order: theme routes registered with AddRoute (HEAD
+// falls back to GET), the home page, then rewrite.Engine resolution into a
+// taxonomy archive, a content archive, or a single item, and finally 404.
+//
+// Two template systems are supported. Page bundles (templates/pages/*.tmpl
+// compiled with LoadPageBundle around layouts/base.tmpl and partials/) are
+// tried first, using names derived from the content type, its rewrite slug,
+// and the type's declared templates; a per-item page_template meta can select
+// a bundle explicitly. Otherwise the WordPress-style hierarchy in hierarchy.go
+// is resolved against the classic template set. Both execute the "base"
+// template.
+//
+// Every query goes through the request's content and taxonomy scopes, so
+// plugins such as multilang can partition results without the theme knowing.
+// Archives list published items only, and single views 404 for anything not
+// published. SEO metadata comes from the shared SEOBuilder plus site option
+// overrides, and BaseFuncMap provides the helpers every theme template can
+// rely on.
+
 package theme
 
 import (
@@ -220,6 +247,7 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 			}
 			return t.In(siteLoc).Format("2006-01-02 15:04")
 		}
+		engineFuncs["currentYear"] = func() int { return time.Now().In(siteLoc).Year() }
 		rw := b.App.RewriteEngine()
 		seo := b.App.SEOBuilder()
 		if rw != nil {

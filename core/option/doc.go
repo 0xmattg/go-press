@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 // Package option provides cached key-value configuration for GoPress.
 //
 // Options are persisted in the database and autoloaded into memory during

@@ -3,8 +3,8 @@
 <footer class="tt-footer">
     <div class="tt-footer-card">
         <div>
-            <strong>{{settingOr $s "company_name" "TerraTrail"}}</strong>
-            <p>{{settingOr $s "company_description" "Curated mountain travel, flexible transport, and local guide planning for thoughtful travelers."}}</p>
+            <strong>{{settingOr $s "company_name" (settingOr $s "site_name" "TerraTrail")}}</strong>
+            <p>{{settingOr $s "company_description" (settingOr $s "site_description" "Curated mountain travel, flexible transport, and local guide planning for thoughtful travelers.")}}</p>
         </div>
         <nav class="tt-footer-links" aria-label="Footer navigation">
             <a href="{{langPrefixURL .Ctx "/about"}}">About</a>
@@ -40,7 +40,7 @@
             </div>
             {{end}}
         </div>
-        <p class="tt-copyright">{{settingOr $s "footer_text" "© 2026 TerraTrail. Travel planning made calmer."}}</p>
+        <p class="tt-copyright">{{settingOr $s "footer_text" (printf "© %d %s" currentYear (settingOr $s "site_name" "TerraTrail"))}}</p>
     </div>
 </footer>
 {{end}}

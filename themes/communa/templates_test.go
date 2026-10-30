@@ -22,7 +22,7 @@ func TestThemeConfigAndInterfaces(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse theme.toml: %v", err)
 	}
-	if cfg.Theme.Name != "Communa" || cfg.Theme.Version != "1.0.14" {
+	if cfg.Theme.Name != "Communa" || cfg.Theme.Version != "1.0.15" {
 		t.Fatalf("unexpected metadata: %+v", cfg.Theme)
 	}
 	names := map[string]bool{}

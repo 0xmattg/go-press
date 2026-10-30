@@ -20,7 +20,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>{{settingOr .Settings "footer_text" "© 2026 FinNews. All rights reserved."}}</p>
+            <p>{{settingOr .Settings "footer_text" (printf "© %d %s" currentYear (settingOr .Settings "site_name" "FinNews"))}}</p>
         </div>
     </div>
 </footer>

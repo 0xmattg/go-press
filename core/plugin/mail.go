@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 package plugin
 
 import "github.com/0xmattg/go-press/core/mail"

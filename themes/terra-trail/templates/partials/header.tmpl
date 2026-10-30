@@ -1,14 +1,14 @@
 {{define "header"}}
 {{$s := .Settings}}
 <header class="tt-header">
-    <a class="tt-brand" href="{{langPrefixURL .Ctx "/"}}" aria-label="{{settingOr $s "company_name" "TerraTrail"}} home">
+    <a class="tt-brand" href="{{langPrefixURL .Ctx "/"}}" aria-label="{{settingOr $s "company_name" (settingOr $s "site_name" "TerraTrail")}} home">
         {{$logoImage := settingOr $s "home_logo_image" ""}}
         {{if $logoImage}}
         <img class="tt-brand-image" src="{{$logoImage}}" alt="" aria-hidden="true">
         {{else}}
         <span class="tt-brand-mark" aria-hidden="true"></span>
         {{end}}
-        {{settingOr $s "home_logo_text" "TerraTrail"}}
+        {{settingOr $s "home_logo_text" (settingOr $s "site_name" "TerraTrail")}}
     </a>
     <button class="tt-nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false">
         <span></span><span></span>

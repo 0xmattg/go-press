@@ -2,7 +2,7 @@
 <footer class="mj-footer">
     <div class="mj-shell mj-footer-grid">
         <div>
-            <a class="mj-footer-brand" href="{{langPrefixURL .Ctx "/"}}">{{settingOr .Settings "home_logo_text" "Mono Journal"}}</a>
+            <a class="mj-footer-brand" href="{{langPrefixURL .Ctx "/"}}">{{settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "Mono Journal")}}</a>
             <p>{{settingOr .Settings "footer_text" "Thoughtfully made notes for the long term."}}</p>
         </div>
         <nav aria-label="Footer navigation">

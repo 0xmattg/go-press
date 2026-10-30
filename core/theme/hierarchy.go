@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 package theme
 
 // ResolveTemplate returns an ordered list of template names to try,
