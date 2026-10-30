@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/0xmattg/go-press/core/dbschema"
 	"github.com/0xmattg/go-press/pkg/dbprefix"
 
 	"gorm.io/gorm"
@@ -116,8 +117,10 @@ func (HDCounter) TableName() string { return tbl("hd_counters") }
 
 // --- repository helpers (use p.db) ---
 
+// autoMigrate uses dbschema so the deposit dedupe index (ux_usdt_deposit_v2)
+// also exists on this site's table when several sites share one schema.
 func (p *Plugin) autoMigrate() error {
-	return p.db.AutoMigrate(migrationModels()...)
+	return dbschema.AutoMigrate(p.db, migrationModels()...)
 }
 
 // backfillLegacyRows upgrades invoices created before network/currency snapshots

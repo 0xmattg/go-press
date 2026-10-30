@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/0xmattg/go-press/core/dbschema"
+
 	"gorm.io/gorm"
 )
 
@@ -17,9 +19,10 @@ func NewRepository(db *gorm.DB) *Repository {
 	return &Repository{db: db}
 }
 
-// AutoMigrate creates or updates the plugin tables.
+// AutoMigrate creates or updates the plugin tables. dbschema keeps the named
+// translation indexes on this site's tables when sites share a schema.
 func (r *Repository) AutoMigrate() error {
-	return r.db.AutoMigrate(
+	return dbschema.AutoMigrate(r.db,
 		&Translation{}, &Language{}, &StringTranslation{}, &MenuTranslation{},
 		&TaxonomyTranslationGroup{}, &TaxonomyTranslation{},
 	)
@@ -139,7 +142,9 @@ func (r *Repository) NextTrid() (uint, error) {
 func (r *Repository) CreateTranslation(t *Translation) error {
 	// Validate: no duplicate content_id→language in same trid
 	var count int64
-	r.db.Model(&Translation{}).Where("trid = ? AND language_code = ?", t.Trid, t.LanguageCode).Count(&count)
+	if err := r.db.Model(&Translation{}).Where("trid = ? AND language_code = ?", t.Trid, t.LanguageCode).Count(&count).Error; err != nil {
+		return err
+	}
 	if count > 0 {
 		return fmt.Errorf("translation already exists for trid=%d lang=%s", t.Trid, t.LanguageCode)
 	}

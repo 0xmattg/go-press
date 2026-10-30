@@ -18,6 +18,7 @@ var (
 	ErrContentNotFound     = errors.New("content not found")
 	ErrContentReadOnly     = errors.New("content type is read-only")
 	ErrReservedSlug        = errors.New("content slug conflicts with a reserved route")
+	ErrSlugRequired        = errors.New("content slug is required")
 	ErrUnsupportedMeta     = errors.New("content meta key is not declared by the content type")
 	ErrInvalidStatus       = errors.New("content status is invalid")
 	ErrReorderUnsupported  = errors.New("content type does not support sorting")
@@ -107,10 +108,62 @@ func IsReservedRootlessSlug(registry *Registry, slug string) bool {
 	return false
 }
 
-// Create validates and atomically persists a content row and its core-owned
-// meta. Extension-owned fields continue to use extension hooks after this
-// command completes.
-func (s *CommandService) Create(ctx context.Context, item *Content, meta map[string]string) error {
+// MutationOption adjusts a single Create or Update command.
+type MutationOption func(*mutationOptions)
+
+type mutationOptions struct {
+	uniqueSlug   bool
+	participants []TxParticipant
+}
+
+// TxParticipant writes data that belongs to the same save as a content row,
+// such as taxonomy relationships, inside the command's transaction. It runs
+// after the row and its core meta are written; returning an error rolls the
+// whole save back and no content event fires.
+type TxParticipant func(tx *gorm.DB, item *Content) error
+
+// WithTxParticipant adds a TxParticipant to one Create or Update command.
+// Participants run in the order they were added.
+func WithTxParticipant(participant TxParticipant) MutationOption {
+	return func(o *mutationOptions) {
+		if participant != nil {
+			o.participants = append(o.participants, participant)
+		}
+	}
+}
+
+func runParticipants(tx *gorm.DB, item *Content, participants []TxParticipant) error {
+	for _, participant := range participants {
+		if err := participant(tx, item); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// WithUniqueSlug makes the command replace item.Slug with the first free slug
+// derived from it within the request scopes of ctx, reserved inside the write
+// transaction so concurrent writers cannot both claim it. Use it when the slug
+// is new or was changed; leave it off for edits that keep the stored slug.
+func WithUniqueSlug() MutationOption {
+	return func(o *mutationOptions) { o.uniqueSlug = true }
+}
+
+func applyMutationOptions(opts []MutationOption) mutationOptions {
+	var o mutationOptions
+	for _, opt := range opts {
+		if opt != nil {
+			opt(&o)
+		}
+	}
+	return o
+}
+
+// Create validates and atomically persists a content row, its core-owned meta,
+// and any TxParticipant writes. Extension-owned fields that are not
+// participants continue to use extension hooks after this command completes.
+// When the transaction rolls back, item keeps its submitted slug and no ID.
+func (s *CommandService) Create(ctx context.Context, item *Content, meta map[string]string, opts ...MutationOption) error {
 	if item == nil {
 		return errors.New("content is required")
 	}
@@ -124,29 +177,46 @@ func (s *CommandService) Create(ctx context.Context, item *Content, meta map[str
 	if err := s.validateMutation(definition, item, meta); err != nil {
 		return err
 	}
+	options := applyMutationOptions(opts)
 	ctx = nonNilContext(ctx)
 	sanitizeContent(item)
+	submittedSlug := item.Slug
 	err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if options.uniqueSlug {
+			slug, err := ReserveUniqueSlug(ctx, tx, item.Type, item.Slug, 0)
+			if err != nil {
+				return err
+			}
+			item.Slug = slug
+		}
 		if err := tx.Omit("Meta").Create(item).Error; err != nil {
 			return err
 		}
-		return saveDeclaredMeta(tx, item.ID, meta)
+		if err := saveMeta(tx, item.ID, meta); err != nil {
+			return err
+		}
+		return runParticipants(tx, item, options.participants)
 	})
-	if err == nil {
-		s.notify(ctx, MutationCreated, item, meta)
+	if err != nil {
+		// The insert was rolled back; do not let callers treat the ID GORM
+		// assigned during the transaction as an existing row.
+		item.ID = 0
+		item.Slug = submittedSlug
+		return err
 	}
-	return err
+	s.notify(ctx, MutationCreated, item, meta)
+	return nil
 }
 
 // Update atomically persists a content row and its core-owned meta after
 // verifying both the supplied and stored rows belong to contentType.
-func (s *CommandService) Update(ctx context.Context, contentType string, item *Content, meta map[string]string) error {
-	return s.UpdateOptimistic(ctx, contentType, item, meta, time.Time{})
+func (s *CommandService) Update(ctx context.Context, contentType string, item *Content, meta map[string]string, opts ...MutationOption) error {
+	return s.UpdateOptimistic(ctx, contentType, item, meta, time.Time{}, opts...)
 }
 
 // UpdateOptimistic applies a full framework Content update in one transaction.
 // A non-zero expectedUpdatedAt prevents an Agent from overwriting a newer edit.
-func (s *CommandService) UpdateOptimistic(ctx context.Context, contentType string, item *Content, meta map[string]string, expectedUpdatedAt time.Time) error {
+func (s *CommandService) UpdateOptimistic(ctx context.Context, contentType string, item *Content, meta map[string]string, expectedUpdatedAt time.Time, opts ...MutationOption) error {
 	if item == nil || item.ID == 0 {
 		return ErrContentNotFound
 	}
@@ -160,8 +230,10 @@ func (s *CommandService) UpdateOptimistic(ctx context.Context, contentType strin
 	if err := s.validateMutation(definition, item, meta); err != nil {
 		return err
 	}
+	options := applyMutationOptions(opts)
 	ctx = nonNilContext(ctx)
 	sanitizeContent(item)
+	submittedSlug, submittedUpdatedAt := item.Slug, item.UpdatedAt
 	err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var stored Content
 		if err := tx.First(&stored, item.ID).Error; err != nil {
@@ -175,6 +247,13 @@ func (s *CommandService) UpdateOptimistic(ctx context.Context, contentType strin
 		}
 		if !expectedUpdatedAt.IsZero() && !stored.UpdatedAt.Equal(expectedUpdatedAt) {
 			return ErrOptimisticLock
+		}
+		if options.uniqueSlug {
+			slug, err := ReserveUniqueSlug(ctx, tx, contentType, item.Slug, item.ID)
+			if err != nil {
+				return err
+			}
+			item.Slug = slug
 		}
 		now := s.now()
 		updates := contentUpdateColumns(item, now)
@@ -191,15 +270,17 @@ func (s *CommandService) UpdateOptimistic(ctx context.Context, contentType strin
 		}
 		item.CreatedAt = stored.CreatedAt
 		item.UpdatedAt = now
-		if err := saveDeclaredMeta(tx, item.ID, meta); err != nil {
+		if err := saveMeta(tx, item.ID, meta); err != nil {
 			return err
 		}
-		return nil
+		return runParticipants(tx, item, options.participants)
 	})
-	if err == nil {
-		s.notify(ctx, MutationUpdated, item, meta)
+	if err != nil {
+		item.Slug, item.UpdatedAt = submittedSlug, submittedUpdatedAt
+		return err
 	}
-	return err
+	s.notify(ctx, MutationUpdated, item, meta)
+	return nil
 }
 
 // PublishOne, MoveToTrash, and Restore are intentionally separate commands so
@@ -469,28 +550,6 @@ func declaredMetaKeys(definition *ContentTypeDef) map[string]struct{} {
 		allowed["embed_code"] = struct{}{}
 	}
 	return allowed
-}
-
-func saveDeclaredMeta(tx *gorm.DB, contentID uint, meta map[string]string) error {
-	for key, value := range meta {
-		var row ContentMeta
-		result := tx.Where("content_id = ? AND meta_key = ?", contentID, key).First(&row)
-		switch {
-		case result.Error == nil:
-			row.MetaValue = value
-			if err := tx.Save(&row).Error; err != nil {
-				return err
-			}
-		case errors.Is(result.Error, gorm.ErrRecordNotFound):
-			row = ContentMeta{ContentID: contentID, MetaKey: key, MetaValue: value}
-			if err := tx.Create(&row).Error; err != nil {
-				return err
-			}
-		default:
-			return result.Error
-		}
-	}
-	return nil
 }
 
 func nonNilContext(ctx context.Context) context.Context {

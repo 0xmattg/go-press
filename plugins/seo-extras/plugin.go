@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 
 	"github.com/0xmattg/go-press/core"
 	"github.com/0xmattg/go-press/core/content"
@@ -169,15 +170,28 @@ func (p *Plugin) saveFields(_ context.Context, args ...interface{}) {
 		{metaKeyImage, strings.TrimSpace(c.PostForm("_seo_image"))},
 		{metaKeyRobots, strings.TrimSpace(c.PostForm("_seo_robots"))},
 	}
-	for _, kv := range pairs {
-		if kv.value == "" {
-			// DeleteMeta keeps absence unambiguous: the read path treats
-			// missing keys as "use default", so storing empty strings would
-			// just make later reads ambiguous.
-			_ = p.engine.Content.DeleteMeta(item.ID, kv.key)
-		} else {
-			_ = p.engine.Content.SaveMeta(item.ID, kv.key, kv.value)
+	// The four fields are written together: a failure leaves the previous
+	// values intact and is reported so the admin shows a failed save.
+	err := p.engine.DB.Transaction(func(tx *gorm.DB) error {
+		contents := content.NewRepository(tx)
+		for _, kv := range pairs {
+			if kv.value == "" {
+				// DeleteMeta keeps absence unambiguous: the read path treats
+				// missing keys as "use default", so storing empty strings would
+				// just make later reads ambiguous.
+				if err := contents.DeleteMeta(item.ID, kv.key); err != nil {
+					return err
+				}
+				continue
+			}
+			if err := contents.SaveMeta(item.ID, kv.key, kv.value); err != nil {
+				return err
+			}
 		}
+		return nil
+	})
+	if err != nil {
+		c.Error(fmt.Errorf("seo-extras: save SEO fields: %w", err)).SetType(gin.ErrorTypePrivate)
 	}
 }
 

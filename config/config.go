@@ -39,6 +39,29 @@ type ServerConfig struct {
 	Host string `mapstructure:"host" toml:"host"`
 	Port int    `mapstructure:"port" toml:"port"`
 	Mode string `mapstructure:"mode" toml:"mode"`
+	// TrustedProxies lists the reverse proxies (IPs or CIDRs) allowed to
+	// report the client address through X-Forwarded-For / X-Real-IP. Leave
+	// empty to trust only loopback, which fits a reverse proxy on the same
+	// host; requests from any other peer are attributed to the peer itself.
+	TrustedProxies []string `mapstructure:"trusted_proxies" toml:"trusted_proxies,omitempty"`
+}
+
+// DefaultTrustedProxies trusts only a reverse proxy running on the same host.
+var DefaultTrustedProxies = []string{"127.0.0.1", "::1"}
+
+// TrustedProxyList returns the configured trusted proxies with blank entries
+// removed, or DefaultTrustedProxies when none are configured.
+func (s ServerConfig) TrustedProxyList() []string {
+	proxies := make([]string, 0, len(s.TrustedProxies))
+	for _, proxy := range s.TrustedProxies {
+		if proxy = strings.TrimSpace(proxy); proxy != "" {
+			proxies = append(proxies, proxy)
+		}
+	}
+	if len(proxies) == 0 {
+		return append([]string(nil), DefaultTrustedProxies...)
+	}
+	return proxies
 }
 
 type PGConfig struct {

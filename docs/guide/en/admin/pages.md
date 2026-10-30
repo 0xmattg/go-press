@@ -31,6 +31,8 @@ A published page with slug `about` is served at `/about`. Resolution happens **l
 
 For that reason, saving a page whose slug collides with a system route (`admin`, `api`, `static`, `sitemap.xml`, …) or an existing archive/taxonomy prefix (`blog`, `products`, `category`, …) is rejected — the page would otherwise be unreachable. Choose a different slug when prompted.
 
+When a new or edited slug is already used by another item of the same content type (trashed items included), saving appends `-1`, `-2`, and so on, as WordPress does; the edit page's permalink shows the final address. Saving without changing the slug never renames existing content. This applies to every content type, not only pages.
+
 > This version supports **flat** page URLs (`/about`). `ParentID` organizes pages in the admin but does not add URL nesting (`/about/team`) yet.
 
 ## Page Templates

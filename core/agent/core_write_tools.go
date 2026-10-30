@@ -163,10 +163,6 @@ func coreWriteToolDefinitions(services CoreToolServices) []Tool {
 				if slug == "" {
 					slug = "draft"
 				}
-				slug, err = services.ContentRepo.EnsureUniqueSlugContext(ctx, input.ContentType, slug, 0)
-				if err != nil {
-					return nil, WrapError(CodeInternal, "failed to reserve content slug", err)
-				}
 				commentStatus := strings.TrimSpace(input.CommentStatus)
 				if commentStatus == "" {
 					commentStatus = "open"
@@ -174,7 +170,7 @@ func coreWriteToolDefinitions(services CoreToolServices) []Tool {
 				item := &content.Content{Type: input.ContentType, Status: content.StatusDraft, Title: strings.TrimSpace(input.Title), Slug: slug,
 					Content: input.Content, Excerpt: input.Excerpt, ImageURL: strings.TrimSpace(input.ImageURL), ParentID: input.ParentID,
 					CommentStatus: commentStatus, AuthorID: invocation.Principal.SubjectID}
-				if err := services.ContentCommands.Create(ctx, item, input.Meta); err != nil {
+				if err := services.ContentCommands.Create(ctx, item, input.Meta, content.WithUniqueSlug()); err != nil {
 					return nil, contentCommandError(err)
 				}
 				return ResultForResource(contentMutation(item), input.ContentType, item.ID), nil
@@ -208,7 +204,11 @@ func coreWriteToolDefinitions(services CoreToolServices) []Tool {
 				if err := applyContentPatch(ctx, services.ContentRepo, definition, item, input); err != nil {
 					return nil, err
 				}
-				if err := services.ContentCommands.UpdateOptimistic(ctx, input.ContentType, item, input.Meta, expected); err != nil {
+				var opts []content.MutationOption
+				if input.Slug != nil {
+					opts = append(opts, content.WithUniqueSlug())
+				}
+				if err := services.ContentCommands.UpdateOptimistic(ctx, input.ContentType, item, input.Meta, expected, opts...); err != nil {
 					return nil, contentCommandError(err)
 				}
 				return ResultForResource(contentMutation(item), input.ContentType, item.ID), nil
@@ -383,11 +383,8 @@ func applyContentPatch(ctx context.Context, repo *content.Repository, definition
 		if slug == "" {
 			return NewError(CodeInvalidArguments, "slug cannot be empty")
 		}
-		unique, err := repo.EnsureUniqueSlugContext(ctx, item.Type, slug, item.ID)
-		if err != nil {
-			return WrapError(CodeInternal, "failed to reserve content slug", err)
-		}
-		item.Slug = unique
+		// Made unique by the update command inside its transaction.
+		item.Slug = slug
 		changed = true
 	}
 	if input.Content != nil {
@@ -493,7 +490,8 @@ func contentCommandError(err error) error {
 		return NewError(CodeNotFound, "content not found")
 	case errors.Is(err, content.ErrOptimisticLock):
 		return NewError(CodeConflict, "content changed since it was read")
-	case errors.Is(err, content.ErrInvalidTransition), errors.Is(err, content.ErrReservedSlug), errors.Is(err, content.ErrUnsupportedMeta), errors.Is(err, content.ErrInvalidStatus):
+	case errors.Is(err, content.ErrInvalidTransition), errors.Is(err, content.ErrReservedSlug), errors.Is(err, content.ErrSlugRequired),
+		errors.Is(err, content.ErrUnsupportedMeta), errors.Is(err, content.ErrInvalidStatus):
 		return WrapError(CodeInvalidArguments, "content mutation was rejected", err)
 	default:
 		return WrapError(CodeInternal, "content mutation failed", err)

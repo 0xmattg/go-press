@@ -6,7 +6,7 @@
     </div>
 </div>
 <div class="card">
-    <form method="POST" action="/admin/{{.Slug}}/{{if .Item}}{{.Item.ID}}/edit{{else}}new{{end}}{{if .BackQuery}}?{{.BackQuery}}{{end}}" id="contentForm">
+    <form method="POST" action="/admin/{{.Slug}}/{{if and .Item .Item.ID}}{{.Item.ID}}/edit{{else}}new{{end}}{{if .BackQuery}}?{{.BackQuery}}{{end}}" id="contentForm">
         <div class="content-edit-layout" data-content-edit-layout>
         <div class="content-edit-main" id="contentEditMain">
         <div class="form-group">

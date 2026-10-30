@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/0xmattg/go-press/core/dbschema"
+
 	"gorm.io/gorm"
 )
 
@@ -22,7 +24,7 @@ type challengeStore interface {
 func newChallengeRepository(db *gorm.DB) *challengeRepository { return &challengeRepository{db: db} }
 
 func (r *challengeRepository) AutoMigrate() error {
-	return r.db.AutoMigrate(&walletChallenge{})
+	return dbschema.AutoMigrate(r.db, &walletChallenge{})
 }
 
 func (r *challengeRepository) Create(ctx context.Context, challenge *walletChallenge) error {

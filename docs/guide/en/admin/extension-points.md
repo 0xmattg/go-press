@@ -28,6 +28,16 @@ The `seo-extras` plugin uses this hook to append a collapsible SEO panel with fi
 
 Plugins can listen to `admin.content.saved` and persist additional form values. This keeps plugin data separate from the core content model while still making it part of the editorial workflow.
 
+Use `engine.Content.SaveMeta(item.ID, key, value)` for content meta. It runs in its own transaction under a lock on the content/key pair: concurrent first saves of a key leave a single row, existing duplicate rows are all updated to the new value, and database errors are returned instead of being mistaken for a missing row. Check the error and report it with `c.Error(err)` so the admin shows a failed save instead of a success notice.
+
+Save order and transaction boundaries:
+
+1. The content row, the meta fields declared by its content type, and its category/tag relationships commit in **one transaction**. If any step fails, everything rolls back and the admin shows the form again with the error, so nothing is left half saved.
+2. `admin.content.saved` fires after that transaction commits. Plugin fields are saved there; when they fail, the content itself is already saved, so report the failure with `c.Error(err)` or the admin will show a success notice.
+3. A plugin that writes several fields should write them in one transaction (for example `engine.DB.Transaction` with `content.NewRepository(tx)`) so it never saves only some of them.
+
+Extensions that call `CommandService.Create` / `Update` directly can join that transaction with `content.WithTxParticipant(func(tx *gorm.DB, item *content.Content) error)`. Participants run after the content row and meta are written; returning an error rolls the whole save back and fires no content event.
+
 ## Content List Tabs
 
 The admin exposes `admin.HookContentListTabs` for plugins that need additional list filters. The multilingual plugin uses it to add language tabs and counts to content list pages.

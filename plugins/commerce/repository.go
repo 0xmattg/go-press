@@ -4,6 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/0xmattg/go-press/core/dbschema"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -32,9 +34,10 @@ func migrationModels() []interface{} {
 	}
 }
 
-// AutoMigrate creates/updates all commerce tables. Idempotent.
+// AutoMigrate creates/updates all commerce tables. Idempotent. dbschema keeps
+// the named refund index on this site's table when sites share a schema.
 func (r *Repository) AutoMigrate() error {
-	return r.db.AutoMigrate(migrationModels()...)
+	return dbschema.AutoMigrate(r.db, migrationModels()...)
 }
 
 // GetProductData returns the commerce data for a product content row, or a

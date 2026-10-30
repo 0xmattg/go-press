@@ -893,6 +893,7 @@ func (e *Engine) SetupRouter() *gin.Engine {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	r := gin.Default()
+	applyTrustedProxies(r, e.Config.Server.TrustedProxyList())
 
 	// Global middleware
 	r.Use(middleware.SecurityHeaders())
@@ -1005,6 +1006,18 @@ func (e *Engine) SetupRouter() *gin.Engine {
 
 	e.Router = r
 	return r
+}
+
+// applyTrustedProxies limits which peers may report the client address through
+// X-Forwarded-For / X-Real-IP. Gin trusts every peer by default, which lets any
+// client spoof c.ClientIP() and evade IP-keyed throttles such as the admin
+// login limiter. An invalid list falls back to loopback-only so a typo never
+// reopens spoofing.
+func applyTrustedProxies(r *gin.Engine, proxies []string) {
+	if err := r.SetTrustedProxies(proxies); err != nil {
+		logger.Error("Invalid server.trusted_proxies; trusting loopback only", "error", err)
+		_ = r.SetTrustedProxies(config.DefaultTrustedProxies)
+	}
 }
 
 // rebuildRouter reapplies every active extension's middleware and route hooks,

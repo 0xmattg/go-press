@@ -28,6 +28,7 @@ theme = "mono-journal"
 host = "0.0.0.0"
 port = 8080
 mode = "release"             # 生产用 release；本地调试可用 debug
+# trusted_proxies = ["127.0.0.1", "::1"]  # 可信反向代理；留空即只信任本机
 
 [pg]
 user = "postgres"
@@ -80,6 +81,24 @@ completed = true
 - `timezone` — 站点时区，使用 IANA 时区名（如 `Asia/Shanghai`、`America/New_York`）或 `Local`。后台发布时间输入会按该时区解析后以 UTC 存储，前台和后台展示再转回该时区。老站点没有该字段时会兼容回退到服务器本地时区；建议在「系统设置 > 网站设置」里保存一次明确值。
 - `theme` — 启动时激活的主题 slug
 
+### `[server]`
+
+- `host` / `port` — HTTP 监听地址。前面有同机反向代理（如 Nginx）时，建议 `host = "127.0.0.1"`，只让反向代理访问应用端口
+- `mode` — 生产用 `release`；`debug` 会输出详细的 Gin 日志（包括每次路由重建时的路由表），只适合本地调试
+- `trusted_proxies` — 可信反向代理的 IP 或 CIDR 列表。只有来自这些地址的请求，其 `X-Forwarded-For` / `X-Real-IP` 才会被用来识别客户端 IP；其他请求一律以 TCP 连接对端地址为准。**留空时只信任本机回环（`127.0.0.1`、`::1`）**，适合反向代理与 GoPress 在同一台机器上的部署。非法条目会被记录错误并回退为只信任本机，不会放开伪造
+
+客户端 IP 用于后台登录限流、REST API 限流、身份插件限流、审计日志和访问统计。如果信任了不该信任的来源，客户端就能伪造 IP 绕过这些限制，所以：
+
+- 反向代理与应用同机：保持默认即可。Nginx 建议用连接地址覆盖转发头，而不是追加：
+
+  ```nginx
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $remote_addr;
+  ```
+
+- 反向代理在其他机器上：把它的内网地址写进 `trusted_proxies`，例如 `["10.0.0.5"]`
+- 前面还有 CDN：除了本机代理，还要把 CDN 回源网段写进 `trusted_proxies`，GoPress 会沿 `X-Forwarded-For` 从右往左跳过可信代理，取第一个不可信的地址作为客户端 IP
+
 ### `[pg]`
 
 - `table_prefix` — 类似 WordPress 的 `wp_`，**多个 GoPress 实例可共享同一数据库**，靠前缀隔离。详见 [数据库表前缀](../reference/database-prefix.md)
@@ -105,6 +124,7 @@ completed = true
 - **后台会话 Cookie** — `HttpOnly` + `SameSite=Lax`，且当 `[site].url` 为 `https://` 时自动加 `Secure`（HTTPS 部署不会再明文传输后台 Token）。因此请把生产站点的 `url` 配成 `https://…`
 - **CSRF 同源校验** — 后台所有改状态请求（含登录、插件后台路由）校验 `Origin`/`Referer` 与站点同源，跨站请求被拒（`403`）
 - **登录限流** — 后台登录按来源 IP 限制失败次数（默认 5 分钟内 10 次失败即临时拦截，返回 `429`），失败尝试写入审计日志
+- **客户端 IP 防伪造** — 只信任 `[server].trusted_proxies`（默认仅本机回环）转发的 `X-Forwarded-For` / `X-Real-IP`，直接访问的客户端无法通过伪造请求头冒充其他 IP 绕过上述限流
 - **账号状态实时生效** — 禁用账号或调整角色后，其已签发的后台/API Token 立即失效或按新角色鉴权，无需等到 Token 过期
 - **前台 Session 可即时撤销** — 前台用户 Session 存在数据库中且每次请求复核账号状态；停用账号后，下一次请求会撤销数据库 Session 并清除浏览器 Cookie
 - **上传文件防 XSS** — 上传目录中 `svg`/`html`/`xml` 等可执行文档在返回时强制 `Content-Disposition: attachment` + CSP `sandbox`，避免被当作页面在站点域下执行脚本；通过 `<img>` 内联引用的图片不受影响，照常显示

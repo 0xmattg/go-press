@@ -35,10 +35,18 @@ content.AddContentScope(c, func(db *gorm.DB) *gorm.DB {
   应用全部 Scope。
 - `Repository.FindBySlugScoped` 及其它 context-aware 仓储方法 — 让详情查询
   与列表查询处于相同 Scope。
-- `EnsureUniqueSlugScoped` — 在当前 Scope 内校验 Slug 唯一性。
+- `content.ReserveUniqueSlug(ctx, tx, type, slug, excludeID)` — 在写入事务内、
+  当前 Scope 中选出第一个可用的 Slug（`slug`、`slug-1`、`slug-2`…）。每个被检查
+  的候选值都会加上事务级 advisory lock，并发写入同一 Slug 时会依次执行，不会
+  都认为它可用。
+- `Repository.CreateWithUniqueSlug(ctx, item)` 与 `CommandService` 的
+  `content.WithUniqueSlug()` 选项 — 在同一事务内完成 Slug 预留与写入的便捷入口。
+- `EnsureUniqueSlugScoped` / `EnsureUniqueSlugContext` — 已废弃：查重发生在写入
+  事务之外，并发时可能分配出相同的 Slug，仅为兼容保留。
 
 同 Slug 的多语言内容依赖这项一致性：列表、详情、保存和后台操作必须消费同一
-请求 Context。
+请求 Context。Slug 只在同一内容类型内唯一；回收站中的内容继续占用自己的
+Slug，恢复时不会冲突。
 
 ## Taxonomy Scope
 

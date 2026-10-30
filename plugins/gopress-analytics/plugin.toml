@@ -1,6 +1,6 @@
 [plugin]
 slug = "gopress-analytics"
 name = "GoPress Analytics"
-version = "1.0.0"
+version = "1.0.1"
 description = "First-party self-hosted analytics for page views, visitors, traffic trends, and top pages."
 author = "GoPress Team"
