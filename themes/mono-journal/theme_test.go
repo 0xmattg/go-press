@@ -27,7 +27,7 @@ func TestThemeConfigAndInterfaces(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse theme.toml: %v", err)
 	}
-	if cfg.Theme.Name != "Mono Journal" || cfg.Theme.Version != "1.1.1" {
+	if cfg.Theme.Name != "Mono Journal" || cfg.Theme.Version != "1.1.2" {
 		t.Fatalf("unexpected metadata: %+v", cfg.Theme)
 	}
 	if cfg.Requires.Core == "" || len(cfg.Requires.Plugins) != 1 ||

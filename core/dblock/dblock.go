@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 // Package dblock provides PostgreSQL transaction-scoped advisory locks for
 // "check, then write" sequences that have no database constraint to lean on,
 // such as picking a free slug or allocating a group ID.

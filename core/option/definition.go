@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 package option
 
 // Definition describes a core option that is owned by GoPress itself.

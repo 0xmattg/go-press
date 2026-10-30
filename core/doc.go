@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 // Package core wires the GoPress runtime together.
 //
 // The Engine type is the application container. It owns long-lived framework

@@ -1,3 +1,29 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
+// Package installer is the first-run setup wizard, served before a site has a
+// completed configuration.
+//
+// cmd/server runs it in place of the Engine when the site's config.toml is
+// missing or install.completed is false. It is a self-contained Gin app with
+// embedded templates and an English/Chinese catalog, and it has three steps:
+//
+//  1. Pick the installer language and accept the beta and update-check
+//     notice. Acceptance sets a policy cookie HMAC-signed with a per-process
+//     secret, which every later step requires.
+//  2. Enter the PostgreSQL settings (connection test, schema, table prefix,
+//     and listen port). The config file is written at this point, with a
+//     freshly generated JWT secret.
+//  3. Enter the site identity, theme, and first administrator. A config under
+//     sites/default/ moves to a directory named after the site host.
+//
+// Finishing step 3 migrates the target database, creates the super_admin
+// account, writes the initial options, and saves config.toml with
+// install.completed set. The ActivationFunc from cmd/server then builds the
+// real Engine and swaps it in through the shared HandlerSwitcher, so the
+// process moves from installer to live site without a restart. Like the
+// Engine, the installer trusts forwarded client addresses only from loopback
+// proxies.
 package installer
 
 import (
@@ -632,7 +658,23 @@ func (i *Installer) initializeSite(cfg *config.Config, values siteValues, adminP
 	}
 
 	store := option.NewStore(db)
-	optionsToSet := map[string]string{
+	for key, value := range initialSiteOptions(cfg, values) {
+		if err := store.Set(key, value); err != nil {
+			return fmt.Errorf("%s: %w", installerT(lang, "error.initial_setting_failed", key), err)
+		}
+	}
+
+	cfg.Install.Completed = true
+	cfg.Install.InstalledAt = time.Now().Format(time.RFC3339)
+	return config.Save(i.configPath, cfg)
+}
+
+// initialSiteOptions returns the options a fresh install writes. They are core
+// keys only, whatever theme was chosen: themes derive their own brand defaults
+// (company name, copyright line) from site_name and site_description, so the
+// installer never needs to know a theme or its private setting keys.
+func initialSiteOptions(cfg *config.Config, values siteValues) map[string]string {
+	return map[string]string{
 		"active_theme":                  cfg.Site.Theme,
 		"site_name":                     values.SiteName,
 		"site_description":              values.Tagline,
@@ -645,24 +687,6 @@ func (i *Installer) initializeSite(cfg *config.Config, values siteValues, adminP
 		updatecheck.KeyPolicyVersion:    cfg.Install.UpdatePolicyVersion,
 		updatecheck.KeyPolicyAcceptedAt: cfg.Install.UpdatePolicyAcceptedAt,
 	}
-	if cfg.Site.Theme == "modern-company" {
-		optionsToSet["company_name"] = values.SiteName
-		optionsToSet["company_description"] = values.Tagline
-		optionsToSet["company_email"] = values.AdminEmail
-		optionsToSet["company_year"] = strconv.Itoa(time.Now().Year())
-	}
-	if cfg.Site.Theme == "financial-news" {
-		optionsToSet["footer_text"] = fmt.Sprintf("© %d %s. Powered by GoPress.", time.Now().Year(), values.SiteName)
-	}
-	for key, value := range optionsToSet {
-		if err := store.Set(key, value); err != nil {
-			return fmt.Errorf("%s: %w", installerT(lang, "error.initial_setting_failed", key), err)
-		}
-	}
-
-	cfg.Install.Completed = true
-	cfg.Install.InstalledAt = time.Now().Format(time.RFC3339)
-	return config.Save(i.configPath, cfg)
 }
 
 func (i *Installer) render(c *gin.Context, status int, data pageData) {

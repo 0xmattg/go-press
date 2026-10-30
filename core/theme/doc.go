@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 // Package theme defines the runtime contract between GoPress core and themes.
 //
 // Themes implement Theme and usually embed BaseTheme for routing, template

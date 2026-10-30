@@ -1,3 +1,23 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
+// Package api serves the public, read-only REST API under /api/v1.
+//
+// Routes are generated from the content registry: generic /content and
+// /content/:id endpoints, plus /<rewrite slug> and /<rewrite slug>/:id for
+// every type with a public archive, and /types for discovery. Only published
+// items of archive-backed types whose publish time has passed are returned,
+// and every query runs through the request's content and taxonomy scopes, so
+// the API exposes exactly what the rendered site shows, including multilang's
+// language partitioning. Responses share one envelope: success plus data and
+// pagination meta, or an error code and message.
+//
+// The Engine mounts the middleware from middleware.go in this order: CORS, a
+// per-client-IP rate limit (forwarded addresses count only from trusted
+// proxies), optional API keys (an empty key list leaves the API public), and
+// an optional Bearer JWT that identifies the caller without widening what is
+// visible. There are no write routes; content changes go through the admin,
+// public submission, or the Agent runtime.
 package api
 
 import (

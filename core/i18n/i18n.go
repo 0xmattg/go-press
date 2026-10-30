@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 // Package i18n provides core-level internationalization for GoPress.
 //
 // This is a SYSTEM-LEVEL package - always available regardless of plugins.

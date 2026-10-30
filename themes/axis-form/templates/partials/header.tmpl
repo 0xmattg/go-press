@@ -2,9 +2,9 @@
 {{$s := .Settings}}
 {{$logoImage := index $s "home_logo_image"}}
 <header class="af-header">
-    <a class="af-brand" href="{{langPrefixURL .Ctx "/"}}" aria-label="{{settingOr $s "company_name" "Axis Form"}} home">
+    <a class="af-brand" href="{{langPrefixURL .Ctx "/"}}" aria-label="{{settingOr $s "company_name" (settingOr $s "site_name" "Axis Form")}} home">
         {{if $logoImage}}<img class="af-brand-logo" src="{{$logoImage}}" alt="" aria-hidden="true">{{end}}
-        <span class="af-brand-text">{{settingOr $s "home_logo_text" "Axis Form"}}</span>
+        <span class="af-brand-text">{{settingOr $s "home_logo_text" (settingOr $s "site_name" "Axis Form")}}</span>
     </a>
     <button class="af-nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false">
         <span></span><span></span>

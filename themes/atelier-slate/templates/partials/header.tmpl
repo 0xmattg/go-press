@@ -1,19 +1,19 @@
 {{define "header"}}
 <header class="as-header" id="site-header">
     <div class="as-container as-nav-shell">
-        <a class="as-brand" href="{{langPrefixURL $.Ctx "/"}}" aria-label="{{settingOr .Settings "home_logo_text" "Atelier Slate"}}">
+        <a class="as-brand" href="{{langPrefixURL $.Ctx "/"}}" aria-label="{{settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "Atelier Slate")}}">
             {{$combined := eq (settingOr .Settings "home_logo_combined" "") "1"}}
             {{$combinedImage := settingOr .Settings "home_logo_combined_image" ""}}
             {{if and $combined $combinedImage}}
-                <img class="as-brand-combined" src="{{$combinedImage}}" alt="{{settingOr .Settings "home_logo_text" "Atelier Slate"}}">
+                <img class="as-brand-combined" src="{{$combinedImage}}" alt="{{settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "Atelier Slate")}}">
             {{else}}
                 {{$logoImage := settingOr .Settings "home_logo_image" ""}}
                 {{if $logoImage}}
-                    <img class="as-brand-image" src="{{$logoImage}}" alt="{{settingOr .Settings "home_logo_text" "Atelier Slate"}}">
+                    <img class="as-brand-image" src="{{$logoImage}}" alt="{{settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "Atelier Slate")}}">
                 {{else}}
                     <span class="as-brand-mark">{{settingOr .Settings "home_logo_glyph" "A"}}</span>
                 {{end}}
-                <span>{{settingOr .Settings "home_logo_text" "Atelier Slate"}}</span>
+                <span>{{settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "Atelier Slate")}}</span>
             {{end}}
         </a>
         <button class="as-nav-toggle" id="nav-toggle" aria-label="Toggle navigation"><span></span><span></span></button>

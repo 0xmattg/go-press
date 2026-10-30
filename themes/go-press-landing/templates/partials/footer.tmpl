@@ -5,11 +5,11 @@
             <div class="footer-brand">
                 <a href="/" class="nav-logo">
                     {{if settingOr .Settings "home_logo_image" ""}}
-                    {{responsiveImage (settingOr .Settings "home_logo_image" "") (settingOr .Settings "home_logo_text" "NovaPulse") "logo-img" "180px" "lazy"}}
+                    {{responsiveImage (settingOr .Settings "home_logo_image" "") (settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "NovaPulse")) "logo-img" "180px" "lazy"}}
                     {{else}}
                     <span class="logo-glyph">{{settingOr .Settings "home_logo_glyph" "N"}}</span>
                     {{end}}
-                    <span class="logo-text">{{settingOr .Settings "home_logo_text" "NovaPulse"}}</span>
+                    <span class="logo-text">{{settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "NovaPulse")}}</span>
                 </a>
                 <p class="footer-desc">{{settingOr .Settings "home_footer_desc" "Enterprise-grade AI infrastructure for teams that ship fast and scale fearlessly."}}</p>
             </div>
@@ -42,7 +42,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>{{settingOr .Settings "home_footer_copyright" "© 2026 NovaPulse AI. All rights reserved."}}</p>
+            <p>{{settingOr .Settings "home_footer_copyright" (printf "© %d %s" currentYear (settingOr .Settings "site_name" "NovaPulse AI"))}}</p>
             <div class="footer-legal">
                 <a href="#">Privacy</a>
                 <a href="#">Terms</a>

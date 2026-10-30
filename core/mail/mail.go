@@ -1,3 +1,20 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
+// Package mail is the single outbound email path for GoPress.
+//
+// Themes, plugins, and core notifications build a Message and call
+// Sender.Send; only Service knows the transport. Send returns ErrDisabled
+// unless mail is enabled in the site configuration, validates the settings,
+// fills defaults such as the From address, and then runs the hook pipeline:
+// the mail.message filter may rewrite the message, mail.before_send fires
+// before delivery, and mail.sent or mail.failed report the result. Delivery
+// uses SMTP with no encryption, STARTTLS, or implicit TLS, through the go-mail
+// driver by default or the standard library driver when configured.
+//
+// The admin mail screen updates settings at runtime with SetConfig, so no
+// restart is needed. Plugins should obtain a Sender through
+// plugin.MailSender instead of asserting the concrete Engine.
 package mail
 
 import (

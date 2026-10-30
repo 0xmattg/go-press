@@ -37,6 +37,9 @@ jobs:
       - name: Check formatting
         run: make fmt-check
 
+      - name: Check license headers
+        run: make license-check
+
       - name: Vet
         run: go vet ./...
 

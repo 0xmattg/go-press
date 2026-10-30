@@ -1,5 +1,5 @@
 {{define "header"}}
-{{$brand := settingOr .Settings "home_logo_text" "Communa"}}
+{{$brand := settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "Communa")}}
 <header class="cmn-header" id="cmn-header" data-site-header>
     <div class="cmn-container cmn-header-inner">
         <a class="cmn-brand" href="{{langPrefixURL .Ctx "/"}}" aria-label="{{$brand}}">

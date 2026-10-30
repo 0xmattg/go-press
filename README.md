@@ -359,4 +359,4 @@ Issues and pull requests are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING
 
 ## License
 
-[MIT License](LICENSE)
+[MIT License](LICENSE). Bundled third-party data keeps its own license; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

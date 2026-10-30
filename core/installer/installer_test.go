@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 package installer
 
 import (
@@ -324,5 +327,39 @@ func TestPrepareSiteConfigPathRenamesDefaultDirectory(t *testing.T) {
 	}
 	if _, err := os.Stat(defaultDir); !os.IsNotExist(err) {
 		t.Fatalf("expected default dir to be renamed away, stat err = %v", err)
+	}
+}
+
+func TestInitialSiteOptionsDoNotDependOnTheme(t *testing.T) {
+	t.Parallel()
+
+	values := siteValues{SiteName: "Acme", Tagline: "Things that work", AdminLanguage: "en", AdminEmail: "owner@acme.test"}
+	var reference map[string]string
+	for _, theme := range []string{"modern-company", "financial-news", "any-other-theme"} {
+		cfg := &config.Config{}
+		cfg.Site.Theme = theme
+		got := initialSiteOptions(cfg, values)
+
+		if got["active_theme"] != theme || got["site_name"] != "Acme" || got["site_description"] != "Things that work" {
+			t.Fatalf("theme %q: core site options not written: %v", theme, got)
+		}
+		for key := range got {
+			if strings.HasPrefix(key, "company_") || strings.HasPrefix(key, "footer_") {
+				t.Fatalf("theme %q: installer wrote theme-owned option %q", theme, key)
+			}
+		}
+		delete(got, "active_theme")
+		if reference == nil {
+			reference = got
+			continue
+		}
+		if len(got) != len(reference) {
+			t.Fatalf("theme %q: option keys differ from other themes: %v vs %v", theme, got, reference)
+		}
+		for key, value := range reference {
+			if got[key] != value {
+				t.Fatalf("theme %q: option %q = %q, want %q", theme, key, got[key], value)
+			}
+		}
 	}
 }

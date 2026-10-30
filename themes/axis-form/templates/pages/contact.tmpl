@@ -8,7 +8,7 @@
 
 <section class="af-contact-grid">
     <div class="af-contact-card">
-        <h2>{{settingOr $s "company_name" "Axis Form"}}</h2>
+        <h2>{{settingOr $s "company_name" (settingOr $s "site_name" "Axis Form")}}</h2>
         <p>{{settingOr $s "company_address" "125 Mercer Street, New York, NY"}}</p>
         <p>{{settingOr $s "company_email" "studio@axisform.example"}}</p>
         <p>{{settingOr $s "company_phone" "+1 212 555 0188"}}</p>

@@ -1,3 +1,16 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
+// Package notification sends core-owned notifications in response to
+// framework events.
+//
+// ContactMessageNotifier is the default consumer. It listens for
+// content.created and, when the new item is a contact_message, emails the
+// configured recipients (falling back to admin_email) on the worker pool, so a
+// theme's contact form only saves content and never waits on SMTP. Sending can
+// be switched off with an option, and plugins can rewrite recipients, subject,
+// and body through the notification.contact_message.* filters without
+// replacing the notifier.
 package notification
 
 import (

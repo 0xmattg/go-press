@@ -10,17 +10,17 @@
                     {{$combinedImage := $footerCombined}}
                     {{if not $combinedImage}}{{$combinedImage = $headerCombined}}{{end}}
                     {{if and $combined $combinedImage}}
-                    <img class="logo-combined" src="{{$combinedImage}}" alt="{{settingOr .Settings "home_logo_text" "Hurricane Techs"}}">
+                    <img class="logo-combined" src="{{$combinedImage}}" alt="{{settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "Hurricane Techs")}}">
                     {{else}}
                     {{if settingOr .Settings "home_logo_image" ""}}
-                    {{responsiveImage (settingOr .Settings "home_logo_image" "") (settingOr .Settings "home_logo_text" "Hurricane Techs") "logo-img" "180px" "lazy"}}
+                    {{responsiveImage (settingOr .Settings "home_logo_image" "") (settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "Hurricane Techs")) "logo-img" "180px" "lazy"}}
                     {{else}}
                     <span class="logo-icon">{{settingOr .Settings "home_logo_glyph" "H"}}</span>
                     {{end}}
-                    <span class="logo-text">{{settingOr .Settings "home_logo_text" "Hurricane Techs"}}</span>
+                    <span class="logo-text">{{settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "Hurricane Techs")}}</span>
                     {{end}}
                 </div>
-                <p>{{.Settings.company_description}}</p>
+                {{with settingOr .Settings "company_description" (settingOr .Settings "site_description" "")}}<p>{{.}}</p>{{end}}
                 <div class="footer-social">
                     {{if .Settings.social_facebook}}<a href="{{.Settings.social_facebook}}" target="_blank" rel="noopener" aria-label="Facebook">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
@@ -42,9 +42,15 @@
             <div class="footer-contact">
                 <h4>{{T $.Ctx "footer_section_contact"}}</h4>
                 <ul>
+                    {{if .Settings.company_email}}
                     <li><strong>{{T $.Ctx "footer_label_email"}}</strong> {{.Settings.company_email}}</li>
+                    {{end}}
+                    {{if .Settings.company_phone}}
                     <li><strong>{{T $.Ctx "footer_label_phone"}}</strong> {{.Settings.company_phone}}</li>
+                    {{end}}
+                    {{if .Settings.company_address}}
                     <li><strong>{{T $.Ctx "footer_label_address"}}</strong> {{.Settings.company_address}}</li>
+                    {{end}}
                     {{if .Settings.company_hours}}
                     <li><strong>{{T $.Ctx "footer_label_hours"}}</strong> {{.Settings.company_hours}}</li>
                     {{end}}
@@ -65,7 +71,8 @@
     </div>
     <div class="footer-bottom">
         <div class="container">
-            <p>&copy; {{.Settings.company_year}} {{settingOr .Settings "footer_copyright_text" "Hurricane Techs. All rights reserved. Cleanroom Solutions Since 2003."}}</p>
+            {{/* A custom copyright text may already contain its own year, so only the generated fallback adds the current one. */}}
+            <p>&copy; {{with .Settings.footer_copyright_text}}{{with $.Settings.company_year}}{{.}} {{end}}{{.}}{{else}}{{settingOr .Settings "company_year" (printf "%d" currentYear)}} {{settingOr .Settings "site_name" "Hurricane Techs"}}{{end}}</p>
         </div>
     </div>
 </footer>

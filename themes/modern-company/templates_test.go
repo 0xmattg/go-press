@@ -2,12 +2,14 @@ package moderncompany
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/gin-gonic/gin"
@@ -413,4 +415,41 @@ func newBaseTemplateTest(t *testing.T) *template.Template {
 		t.Fatalf("parse base template: %v", err)
 	}
 	return tmpl
+}
+
+func TestFooterFallsBackToSiteIdentity(t *testing.T) {
+	theme := NewWithDB(nil, ".")
+	tmpl, err := template.New("footer_test").Funcs(theme.TemplateFuncs()).ParseFiles("templates/partials/footer.tmpl")
+	if err != nil {
+		t.Fatalf("parse footer: %v", err)
+	}
+	render := func(settings map[string]string) string {
+		t.Helper()
+		var out bytes.Buffer
+		if err := tmpl.ExecuteTemplate(&out, "footer", PageData{Settings: settings}); err != nil {
+			t.Fatalf("execute footer: %v", err)
+		}
+		return out.String()
+	}
+
+	// A fresh install stores only core site options.
+	fresh := render(map[string]string{"site_name": "Acme Labs", "site_description": "Precision tools"})
+	year := time.Now().Year()
+	for _, want := range []string{"Acme Labs", "Precision tools", fmt.Sprintf("&copy; %d Acme Labs", year)} {
+		if !strings.Contains(fresh, want) {
+			t.Fatalf("fresh-install footer missing %q:\n%s", want, fresh)
+		}
+	}
+	if strings.Contains(fresh, "Hurricane Techs") {
+		t.Fatalf("fresh-install footer shows the demo brand:\n%s", fresh)
+	}
+	if strings.Contains(fresh, "<li><strong>") {
+		t.Fatalf("fresh-install footer renders empty contact rows:\n%s", fresh)
+	}
+
+	// A custom copyright text may carry its own year; it must not gain a second one.
+	custom := render(map[string]string{"site_name": "Acme Labs", "footer_copyright_text": "2020 Acme Labs Ltd."})
+	if !strings.Contains(custom, "&copy; 2020 Acme Labs Ltd.") || strings.Contains(custom, fmt.Sprintf("%d 2020", year)) {
+		t.Fatalf("custom copyright text was changed:\n%s", custom)
+	}
 }

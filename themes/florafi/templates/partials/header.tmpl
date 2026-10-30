@@ -1,8 +1,8 @@
 {{define "header"}}
 <header class="ff-header" id="site-header">
-    <a href="{{langPrefixURL $.Ctx "/"}}" class="ff-logo" aria-label="{{settingOr .Settings "home_logo_text" "FloraFi"}} home">
+    <a href="{{langPrefixURL $.Ctx "/"}}" class="ff-logo" aria-label="{{settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "FloraFi")}} home">
         <span class="ff-logo-mark" aria-hidden="true"><span></span></span>
-        <span class="ff-logo-text">{{settingOr .Settings "home_logo_text" "FloraFi"}}</span>
+        <span class="ff-logo-text">{{settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "FloraFi")}}</span>
     </a>
 
     <button class="ff-nav-toggle" id="ff-nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">

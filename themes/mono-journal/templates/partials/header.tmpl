@@ -1,5 +1,5 @@
 {{define "header"}}
-{{$brand := settingOr .Settings "home_logo_text" "Mono Journal"}}
+{{$brand := settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "Mono Journal")}}
 <header class="mj-header" data-site-header>
     <div class="mj-shell mj-header-inner">
         <a class="mj-brand" href="{{langPrefixURL .Ctx "/"}}" aria-label="{{$brand}}">

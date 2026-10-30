@@ -1,3 +1,28 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
+// Content write path.
+//
+// CommandService is the framework-owned way to change content. Transports
+// (admin handlers, public submission, Agent tools) parse input and enforce
+// RBAC and ownership; this service enforces what must hold for every caller:
+// the item belongs to a registered, writable type, a rootless slug does not
+// shadow a system route, archive, or taxonomy, the status is valid, meta keys
+// are declared by the type, and published items carry a publish time.
+//
+// Create and Update write the row, its declared meta, and any TxParticipant
+// (for example taxonomy relationships) in one transaction. WithUniqueSlug
+// reserves a free slug inside that transaction under an advisory lock.
+// UpdateOptimistic and the single-item status transitions reject stale writes
+// with ErrOptimisticLock, and a failed save leaves the caller's item as
+// submitted. The MutationObserver runs only after commit, and only for Create,
+// Update, and single-item transitions; the Engine turns it into content.*
+// hooks and page-cache invalidation. Bulk operations do not notify.
+//
+// Repository write methods remain for legacy and extension-owned paths, but
+// they bypass this validation and most content events, so new code that
+// mutates content should come through here.
+
 package content
 
 import (

@@ -51,14 +51,14 @@
                     {{$combined := eq (settingOr .Settings "home_logo_combined" "") "1"}}
                     {{$combinedImage := settingOr .Settings "home_logo_combined_image" ""}}
                     {{if and $combined $combinedImage}}
-                    <img class="logo-combined" src="{{$combinedImage}}" alt="{{settingOr .Settings "home_logo_text" "Hurricane Techs"}}">
+                    <img class="logo-combined" src="{{$combinedImage}}" alt="{{settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "Hurricane Techs")}}">
                     {{else}}
                     {{if settingOr .Settings "home_logo_image" ""}}
-                    {{responsiveImage (settingOr .Settings "home_logo_image" "") (settingOr .Settings "home_logo_text" "Hurricane Techs") "logo-img" "180px" "eager"}}
+                    {{responsiveImage (settingOr .Settings "home_logo_image" "") (settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "Hurricane Techs")) "logo-img" "180px" "eager"}}
                     {{else}}
                     <span class="logo-icon">{{settingOr .Settings "home_logo_glyph" "H"}}</span>
                     {{end}}
-                    <span class="logo-text">{{settingOr .Settings "home_logo_text" "Hurricane Techs"}}</span>
+                    <span class="logo-text">{{settingOr .Settings "home_logo_text" (settingOr .Settings "site_name" "Hurricane Techs")}}</span>
                     {{end}}
                 </a>
                 <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">

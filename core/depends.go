@@ -1,3 +1,23 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
+// Theme → plugin dependency resolution.
+//
+// A theme may declare, in the [requires] table of its theme.toml, a core
+// version constraint and the plugins it needs (slug, semver constraint, and an
+// optional flag). This is the only dependency GoPress allows between
+// extensions: it is declarative, resolved here by core, and never gives the
+// theme's code access to the plugin. Plugin → plugin dependencies do not exist.
+//
+// Each requirement resolves to a DepState. Present but inactive plugins are
+// activated automatically at boot (ReconcileActiveThemeDependencies) and before
+// a theme switch (ActivateThemeDependencies), except default-inactive opt-in
+// modules, which the operator must enable (DepNeedsEnable). A missing plugin, a
+// version mismatch, or an unmet core constraint cannot be fixed at runtime: it
+// blocks SwitchTheme unless the plugin requirement is optional, while at boot
+// it is only logged so the site still starts and the admin can surface it.
+// While a theme is active, a plugin it hard-requires cannot be deactivated.
+
 package core
 
 import (

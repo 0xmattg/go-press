@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 // Package media models uploaded files and responsive image derivatives.
 //
 // The media repository stores original upload metadata while MediaVariant rows

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 // Package updatecheck provides the generic GoPress update-check protocol and
 // target registry. Core, themes, and plugins can register independently
 // versioned targets without depending on one another.

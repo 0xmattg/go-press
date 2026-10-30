@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 // Package admin implements the data-driven GoPress CMS interface.
 //
 // Admin screens are generated from the active content registry, repositories,

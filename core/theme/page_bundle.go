@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 // Page bundle loading: composes per-page templates from a shared layout +
 // partials directory. This is the canonical way for themes to compile their
 // page templates so that the funcmap (T, langPrefixURL, currentLang, etc.)

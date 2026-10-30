@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 // Package plugin defines the minimal contract for GoPress plugins.
 //
 // Plugins are compiled into the GoPress binary and activated by the Engine at

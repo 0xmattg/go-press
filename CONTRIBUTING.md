@@ -32,6 +32,20 @@ gopress serve              # or `./build/gopress serve` if not installed via `ma
 
 If some checks depend on PostgreSQL, Redis, or local site configuration, please describe in the PR what you actually ran and which checks were not run.
 
+## Licensing and Sign-Off
+
+GoPress is released under the [MIT License](LICENSE). By contributing, you agree that your contribution is licensed under the same terms.
+
+Every commit in a pull request must be signed off to certify the [Developer Certificate of Origin](https://developercertificate.org/), confirming that you wrote the change or otherwise have the right to submit it under the project's license. `git commit -s` adds the sign-off line:
+
+```text
+Signed-off-by: Your Name <your.email@example.com>
+```
+
+Use your real name or a consistent public identity, and an email address you control.
+
+Go files under `core/` must start with the project license header. `make license` adds it to new files and `make license-check` verifies it; CI runs the check.
+
 ## Documentation, Themes, and Plugins
 
 Documentation changes should stay neutral, verifiable, and user-focused. For statements about performance, compatibility, or security, provide reproduction steps, constraints, or clearly label them as target behavior when applicable.

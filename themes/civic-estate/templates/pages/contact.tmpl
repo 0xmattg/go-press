@@ -8,7 +8,7 @@
 
 <section class="ce-contact-grid">
     <div class="ce-contact-card">
-        <h2>{{settingOr $s "company_name" "Civic Estate"}}</h2>
+        <h2>{{settingOr $s "company_name" (settingOr $s "site_name" "Civic Estate")}}</h2>
         <p>{{settingOr $s "company_address" "220 Market Street, Chicago, IL"}}</p>
         <p>{{settingOr $s "company_email" "hello@civicestate.example"}}</p>
         <p>{{settingOr $s "company_phone" "+1 212 555 0188"}}</p>

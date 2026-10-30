@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 package content
 
 import "github.com/0xmattg/go-press/pkg/dbprefix"

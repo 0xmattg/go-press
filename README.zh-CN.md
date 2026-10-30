@@ -348,4 +348,4 @@ Gin / GORM / PostgreSQL / Redis / 官方 MCP Go SDK / golang-jwt / Viper + TOML 
 
 ## 开源协议
 
-[MIT License](LICENSE)
+[MIT License](LICENSE)。随仓库分发的第三方数据沿用其自身协议，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 // Package content defines GoPress's unified content model.
 //
 // All first-party and theme-declared content types share the same Content table

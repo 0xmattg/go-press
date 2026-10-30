@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 // Package rewrite owns public URL resolution, SEO metadata, redirects, and
 // sitemap generation.
 //

@@ -1,3 +1,26 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
+// Role-based access control.
+//
+// A role is a level plus a set of "resource.action" capabilities. The defaults
+// follow WordPress: super_admin holds the "*.*" wildcard, and editor, author,
+// contributor, and subscriber hold explicit lists. There is no per-resource
+// wildcard. Can is a pure capability lookup; *_own actions such as
+// content.update_own only say the role may act on its own resources, and the
+// caller must check ownership against the stored row.
+//
+// Capabilities can change at runtime. Extensions call GrantCapability on
+// activation and keep the returned CapabilityGrant; RevokeCapabilityGrant
+// removes only what that grant added, so a capability a role already held is
+// never taken away. The Engine uses the same mechanism to turn a theme's
+// public_submission policy into capabilities for the active theme.
+//
+// Protected routes must check a capability; a valid login alone is not
+// authorization. Admin handlers call checkPermission, extension routes wrap
+// admin.RequirePermission, and Agent tools combine credential scopes with
+// RBAC in agent.Authorizer.
+
 package user
 
 import "sync"

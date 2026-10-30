@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 // Package dbschema keeps GORM-managed schemas correct when several GoPress
 // sites share one PostgreSQL schema and are separated only by table prefixes.
 //

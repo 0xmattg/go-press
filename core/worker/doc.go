@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 // Package worker provides lightweight background execution for GoPress.
 //
 // Pool runs asynchronous tasks on a bounded goroutine set. Scheduler dispatches

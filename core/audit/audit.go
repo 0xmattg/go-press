@@ -1,3 +1,6 @@
+// Copyright (c) 2026 0xmattg and GoPress contributors
+// SPDX-License-Identifier: MIT
+
 // Package audit provides protocol- and UI-neutral persistence for framework
 // audit events. Admin, Agent, REST, and future transports should depend on this
 // package instead of defining their own audit tables.
