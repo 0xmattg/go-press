@@ -40,12 +40,12 @@
                 {{$defaultLang := .DefaultLang}}
                 {{range $idx, $lang := .Languages}}
                 <tr>
-                    <td>{{$lang.Code}}<input type="hidden" name="plugin_multi-language_lang_{{$idx}}_code" value="{{$lang.Code}}"></td>
-                    <td>{{$lang.Flag}} {{$lang.Name}}<input type="hidden" name="plugin_multi-language_lang_{{$idx}}_name" value="{{$lang.Name}}"><input type="hidden" name="plugin_multi-language_lang_{{$idx}}_flag" value="{{$lang.Flag}}"></td>
+                    <td>{{$lang.Code}}<input type="hidden" name="plugin_multilang_lang_{{$idx}}_code" value="{{$lang.Code}}"></td>
+                    <td>{{$lang.Flag}} {{$lang.Name}}<input type="hidden" name="plugin_multilang_lang_{{$idx}}_name" value="{{$lang.Name}}"><input type="hidden" name="plugin_multilang_lang_{{$idx}}_flag" value="{{$lang.Flag}}"></td>
                     <td>{{$lang.Flag}}</td>
-                    <td><input type="radio" name="plugin_multi-language_default_lang" value="{{$lang.Code}}" {{if $lang.IsDefault}}checked{{end}}></td>
-                    <td><input type="number" name="plugin_multi-language_lang_{{$idx}}_sort" value="{{$lang.SortOrder}}" style="width:60px; padding:0.2rem 0.4rem; border:1px solid #d1d5db; border-radius:4px;"></td>
-                    <td><select name="plugin_multi-language_lang_{{$idx}}_active" style="padding:0.2rem 0.4rem; border:1px solid #d1d5db; border-radius:4px;"><option value="true" {{if $lang.Active}}selected{{end}}>{{X $ "plugin.multilang.ui.009" "启用"}}</option><option value="false" {{if not $lang.Active}}selected{{end}}>{{X $ "plugin.multilang.ui.010" "禁用"}}</option></select></td>
+                    <td><input type="radio" name="plugin_multilang_default_lang" value="{{$lang.Code}}" {{if $lang.IsDefault}}checked{{end}}></td>
+                    <td><input type="number" name="plugin_multilang_lang_{{$idx}}_sort" value="{{$lang.SortOrder}}" style="width:60px; padding:0.2rem 0.4rem; border:1px solid #d1d5db; border-radius:4px;"></td>
+                    <td><select name="plugin_multilang_lang_{{$idx}}_active" style="padding:0.2rem 0.4rem; border:1px solid #d1d5db; border-radius:4px;"><option value="true" {{if $lang.Active}}selected{{end}}>{{X $ "plugin.multilang.ui.009" "启用"}}</option><option value="false" {{if not $lang.Active}}selected{{end}}>{{X $ "plugin.multilang.ui.010" "禁用"}}</option></select></td>
                 </tr>
                 {{end}}
             </tbody>
@@ -179,7 +179,7 @@
         {{range .TaxonomyPolicies}}
         <label class="ml-tax-policy-card">
             <span><strong>{{adminTaxonomyLabel $.AdminLanguage .Type .Label}}</strong><code>{{.Type}}</code></span>
-            <select name="plugin_multi-language_taxonomy_{{.Type}}_mode" aria-label="{{adminTaxonomyLabel $.AdminLanguage .Type .Label}} {{X $ "plugin.multilang.taxonomy.mode" "翻译模式"}}">
+            <select name="plugin_multilang_taxonomy_{{.Type}}_mode" aria-label="{{adminTaxonomyLabel $.AdminLanguage .Type .Label}} {{X $ "plugin.multilang.taxonomy.mode" "翻译模式"}}">
                 <option value="shared" {{if eq .Mode "shared"}}selected{{end}}>{{X $ "plugin.multilang.taxonomy.shared" "共享（兼容现有行为）"}}</option>
                 <option value="translated_only" {{if eq .Mode "translated_only"}}selected{{end}}>{{X $ "plugin.multilang.taxonomy.independent" "按语言独立翻译"}}</option>
             </select>
@@ -476,8 +476,8 @@
 
     <div class="form-group" style="margin-bottom:1.5rem;">
         <label>{{X $ "plugin.multilang.ui.062" "浏览器语言自动检测"}}</label>
-        <select name="plugin_multi-language_auto_detect" style="padding:0.4rem 0.8rem; border:1px solid #d1d5db; border-radius:6px;">
-            {{$autoDetect := settingOr .Settings "plugin_multi-language_auto_detect" "true"}}
+        <select name="plugin_multilang_auto_detect" style="padding:0.4rem 0.8rem; border:1px solid #d1d5db; border-radius:6px;">
+            {{$autoDetect := settingOr .Settings "plugin_multilang_auto_detect" "true"}}
             <option value="true" {{if eq $autoDetect "true"}}selected{{end}}>{{X $ "plugin.multilang.ui.063" "启用 (根据 Accept-Language 头自动选择)"}}</option>
             <option value="false" {{if eq $autoDetect "false"}}selected{{end}}>{{X $ "plugin.multilang.ui.064" "禁用 (始终使用默认语言)"}}</option>
         </select>
@@ -1025,7 +1025,7 @@ function saveMenuAssignment() {
     selects.forEach(function(sel) {
         form.append(sel.getAttribute('data-field'), sel.value);
     });
-    fetch('/admin/plugins/multi-language/menu-translate', {
+    fetch('/admin/plugins/multilang/menu-translate', {
         method: 'POST',
         body: form
     }).then(function(resp) {
@@ -1075,13 +1075,13 @@ function addLanguageRow() {
     var tbody = document.getElementById('langRows');
     var idx = tbody.children.length;
     var row = document.createElement('tr');
-    row.innerHTML = '<td>' + code + '<input type="hidden" name="plugin_multi-language_lang_' + idx + '_code" value="' + code + '"></td>'
-        + '<td>' + flag + ' ' + name + '<input type="hidden" name="plugin_multi-language_lang_' + idx + '_name" value="' + name + '">'
-        + '<input type="hidden" name="plugin_multi-language_lang_' + idx + '_flag" value="' + flag + '"></td>'
+    row.innerHTML = '<td>' + code + '<input type="hidden" name="plugin_multilang_lang_' + idx + '_code" value="' + code + '"></td>'
+        + '<td>' + flag + ' ' + name + '<input type="hidden" name="plugin_multilang_lang_' + idx + '_name" value="' + name + '">'
+        + '<input type="hidden" name="plugin_multilang_lang_' + idx + '_flag" value="' + flag + '"></td>'
         + '<td>' + flag + '</td>'
-        + '<td><input type="radio" name="plugin_multi-language_default_lang" value="' + code + '"></td>'
-        + '<td><input type="number" name="plugin_multi-language_lang_' + idx + '_sort" value="' + idx + '" style="width:60px; padding:0.2rem 0.4rem; border:1px solid #d1d5db; border-radius:4px;"></td>'
-        + '<td><select name="plugin_multi-language_lang_' + idx + '_active" style="padding:0.2rem 0.4rem; border:1px solid #d1d5db; border-radius:4px;"><option value="true" selected>{{X $ "plugin.multilang.ui.009" "启用"}}</option><option value="false">{{X $ "plugin.multilang.ui.010" "禁用"}}</option></select></td>';
+        + '<td><input type="radio" name="plugin_multilang_default_lang" value="' + code + '"></td>'
+        + '<td><input type="number" name="plugin_multilang_lang_' + idx + '_sort" value="' + idx + '" style="width:60px; padding:0.2rem 0.4rem; border:1px solid #d1d5db; border-radius:4px;"></td>'
+        + '<td><select name="plugin_multilang_lang_' + idx + '_active" style="padding:0.2rem 0.4rem; border:1px solid #d1d5db; border-radius:4px;"><option value="true" selected>{{X $ "plugin.multilang.ui.009" "启用"}}</option><option value="false">{{X $ "plugin.multilang.ui.010" "禁用"}}</option></select></td>';
     tbody.appendChild(row);
 
     // Reset inputs
@@ -1157,7 +1157,7 @@ function createTranslation(contentID, targetLang, langName) {
         form.append('content_id', contentID);
         form.append('target_lang', targetLang);
         form.append('publish', publish);
-        fetch('/admin/plugins/multi-language/translate', {
+        fetch('/admin/plugins/multilang/translate', {
             method: 'POST',
             body: form
         }).then(function(resp) {
@@ -1224,8 +1224,8 @@ function createTaxonomyTranslation(button) {
         form.append('slug', slug);
         form.append('description', modal.querySelector('#mlTaxDescription').value);
         closeTaxonomyModal();
-        fetch('/admin/plugins/multi-language/taxonomy-translate', {method:'POST', body:form})
-            .then(function(resp) { window.location.href = resp.redirected ? resp.url : '/admin/plugins/multi-language/settings#taxonomy-translations'; })
+        fetch('/admin/plugins/multilang/taxonomy-translate', {method:'POST', body:form})
+            .then(function(resp) { window.location.href = resp.redirected ? resp.url : '/admin/plugins/multilang/settings#taxonomy-translations'; })
             .catch(function(err) { alert(mlText.createFailed + ': ' + err.message); });
     };
 }
@@ -1237,7 +1237,7 @@ function saveStringTranslations() {
     inputs.forEach(function(input) {
         form.append(input.name, input.value);
     });
-    fetch('/admin/plugins/multi-language/string-translate', {
+    fetch('/admin/plugins/multilang/string-translate', {
         method: 'POST',
         body: form
     }).then(function(resp) {
@@ -1287,7 +1287,7 @@ function saveOptionTranslations() {
     inputs.forEach(function(input) {
         form.append(input.name, input.value);
     });
-    fetch('/admin/plugins/multi-language/option-translate', {
+    fetch('/admin/plugins/multilang/option-translate', {
         method: 'POST',
         body: form
     }).then(function(resp) {
@@ -1308,7 +1308,7 @@ function saveSiteOptionTranslations() {
     inputs.forEach(function(input) {
         form.append(input.name, input.value);
     });
-    fetch('/admin/plugins/multi-language/site-option-translate', {
+    fetch('/admin/plugins/multilang/site-option-translate', {
         method: 'POST',
         body: form
     }).then(function(resp) {

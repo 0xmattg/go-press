@@ -87,6 +87,12 @@ type DepositRow struct {
 func (DepositRow) TableName() string { return tbl("deposits") }
 
 // ChainCursor is the last safely-scanned block per chain (incremental scanning).
+//
+// LEGACY(usdt-chain-cursor): replaced by NetworkCursor in commerce-usdt 0.2.0;
+// scans no longer read or write it. It stays in migrationModels and
+// tableBaseNames so installs that already have the table keep it migrated and
+// registered as plugin-owned for diagnostics and tooling. Remove only together
+// with a migration that drops the old table on existing installs.
 type ChainCursor struct {
 	Chain            string `gorm:"size:32;primaryKey"`
 	LastScannedBlock uint64
@@ -126,6 +132,12 @@ func (p *Plugin) autoMigrate() error {
 // backfillLegacyRows upgrades invoices created before network/currency snapshots
 // were introduced. It uses the current configured identity and never guesses
 // when that identity is unavailable.
+//
+// LEGACY(usdt-invoice-snapshots): invoices and deposits created before
+// commerce-usdt 0.2.0 lack the network, currency and watch-window snapshots
+// that settlement now requires. It runs on every activation, right after
+// autoMigrate, and its query matches no rows once backfilled. Remove only once
+// release notes stop supporting direct upgrades from versions before 0.2.0.
 func (p *Plugin) backfillLegacyRows(cfg config) error {
 	if p == nil || p.db == nil || cfg.networkKey() == "" {
 		return nil

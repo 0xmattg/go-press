@@ -15,6 +15,11 @@ import (
 // example config. Because the source is public, any deployment still using it
 // (or an empty secret) would let anyone forge admin sessions, so the server
 // refuses to boot in that state.
+//
+// LEGACY(jwt-placeholder-secret): config files copied from older examples may
+// still contain this value; JWTSecretInsecure rejects it at startup. This is a
+// security guard, not dead code: keep it for as long as any deployment might
+// run a config file created from an old example.
 const LegacyPlaceholderJWTSecret = "go-press-change-this-secret-in-production"
 
 type Config struct {

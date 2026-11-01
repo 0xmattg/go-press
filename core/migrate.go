@@ -33,12 +33,15 @@ func MigrateDB(db *gorm.DB) error {
 	if err := dbschema.AutoMigrate(db, coreModels()...); err != nil {
 		return err
 	}
+	// LEGACY(taxonomy-slug-index): see migrateTaxonomySlugIndex.
 	if err := migrateTaxonomySlugIndex(db); err != nil {
 		return err
 	}
+	// LEGACY(user-nullable-credentials): see migrateLegacyUserColumns.
 	if err := migrateLegacyUserColumns(db.Migrator()); err != nil {
 		return err
 	}
+	// LEGACY(media-updated-at): see backfillMediaUpdatedAt.
 	return backfillMediaUpdatedAt(db)
 }
 
@@ -46,6 +49,13 @@ func MigrateDB(db *gorm.DB) error {
 // Core command services continue enforcing the exact historical rule when no
 // request scope is active, while extensions may safely reuse a slug in another
 // scoped variant. Existing rows and relationships remain untouched.
+//
+// LEGACY(taxonomy-slug-index): sites installed before core 0.6.65 still carry
+// the old unique index on terms.slug; this replaces it with a plain index. It
+// runs on every boot from MigrateDB, after AutoMigrate, and does nothing once
+// the unique index is gone, so keeping it costs one index lookup. Remove only
+// after a versioned migration (audit A15) owns this upgrade, or once release
+// notes stop supporting direct upgrades from versions before 0.6.65.
 func migrateTaxonomySlugIndex(db *gorm.DB) error {
 	if db == nil {
 		return errors.New("database is required")
@@ -72,6 +82,13 @@ func migrateTaxonomySlugIndex(db *gorm.DB) error {
 	return nil
 }
 
+// backfillMediaUpdatedAt copies created_at into a missing media updated_at.
+//
+// LEGACY(media-updated-at): media rows created before core 0.6.62 have no
+// updated_at, which optimistic metadata updates rely on. It runs on every boot
+// from MigrateDB as one UPDATE that matches no rows once backfilled. Remove
+// under the same conditions as LEGACY(taxonomy-slug-index), for versions
+// before 0.6.62.
 func backfillMediaUpdatedAt(db *gorm.DB) error {
 	if db == nil {
 		return errors.New("database is required")
@@ -88,6 +105,13 @@ type columnAlterer interface {
 // GORM AutoMigrate does not relax an existing NOT NULL constraint when a
 // model field becomes nullable. Explicitly align credentials that external-only
 // accounts are allowed to omit.
+//
+// LEGACY(user-nullable-credentials): users tables created by releases that
+// predate external-only accounts (this step was added in core 0.6.16) declare
+// email and password_hash NOT NULL, so wallet or OAuth sign-ups would fail.
+// It runs on every boot from MigrateDB; re-applying the column definition is
+// harmless. Remove under the same conditions as LEGACY(taxonomy-slug-index),
+// for versions before 0.6.16.
 func migrateLegacyUserColumns(migrator columnAlterer) error {
 	for _, field := range []string{"Email", "PasswordHash"} {
 		if err := migrator.AlterColumn(&user.User{}, field); err != nil {

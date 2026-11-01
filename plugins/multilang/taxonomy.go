@@ -47,7 +47,7 @@ type TaxonomyTranslationView struct {
 }
 
 func taxonomyModeOption(taxonomyType string) string {
-	return "plugin_multi-language_taxonomy_" + taxonomyType + "_mode"
+	return "plugin_multilang_taxonomy_" + taxonomyType + "_mode"
 }
 
 func (p *Plugin) taxonomyMode(taxonomyType string) string {
@@ -250,7 +250,7 @@ func (p *Plugin) taxonomySettingsData(data map[string]interface{}, languages []L
 
 func (p *Plugin) handleCreateTaxonomyTranslation(c *gin.Context) {
 	redirect := func(key, message string) {
-		c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?"+key+"="+url.QueryEscape(message)+"#taxonomy-translations")
+		c.Redirect(http.StatusFound, "/admin/plugins/multilang/settings?"+key+"="+url.QueryEscape(message)+"#taxonomy-translations")
 	}
 	sourceID64, err := strconv.ParseUint(c.PostForm("taxonomy_id"), 10, 64)
 	targetLang := strings.ToLower(strings.TrimSpace(c.PostForm("target_lang")))
@@ -435,6 +435,16 @@ func (p *Plugin) prefixedTaxonomyPath(lang, taxonomyType, slug string) string {
 	return "/" + lang + path
 }
 
+// redirectLegacyTaxonomyAlias sends old term URLs to the term for the request
+// language once a taxonomy uses independent per-language translations.
+//
+// LEGACY(multilang-taxonomy-alias): while a taxonomy is shared, every language
+// uses the default-language term URL, and search engines index those URLs.
+// After the site switches that taxonomy to translated-only, this 301-redirects
+// them to the translated term, and adds the language prefix when it is missing.
+// It runs in the language middleware for GET/HEAD requests to two-segment
+// taxonomy paths only. Not scheduled for removal: any site can switch modes at
+// any time, which creates new old URLs.
 func (p *Plugin) redirectLegacyTaxonomyAlias(c *gin.Context, originalPath, lang string, hadLanguagePrefix bool) bool {
 	if c == nil || c.Request == nil || (c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead) {
 		return false

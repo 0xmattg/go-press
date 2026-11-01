@@ -69,6 +69,12 @@ var orderTransitions = map[string]map[string]string{
 	},
 	// Legacy orders may already carry this combined state. Keep them operable
 	// while new partial refunds remain in Processing/Completed.
+	//
+	// LEGACY(commerce-partially-refunded): orders partially refunded before the
+	// refund rework in commerce 0.1.0 are stored in this state, and nothing
+	// moves new orders into it. Keep these transitions so those orders can still
+	// be refunded or shipped. Remove only after a data migration maps the state
+	// to Processing/Completed.
 	OrderPartiallyRefunded: {
 		EventRefund:        OrderRefunded,
 		EventPartialRefund: OrderPartiallyRefunded,

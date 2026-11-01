@@ -197,7 +197,7 @@ type RequiresConfig struct {
 
 // PluginRequirement is one entry in [requires].plugins.
 type PluginRequirement struct {
-	// Slug is the required plugin's stable identifier (its Name()), e.g. "multi-language".
+	// Slug is the required plugin's stable identifier (its Name()), e.g. "multilang".
 	Slug string `toml:"slug"`
 	// Version is an optional semver constraint, e.g. ">=2.0.0" or "^1.0". Empty = any version.
 	Version string `toml:"version"`

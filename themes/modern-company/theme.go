@@ -195,12 +195,22 @@ func (t *ModernCompanyTheme) Setup(app coreTheme.App) {
 
 // ServeHTTP delegates frontend routing to BaseTheme. Content archives and singles are resolved from the active content registry and theme.toml rewrite slugs.
 func (t *ModernCompanyTheme) ServeHTTP(c *gin.Context) {
+	// LEGACY(modern-company-taxonomy-filter): see redirectLegacyTaxonomyFilter.
 	if t.redirectLegacyTaxonomyFilter(c) {
 		return
 	}
 	t.BaseTheme.ServeHTTP(c)
 }
 
+// redirectLegacyTaxonomyFilter sends archive URLs filtered by a taxonomy query
+// parameter to the matching taxonomy archive URL.
+//
+// LEGACY(modern-company-taxonomy-filter): before modern-company 1.0.0, archives
+// were filtered with query strings such as ?category=<slug>. Those URLs are
+// still indexed and linked, so they get a 301 to the taxonomy URL. It runs
+// first in ServeHTTP, for GET requests to first-page archives only. Not
+// scheduled for removal; drop it only once the old URLs no longer receive
+// traffic.
 func (t *ModernCompanyTheme) redirectLegacyTaxonomyFilter(c *gin.Context) bool {
 	if t.engine == nil || c == nil || c.Request == nil || c.Request.Method != http.MethodGet {
 		return false

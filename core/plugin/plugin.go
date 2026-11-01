@@ -167,8 +167,8 @@ type LogoProvider interface {
 // Slug returns the stable admin/settings identifier for a plugin.
 //
 // Plugin names are already expected to be URL-safe slugs such as
-// "multi-language" or "seo-extras", so the current implementation returns
-// Name unchanged.
+// "multilang" or "seo-extras" (see ValidSlug), so the current implementation
+// returns Name unchanged.
 func Slug(p Plugin) string {
 	return p.Name()
 }

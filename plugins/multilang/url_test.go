@@ -81,9 +81,9 @@ func TestTaxonomyTranslationRouteRejectsRoleWithoutTaxonomyPermission(t *testing
 	}
 	p := &Plugin{engine: &core.Engine{RBAC: user.NewRBAC()}}
 	r := gin.New()
-	r.POST("/admin/plugins/multi-language/taxonomy-translate", admin.AuthMiddleware(auth), p.handleCreateTaxonomyTranslation)
+	r.POST("/admin/plugins/multilang/taxonomy-translate", admin.AuthMiddleware(auth), p.handleCreateTaxonomyTranslation)
 	form := url.Values{"taxonomy_id": {"1"}, "target_lang": {"zh"}}
-	req := httptest.NewRequest(http.MethodPost, "/admin/plugins/multi-language/taxonomy-translate", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/admin/plugins/multilang/taxonomy-translate", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.AddCookie(&http.Cookie{Name: "admin_token", Value: token})
 	rec := httptest.NewRecorder()
@@ -261,7 +261,7 @@ func TestTaxonomyTranslationRouteCreatesScopedChildWithTranslatedParent(t *testi
 	}
 
 	r := gin.New()
-	r.POST("/admin/plugins/multi-language/taxonomy-translate", func(c *gin.Context) {
+	r.POST("/admin/plugins/multilang/taxonomy-translate", func(c *gin.Context) {
 		c.Set("admin_role", user.RoleEditor)
 		p.handleCreateTaxonomyTranslation(c)
 	})
@@ -269,7 +269,7 @@ func TestTaxonomyTranslationRouteCreatesScopedChildWithTranslatedParent(t *testi
 		"taxonomy_id": {strconv.FormatUint(uint64(enChild.ID), 10)}, "target_lang": {"zh"},
 		"name": {"新闻"}, "slug": {"xinwen"}, "description": {"中文描述"},
 	}
-	req := httptest.NewRequest(http.MethodPost, "/admin/plugins/multi-language/taxonomy-translate", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/admin/plugins/multilang/taxonomy-translate", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec := httptest.NewRecorder()
 	r.ServeHTTP(rec, req)
@@ -400,11 +400,11 @@ func TestSiteOptionTranslationRouteRejectsSubscriber(t *testing.T) {
 	p := &Plugin{}
 	r := gin.New()
 	r.POST(
-		"/admin/plugins/multi-language/site-option-translate",
+		"/admin/plugins/multilang/site-option-translate",
 		admin.RequirePermission(auth, user.NewRBAC(), "plugin", "update"),
 		p.handleSiteOptionTranslationSave,
 	)
-	req := httptest.NewRequest(http.MethodPost, "/admin/plugins/multi-language/site-option-translate", nil)
+	req := httptest.NewRequest(http.MethodPost, "/admin/plugins/multilang/site-option-translate", nil)
 	req.AddCookie(&http.Cookie{Name: "admin_token", Value: token})
 	rec := httptest.NewRecorder()
 

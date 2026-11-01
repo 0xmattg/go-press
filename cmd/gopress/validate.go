@@ -10,18 +10,23 @@ import (
 	"github.com/0xmattg/go-press/pkg/semver"
 )
 
-// validateExtensionDeps checks, at codegen time, that every theme's declared
-// [requires] can be satisfied by the plugins in this build and that all
-// versions/constraints are valid semver. It returns human-readable problems; the
-// caller prints them as warnings. The authoritative gate is at runtime (boot and
-// theme switch) — this just surfaces problems early, before you ship a build
-// whose active theme can't work.
+// validateExtensionDeps checks, at codegen time, that every extension follows
+// the identity rules (directory name equals a valid slug, no theme/plugin slug
+// clash), that every theme's declared [requires] can be satisfied by the
+// plugins in this build, and that all versions/constraints are valid semver. It
+// returns human-readable problems; the caller prints them as warnings. The
+// authoritative gate is at runtime (boot and theme switch) — this just surfaces
+// problems early, before you ship a build whose active theme can't work.
 func validateExtensionDeps(root string, themes, plugins []string) []string {
 	// Map the plugin's runtime slug (plugin.toml [plugin].slug — which equals its
-	// Name()) to its version. Themes reference plugins by slug, not by directory
-	// name, and the two can differ (dir "multilang" vs slug "multi-language").
+	// Name() and its directory name) to its version.
 	pluginVer := make(map[string]string, len(plugins))
 	var problems []string
+	for _, t := range themes {
+		if !corePlugin.ValidSlug(t) {
+			problems = append(problems, fmt.Sprintf("theme dir %q is not a valid slug (lowercase words joined by single hyphens)", t))
+		}
+	}
 	for _, dir := range plugins {
 		data, err := os.ReadFile(filepath.Join(root, pluginsRelDir, dir, pluginMarker))
 		if err != nil {
@@ -32,6 +37,17 @@ func validateExtensionDeps(root string, themes, plugins []string) []string {
 		if slug == "" {
 			problems = append(problems, fmt.Sprintf("plugin dir %q is missing [plugin].slug in plugin.toml (needed for theme dependencies)", dir))
 			slug = dir
+		}
+		if slug != dir {
+			problems = append(problems, fmt.Sprintf("plugin dir %q declares slug %q; the directory name must equal the slug", dir, slug))
+		}
+		if !corePlugin.ValidSlug(slug) {
+			problems = append(problems, fmt.Sprintf("plugin %q is not a valid slug (lowercase words joined by single hyphens)", slug))
+		}
+		for _, t := range themes {
+			if t == slug {
+				problems = append(problems, fmt.Sprintf("slug %q is used by both a theme and a plugin", slug))
+			}
 		}
 		pluginVer[slug] = meta.Version
 		if meta.Version != "" && !semver.Valid(meta.Version) {

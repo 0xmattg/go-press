@@ -12,12 +12,12 @@
 [requires]
 core = ">=0.7.0"                      # 可选：要求的 GoPress 核心版本（semver 约束）
 plugins = [
-  { slug = "multi-language", version = ">=2.0.0" },
-  { slug = "seo-extras",     version = "^1.0.0", optional = false },
+  { slug = "multilang",  version = ">=2.0.0" },
+  { slug = "seo-extras", version = "^1.0.0", optional = false },
 ]
 ```
 
-- `slug` — 被依赖插件的**运行时标识**（即插件的 `Name()`，也写在插件 `plugin.toml` 的 `[plugin].slug`）。注意 slug 可能与插件**目录名**不同（如目录 `multilang` 的 slug 是 `multi-language`）。
+- `slug` — 被依赖插件的**运行时标识**。插件的 `Name()`、`plugin.toml` 中的 `[plugin].slug`、它在 `plugins/` 下的目录名，三者始终相同。
 - `version` — 可选的 semver 约束（`>=2.0.0`、`^1.0`、`~1.2`、`>=1 <2` 等）。留空表示任意版本。
 - `optional` — 为 `true` 时，依赖不满足只告警、不阻止主题启用。
 - `core` — 可选，对核心版本的约束。
@@ -57,11 +57,13 @@ GoPress 的插件是**编译进二进制**的，没有运行时安装。所以"�
 
 ## 给插件作者：`plugin.toml` 的 slug
 
-要被主题依赖，插件的 `plugin.toml` 必须声明 `slug`，且**与插件的 `Name()` 一致**：
+要被主题依赖，插件的 `plugin.toml` 必须声明 `slug`，且**与插件的 `Name()` 和目录名一致**：
 
 ```toml
 [plugin]
-slug = "multi-language"   # 运行时标识；主题按此 slug 依赖；必须等于 Name()
+slug = "multilang"        # 运行时标识；主题按此 slug 依赖；等于 Name() 和目录名
 name = "Multi-Language"   # 人类可读显示名
 version = "2.0.0"
 ```
+
+slug 由小写字母和数字组成，单词之间用单个连字符连接（如 `seo-extras`、`commerce-usdt`），长度 2–64，不能包含下划线。表名由 slug 推导，把连字符换成下划线（`commerce-usdt` → `<前缀>plgn_commerce_usdt_*`），详见 [CONTRIBUTING.md](https://github.com/0xmattg/go-press/blob/main/CONTRIBUTING.md#extension-identity)。

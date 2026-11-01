@@ -193,6 +193,13 @@ func (r *Repository) SaveMeta(contentID uint, key, value string) error {
 // It then updates every existing row for each key and inserts one only when
 // none exists: legacy duplicate rows stay in agreement instead of diverging,
 // and a failed write is returned rather than mistaken for a missing row.
+//
+// LEGACY(content-meta-duplicates): before core 0.6.83, concurrent saves could
+// insert several rows for the same (content_id, meta_key), and those rows were
+// deliberately left in place. Updating every matching row keeps them
+// consistent, so do not narrow this to the first row. Remove only after a data
+// migration merges the duplicates and adds a unique (content_id, meta_key)
+// constraint.
 func saveMeta(tx *gorm.DB, contentID uint, meta map[string]string) error {
 	if len(meta) == 0 {
 		return nil

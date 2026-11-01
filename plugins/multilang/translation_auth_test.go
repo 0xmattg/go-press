@@ -89,7 +89,7 @@ func postTranslation(t *testing.T, p *Plugin, account *user.User, contentID uint
 		t.Fatal(err)
 	}
 	r := gin.New()
-	r.POST("/admin/plugins/multi-language/translate",
+	r.POST("/admin/plugins/multilang/translate",
 		admin.RequirePermission(p.engine.Auth, p.engine.RBAC, "content", "create"),
 		p.handleCreateTranslation,
 	)
@@ -97,7 +97,7 @@ func postTranslation(t *testing.T, p *Plugin, account *user.User, contentID uint
 	if publish {
 		form.Set("publish", "1")
 	}
-	req := httptest.NewRequest(http.MethodPost, "/admin/plugins/multi-language/translate", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/admin/plugins/multilang/translate", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.AddCookie(&http.Cookie{Name: "admin_token", Value: token})
 	rec := httptest.NewRecorder()

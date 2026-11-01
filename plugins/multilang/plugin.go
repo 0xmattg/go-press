@@ -48,7 +48,7 @@ import (
 )
 
 const (
-	PluginName  = "multi-language"
+	PluginName  = "multilang"
 	CookieName  = "gopress_lang"
 	DefaultLang = "zh"
 )
@@ -105,8 +105,8 @@ func (p *Plugin) OnSettingsSave(settings map[string]string) {
 		return
 	}
 
-	// Parse language entries from form: plugin_multi-language_lang_0_code, etc.
-	prefix := "plugin_multi-language_lang_"
+	// Parse language entries from form: plugin_multilang_lang_0_code, etc.
+	prefix := "plugin_multilang_lang_"
 	var formLangs []Language
 	for i := 0; i < 50; i++ {
 		code := settings[fmt.Sprintf("%s%d_code", prefix, i)]
@@ -128,7 +128,7 @@ func (p *Plugin) OnSettingsSave(settings map[string]string) {
 		})
 	}
 
-	defaultLangCode := settings["plugin_multi-language_default_lang"]
+	defaultLangCode := settings["plugin_multilang_default_lang"]
 
 	// Get existing languages from DB
 	existing, _ := p.repo.ListLanguages()
@@ -169,7 +169,7 @@ func (p *Plugin) OnSettingsSave(settings map[string]string) {
 		p.defaultTag = defaultLangCode
 	}
 
-	logger.Info("multi-language: synced languages from settings", "count", len(formLangs), "default", defaultLangCode)
+	logger.Info("multilang: synced languages from settings", "count", len(formLangs), "default", defaultLangCode)
 }
 
 // ValidateSettings prevents translated rows from being exposed through the
@@ -201,7 +201,7 @@ func (p *Plugin) ValidateSettings(settings map[string]string) error {
 func (p *Plugin) Activate(app plugin.App) {
 	e, ok := app.(*core.Engine)
 	if !ok {
-		logger.Error("multi-language: failed to cast app to *core.Engine")
+		logger.Error("multilang: failed to cast app to *core.Engine")
 		return
 	}
 	p.engine = e
@@ -218,7 +218,7 @@ func (p *Plugin) Activate(app plugin.App) {
 
 	// 1. Auto-migrate plugin tables
 	if err := p.repo.AutoMigrate(); err != nil {
-		logger.Error("multi-language: table migration failed", "error", err)
+		logger.Error("multilang: table migration failed", "error", err)
 		return
 	}
 	// Register tables with core table registry
@@ -294,19 +294,19 @@ func (p *Plugin) Activate(app plugin.App) {
 		pluginUpdate := admin.RequirePermission(e.Auth, e.RBAC, "plugin", "update")
 		adminAuth := admin.AuthMiddleware(e.Auth)
 		// Translation admin API.
-		r.POST("/admin/plugins/multi-language/translate", contentCreate, p.handleCreateTranslation)
-		r.POST("/admin/plugins/multi-language/unlink", contentUpdate, p.handleUnlinkTranslation)
+		r.POST("/admin/plugins/multilang/translate", contentCreate, p.handleCreateTranslation)
+		r.POST("/admin/plugins/multilang/unlink", contentUpdate, p.handleUnlinkTranslation)
 		// Menu translation admin API
-		r.POST("/admin/plugins/multi-language/menu-translate", menuUpdate, p.handleMenuTranslationSave)
-		r.POST("/admin/plugins/multi-language/menu-unlink", menuUpdate, p.handleMenuUnlink)
+		r.POST("/admin/plugins/multilang/menu-translate", menuUpdate, p.handleMenuTranslationSave)
+		r.POST("/admin/plugins/multilang/menu-unlink", menuUpdate, p.handleMenuUnlink)
 		// String translation admin API
-		r.POST("/admin/plugins/multi-language/string-translate", pluginUpdate, p.handleStringTranslationSave)
+		r.POST("/admin/plugins/multilang/string-translate", pluginUpdate, p.handleStringTranslationSave)
 		// Option translation admin API
-		r.POST("/admin/plugins/multi-language/option-translate", pluginUpdate, p.handleOptionTranslationSave)
-		r.POST("/admin/plugins/multi-language/site-option-translate", pluginUpdate, p.handleSiteOptionTranslationSave)
+		r.POST("/admin/plugins/multilang/option-translate", pluginUpdate, p.handleOptionTranslationSave)
+		r.POST("/admin/plugins/multilang/site-option-translate", pluginUpdate, p.handleSiteOptionTranslationSave)
 		// Taxonomy permission is resolved dynamically from the submitted source
 		// item; the handler verifies taxonomy.read + taxonomy.create after auth.
-		r.POST("/admin/plugins/multi-language/taxonomy-translate", adminAuth, p.handleCreateTaxonomyTranslation)
+		r.POST("/admin/plugins/multilang/taxonomy-translate", adminAuth, p.handleCreateTaxonomyTranslation)
 	}, 5))
 
 	// 4c. Re-prime the i18n bundle whenever core admin reports a bulk option
@@ -351,7 +351,7 @@ func (p *Plugin) Activate(app plugin.App) {
 func (p *Plugin) Deactivate(app plugin.App) {
 	e, ok := app.(*core.Engine)
 	if !ok {
-		logger.Error("multi-language: failed to cast app to *core.Engine on deactivate")
+		logger.Error("multilang: failed to cast app to *core.Engine on deactivate")
 		return
 	}
 
@@ -887,7 +887,7 @@ func (p *Plugin) authorizeContentTranslation(c *gin.Context, original *contentPk
 // redirectSettings returns to the plugin settings page with a query-escaped
 // status message; error text may contain arbitrary database messages.
 func redirectSettings(c *gin.Context, key, message string) {
-	c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?"+key+"="+url.QueryEscape(message))
+	c.Redirect(http.StatusFound, "/admin/plugins/multilang/settings?"+key+"="+url.QueryEscape(message))
 }
 
 // handleUnlinkTranslation removes a content item from its translation group.
@@ -999,11 +999,11 @@ func (p *Plugin) seedDefaultLanguages() {
 
 	for _, lang := range []Language{defaultEntry, secondEntry} {
 		if err := p.repo.CreateLanguage(&lang); err != nil {
-			logger.Warn("multi-language: failed to seed language", "code", lang.Code, "error", err)
+			logger.Warn("multilang: failed to seed language", "code", lang.Code, "error", err)
 		}
 	}
 	p.defaultTag = siteLang
-	logger.Info("multi-language: seeded default languages", "default", siteLang, "secondary", secondCode)
+	logger.Info("multilang: seeded default languages", "default", siteLang, "secondary", secondCode)
 }
 
 // --- i18n DB Override Layer ---
@@ -1054,6 +1054,13 @@ func (p *Plugin) loadDBOverrides() {
 	}
 
 	// 2. Load from Options table (legacy i18n.{lang}.{key} format)
+	//
+	// LEGACY(multilang-i18n-options): string translations were stored as
+	// i18n.{lang}.{key} options before they moved into the string_translations
+	// table in April 2026. Nothing writes this format any more, but sites that
+	// saved translations back then still read them from here. It only scans the
+	// in-memory options already loaded above. Remove only after a migration
+	// copies these options into string_translations and deletes them.
 	msgsByLang := make(map[string][]*goi18n.Message)
 	for key, val := range allOpts {
 		if !strings.HasPrefix(key, "i18n.") {
@@ -1185,6 +1192,7 @@ func (p *Plugin) LanguagePrefixMiddleware() gin.HandlerFunc {
 		if p.engine.I18n != nil {
 			c.Set(coreI18n.CtxKeyLocalizer, p.engine.I18n.NewLocalizer(lang))
 		}
+		// LEGACY(multilang-taxonomy-alias): see redirectLegacyTaxonomyAlias.
 		if p.redirectLegacyTaxonomyAlias(c, c.Request.URL.Path, lang, hadLanguagePrefix) {
 			return
 		}
@@ -1859,7 +1867,7 @@ func (p *Plugin) registerMenuHooks(e *core.Engine) {
 			return
 		}
 		p.repo.UnlinkMenuTranslation(menuID)
-		logger.Info("multi-language: cleaned up translation record for deleted menu", "menu_id", menuID)
+		logger.Info("multilang: cleaned up translation record for deleted menu", "menu_id", menuID)
 	}, 10))
 
 	p.hookHandles = append(p.hookHandles, e.Hooks.AddFilter(hook.MenuLocationResolve, func(value interface{}, args ...interface{}) interface{} {
@@ -1924,7 +1932,7 @@ func (p *Plugin) registerMenuHooks(e *core.Engine) {
 		}
 		return p.rewriteMenuURLs(translated, targetLang)
 	}, 10))
-	logger.Info("multi-language: menu hooks registered")
+	logger.Info("multilang: menu hooks registered")
 }
 
 // rewriteMenuURLs clones a menu and adjusts item URLs for the target language.
@@ -2092,7 +2100,7 @@ func (p *Plugin) handleMenuTranslationSave(c *gin.Context) {
 	// Reload menus so the hook picks up new assignments
 	p.engine.Menus.LoadAll()
 
-	c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?success=菜单语言分配已保存")
+	c.Redirect(http.StatusFound, "/admin/plugins/multilang/settings?success=菜单语言分配已保存")
 }
 
 // handleMenuUnlink removes a menu from its translation group.
@@ -2104,7 +2112,7 @@ func (p *Plugin) handleMenuUnlink(c *gin.Context) {
 
 	menuIDStr := c.PostForm("menu_id")
 	if menuIDStr == "" {
-		c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?error=参数不完整")
+		c.Redirect(http.StatusFound, "/admin/plugins/multilang/settings?error=参数不完整")
 		return
 	}
 
@@ -2174,7 +2182,7 @@ func (p *Plugin) handleStringTranslationSave(c *gin.Context) {
 	}
 
 	if err := c.Request.ParseMultipartForm(32 << 20); err != nil {
-		c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?error=表单解析失败")
+		c.Redirect(http.StatusFound, "/admin/plugins/multilang/settings?error=表单解析失败")
 		return
 	}
 
@@ -2213,7 +2221,7 @@ func (p *Plugin) handleStringTranslationSave(c *gin.Context) {
 	cache.InvalidatePageCache(p.engine.Cache)
 
 	logger.Info("String translations saved", "count", count)
-	c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?success=字符串翻译已保存")
+	c.Redirect(http.StatusFound, "/admin/plugins/multilang/settings?success=字符串翻译已保存")
 }
 
 // handleOptionTranslationSave saves translatable option overrides from the admin UI.
@@ -2225,7 +2233,7 @@ func (p *Plugin) handleOptionTranslationSave(c *gin.Context) {
 	}
 
 	if err := c.Request.ParseMultipartForm(32 << 20); err != nil {
-		c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?error=表单解析失败")
+		c.Redirect(http.StatusFound, "/admin/plugins/multilang/settings?error=表单解析失败")
 		return
 	}
 
@@ -2263,7 +2271,7 @@ func (p *Plugin) handleOptionTranslationSave(c *gin.Context) {
 	cache.InvalidatePageCache(p.engine.Cache)
 
 	logger.Info("Option translations saved", "count", count)
-	c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?success=主题设置翻译已保存")
+	c.Redirect(http.StatusFound, "/admin/plugins/multilang/settings?success=主题设置翻译已保存")
 }
 
 // handleSiteOptionTranslationSave saves core site option translations from the
@@ -2275,7 +2283,7 @@ func (p *Plugin) handleSiteOptionTranslationSave(c *gin.Context) {
 	}
 
 	if err := c.Request.ParseMultipartForm(32 << 20); err != nil {
-		c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?error=表单解析失败")
+		c.Redirect(http.StatusFound, "/admin/plugins/multilang/settings?error=表单解析失败")
 		return
 	}
 
@@ -2291,7 +2299,7 @@ func (p *Plugin) handleSiteOptionTranslationSave(c *gin.Context) {
 		langCode := parts[0]
 		optKey := parts[1]
 		if !option.IsSystemTranslatable(optKey) {
-			logger.Warn("multi-language: rejected non-system site option translation", "key", optKey)
+			logger.Warn("multilang: rejected non-system site option translation", "key", optKey)
 			continue
 		}
 		value := strings.TrimSpace(values[0])
@@ -2314,5 +2322,5 @@ func (p *Plugin) handleSiteOptionTranslationSave(c *gin.Context) {
 	cache.InvalidatePageCache(p.engine.Cache)
 
 	logger.Info("Site option translations saved", "count", count)
-	c.Redirect(http.StatusFound, "/admin/plugins/multi-language/settings?success=网站设置翻译已保存")
+	c.Redirect(http.StatusFound, "/admin/plugins/multilang/settings?success=网站设置翻译已保存")
 }

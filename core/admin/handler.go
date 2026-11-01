@@ -45,7 +45,7 @@ type ThemeDisplayInfo struct {
 	DepBlocked         bool
 	DepReason          string
 	DepInactivePlugins []string
-	DepInactiveSummary string // e.g. "multi-language, seo-extras"
+	DepInactiveSummary string // e.g. "multilang, seo-extras"
 }
 
 // ThemeManager provides theme switching callbacks to the admin handler.

@@ -157,6 +157,11 @@ const (
 // reserves refund capacity while the gateway call is in flight; succeeded rows
 // count toward the order's cumulative refunded amount. IdempotencyKey is
 // nullable so AutoMigrate remains compatible with legacy rows.
+//
+// LEGACY(commerce-refund-idempotency): refunds recorded before commerce 0.1.0
+// have no idempotency key. Making the column NOT NULL would make AutoMigrate
+// fail on those sites at boot. Keep it nullable until a data migration assigns
+// keys to the old rows.
 type Refund struct {
 	ID             uint    `gorm:"primaryKey"`
 	OrderID        uint    `gorm:"index"`
