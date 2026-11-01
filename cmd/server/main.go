@@ -32,10 +32,11 @@ import (
 //	@title			GoPress API
 //	@version		1.0
 //	@description	GoPress CMS RESTful API — WordPress-like content management in Go
-//	@termsOfService	https://hurricanetechs.com/terms
+//	@termsOfService	https://gopress.xyz
 //
-//	@contact.name	Hurricane Techs
-//	@contact.email	sale@hurricanetechs.com
+//	@contact.name	GoPress
+//	@contact.url	https://gopress.xyz
+//	@contact.email	contact@gopress.xyz
 //
 //	@host			localhost:8080
 //	@BasePath		/api/v1

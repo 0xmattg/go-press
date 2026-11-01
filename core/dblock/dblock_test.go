@@ -21,7 +21,7 @@ func TestKeyIsStableAndDistinguishesNames(t *testing.T) {
 	if Key("gopress:content-slug:gp_contents:post:hello") != Key("gopress:content-slug:gp_contents:post:hello") {
 		t.Fatal("Key() is not deterministic")
 	}
-	if Key("gopress:content-slug:gp_contents:post:hello") == Key("gopress:content-slug:gp_bitcuz_contents:post:hello") {
+	if Key("gopress:content-slug:gp_contents:post:hello") == Key("gopress:content-slug:gp_site2_contents:post:hello") {
 		t.Fatal("different sites produced the same lock key")
 	}
 }

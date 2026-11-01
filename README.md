@@ -359,4 +359,4 @@ Issues and pull requests are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING
 
 ## License
 
-[MIT License](LICENSE). Bundled third-party data keeps its own license; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+[MIT License](LICENSE). Bundled third-party data keeps its own license, stated in a README next to the data file (for example [plugins/gopress-analytics/data/README.md](plugins/gopress-analytics/data/README.md)).

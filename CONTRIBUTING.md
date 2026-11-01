@@ -51,3 +51,20 @@ Go files under `core/` must start with the project license header. `make license
 Documentation changes should stay neutral, verifiable, and user-focused. For statements about performance, compatibility, or security, provide reproduction steps, constraints, or clearly label them as target behavior when applicable.
 
 Theme and plugin contributions should avoid direct dependencies on other themes or plugins. Capabilities that can be expressed through core interfaces, hooks, filters, or configuration should not be implemented through implicit cross-package calls.
+
+Code marked with a `LEGACY(<id>):` comment keeps already-deployed sites working (old data, configuration, or URLs). Please do not remove or simplify it as dead code unless the removal condition written in that comment is met.
+
+## Extension Identity
+
+A theme or plugin is identified by its **slug**, and the same slug is used everywhere:
+
+- The directory is `themes/<slug>/` or `plugins/<slug>/`.
+- A plugin's `plugin.toml` declares `[plugin].slug = "<slug>"`, and its `Name()` returns the same value. A theme registers itself with `core.RegisterTheme("<slug>", ...)`.
+- A slug is 2–64 characters of lowercase letters and digits, in words joined by single hyphens (`seo-extras`, `commerce-usdt`). Underscores are not allowed, and a theme and a plugin cannot share a slug.
+- Table names are derived from the slug by replacing hyphens with underscores: use `pluginMeta.Table("events")` (from `plugin.ParseMetaString`) to get `<prefix>plgn_<storage_slug>_events`. There is no setting to override the derived name.
+
+`internal/contracts` tests these rules for every module it finds, and `gopress gen` prints a warning when a module breaks them.
+
+## How Pull Requests Land
+
+Maintainers carry merged pull requests into the main development branch with `git cherry-pick -x`, which keeps your authorship and `Signed-off-by` line and records the original commit.

@@ -89,6 +89,7 @@ func (p *Plugin) Activate(app plugin.App) {
 		logger.Error("commerce-usdt: migration failed", "error", err)
 		return
 	}
+	// LEGACY(usdt-invoice-snapshots): see backfillLegacyRows.
 	if err := p.backfillLegacyRows(p.loadConfig()); err != nil {
 		logger.Error("commerce-usdt: legacy data backfill failed", "error", err)
 		return

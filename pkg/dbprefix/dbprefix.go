@@ -1,6 +1,9 @@
 package dbprefix
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 // DefaultPrefix is the default table prefix for GoPress core tables.
 const DefaultPrefix = "gp_"
@@ -39,19 +42,49 @@ func Table(name string) string {
 }
 
 // PluginTable returns the prefixed table name for a plugin table.
-// Convention: {prefix}plgn_{pluginSlug}_{tableName}
-// Example: PluginTable("multilang", "translations") → "gp_plgn_multilang_translations"
-func PluginTable(pluginSlug, tableName string) string {
+// Convention: {prefix}plgn_{storageSlug}_{tableName}, where storageSlug is the
+// plugin slug with "-" replaced by "_" (plugin.StorageSlug).
+// Example: PluginTable("commerce_usdt", "invoices") → "gp_plgn_commerce_usdt_invoices"
+//
+// Both arguments must match [a-z][a-z0-9_]*; anything else panics. A bad name
+// is a programming error, and the plugin's own tests surface it.
+func PluginTable(storageSlug, tableName string) string {
+	mustIdent("plugin storage slug", storageSlug)
+	mustIdent("table name", tableName)
 	mu.RLock()
 	defer mu.RUnlock()
-	return prefix + PluginInfix + pluginSlug + "_" + tableName
+	return prefix + PluginInfix + storageSlug + "_" + tableName
 }
 
 // ThemeTable returns the prefixed table name for a theme table.
-// Convention: {prefix}thm_{themeSlug}_{tableName}
-// Example: ThemeTable("financial-news", "tickers") → "gp_thm_financial-news_tickers"
-func ThemeTable(themeSlug, tableName string) string {
+// Convention: {prefix}thm_{storageSlug}_{tableName}, with the same storage
+// slug rule and argument checks as PluginTable.
+// Example: ThemeTable("financial_news", "tickers") → "gp_thm_financial_news_tickers"
+func ThemeTable(storageSlug, tableName string) string {
+	mustIdent("theme storage slug", storageSlug)
+	mustIdent("table name", tableName)
 	mu.RLock()
 	defer mu.RUnlock()
-	return prefix + ThemeInfix + themeSlug + "_" + tableName
+	return prefix + ThemeInfix + storageSlug + "_" + tableName
+}
+
+func mustIdent(kind, s string) {
+	if !validIdent(s) {
+		panic(fmt.Sprintf("dbprefix: invalid %s %q: want [a-z][a-z0-9_]*", kind, s))
+	}
+}
+
+func validIdent(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i, r := range s {
+		switch {
+		case r >= 'a' && r <= 'z':
+		case i > 0 && (r >= '0' && r <= '9' || r == '_'):
+		default:
+			return false
+		}
+	}
+	return true
 }

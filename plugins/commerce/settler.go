@@ -294,6 +294,11 @@ func refundEvent(refunded, orderTotal int64) string {
 
 // successfulRefundTotal includes legacy rows with an empty status so schema
 // migration does not make earlier refunds disappear from the cumulative limit.
+//
+// LEGACY(commerce-refund-status): refunds recorded before commerce 0.1.0 have
+// no status and were all successful. Dropping the empty/NULL match would let
+// those orders be refunded again beyond their paid amount. Remove only after a
+// data migration sets their status to succeeded.
 func successfulRefundTotal(db *gorm.DB, orderID uint) (int64, error) {
 	var total int64
 	err := db.Model(&Refund{}).Where("order_id = ? AND (status = ? OR status = '' OR status IS NULL)", orderID, RefundSucceeded).

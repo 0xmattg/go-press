@@ -19,14 +19,14 @@ Add a `[requires]` block to `theme.toml`:
 [requires]
 core = ">=0.7.0"                      # optional: required GoPress core version (semver constraint)
 plugins = [
-  { slug = "multi-language", version = ">=2.0.0" },
-  { slug = "seo-extras",     version = "^1.0.0", optional = false },
+  { slug = "multilang",  version = ">=2.0.0" },
+  { slug = "seo-extras", version = "^1.0.0", optional = false },
 ]
 ```
 
-- `slug` — the required plugin's **runtime identity** (its `Name()`, also declared
-  in the plugin's `plugin.toml` `[plugin].slug`). Note the slug can differ from the
-  plugin **directory** name (dir `multilang` → slug `multi-language`).
+- `slug` — the required plugin's **runtime identity**: its `Name()`, its
+  `plugin.toml` `[plugin].slug`, and its directory name under `plugins/`, which
+  are always the same.
 - `version` — optional semver constraint (`>=2.0.0`, `^1.0`, `~1.2`, `>=1 <2`, …).
   Empty means any version.
 - `optional` — when `true`, an unmet dependency is a warning, not a hard block.
@@ -82,11 +82,17 @@ auto-activates plugins that are compiled in but inactive.
 ## For plugin authors: the `plugin.toml` slug
 
 To be depended on, a plugin's `plugin.toml` must declare `slug`, and it must equal
-the plugin's `Name()`:
+the plugin's `Name()` and its directory name:
 
 ```toml
 [plugin]
-slug = "multi-language"   # runtime identity; themes depend on this; must equal Name()
+slug = "multilang"        # runtime identity; themes depend on this; equals Name() and the directory name
 name = "Multi-Language"   # human-readable display name
 version = "2.0.0"
 ```
+
+A slug is lowercase letters and digits in words joined by single hyphens
+(`seo-extras`, `commerce-usdt`), 2–64 characters, with no underscores. Table
+names are derived from it by replacing hyphens with underscores
+(`commerce-usdt` → `<prefix>plgn_commerce_usdt_*`); see
+[CONTRIBUTING.md](https://github.com/0xmattg/go-press/blob/main/CONTRIBUTING.md#extension-identity).

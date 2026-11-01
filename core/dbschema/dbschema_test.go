@@ -16,7 +16,7 @@ import (
 
 func TestSiteIndexNameIsTableScopedAndBounded(t *testing.T) {
 	t.Parallel()
-	if got := SiteIndexName("gp_bitcuz_user_identities", "idx_user_identity_key"); got != "gp_bitcuz_user_identities_idx_user_identity_key" {
+	if got := SiteIndexName("gp_site2_user_identities", "idx_user_identity_key"); got != "gp_site2_user_identities_idx_user_identity_key" {
 		t.Fatalf("SiteIndexName() = %q", got)
 	}
 
