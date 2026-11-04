@@ -33,8 +33,13 @@ const (
 var (
 	// ErrEmptyCart is returned when checkout is attempted with no items.
 	ErrEmptyCart = errors.New("commerce: cart is empty")
-	// ErrNoGateway is returned when the chosen payment method isn't registered.
+	// ErrNoGateway is returned when the chosen payment method isn't registered
+	// or is not currently available while other methods still are.
 	ErrNoGateway = errors.New("commerce: unknown payment method")
+	// ErrCheckoutUnavailable is returned when no payment gateway can currently
+	// take the order (none registered, or none configured for the currency).
+	// Checkout refuses before creating any order, reservation, or payment row.
+	ErrCheckoutUnavailable = errors.New("commerce: no payment gateway is available")
 	// ErrInvalidPaymentAction is returned when a gateway violates the action
 	// contract. Because a remote payment may already exist, it is reconciled.
 	ErrInvalidPaymentAction = errors.New("commerce: invalid payment action")
@@ -90,11 +95,21 @@ func (s *CheckoutService) PlaceOrder(c *gin.Context, in CheckoutInput) (*Order, 
 		return nil, nil, ErrInvalidCheckoutKey
 	}
 
+	// Precondition: at least one gateway must be able to take payment right
+	// now. This is evaluated on every submission (not only when the form was
+	// rendered) because configuration can change in between, and it runs
+	// before validation and the write transaction so a refused checkout leaves
+	// no order, inventory reservation, or payment row behind.
+	gateways := corecommerce.AvailablePaymentGatewaysForCurrency(c, s.p.engine.Hooks, cartView.Currency)
+	if len(gateways) == 0 {
+		return nil, nil, ErrCheckoutUnavailable
+	}
+
 	if verrs := s.validate(cartView, in); len(verrs) > 0 {
 		return nil, nil, fmt.Errorf("commerce: checkout validation failed: %s", strings.Join(verrs, "; "))
 	}
 
-	gateway := s.gatewayByID(c, in.PaymentMethod, cartView.Currency)
+	gateway := selectGateway(gateways, in.PaymentMethod)
 	if gateway == nil {
 		return nil, nil, ErrNoGateway
 	}
@@ -598,9 +613,10 @@ func (s *CheckoutService) validate(cart CartView, in CheckoutInput) []string {
 	return errs
 }
 
-// gatewayByID finds a registered gateway by its ID (empty picks the first).
-func (s *CheckoutService) gatewayByID(c *gin.Context, id, currency string) corecommerce.PaymentGateway {
-	gateways := corecommerce.AvailablePaymentGatewaysForCurrency(c, s.p.engine.Hooks, currency)
+// selectGateway picks the submitted gateway from the currently available set
+// (empty picks the first). A gateway that is registered but unavailable is
+// never returned, so a stale or forged payment_method cannot select it.
+func selectGateway(gateways []corecommerce.PaymentGateway, id string) corecommerce.PaymentGateway {
 	if len(gateways) == 0 {
 		return nil
 	}

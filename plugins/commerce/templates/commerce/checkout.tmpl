@@ -3,7 +3,10 @@
   <div class="container" style="max-width:960px;margin:0 auto;padding:2rem 1rem;">
     <h1>{{T .Ctx "commerce.checkout.title"}}</h1>
     {{if .Error}}
-      <div class="commerce-alert" style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:.8rem 1rem;border-radius:8px;margin:1rem 0;">{{.Error}}</div>
+      <div class="commerce-alert" role="alert" style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:.8rem 1rem;border-radius:8px;margin:1rem 0;">{{.Error}}</div>
+    {{end}}
+    {{if .Notice}}
+      <div id="commerce-checkout-notice" class="commerce-alert commerce-alert-notice" role="status" style="background:#fffbeb;border:1px solid #fde68a;color:#92400e;padding:.8rem 1rem;border-radius:8px;margin:1rem 0;">{{.Notice}}</div>
     {{end}}
 
     <form method="POST" action="/checkout" class="commerce-checkout" style="display:grid;grid-template-columns:1fr 340px;gap:2rem;align-items:start;margin-top:1rem;">
@@ -24,16 +27,14 @@
           <div class="form-group" style="flex:1;"><label for="billing_country">{{T .Ctx "commerce.checkout.country"}}</label><input type="text" id="billing_country" name="billing_country"></div>
         </div>
 
-        <h2 style="font-size:1.1rem;margin:1.5rem 0 .8rem;">{{T .Ctx "commerce.checkout.payment_method"}}</h2>
         {{if .Gateways}}
+          <h2 style="font-size:1.1rem;margin:1.5rem 0 .8rem;">{{T .Ctx "commerce.checkout.payment_method"}}</h2>
           {{range $i, $g := .Gateways}}
             <label class="commerce-pay-method" style="display:flex;align-items:center;gap:.6rem;padding:.7rem .9rem;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:.6rem;cursor:pointer;">
               <input type="radio" name="payment_method" value="{{$g.ID}}"{{if eq $i 0}} checked{{end}}>
               <span>{{$g.Icon}} {{$g.Title}}</span>
             </label>
           {{end}}
-        {{else}}
-          <p style="color:#b91c1c;">{{T .Ctx "commerce.checkout.no_payment_methods"}}</p>
         {{end}}
       </div>
 
@@ -50,7 +51,7 @@
           <tr><td style="padding:.35rem 0;">{{T .Ctx "commerce.common.shipping"}}</td><td style="padding:.35rem 0;text-align:right;">{{.Shipping}}</td></tr>
           <tr style="border-top:2px solid #e2e8f0;font-size:1.1rem;"><td style="padding:.6rem 0;"><strong>{{T .Ctx "commerce.common.total"}}</strong></td><td style="padding:.6rem 0;text-align:right;"><strong>{{.GrandTotal}} {{.Cart.Currency}}</strong></td></tr>
         </table>
-        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:1rem;"{{if not .Gateways}} disabled{{end}}>{{T .Ctx "commerce.checkout.place_order"}}</button>
+        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:1rem;"{{if not .Gateways}} disabled{{if .Notice}} aria-describedby="commerce-checkout-notice"{{end}}{{end}}>{{T .Ctx "commerce.checkout.place_order"}}</button>
       </aside>
     </form>
   </div>

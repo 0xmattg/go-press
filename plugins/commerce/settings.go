@@ -23,10 +23,13 @@ func (p *Plugin) SettingsData() map[string]interface{} {
 		"WeightUnit":           p.opt("plugin_commerce_weight_unit", "g"),
 		"FlatShipping":         p.opt("plugin_commerce_flat_shipping", ""),
 		"ReservationTTL":       p.opt("plugin_commerce_reservation_ttl_minutes", "60"),
-		"OfflineAccountName":   p.opt("plugin_commerce_offline_account_name", ""),
-		"OfflineBankName":      p.opt("plugin_commerce_offline_bank_name", ""),
-		"OfflineAccountNumber": p.opt("plugin_commerce_offline_account_number", ""),
-		"OfflineInstructions":  p.opt("plugin_commerce_offline_instructions", ""),
+		"OfflineAccountName":   p.opt(optOfflineAccountName, ""),
+		"OfflineBankName":      p.opt(optOfflineBankName, ""),
+		"OfflineAccountNumber": p.opt(optOfflineAccountNumber, ""),
+		"OfflineInstructions":  p.opt(optOfflineInstructions, ""),
+		// OfflineReady mirrors offlineGateway.Available so the admin sees
+		// whether bank transfer is currently offered at checkout.
+		"OfflineReady": p.offlineConfigured(),
 	}
 }
 

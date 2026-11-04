@@ -8,7 +8,7 @@
   <meta name="description" content="{{settingOr .Ctx .Settings "site_description" "A focused storefront powered by GoPress Commerce."}}">
   {{faviconLinks (settingOr .Ctx .Settings "site_icon" "")}}
   {{end}}
-  <link rel="stylesheet" href="/static/css/style.css?v=4">
+  <link rel="stylesheet" href="/static/css/style.css?v=5">
   {{renderHook "theme.head.end" .}}
 </head>
 <body>{{renderHook "theme.body.open" .}}
@@ -16,7 +16,7 @@
   <main class="ss-main">{{template "content" .}}</main>
   {{template "footer" .}}
   {{template "loginModal" .}}
-  <script src="/static/js/main.js?v=2"></script>
+  <script src="/static/js/main.js?v=3"></script>
   {{renderHook "theme.footer.end" .}}
 </body>
 </html>{{end}}

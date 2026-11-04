@@ -205,7 +205,7 @@ func TestManifestDeclaresCommerceWithoutOwningProducts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.Theme.Version != "1.0.5" {
+	if cfg.Theme.Version != "1.0.6" {
 		t.Fatalf("theme version = %q", cfg.Theme.Version)
 	}
 	if len(cfg.ContentTypes) != 0 {
