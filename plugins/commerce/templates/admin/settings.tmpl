@@ -42,19 +42,25 @@
         </section>
 
         <section class="settings-section">
-            <h3 class="settings-section-title">{{X $ "plugin.commerce.settings.offline" "银行转账（离线支付）"}}</h3>
+            <h3 class="settings-section-title">{{X $ "plugin.commerce.settings.offline" "银行转账（离线支付）"}}
+                {{if .OfflineReady}}<span class="badge badge-active" style="vertical-align:middle;margin-left:.4rem;">{{X $ "plugin.commerce.settings.offline_ready" "结算页可用"}}</span>{{else}}<span class="badge badge-draft" style="vertical-align:middle;margin-left:.4rem;">{{X $ "plugin.commerce.settings.offline_not_ready" "未配置 · 结算页不显示"}}</span>{{end}}
+            </h3>
+            <p id="offlineHelp" style="margin:-.25rem 0 .75rem;font-size:.8rem;color:var(--text-muted);">{{X $ "plugin.commerce.settings.offline_help" "收款户名和收款账号都填写后，银行转账才会出现在结算页；两项留空即关闭银行转账。没有任何可用支付方式时，前台会拒绝新订单。"}}</p>
             <div class="settings-grid">
                 <div class="form-group settings-item">
-                    <label for="offlineAccountName">{{X $ "plugin.commerce.settings.account_name" "收款户名"}}</label>
-                    <input type="text" id="offlineAccountName" name="plugin_commerce_offline_account_name" value="{{.OfflineAccountName}}">
+                    <label for="offlineAccountName">{{X $ "plugin.commerce.settings.account_name" "收款户名"}} *</label>
+                    <input type="text" id="offlineAccountName" name="plugin_commerce_offline_account_name" value="{{.OfflineAccountName}}" aria-describedby="offlineHelp">
+                    <small>{{X $ "plugin.commerce.settings.required" "必填。"}}</small>
                 </div>
                 <div class="form-group settings-item">
                     <label for="offlineBankName">{{X $ "plugin.commerce.settings.bank_name" "开户银行"}}</label>
                     <input type="text" id="offlineBankName" name="plugin_commerce_offline_bank_name" value="{{.OfflineBankName}}">
+                    <small>{{X $ "plugin.commerce.settings.bank_name_help" "选填，建议填写。SWIFT 或路由号可写在附加说明中。"}}</small>
                 </div>
                 <div class="form-group settings-item">
-                    <label for="offlineAccountNumber">{{X $ "plugin.commerce.settings.account_number" "收款账号"}}</label>
-                    <input type="text" id="offlineAccountNumber" name="plugin_commerce_offline_account_number" value="{{.OfflineAccountNumber}}">
+                    <label for="offlineAccountNumber">{{X $ "plugin.commerce.settings.account_number" "收款账号"}} *</label>
+                    <input type="text" id="offlineAccountNumber" name="plugin_commerce_offline_account_number" value="{{.OfflineAccountNumber}}" aria-describedby="offlineHelp">
+                    <small>{{X $ "plugin.commerce.settings.account_number_help" "必填。银行账号或 IBAN。"}}</small>
                 </div>
                 <div class="form-group settings-item">
                     <label for="offlineInstructions">{{X $ "plugin.commerce.settings.instructions" "附加说明"}}</label>

@@ -104,6 +104,7 @@ button { color: inherit; }
 .btn-danger { color: #fff; background: var(--ss-danger); border-color: var(--ss-danger); }
 .btn-sm { min-height: 34px; padding-inline: 12px; font-size: 12px; }
 .btn-lg { min-height: 52px; padding-inline: 22px; border-radius: 12px; font-size: 14px; }
+.btn:disabled, .btn:disabled:hover { color: var(--ss-faint); background: var(--ss-bg); border-color: var(--ss-line); box-shadow: none; transform: none; cursor: not-allowed; }
 .ss-eyebrow { display: block; margin-bottom: 14px; color: var(--ss-accent); font-size: 11px; font-weight: 850; letter-spacing: .13em; text-transform: uppercase; }
 .ss-text-link { color: var(--ss-ink); font-size: 13px; font-weight: 800; white-space: nowrap; }
 .ss-breadcrumb { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 30px; color: var(--ss-faint); font-size: 12px; }
@@ -220,6 +221,8 @@ button { color: inherit; }
 .commerce-summary, .commerce-pay-method { border-color: var(--ss-line) !important; }
 .commerce-summary { background: #fafaff; }
 .commerce-alert { border-radius: 10px !important; }
+/* "Orders cannot be processed right now": keep Commerce's amber, add the theme's heavier weight and a left accent. */
+.commerce-alert-notice { border-left: 4px solid #f0b429 !important; color: var(--ss-ink) !important; font-weight: 700; }
 .commerce-cart-table a { color: var(--ss-accent-dark); font-weight: 700; }
 
 /* Footer */

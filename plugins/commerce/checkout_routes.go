@@ -56,11 +56,20 @@ func (p *Plugin) renderCheckout(c *gin.Context, cart CartView, errMsg string) {
 		grand, pricingErr = addMoneyChecked(cart.Subtotal, shipping)
 	}
 	gateways := p.gatewayViews(c, cart.Currency)
+	// Notice is the shopper-facing "cannot take orders" state. It deliberately
+	// does not say why (e.g. which gateway lacks configuration); the button is
+	// disabled as a convenience while PlaceOrder remains the authority.
+	notice := ""
 	if pricingErr != nil {
 		shipping = 0
 		grand = cart.Subtotal
 		gateways = nil
 		errMsg = p.t(c, "commerce.error.invalid_totals")
+	} else if len(gateways) == 0 {
+		notice = p.t(c, "commerce.error.orders_unavailable")
+		if errMsg == notice {
+			errMsg = "" // a refused submission shows the notice once, not twice
+		}
 	}
 	data := gin.H{
 		"Title":       p.t(c, "commerce.checkout.title"),
@@ -69,6 +78,7 @@ func (p *Plugin) renderCheckout(c *gin.Context, cart CartView, errMsg string) {
 		"Shipping":    formatPrice(shipping),
 		"GrandTotal":  formatPrice(grand),
 		"Error":       errMsg,
+		"Notice":      notice,
 		"CheckoutKey": checkoutKey,
 	}
 	if u := user.CurrentUser(c); u != nil && u.Email != nil {
@@ -268,6 +278,9 @@ func parseCheckoutForm(c *gin.Context) CheckoutInput {
 }
 
 func (p *Plugin) checkoutErrorMessage(c *gin.Context, err error) string {
+	if errors.Is(err, ErrCheckoutUnavailable) {
+		return p.t(c, "commerce.error.orders_unavailable")
+	}
 	if errors.Is(err, ErrNoGateway) {
 		return p.t(c, "commerce.error.no_gateway")
 	}
