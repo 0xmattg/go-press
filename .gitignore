@@ -20,7 +20,7 @@ coverage*
 .DS_Store
 .AppleDouble
 .LSOverride
-Icon?
+Icon[!a-zA-Z0-9._-]
 ._*
 
 # Node/Frontend
