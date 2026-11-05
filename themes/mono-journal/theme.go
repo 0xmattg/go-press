@@ -58,8 +58,11 @@ func NewWithDB(db *gorm.DB, themeDir string) *Theme {
 	return t
 }
 
-func (t *Theme) Setup(_ coreTheme.App) {
+func (t *Theme) Setup(app coreTheme.App) {
 	registerTranslatableOptions()
+
+	app.MenuStore().RegisterLocation("header", "Header Navigation")
+	app.MenuStore().RegisterLocation("footer", "Footer Navigation")
 }
 
 func (t *Theme) ServeHTTP(c *gin.Context) { t.BaseTheme.ServeHTTP(c) }
