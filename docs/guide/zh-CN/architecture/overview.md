@@ -69,7 +69,8 @@ main.go
        │    ├→ registerCoreTypes()              //    恢复核心内容类型与 category/tag taxonomy
        │    ├→ LoadFileConfig(theme.toml)        //    读取主题声明的内容类型/菜单/模板映射
        │    ├→ RegisterContentTypesFromConfig()  //    按 [[content_types]] 注册主题内容类型
-       │    └→ theme.Setup()                    //    主题运行时初始化（菜单位置、设置、hook）
+       │    ├→ RegisterMenuLocationsFromConfig() //    清空旧位置，按 [[menu_locations]] 注册菜单位置
+       │    └→ theme.Setup()                    //    主题运行时初始化（设置、hook、运行时菜单位置）
        ├→ engine.LoadAllPlugins()               // 7. 注册插件 + 激活已启用插件
        ├→ engine.SetupAdmin()                   // 8. 后台 CMS 路由
        ├→ engine.SetupRouter()                  // 9. 组装 Gin 路由

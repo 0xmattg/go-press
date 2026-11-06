@@ -453,10 +453,10 @@ func (e *Engine) LoadAllThemes() error {
 
 // activateTheme activates a theme by slug without persisting the choice.
 //
-// Activation rebuilds the content registry from core definitions plus the
-// selected theme's theme.toml declarations, then calls Theme.Setup. This keeps
-// stale content type and taxonomy declarations from previous themes out of the
-// active runtime.
+// Activation rebuilds the content registry and the menu location list from
+// core definitions plus the selected theme's theme.toml declarations, then
+// calls Theme.Setup. This keeps stale content type, taxonomy and menu location
+// declarations from previous themes out of the active runtime.
 func (e *Engine) activateTheme(name string) error {
 	theme, ok := e.themes[name]
 	if !ok {
@@ -481,6 +481,13 @@ func (e *Engine) activateTheme(name string) error {
 		}
 	}
 	coreTheme.RegisterContentTypesFromConfig(e.Registry, themeConfig)
+	// Menu locations follow the same rule: start from the selected theme's
+	// theme.toml so a previous theme's locations do not survive a switch.
+	// Theme.Setup may still add runtime-only locations below.
+	if e.Menus != nil {
+		e.Menus.ResetLocations()
+		coreTheme.RegisterMenuLocationsFromConfig(e.Menus, themeConfig)
+	}
 	// Let active plugins contribute content types that must survive theme
 	// switches (the registry was just cleared and rebuilt). Fires on every
 	// activation, including the initial one and later switches.

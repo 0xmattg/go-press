@@ -52,7 +52,10 @@ type Store struct {
 	menus     map[string]*Menu // keyed by location
 	menusById map[uint]*Menu   // keyed by menu ID
 	locations map[string]LocationDef
-	hooks     *hook.Bus
+	// locationOrder keeps registration order so the admin lists locations as
+	// the theme declared them rather than in map order.
+	locationOrder []string
+	hooks         *hook.Bus
 }
 
 // NewStore creates a new menu Store.
@@ -117,16 +120,29 @@ func goroutineID() uint64 {
 func (s *Store) RegisterLocation(name, label string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if _, exists := s.locations[name]; !exists {
+		s.locationOrder = append(s.locationOrder, name)
+	}
 	s.locations[name] = LocationDef{Name: name, Label: label}
 }
 
-// GetLocations returns all registered menu locations.
+// ResetLocations forgets every registered location. Engine calls it when a
+// theme is activated so a switched-away theme's locations do not linger.
+// Menus and their stored location assignments are left untouched.
+func (s *Store) ResetLocations() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.locations = make(map[string]LocationDef)
+	s.locationOrder = nil
+}
+
+// GetLocations returns all registered menu locations in registration order.
 func (s *Store) GetLocations() []LocationDef {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	result := make([]LocationDef, 0, len(s.locations))
-	for _, loc := range s.locations {
-		result = append(result, loc)
+	result := make([]LocationDef, 0, len(s.locationOrder))
+	for _, name := range s.locationOrder {
+		result = append(result, s.locations[name])
 	}
 	return result
 }
@@ -136,6 +152,9 @@ func (s *Store) GetLocations() []LocationDef {
 // location map. Plugins may resolve a different menu at runtime through
 // hook.MenuLocationResolve.
 func (s *Store) LoadAll() {
+	if s.db == nil {
+		return
+	}
 	var menus []Menu
 	s.db.Preload("Items", func(db *gorm.DB) *gorm.DB {
 		return db.Order("sort_order ASC")

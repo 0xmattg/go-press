@@ -6,6 +6,7 @@ package theme
 import (
 	"html/template"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/0xmattg/go-press/core/comment"
@@ -114,7 +115,7 @@ type Theme interface {
 	Author() string
 
 	// Lifecycle
-	Setup(app App)            // Register menu locations and theme runtime hooks
+	Setup(app App)            // Register theme runtime hooks (theme.toml menu locations are registered by core)
 	ServeHTTP(c *gin.Context) // Handle a front-end request (internal routing)
 
 	// Templates
@@ -289,6 +290,27 @@ func LoadFileConfig(themeDir string) (*FileConfig, error) {
 		return nil, err
 	}
 	return &cfg, nil
+}
+
+// RegisterMenuLocationsFromConfig registers the theme's [[menu_locations]]
+// entries in declaration order. Engine resets the store first on every theme
+// activation, so theme.toml is the single source of a theme's locations; Setup
+// only needs RegisterLocation for locations that exist at runtime alone.
+func RegisterMenuLocationsFromConfig(store *menu.Store, cfg *FileConfig) {
+	if store == nil || cfg == nil {
+		return
+	}
+	for _, loc := range cfg.MenuLocations {
+		name := strings.TrimSpace(loc.Name)
+		if name == "" {
+			continue
+		}
+		label := strings.TrimSpace(loc.Label)
+		if label == "" {
+			label = name
+		}
+		store.RegisterLocation(name, label)
+	}
 }
 
 // RegisterContentTypesFromConfig registers theme-declared content models.
