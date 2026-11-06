@@ -29,12 +29,19 @@ name = "footer"
 label = "Footer Navigation"
 ```
 
-The admin displays the active theme's registered locations and lets users assign menus to them.
+The admin displays the active theme's registered locations, in declaration
+order, and lets users assign menus to them.
 
-Manifest declarations are the preferred source because core can inspect them
-before theme runtime setup. A theme may still call
-`app.MenuStore().RegisterLocation(name, label)` for a genuinely dynamic or
-legacy location, but it should not duplicate a manifest entry.
+When a theme is activated, core clears the previous theme's locations and
+registers the ones declared in `theme.toml` before it calls the theme's
+`Setup()`. A theme therefore needs no Go code for its locations, and switching
+themes never leaves the old theme's locations behind.
+
+A theme may still call `app.MenuStore().RegisterLocation(name, label)` in
+`Setup()` for a location that only exists at runtime; it is listed after the
+manifest entries. Do not duplicate a manifest entry. Existing themes that do
+are harmless: the `Setup()` call only overrides the label, and the admin still
+prefers a translated label.
 
 ## Rendering
 

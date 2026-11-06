@@ -41,8 +41,9 @@ func New(engine *core.Engine, themeDir string) *MyTheme {
 // Name / Version / Description / Author 由内嵌 BaseTheme 从 theme.toml 解析，
 // 不要在 Go 中再手写一份。
 
-// Setup 只放主题运行时初始化，例如菜单位置、可翻译设置键、自定义 hook。
-// 内容类型由 theme.toml 的 [[content_types]] 声明，core 在激活主题时自动注册。
+// Setup 只放主题运行时初始化，例如可翻译设置键、自定义 hook、只在运行时才存在的菜单位置。
+// 内容类型和菜单位置分别由 theme.toml 的 [[content_types]]、[[menu_locations]] 声明，
+// core 在激活主题时自动注册。
 func (t *MyTheme) Setup(app coreTheme.App) {}
 
 // ServeHTTP 委托给 BaseTheme 处理

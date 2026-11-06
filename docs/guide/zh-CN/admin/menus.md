@@ -25,8 +25,10 @@ core/menu/
 
 ## 主题中使用菜单
 
-主题优先在 `theme.toml` 中声明菜单位置，使 core 在运行时 Setup 之前就能检查
-并展示这些位置：
+主题在 `theme.toml` 中声明菜单位置。core 激活主题时会先清空上一个主题的位置，
+再按声明顺序注册当前主题的位置，然后才调用主题的 `Setup()`。因此只在
+`theme.toml` 中声明、`Setup()` 里什么都不写，后台「菜单管理」也能看到并分配这些位置；
+切换主题后，旧主题的位置不会残留：
 
 ```toml
 [[menu_locations]]
@@ -38,8 +40,10 @@ name = "footer"
 label = "底部导航"
 ```
 
-确需动态位置或兼容旧主题时，仍可在 `Setup()` 调用
-`app.MenuStore().RegisterLocation(name, label)`，但不要与 manifest 重复声明。
+确需只在运行时才存在的位置时，可以在 `Setup()` 调用
+`app.MenuStore().RegisterLocation(name, label)` 追加，它会排在 manifest 声明的位置之后。
+不要与 manifest 重复声明；旧主题里已有的同名重复注册不会报错，只会用 `Setup()` 中的
+名称覆盖显示名称（后台显示时仍优先使用翻译）。
 
 模板中渲染：
 
