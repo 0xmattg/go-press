@@ -107,6 +107,35 @@ share a schema only the first one would get them; `dbschema.AutoMigrate` adds a
 site-owned equivalent wherever it is missing. See
 [Database Prefixes](../reference/database-prefix.md#indexes-and-prefixes).
 
+## Plugin Files
+
+Ship the plugin's templates, locales and static files in the binary by implementing `plugin.AssetsProvider`:
+
+```go
+import (
+    "embed"
+    "io/fs"
+)
+
+//go:embed templates locales static
+var pluginFiles embed.FS
+
+func (p *MyPlugin) Assets() fs.FS { return pluginFiles }
+```
+
+Core then reads the plugin's admin settings page from `templates/admin/settings.tmpl` (no `SettingsTemplatePath()` needed) and its admin locales from `locales/admin/`. Read your own fragments through `engine.PluginFS(p)`, which returns the embedded files with `server.mode = "release"` and `plugins/<slug>/` on disk in other modes when that directory exists:
+
+```go
+fsys := engine.PluginFS(p)
+// A storefront page inside the active theme's layout; themes override it
+// with templates/<namespace>/<fragment>.tmpl.
+engine.RenderNamespacedInActiveThemeFS(c, "my-plugin", "page", assets.Sub(fsys, "templates/my-plugin"), data)
+// An admin page inside the admin chrome.
+engine.Admin.RenderExtensionPageFS(c, admin.TemplateRef{FS: fsys, Name: "templates/admin/report.tmpl"}, title, active, data)
+```
+
+Do not build paths that start with `plugins/` in plugin code: a plugin compiled from an external Go module has no such directory. `go:embed` skips files whose names start with `.` or `_`; prefix the pattern with `all:` if you need them. Plugins without `Assets()` keep working from `plugins/<slug>/`.
+
 ## Settings Pages
 
 Plugins that need admin configuration should implement the settings provider interfaces used by the admin plugin page. The plugin owns the UI, data loading, and save handling, while the admin owns routing, permissions, layout, and language context.

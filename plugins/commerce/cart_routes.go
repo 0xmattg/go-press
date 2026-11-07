@@ -11,10 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// commerceTemplateDir is where the plugin's default storefront fragment
-// templates live (theme overrides at <theme templates>/commerce/ win).
-const commerceTemplateDir = "plugins/commerce/templates/commerce"
-
 // registerStorefrontRoutes wires the public cart routes onto the gin engine.
 // Called from the routes.register hook so the routes appear/disappear with the
 // module and survive router rebuilds.
@@ -29,7 +25,7 @@ func (p *Plugin) registerStorefrontRoutes(r *gin.Engine) {
 
 func (p *Plugin) handleCartView(c *gin.Context) {
 	data := gin.H{"Title": p.t(c, "commerce.cart.title"), "Cart": p.cart().View(c)}
-	if err := p.engine.RenderNamespacedInActiveTheme(c, pluginSlug, "cart", commerceTemplateDir, data); err != nil {
+	if err := p.renderStorefront(c, "cart", data); err != nil {
 		c.String(http.StatusInternalServerError, "%s", p.t(c, "commerce.error.cart_unavailable"))
 	}
 }

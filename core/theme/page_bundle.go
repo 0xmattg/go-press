@@ -8,7 +8,7 @@
 // BaseTheme.BaseFuncMap()), so any helper added to core is immediately
 // available to every theme without per-theme handler edits.
 //
-// Expected directory layout (under TemplateDir()):
+// Expected directory layout (under the theme's templates directory):
 //
 //	layouts/base.tmpl       — required, defines the {{define "base"}} skeleton
 //	partials/*.tmpl         — optional, each defines a named block
@@ -20,12 +20,15 @@
 package theme
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
-	"os"
-	"path/filepath"
+	"io/fs"
+	"path"
 	"sort"
 	"strings"
+
+	"github.com/0xmattg/go-press/core/assets"
 )
 
 // LoadPageBundle composes a per-page template set for the given theme.
@@ -33,22 +36,22 @@ import (
 // fully-parsed templates ready to be executed via ExecuteTemplate("base", ...).
 //
 // pages is the list of page slugs to load (e.g. ["home", "about", "blog"]).
-// Pages that do not exist on disk are skipped with a non-fatal error in
-// the returned map (caller may inspect via missing pages).
+// A page without a template file is an error. Files are read through
+// TemplatesFS, so themes initialized with InitBaseFS load from their asset
+// filesystem and other themes from TemplateDir.
 func LoadPageBundle(t Theme, pages []string) (map[string]*template.Template, error) {
-	tplDir := t.TemplateDir()
-	if tplDir == "" {
+	tplFS := TemplatesFS(t)
+	if tplFS == nil {
 		return nil, fmt.Errorf("theme %q has no template dir", t.Name())
 	}
 
-	layoutPath := filepath.Join(tplDir, "layouts", "base.tmpl")
-	if _, err := os.Stat(layoutPath); err != nil {
+	const layoutPath = "layouts/base.tmpl"
+	if _, err := fs.Stat(tplFS, layoutPath); err != nil {
 		return nil, fmt.Errorf("layout missing for theme %q: %w", t.Name(), err)
 	}
 
 	// Collect all partials/*.tmpl deterministically.
-	partialsDir := filepath.Join(tplDir, "partials")
-	partials, err := globTemplates(partialsDir)
+	partials, err := assets.TemplateNames(tplFS, "partials")
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +60,8 @@ func LoadPageBundle(t Theme, pages []string) (map[string]*template.Template, err
 
 	out := make(map[string]*template.Template, len(pages))
 	for _, page := range pages {
-		pagePath := filepath.Join(tplDir, "pages", page+".tmpl")
-		if _, err := os.Stat(pagePath); err != nil {
+		pagePath := path.Join("pages", page+".tmpl")
+		if _, err := fs.Stat(tplFS, pagePath); err != nil {
 			return nil, fmt.Errorf("page %q missing for theme %q: %w", page, t.Name(), err)
 		}
 
@@ -67,7 +70,7 @@ func LoadPageBundle(t Theme, pages []string) (map[string]*template.Template, err
 		files = append(files, partials...)
 		files = append(files, pagePath)
 
-		tpl, err := template.New("").Funcs(funcMap).ParseFiles(files...)
+		tpl, err := assets.ParseFiles(template.New("").Funcs(funcMap), tplFS, files...)
 		if err != nil {
 			return nil, fmt.Errorf("parse page %q for theme %q: %w", page, t.Name(), err)
 		}
@@ -83,15 +86,14 @@ func LoadPageBundle(t Theme, pages []string) (map[string]*template.Template, err
 // are resolved from registered content type configuration instead of a
 // theme-maintained hard-coded route list.
 func LoadAllPageBundles(t Theme) (map[string]*template.Template, error) {
-	tplDir := t.TemplateDir()
-	if tplDir == "" {
+	tplFS := TemplatesFS(t)
+	if tplFS == nil {
 		return nil, fmt.Errorf("theme %q has no template dir", t.Name())
 	}
 
-	pagesDir := filepath.Join(tplDir, "pages")
-	entries, err := os.ReadDir(pagesDir)
+	entries, err := fs.ReadDir(tplFS, "pages")
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return map[string]*template.Template{}, nil
 		}
 		return nil, err
@@ -102,7 +104,7 @@ func LoadAllPageBundles(t Theme) (map[string]*template.Template, error) {
 		if e.IsDir() {
 			continue
 		}
-		ext := filepath.Ext(e.Name())
+		ext := path.Ext(e.Name())
 		if ext != ".tmpl" && ext != ".html" {
 			continue
 		}
@@ -114,26 +116,4 @@ func LoadAllPageBundles(t Theme) (map[string]*template.Template, error) {
 	}
 
 	return LoadPageBundle(t, pages)
-}
-
-func globTemplates(dir string) ([]string, error) {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	files := make([]string, 0, len(entries))
-	for _, e := range entries {
-		if e.IsDir() {
-			continue
-		}
-		if filepath.Ext(e.Name()) != ".tmpl" {
-			continue
-		}
-		files = append(files, filepath.Join(dir, e.Name()))
-	}
-	sort.Strings(files)
-	return files, nil
 }

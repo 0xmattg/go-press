@@ -6,13 +6,16 @@ package core
 import (
 	"fmt"
 	"html/template"
+	"io/fs"
 	"net/http"
-	"os"
+	"path"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/0xmattg/go-press/core/assets"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
 )
 
 // RenderNamespacedInActiveTheme renders an extension-owned page fragment inside
@@ -30,7 +33,19 @@ import (
 // partials/*.tmpl using the theme's own FuncMap, then "base" is executed with
 // data (Ctx and Settings are injected when absent). Returns an error the caller
 // can turn into a 404/500; it does not write an error page itself.
+//
+// Extensions that ship their files in an asset filesystem should call
+// RenderNamespacedInActiveThemeFS instead.
 func (e *Engine) RenderNamespacedInActiveTheme(c *gin.Context, namespace, fragment, extensionDefaultDir string, data gin.H) error {
+	return e.RenderNamespacedInActiveThemeFS(c, namespace, fragment, assets.DirFS(extensionDefaultDir), data)
+}
+
+// RenderNamespacedInActiveThemeFS is RenderNamespacedInActiveTheme with the
+// extension's default fragments read from defaults, a filesystem rooted at the
+// directory that holds <fragment>.tmpl (for example a plugin's
+// templates/<namespace> subtree). Theme overrides and the theme's layout and
+// partials are read through the active theme's templates filesystem.
+func (e *Engine) RenderNamespacedInActiveThemeFS(c *gin.Context, namespace, fragment string, defaults fs.FS, data gin.H) error {
 	if !validThemeTemplateComponent(namespace) {
 		return fmt.Errorf("render-in-theme: invalid namespace %q", namespace)
 	}
@@ -42,38 +57,31 @@ func (e *Engine) RenderNamespacedInActiveTheme(c *gin.Context, namespace, fragme
 	if t == nil {
 		return fmt.Errorf("render-in-theme: no active theme")
 	}
-	tplDir := t.TemplateDir()
-	layout := filepath.Join(tplDir, "layouts", "base.tmpl")
-	if _, err := os.Stat(layout); err != nil {
+	themeFS := coreTheme.TemplatesFS(t)
+	if themeFS == nil {
+		return fmt.Errorf("render-in-theme: active theme has no templates")
+	}
+	const layout = "layouts/base.tmpl"
+	if _, err := fs.Stat(themeFS, layout); err != nil {
 		return fmt.Errorf("render-in-theme: active theme has no layouts/base.tmpl: %w", err)
 	}
 
 	// Fragment: theme override wins over the extension's bundled default.
-	fragPath := filepath.Join(tplDir, namespace, fragment+".tmpl")
-	if _, err := os.Stat(fragPath); err != nil {
-		fragPath = filepath.Join(extensionDefaultDir, fragment+".tmpl")
-		if _, err2 := os.Stat(fragPath); err2 != nil {
+	fragFS, fragName := themeFS, path.Join(namespace, fragment+".tmpl")
+	if !assets.Exists(fragFS, fragName) {
+		fragFS, fragName = defaults, fragment+".tmpl"
+		if !assets.Exists(fragFS, fragName) {
 			return fmt.Errorf("render-in-theme: fragment %q not found in theme override or extension defaults", fragment)
 		}
 	}
 
 	// All partials (optional).
-	var partials []string
-	if entries, err := os.ReadDir(filepath.Join(tplDir, "partials")); err == nil {
-		for _, en := range entries {
-			if !en.IsDir() && filepath.Ext(en.Name()) == ".tmpl" {
-				partials = append(partials, filepath.Join(tplDir, "partials", en.Name()))
-			}
-		}
-		sort.Strings(partials)
+	partials, _ := assets.TemplateNames(themeFS, "partials")
+
+	tmpl, err := assets.ParseFiles(template.New("").Funcs(t.TemplateFuncs()), themeFS, append([]string{layout}, partials...)...)
+	if err == nil {
+		tmpl, err = assets.ParseFiles(tmpl, fragFS, fragName)
 	}
-
-	files := make([]string, 0, 2+len(partials))
-	files = append(files, layout)
-	files = append(files, partials...)
-	files = append(files, fragPath)
-
-	tmpl, err := template.New("").Funcs(t.TemplateFuncs()).ParseFiles(files...)
 	if err != nil {
 		return fmt.Errorf("render-in-theme: parse %q: %w", fragment, err)
 	}

@@ -163,6 +163,12 @@ func (e *Engine) RenderNamespacedInActiveTheme(c *gin.Context, namespace, fragme
 
 Renders an extension-owned fragment inside the active theme's `layouts/base.tmpl` + partials, using the theme's own FuncMap. Fragment resolution is generic: `<theme>/templates/<namespace>/<fragment>.tmpl` wins over `<extensionDefaultDir>/<fragment>.tmpl`. Namespace and fragment are validated as single safe path components. Commerce passes the `commerce` namespace; core itself has no Commerce-specific branch. This is how `/cart`, `/checkout`, `/order-tracking`, and `/my-account/*` share the site's header/footer and let a theme override any page. `RenderInActiveTheme` remains as a compatibility wrapper that derives the namespace from the default directory's basename.
 
+```go
+func (e *Engine) RenderNamespacedInActiveThemeFS(c *gin.Context, namespace, fragment string, defaults fs.FS, data gin.H) error
+```
+
+The same, with the extension's default fragments read from a filesystem rooted at the directory that holds `<fragment>.tmpl`. Commerce passes the `templates/commerce` subtree of `Engine.PluginFS(p)`, its embedded files, so the storefront does not need `plugins/commerce/` on disk. The string form wraps its directory in `os.DirFS`.
+
 ### `admin.nav.items`
 
 `buildMenuItems()` applies this filter before the System section, so an active plugin can contribute a sidebar section. Commerce adds an "电商 / Commerce" section with **Orders**. Products appear under Content automatically (they are a content type).

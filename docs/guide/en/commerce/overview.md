@@ -50,7 +50,7 @@ Building Commerce required several *generic* core extension points — deliberat
 | `content.register_types` action | Lets a plugin (re)register content types idempotently so they survive theme switches, which rebuild the registry. |
 | `default_inactive` + `DefaultInactiveProvider` | Marks an opt-in module that ships disabled and is toggled from Settings → Modules. |
 | `DepNeedsEnable` dependency state | A theme dependency that is present-but-disabled produces a non-blocking "enable" prompt instead of a hard block. |
-| `Engine.RenderNamespacedInActiveTheme` | Renders an extension-owned full page inside the active theme's layout, with namespace-scoped theme overrides. |
+| `Engine.RenderNamespacedInActiveTheme` / `RenderNamespacedInActiveThemeFS` | Renders an extension-owned full page inside the active theme's layout, with namespace-scoped theme overrides; the FS form reads the extension's defaults from its embedded files. |
 | `admin.nav.items` filter | Lets an active plugin contribute an admin sidebar section (Commerce's "Orders" lives here). |
 | `seed.completed` action | Fires after demo/seed import so a plugin can derive satellite rows from seeded content (Commerce builds `product_data` from product meta). |
 

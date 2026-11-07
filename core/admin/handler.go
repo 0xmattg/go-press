@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"log"
 	"net/http"
 	"net/url"
@@ -16,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0xmattg/go-press/core/assets"
 	"github.com/0xmattg/go-press/core/content"
 	"github.com/0xmattg/go-press/core/hook"
 	coreI18n "github.com/0xmattg/go-press/core/i18n"
@@ -25,6 +27,26 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+// TemplateRef locates an extension-owned admin template: Name is a
+// slash-separated path inside FS. The zero value means "no template".
+type TemplateRef struct {
+	FS   fs.FS
+	Name string
+}
+
+// Valid reports whether r names a template.
+func (r TemplateRef) Valid() bool { return r.FS != nil && r.Name != "" }
+
+// TemplateRefFromPath adapts a file path, as returned by the older
+// SettingsTemplatePath contracts, into a TemplateRef. An empty path yields the
+// zero TemplateRef.
+func TemplateRefFromPath(filePath string) TemplateRef {
+	if filePath == "" {
+		return TemplateRef{}
+	}
+	return TemplateRef{FS: assets.DirFS(filepath.Dir(filePath)), Name: filepath.Base(filePath)}
+}
 
 // ThemeDisplayInfo holds info about a theme for admin display.
 type ThemeDisplayInfo struct {
@@ -53,8 +75,8 @@ type ThemeManager struct {
 	SwitchFn           func(name string) error
 	ActiveFn           func() string
 	AvailableFn        func() []ThemeDisplayInfo
-	ImportDemoFn       func(slug string) error  // import demo data for a theme
-	SettingsTemplateFn func(slug string) string // returns settings template path
+	ImportDemoFn       func(slug string) error       // import demo data for a theme
+	SettingsTemplateFn func(slug string) TemplateRef // locates the theme settings template
 	LocaleCatalogFn    func(slug string) *coreI18n.Catalog
 	// ActiveDepWarningFn returns a non-empty message when the active theme has an
 	// unmet dependency (e.g. a required plugin missing from the build), for the
@@ -141,7 +163,7 @@ type PluginCallbacks struct {
 	AllFn              func() []PluginInfo
 	ActivateFn         func(name string) error
 	DeactivateFn       func(name string) error
-	SettingsTemplateFn func(slug string) string                            // returns settings template path
+	SettingsTemplateFn func(slug string) TemplateRef                       // locates the plugin settings template
 	SettingsDataFn     func(slug string) map[string]interface{}            // extra template data for plugin settings page
 	SettingsValidateFn func(slug string, settings map[string]string) error // pre-persistence validation
 	SettingsSaveFn     func(slug string, settings map[string]string)       // hook called after plugin settings are saved
@@ -938,9 +960,18 @@ func requestBaseURL(c *gin.Context) string {
 // title; active is the nav highlight key (matches an AdminMenuItem.Active).
 // extra is page-specific data merged over the chrome data. ?success / ?error
 // query params surface as banners, matching core admin pages.
+//
+// Plugins that ship their files in an asset filesystem should call
+// RenderExtensionPageFS instead.
 func (h *Handler) RenderExtensionPage(c *gin.Context, fragmentPath, title, active string, extra map[string]interface{}) error {
-	layout := filepath.Join(h.tmplDir, "layouts", "admin.tmpl")
-	tmpl, err := template.New("").Funcs(h.funcMap).ParseFiles(layout, fragmentPath)
+	return h.RenderExtensionPageFS(c, TemplateRefFromPath(fragmentPath), title, active, extra)
+}
+
+// RenderExtensionPageFS is RenderExtensionPage with the fragment read from a
+// plugin filesystem, for example
+// TemplateRef{FS: engine.PluginFS(p), Name: "templates/admin/orders.tmpl"}.
+func (h *Handler) RenderExtensionPageFS(c *gin.Context, fragment TemplateRef, title, active string, extra map[string]interface{}) error {
+	tmpl, err := h.parseWithAdminLayout(fragment)
 	if err != nil {
 		return err
 	}
@@ -970,6 +1001,20 @@ func (h *Handler) RenderExtensionPage(c *gin.Context, fragmentPath, title, activ
 
 	c.Header("Content-Type", "text/html; charset=utf-8")
 	return tmpl.ExecuteTemplate(c.Writer, "admin", data)
+}
+
+// parseWithAdminLayout composes an extension template with the core admin
+// layout, the way ParseFiles(layout, fragment) did for file paths.
+func (h *Handler) parseWithAdminLayout(fragment TemplateRef) (*template.Template, error) {
+	if !fragment.Valid() {
+		return nil, fmt.Errorf("admin: no extension template to render")
+	}
+	layout := filepath.Join(h.tmplDir, "layouts", "admin.tmpl")
+	tmpl, err := template.New("").Funcs(h.funcMap).ParseFiles(layout)
+	if err != nil {
+		return nil, err
+	}
+	return assets.ParseFiles(tmpl, fragment.FS, fragment.Name)
 }
 
 // ==================== Helpers ====================

@@ -84,7 +84,7 @@ func (p *Plugin) renderCheckout(c *gin.Context, cart CartView, errMsg string) {
 	if u := user.CurrentUser(c); u != nil && u.Email != nil {
 		data["Email"] = *u.Email
 	}
-	if err := p.engine.RenderNamespacedInActiveTheme(c, pluginSlug, "checkout", commerceTemplateDir, data); err != nil {
+	if err := p.renderStorefront(c, "checkout", data); err != nil {
 		c.String(http.StatusInternalServerError, "%s", p.t(c, "commerce.error.checkout_unavailable"))
 	}
 }
@@ -205,7 +205,7 @@ func (p *Plugin) renderInlinePayment(c *gin.Context, order *Order, action coreco
 		"ClientDataJSON": string(payload),
 		"CompleteURL":    p.checkoutCompleteURL(order, false),
 	}
-	if err := p.engine.RenderNamespacedInActiveTheme(c, pluginSlug, "payment-inline", commerceTemplateDir, data); err != nil {
+	if err := p.renderStorefront(c, "payment-inline", data); err != nil {
 		c.String(http.StatusInternalServerError, "%s", p.t(c, "commerce.error.payment_unavailable"))
 	}
 }
@@ -249,7 +249,7 @@ func (p *Plugin) renderOrderView(c *gin.Context, order *Order, heading string) {
 			}
 		}
 	}
-	if err := p.engine.RenderNamespacedInActiveTheme(c, pluginSlug, "order-received", commerceTemplateDir, data); err != nil {
+	if err := p.renderStorefront(c, "order-received", data); err != nil {
 		c.String(http.StatusInternalServerError, "%s", p.t(c, "commerce.error.order_unavailable"))
 	}
 }

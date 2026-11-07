@@ -3,6 +3,21 @@
 ## 最小可用主题
 
 ```go
+// themes/my-theme/meta.go
+package mytheme
+
+import "embed"
+
+//go:embed theme.toml
+var themeTOML string
+
+// themeFiles 把主题自己的文件打包进二进制。
+//
+//go:embed templates static locales
+var themeFiles embed.FS
+```
+
+```go
 // themes/my-theme/theme.go
 package mytheme
 
@@ -16,7 +31,7 @@ import (
 )
 
 func init() {
-    core.RegisterTheme("my-theme", func(engine *core.Engine, themeDir string) coreTheme.Theme {
+    core.RegisterThemeWithMeta("my-theme", themeTOML, func(engine *core.Engine, themeDir string) coreTheme.Theme {
         return New(engine, themeDir)
     })
 }
@@ -28,7 +43,7 @@ type MyTheme struct {
 
 func New(engine *core.Engine, themeDir string) *MyTheme {
     t := &MyTheme{engine: engine}
-    t.InitBase(engine, themeDir, nil) // 初始化 BaseTheme
+    t.InitBaseFS(engine, themeDir, themeFiles, themeTOML, nil) // 初始化 BaseTheme
 
     // 注册自定义静态页面路由（可选）
     t.AddRoute("GET", "/about", myAboutHandler)
@@ -55,7 +70,19 @@ func (t *MyTheme) TemplateDir() string             { return filepath.Join(t.Them
 func (t *MyTheme) StaticDir() string               { return filepath.Join(t.ThemeDir, "static") }
 ```
 
-**不需要手动改 `cmd/server/main.go`**。把目录拖到 `themes/`，确保根目录同时有 `theme.toml` 和至少一个非 test `.go` 文件，然后重新执行 `gopress serve`。autoload 包会被重新生成，新主题的 `init()` 在启动时自动调用 `core.RegisterTheme` 完成注册。详见 [安装与运行](../getting-started/installation.md)。
+**不需要手动改 `cmd/server/main.go`**。把目录拖到 `themes/`，确保根目录同时有 `theme.toml` 和至少一个非 test `.go` 文件，然后重新执行 `gopress serve`。autoload 包会被重新生成，新主题的 `init()` 在启动时自动调用 `core.RegisterThemeWithMeta` 完成注册。详见 [安装与运行](../getting-started/installation.md)。
+
+### 把主题文件打包进二进制
+
+`InitBaseFS` 把主题自己的文件交给 BaseTheme。页面模板、模板层级、`/static/*`、语言包、后台设置页和演示数据都从这里读取：
+
+- `server.mode = "release"` 时只读打包进二进制的副本，二进制运行时不需要主题目录。
+- 其他模式下，磁盘上的主题目录存在时整体改读磁盘，改模板、CSS 不用重新编译。
+- 主题有哪些运行时目录就打包哪些（`templates`、`static`、`locales`、`demo`）。`go:embed` 会跳过以 `.` 或 `_` 开头的文件，需要这类文件时在模式前加 `all:`。
+- core 按约定位置查找后台设置页 `templates/admin/theme_settings.tmpl` 和演示数据 `demo/data/seed.toml`，不需要写 Go 方法。
+- `RegisterThemeWithMeta` 让安装器直接从打包的 `theme.toml` 列出主题。
+
+仍然调用 `InitBase(engine, themeDir, themeTOML, funcs)` 的主题照旧从磁盘读取 `TemplateDir()`、`StaticDir()` 和主题目录。
 
 配置文件 `[site] theme = "my-theme"` 即可激活该主题。
 
@@ -347,6 +374,8 @@ themes/my-theme/
 
 ## 可选接口
 
+演示数据放在 `demo/data/seed.toml`，并把 `demo` 和其他主题文件一起打包，后台就会提供一键导入。使用 `InitBase` 的主题改为实现 `DemoSeedPath()`：
+
 ```go
 // DemoDataProvider — 实现后，后台可一键导入演示数据
 func (t *MyTheme) DemoSeedPath() string {
@@ -385,7 +414,7 @@ func (t *MyTheme) DemoSeedPath() string {
 ```go
 func New(engine *core.Engine, themeDir string) *MyTheme {
     t := &MyTheme{engine: engine}
-    t.InitBase(engine, themeDir, template.FuncMap{
+    t.InitBaseFS(engine, themeDir, themeFiles, themeTOML, template.FuncMap{
         "formatLongDate": func(tm *time.Time) string {
             if tm == nil {
                 return ""

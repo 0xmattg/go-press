@@ -38,7 +38,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -822,45 +821,37 @@ func cloneConfig(cfg *config.Config) *config.Config {
 	return &copyCfg
 }
 
+// discoverThemes lists the themes compiled into this binary, from core's theme
+// registry, sorted by slug. It does not scan directories: a folder under
+// themes/ that is not compiled in cannot be activated, so it is not offered.
+// Metadata comes from the theme.toml registered with the theme
+// (core.RegisterThemeWithMeta), else from theme.toml in the theme's directory,
+// else the slug alone.
 func discoverThemes() []ThemeOption {
-	entries, err := os.ReadDir("themes")
-	if err != nil {
-		return []ThemeOption{{Slug: "modern-company", Name: "modern-company"}}
-	}
-
-	var themes []ThemeOption
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-
-		slug := entry.Name()
-		metaPath := filepath.Join("themes", slug, "theme.toml")
-		var meta themeFile
-		if _, err := toml.DecodeFile(metaPath, &meta); err != nil {
-			themes = append(themes, ThemeOption{Slug: slug, Name: slug})
-			continue
-		}
-
-		name := meta.Theme.Name
-		if name == "" {
-			name = slug
-		}
-		themes = append(themes, ThemeOption{
-			Slug:        slug,
-			Name:        name,
-			Description: meta.Theme.Description,
-		})
-	}
-
-	sort.Slice(themes, func(i, j int) bool {
-		return themes[i].Slug < themes[j].Slug
-	})
-
-	if len(themes) == 0 {
-		return []ThemeOption{{Slug: "modern-company", Name: "modern-company"}}
+	registered := core.RegisteredThemes()
+	themes := make([]ThemeOption, 0, len(registered))
+	for _, rt := range registered {
+		themes = append(themes, themeOptionFor(rt))
 	}
 	return themes
+}
+
+func themeOptionFor(rt core.RegisteredTheme) ThemeOption {
+	var meta themeFile
+	var err error
+	if rt.Source.TOML != "" {
+		_, err = toml.Decode(rt.Source.TOML, &meta)
+	} else {
+		_, err = toml.DecodeFile(filepath.Join(rt.Source.Dir, "theme.toml"), &meta)
+	}
+	if err != nil {
+		return ThemeOption{Slug: rt.Slug, Name: rt.Slug}
+	}
+	name := meta.Theme.Name
+	if name == "" {
+		name = rt.Slug
+	}
+	return ThemeOption{Slug: rt.Slug, Name: name, Description: meta.Theme.Description}
 }
 
 func generateSecret(bytesLen int) (string, error) {

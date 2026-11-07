@@ -24,11 +24,11 @@ Commerce 由当前主题呈现，但主题从不 import Commerce 插件。所有
 
 ## 整页：主题外壳
 
-`/cart`、`/checkout`、`/order-tracking`、`/checkout/complete/:number`、`/my-account/*` 是动态的、插件拥有的整页。Commerce 用 `Engine.RenderNamespacedInActiveTheme(c, "commerce", ...)` 渲染它们：在当前主题的 `layouts/base.tmpl` + partials 内、用主题的 FuncMap 组合片段。Core API 接受任意安全命名空间，Commerce 只传入它自己的命名空间。模板解析遵循 WordPress 式覆盖顺序：
+`/cart`、`/checkout`、`/order-tracking`、`/checkout/complete/:number`、`/my-account/*` 是动态的、插件拥有的整页。Commerce 用 `Engine.RenderNamespacedInActiveThemeFS(c, "commerce", ...)` 渲染它们：在当前主题的 `layouts/base.tmpl` + partials 内、用主题的 FuncMap 组合片段。Core API 接受任意安全命名空间，Commerce 只传入它自己的命名空间。模板解析遵循 WordPress 式覆盖顺序：
 
 ```text
 <theme>/templates/commerce/<fragment>.tmpl   ← 主题覆盖（优先）
-plugins/commerce/templates/commerce/<fragment>.tmpl   ← 插件默认
+templates/commerce/<fragment>.tmpl            ← 插件默认，来自插件打包进二进制的文件
 ```
 
 于是主题只需在 `templates/commerce/` 放一个文件，就能重设任意店面页样式，无需改 Go。

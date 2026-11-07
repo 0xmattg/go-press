@@ -16,7 +16,9 @@ import (
 )
 
 func init() {
-	core.RegisterTheme("modern-company", func(engine *core.Engine, themeDir string) coreTheme.Theme {
+	// Registering the embedded theme.toml lets the installer list the theme
+	// without reading its directory.
+	core.RegisterThemeWithMeta("modern-company", themeTOML, func(engine *core.Engine, themeDir string) coreTheme.Theme {
 		return New(engine, themeDir)
 	})
 }
@@ -31,8 +33,7 @@ type ModernCompanyTheme struct {
 
 // Compile-time interface check.
 var _ coreTheme.Theme = (*ModernCompanyTheme)(nil)
-var _ coreTheme.DemoDataProvider = (*ModernCompanyTheme)(nil)
-var _ coreTheme.SettingsProvider = (*ModernCompanyTheme)(nil)
+var _ coreTheme.AssetFSProvider = (*ModernCompanyTheme)(nil)
 
 // New creates a new ModernCompanyTheme.
 func New(engine *core.Engine, themeDir string) *ModernCompanyTheme {
@@ -46,7 +47,10 @@ func New(engine *core.Engine, themeDir string) *ModernCompanyTheme {
 	// Initialize BaseTheme with engine capabilities and theme-specific funcs.
 	// Theme-specific helpers go here so they're merged into BaseFuncMap and
 	// thus available to every template loader (page bundle, hierarchy loader).
-	t.InitBase(engine, themeDir, themeTOML, template.FuncMap{
+	// Files come from the embedded themeFiles: the admin settings page and the
+	// demo seed are found at core's conventional paths
+	// (templates/admin/theme_settings.tmpl, demo/data/seed.toml).
+	t.InitBaseFS(engine, themeDir, themeFiles, themeTOML, template.FuncMap{
 		"formatDateTime": func(tm *time.Time) string {
 			if tm == nil {
 				return ""
@@ -103,7 +107,7 @@ func NewWithDB(db *gorm.DB, themeDir string) *ModernCompanyTheme {
 	t := &ModernCompanyTheme{
 		handler: handler,
 	}
-	t.InitBase(nil, themeDir, themeTOML, template.FuncMap{
+	t.InitBaseFS(nil, themeDir, themeFiles, themeTOML, template.FuncMap{
 		"formatDateTime": func(tm *time.Time) string {
 			if tm == nil {
 				return ""
@@ -261,18 +265,4 @@ func (t *ModernCompanyTheme) TemplateDir() string {
 
 func (t *ModernCompanyTheme) StaticDir() string {
 	return filepath.Join(t.ThemeDir, "static")
-}
-
-// --- Demo Data ---
-
-// DemoSeedPath returns the path to the bundled demo seed.toml.
-func (t *ModernCompanyTheme) DemoSeedPath() string {
-	return filepath.Join(t.ThemeDir, "demo", "data", "seed.toml")
-}
-
-// --- Settings ---
-
-// SettingsTemplatePath returns the path to the admin settings template.
-func (t *ModernCompanyTheme) SettingsTemplatePath() string {
-	return filepath.Join(t.ThemeDir, "templates", "admin", "theme_settings.tmpl")
 }

@@ -43,7 +43,7 @@ GoPress 的国际化能力由 **Core 层** 提供，多语言插件负责数据�
 │  ├── IsTranslatable(key)                        # 判断是否可翻译    │
 │  └── AllTranslatableKeys()                      # 返回所有注册键    │
 └────────────────────────────────┬────────────────────────────────────┘
-                                 │ AddMessages() / LoadLocalesFS() / LoadThemeLocales()
+                                 │ AddMessages() / LoadLocalesFS() / LoadThemeLocalesFS()
                                  ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │  数据来源（优先级从高到低）                                          │
@@ -61,7 +61,7 @@ GoPress 的国际化能力由 **Core 层** 提供，多语言插件负责数据�
 
 ### UI 字符串翻译
 
-主题在 `locales/` 目录提供 JSON 翻译文件，模板中 `{{T .Ctx "welcome"}}` 直接使用。multilang 插件后台「字符串翻译管理」允许在 DB 中覆盖或新增翻译条目。
+主题在 `locales/` 目录提供 JSON 翻译文件，模板中 `{{T .Ctx "welcome"}}` 直接使用。multilang 插件后台「字符串翻译管理」允许在 DB 中覆盖或新增翻译条目；它通过 `Engine.ActiveThemeLocaleMessages()` 拿到当前主题的 key 和默认文案（core 加载主题语言包时读到的内容），自己不读主题目录。
 
 ### 主题设置翻译
 

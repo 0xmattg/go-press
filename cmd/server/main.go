@@ -127,7 +127,7 @@ func main() {
 		// CLI -seed flag: import demo data for the active theme
 		if *seedFlag {
 			activeSlug := engine.ActiveThemeName()
-			if seedPath := engine.ThemeDemoSeedPath(activeSlug); seedPath != "" {
+			if engine.HasThemeDemoData(activeSlug) {
 				logger.Info("Importing theme demo data via -seed flag", "theme", activeSlug)
 				if err := engine.ImportThemeDemoData(activeSlug); err != nil {
 					log.Fatalf("Failed to import theme demo data: %v", err)

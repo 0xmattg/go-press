@@ -59,11 +59,23 @@ Code marked with a `LEGACY(<id>):` comment keeps already-deployed sites working 
 A theme or plugin is identified by its **slug**, and the same slug is used everywhere:
 
 - The directory is `themes/<slug>/` or `plugins/<slug>/`.
-- A plugin's `plugin.toml` declares `[plugin].slug = "<slug>"`, and its `Name()` returns the same value. A theme registers itself with `core.RegisterTheme("<slug>", ...)`.
+- A plugin's `plugin.toml` declares `[plugin].slug = "<slug>"`, and its `Name()` returns the same value. A theme registers itself with `core.RegisterThemeWithMeta("<slug>", themeTOML, ...)` (or `core.RegisterTheme("<slug>", ...)`).
 - A slug is 2–64 characters of lowercase letters and digits, in words joined by single hyphens (`seo-extras`, `commerce-usdt`). Underscores are not allowed, and a theme and a plugin cannot share a slug.
 - Table names are derived from the slug by replacing hyphens with underscores: use `pluginMeta.Table("events")` (from `plugin.ParseMetaString`) to get `<prefix>plgn_<storage_slug>_events`. There is no setting to override the derived name.
 
 `internal/contracts` tests these rules for every module it finds, and `gopress gen` prints a warning when a module breaks them.
+
+## Module Files
+
+New themes and plugins ship their own files inside the binary, so they also run where their source directory does not exist:
+
+- A theme embeds `templates`, `static`, `locales` and `demo` (whichever it has) and calls `BaseTheme.InitBaseFS(engine, themeDir, themeFiles, themeTOML, funcs)`. It registers with `core.RegisterThemeWithMeta` so the installer can list it.
+- A plugin embeds `templates`, `locales` and `static` and implements `plugin.AssetsProvider` (`Assets() fs.FS`). It reads its own fragments through `Engine.PluginFS`, `Engine.RenderNamespacedInActiveThemeFS` and `admin.Handler.RenderExtensionPageFS`.
+- Settings pages and demo data live at the conventional paths `templates/admin/theme_settings.tmpl` (themes), `templates/admin/settings.tmpl` (plugins) and `demo/data/seed.toml`; core finds them without a Go method.
+- Module code must not build paths starting with `themes/` or `plugins/`.
+- `go:embed` skips names starting with `.` or `_`; use the `all:` prefix when such files are needed. A test that walks the module's runtime directories and checks each file is embedded catches a forgotten directory (see `themes/modern-company/assets_test.go`).
+
+Outside `server.mode = "release"`, core reads a module's directory on disk when it exists, so template and CSS edits show without rebuilding.
 
 ## How Pull Requests Land
 

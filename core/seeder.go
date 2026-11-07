@@ -30,6 +30,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -122,6 +123,28 @@ func (e *Engine) ForceSeedFromFile(path string) error {
 	if err != nil {
 		return err
 	}
+	return e.forceSeed(prepared)
+}
+
+// ForceSeedFromFS is ForceSeedFromFile for a seed file inside a filesystem,
+// such as a theme's asset filesystem.
+func (e *Engine) ForceSeedFromFS(fsys fs.FS, name string) error {
+	if fsys == nil {
+		return fmt.Errorf("failed to parse seed file: no filesystem for %q", name)
+	}
+	data, err := fs.ReadFile(fsys, name)
+	if err != nil {
+		return fmt.Errorf("failed to parse seed file: %w", err)
+	}
+	prepared, err := prepareSeedData(string(data))
+	if err != nil {
+		return err
+	}
+	return e.forceSeed(prepared)
+}
+
+// forceSeed replaces the site's seeded data with a validated seed.
+func (e *Engine) forceSeed(prepared *preparedSeedData) error {
 	if err := validateSeedRegistry(prepared, e.Registry); err != nil {
 		return fmt.Errorf("seed is incompatible with the active content registry: %w", err)
 	}
@@ -227,6 +250,18 @@ func prepareSeedFile(path string) (*preparedSeedData, error) {
 	if _, err := toml.DecodeFile(path, &data); err != nil {
 		return nil, fmt.Errorf("failed to parse seed file: %w", err)
 	}
+	return prepareSeed(data)
+}
+
+func prepareSeedData(content string) (*preparedSeedData, error) {
+	var data SeedData
+	if _, err := toml.Decode(content, &data); err != nil {
+		return nil, fmt.Errorf("failed to parse seed file: %w", err)
+	}
+	return prepareSeed(data)
+}
+
+func prepareSeed(data SeedData) (*preparedSeedData, error) {
 	taxonomyDefs, err := normalizedSeedTaxonomies(data)
 	if err != nil {
 		return nil, fmt.Errorf("invalid seed taxonomies: %w", err)

@@ -50,7 +50,7 @@ Commerce 是 `default_inactive` 插件（一个通用 core 能力，而非电商
 | `content.register_types` action | 让插件幂等地（重）注册内容类型，从而在切主题（会重建注册表）后依然存在。 |
 | `default_inactive` + `DefaultInactiveProvider` | 标记默认停用、可在「设置 → 模块」开关的可选模块。 |
 | `DepNeedsEnable` 依赖状态 | 主题依赖「已内置但未启用」时，产生非阻断的「立即启用」强提示，而非硬阻断。 |
-| `Engine.RenderNamespacedInActiveTheme` | 在当前主题布局内渲染扩展拥有的整页，支持按命名空间隔离的主题覆盖。 |
+| `Engine.RenderNamespacedInActiveTheme` / `RenderNamespacedInActiveThemeFS` | 在当前主题布局内渲染扩展拥有的整页，支持按命名空间隔离的主题覆盖；FS 版本从扩展打包进二进制的文件读取默认片段。 |
 | `admin.nav.items` filter | 让激活插件贡献一个后台侧栏分区（Commerce 的「订单」在此）。 |
 | `seed.completed` action | 演示/种子导入后触发，让插件从种子内容派生卫星数据（Commerce 据商品 meta 建 `product_data`）。 |
 

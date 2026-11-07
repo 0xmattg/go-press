@@ -245,7 +245,7 @@ const commerceNavIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentCol
 var (
 	_ plugin.Plugin                        = (*Plugin)(nil)
 	_ plugin.DefaultInactiveProvider       = (*Plugin)(nil)
-	_ plugin.SettingsProvider              = (*Plugin)(nil)
+	_ plugin.AssetsProvider                = (*Plugin)(nil)
 	_ plugin.SettingsDataProvider          = (*Plugin)(nil)
 	_ plugin.SettingsAuthorizationProvider = (*Plugin)(nil)
 	_ plugin.LogoProvider                  = (*Plugin)(nil)

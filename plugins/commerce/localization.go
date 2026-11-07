@@ -1,7 +1,7 @@
 package commerce
 
 import (
-	"embed"
+	"io/fs"
 
 	"github.com/gin-gonic/gin"
 
@@ -11,9 +11,7 @@ import (
 // commerceLocaleFS keeps the plugin's storefront copy with the plugin. Message
 // IDs are namespaced with commerce. so they can safely share Core's bundle with
 // the active theme and other extensions.
-//
-//go:embed locales/*.json locales/admin/*.json
-var commerceLocaleFS embed.FS
+var commerceLocaleFS fs.FS = commerceFiles
 
 var commerceAdminCatalog = coreI18n.NewCatalog(
 	coreI18n.DefaultUILanguage,

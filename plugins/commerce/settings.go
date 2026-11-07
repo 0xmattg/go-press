@@ -1,17 +1,9 @@
 package commerce
 
-import "path/filepath"
-
 // SettingsPermissionResource declares the narrow RBAC resource used by the
 // generic plugin settings handlers. Core supplies the read/update action and
 // remains unaware of the Commerce plugin slug.
 func (p *Plugin) SettingsPermissionResource() string { return "commerce_settings" }
-
-// SettingsTemplatePath implements plugin.SettingsProvider: the admin settings
-// page reachable at /admin/plugins/commerce/settings.
-func (p *Plugin) SettingsTemplatePath() string {
-	return filepath.Join("plugins", pluginSlug, "templates", "admin", "settings.tmpl")
-}
 
 // SettingsData implements plugin.SettingsDataProvider: current store settings
 // for the settings template. Fields persist as plugin_commerce_* options via the
