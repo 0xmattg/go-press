@@ -6,12 +6,10 @@ package admin
 import (
 	"errors"
 	"fmt"
-	"html/template"
 	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -649,16 +647,15 @@ func (h *Handler) ThemeSettings(c *gin.Context) {
 		return
 	}
 
-	// Get theme settings template path
-	tmplPath := h.themeManager.SettingsTemplate(slug)
-	if tmplPath == "" {
+	// Locate the theme settings template
+	settingsTmpl := h.themeManager.SettingsTemplate(slug)
+	if !settingsTmpl.Valid() {
 		c.Redirect(http.StatusFound, "/admin/themes?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.theme_settings_unavailable")))
 		return
 	}
 
 	// Compile the theme settings template with admin layout
-	layout := filepath.Join(h.tmplDir, "layouts", "admin.tmpl")
-	tmpl, err := template.New("").Funcs(h.funcMap).ParseFiles(layout, tmplPath)
+	tmpl, err := h.parseWithAdminLayout(settingsTmpl)
 	if err != nil {
 		log.Printf("Theme settings template error (%s): %v", slug, err)
 		c.Redirect(http.StatusFound, "/admin/themes?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.theme_template_failed")))
@@ -1059,16 +1056,15 @@ func (h *Handler) PluginSettings(c *gin.Context) {
 		pluginName = msg
 	}
 
-	// Get plugin settings template path
-	tmplPath := h.pluginCallbacks.SettingsTemplate(slug)
-	if tmplPath == "" {
+	// Locate the plugin settings template
+	settingsTmpl := h.pluginCallbacks.SettingsTemplate(slug)
+	if !settingsTmpl.Valid() {
 		c.Redirect(http.StatusFound, "/admin/plugins?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.plugin_settings_unavailable")))
 		return
 	}
 
 	// Compile the plugin settings template with admin layout
-	layout := filepath.Join(h.tmplDir, "layouts", "admin.tmpl")
-	tmpl, err := template.New("").Funcs(h.funcMap).ParseFiles(layout, tmplPath)
+	tmpl, err := h.parseWithAdminLayout(settingsTmpl)
 	if err != nil {
 		log.Printf("Plugin settings template error (%s): %v", slug, err)
 		c.Redirect(http.StatusFound, "/admin/plugins?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.plugin_template_failed")))

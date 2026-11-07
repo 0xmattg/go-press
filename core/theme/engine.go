@@ -4,9 +4,10 @@
 package theme
 
 import (
+	"fmt"
 	"html/template"
-	"os"
-	"path/filepath"
+	"io/fs"
+	"path"
 	"strings"
 	"sync"
 
@@ -29,31 +30,32 @@ func NewTemplateEngine(t Theme) *TemplateEngine {
 	}
 }
 
-// Load compiles all templates in the theme's template directory.
+// Load compiles all templates in the theme's templates directory, read
+// through TemplatesFS. Template names are slash-separated paths relative to
+// that directory, for example "single-post.tmpl" or "partials/header.tmpl".
 func (e *TemplateEngine) Load() error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	dir := e.theme.TemplateDir()
+	tplFS := TemplatesFS(e.theme)
+	if tplFS == nil {
+		return fmt.Errorf("theme %q has no template dir", e.theme.Name())
+	}
 	tmpl := template.New("").Funcs(e.funcMap)
 
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	err := fs.WalkDir(tplFS, ".", func(name string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if info.IsDir() {
+		if d.IsDir() {
 			return nil
 		}
-		ext := strings.ToLower(filepath.Ext(path))
+		ext := strings.ToLower(path.Ext(name))
 		if ext != ".tmpl" && ext != ".html" {
 			return nil
 		}
 
-		// Template name is relative path from template dir
-		name, _ := filepath.Rel(dir, path)
-		name = filepath.ToSlash(name) // normalize to forward slashes
-
-		data, readErr := os.ReadFile(path)
+		data, readErr := fs.ReadFile(tplFS, name)
 		if readErr != nil {
 			return readErr
 		}
@@ -69,8 +71,16 @@ func (e *TemplateEngine) Load() error {
 	}
 
 	e.templates = tmpl
-	logger.Info("Templates loaded", "theme", e.theme.Name(), "dir", dir)
+	logger.Info("Templates loaded", "theme", e.theme.Name(), "source", templateSource(e.theme))
 	return nil
+}
+
+// templateSource describes where a theme's templates come from, for logs.
+func templateSource(t Theme) string {
+	if AssetFSOf(t) != nil {
+		return "asset filesystem"
+	}
+	return t.TemplateDir()
 }
 
 // Get returns the compiled template set.

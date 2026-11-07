@@ -35,7 +35,9 @@ database overrides and management UI through public contracts:
 ```text
 core/i18n.Manager
   -> layered messages published as immutable bundle snapshots
-  -> LoadThemeLocales / LoadLocalesFS / AddMessages
+  -> LoadThemeLocalesFS / LoadLocalesFS / AddMessages
+  -> ThemeMessages (read-only copy of the theme layer;
+     Engine.ActiveThemeLocaleMessages exposes it to plugins)
   -> T(ctx, key)
   -> TranslateOption / TranslateSettings
 
@@ -69,7 +71,9 @@ translations.
 
 Themes place JSON messages under `locales/` and use `{{T .Ctx "welcome"}}` in
 templates. A multilingual extension may add or override messages in the
-database without editing theme files.
+database without editing theme files. It lists the theme's keys and default
+text through `Engine.ActiveThemeLocaleMessages()`, the messages core loaded
+from the active theme, rather than reading the theme directory itself.
 
 ### Translatable Settings
 

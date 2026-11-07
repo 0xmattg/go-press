@@ -24,11 +24,11 @@ The slot value works whether the theme passes a `gin.H` map (BaseTheme) or a typ
 
 ## Full pages via the theme shell
 
-`/cart`, `/checkout`, `/order-tracking`, `/checkout/complete/:number`, and `/my-account/*` are dynamic, plugin-owned full pages. Commerce renders them with `Engine.RenderNamespacedInActiveTheme(c, "commerce", ...)`, which composes the fragment inside the active theme's `layouts/base.tmpl` + partials using the theme's FuncMap. The core API accepts any safe namespace; Commerce supplies its own. Template resolution follows a WordPress-style override order:
+`/cart`, `/checkout`, `/order-tracking`, `/checkout/complete/:number`, and `/my-account/*` are dynamic, plugin-owned full pages. Commerce renders them with `Engine.RenderNamespacedInActiveThemeFS(c, "commerce", ...)`, which composes the fragment inside the active theme's `layouts/base.tmpl` + partials using the theme's FuncMap. The core API accepts any safe namespace; Commerce supplies its own. Template resolution follows a WordPress-style override order:
 
 ```text
 <theme>/templates/commerce/<fragment>.tmpl   ← theme override (wins)
-plugins/commerce/templates/commerce/<fragment>.tmpl   ← plugin default
+templates/commerce/<fragment>.tmpl            ← plugin default, from the plugin's embedded files
 ```
 
 So a theme can restyle any storefront page by dropping a file in `templates/commerce/`, without touching Go.

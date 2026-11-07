@@ -5,6 +5,22 @@ This guide describes the recommended shape of a GoPress theme.
 ## Minimal Theme
 
 ```go
+// themes/my-theme/meta.go
+package mytheme
+
+import "embed"
+
+//go:embed theme.toml
+var themeTOML string
+
+// themeFiles carries the theme's own files inside the binary.
+//
+//go:embed templates static locales
+var themeFiles embed.FS
+```
+
+```go
+// themes/my-theme/theme.go
 package mytheme
 
 import (
@@ -17,7 +33,7 @@ import (
 )
 
 func init() {
-    core.RegisterTheme("my-theme", func(engine *core.Engine, themeDir string) coreTheme.Theme {
+    core.RegisterThemeWithMeta("my-theme", themeTOML, func(engine *core.Engine, themeDir string) coreTheme.Theme {
         return New(engine, themeDir)
     })
 }
@@ -29,7 +45,7 @@ type MyTheme struct {
 
 func New(engine *core.Engine, themeDir string) *MyTheme {
     t := &MyTheme{engine: engine}
-    t.InitBase(engine, themeDir, nil)
+    t.InitBaseFS(engine, themeDir, themeFiles, themeTOML, nil)
     t.LoadTemplates(t)
     return t
 }
@@ -43,7 +59,19 @@ func (t *MyTheme) TemplateDir() string { return filepath.Join(t.ThemeDir, "templ
 func (t *MyTheme) StaticDir() string { return filepath.Join(t.ThemeDir, "static") }
 ```
 
-No manual `cmd/server/main.go` edit is required. Drop the folder into `themes/`, make sure it has both `theme.toml` and at least one non-test `.go` file at its root, then re-run `gopress serve`. The autoload package is regenerated and the new theme's `init()` registers itself with `core.RegisterTheme` at startup. See [Getting Started > Installation](../getting-started/installation.md) for details.
+No manual `cmd/server/main.go` edit is required. Drop the folder into `themes/`, make sure it has both `theme.toml` and at least one non-test `.go` file at its root, then re-run `gopress serve`. The autoload package is regenerated and the new theme's `init()` registers itself with `core.RegisterThemeWithMeta` at startup. See [Getting Started > Installation](../getting-started/installation.md) for details.
+
+### Theme Files in the Binary
+
+`InitBaseFS` hands BaseTheme the theme's own files. Page templates, the template hierarchy, `/static/*`, locales, the admin settings page and demo data are all read from them:
+
+- With `server.mode = "release"`, only the embedded copy is used, so the binary does not need the theme directory.
+- In any other mode, the theme directory on disk is used as a whole when it exists, so template and CSS edits show without rebuilding.
+- Embed every runtime directory the theme has (`templates`, `static`, `locales`, `demo`). `go:embed` skips files whose names start with `.` or `_`; prefix the pattern with `all:` if the theme needs such files.
+- Core finds the admin settings page at `templates/admin/theme_settings.tmpl` and demo data at `demo/data/seed.toml`; no Go method is needed for either.
+- `RegisterThemeWithMeta` lets the installer list the theme from the embedded `theme.toml`.
+
+Themes that call `InitBase(engine, themeDir, themeTOML, funcs)` instead keep reading `TemplateDir()`, `StaticDir()` and the theme directory from disk.
 
 ## Theme Metadata
 
@@ -298,7 +326,7 @@ If a theme needs a custom date formatter, convert through `engine.SiteLocation()
 ```go
 func New(engine *core.Engine, themeDir string) *MyTheme {
     t := &MyTheme{engine: engine}
-    t.InitBase(engine, themeDir, template.FuncMap{
+    t.InitBaseFS(engine, themeDir, themeFiles, themeTOML, template.FuncMap{
         "formatLongDate": func(tm *time.Time) string {
             if tm == nil {
                 return ""
@@ -379,7 +407,7 @@ data := gin.H{
 
 ## Demo Data
 
-Implement `DemoSeedPath()` to enable one-click demo import from the admin:
+Put the seed at `demo/data/seed.toml` and embed `demo` with the other theme files; the admin then offers one-click demo import. A theme that uses `InitBase` implements `DemoSeedPath()` instead:
 
 ```go
 func (t *MyTheme) DemoSeedPath() string {

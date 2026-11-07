@@ -4,11 +4,14 @@
 package theme
 
 import (
+	"fmt"
 	"html/template"
+	"io/fs"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/0xmattg/go-press/core/assets"
 	"github.com/0xmattg/go-press/core/comment"
 	"github.com/0xmattg/go-press/core/content"
 	"github.com/0xmattg/go-press/core/hook"
@@ -120,12 +123,71 @@ type Theme interface {
 
 	// Templates
 	TemplateFuncs() template.FuncMap
+	// TemplateDir and StaticDir locate the theme's files on disk. Core reads
+	// them only for themes without an asset filesystem (see AssetFSProvider);
+	// a theme initialized with BaseTheme.InitBaseFS is read through that
+	// filesystem instead.
 	TemplateDir() string
 	StaticDir() string
 }
 
+// AssetFSProvider is implemented by themes whose own files are read through a
+// filesystem rooted at the theme directory (templates/, static/, locales/,
+// demo/). BaseTheme implements it; AssetFS returns nil until the theme calls
+// InitBaseFS, and core then falls back to TemplateDir, StaticDir and the
+// theme's directory on disk.
+type AssetFSProvider interface {
+	AssetFS() fs.FS
+}
+
+// Conventional locations inside a theme's asset filesystem. For themes with an
+// asset filesystem core looks these up directly instead of asking the theme
+// for paths through DemoDataProvider and SettingsProvider.
+const (
+	SettingsTemplateName = "templates/admin/theme_settings.tmpl"
+	DemoSeedName         = "demo/data/seed.toml"
+)
+
+// AssetFSOf returns t's asset filesystem, or nil when t reads its files from
+// disk paths.
+func AssetFSOf(t Theme) fs.FS {
+	if p, ok := t.(AssetFSProvider); ok {
+		return p.AssetFS()
+	}
+	return nil
+}
+
+// TemplatesFS returns the filesystem rooted at t's templates directory.
+func TemplatesFS(t Theme) fs.FS {
+	if t == nil {
+		return nil
+	}
+	if fsys := AssetFSOf(t); fsys != nil {
+		return assets.Sub(fsys, "templates")
+	}
+	if dir := t.TemplateDir(); dir != "" {
+		return assets.DirFS(dir)
+	}
+	return nil
+}
+
+// StaticFS returns the filesystem rooted at t's static directory.
+func StaticFS(t Theme) fs.FS {
+	if t == nil {
+		return nil
+	}
+	if fsys := AssetFSOf(t); fsys != nil {
+		return assets.Sub(fsys, "static")
+	}
+	if dir := t.StaticDir(); dir != "" {
+		return assets.DirFS(dir)
+	}
+	return nil
+}
+
 // DemoDataProvider is an optional interface that themes can implement
 // to supply bundled demo/seed data for one-click import from the admin panel.
+// Themes with an asset filesystem do not need it: core uses DemoSeedName.
 type DemoDataProvider interface {
 	// DemoSeedPath returns the absolute path to the theme's seed.toml file.
 	// Return "" if no demo data is available.
@@ -134,6 +196,8 @@ type DemoDataProvider interface {
 
 // SettingsProvider is an optional interface that themes can implement
 // to supply a custom admin settings page for theme-specific configuration.
+// Themes with an asset filesystem do not need it: core uses
+// SettingsTemplateName.
 type SettingsProvider interface {
 	// SettingsTemplatePath returns the absolute path to the theme's admin
 	// settings template file. Return "" if no settings page is available.
@@ -290,6 +354,18 @@ func LoadFileConfig(themeDir string) (*FileConfig, error) {
 		return nil, err
 	}
 	return &cfg, nil
+}
+
+// LoadFileConfigFS parses theme.toml at the root of a theme filesystem.
+func LoadFileConfigFS(themeFS fs.FS) (*FileConfig, error) {
+	if themeFS == nil {
+		return nil, fmt.Errorf("theme: no filesystem to read theme.toml from")
+	}
+	data, err := fs.ReadFile(themeFS, "theme.toml")
+	if err != nil {
+		return nil, err
+	}
+	return ParseFileConfig(string(data))
 }
 
 // RegisterMenuLocationsFromConfig registers the theme's [[menu_locations]]

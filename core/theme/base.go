@@ -30,10 +30,9 @@ package theme
 import (
 	"fmt"
 	"html/template"
+	"io/fs"
 	"net/http"
 	"net/url"
-	"os"
-	"path/filepath"
 	"reflect"
 	"sort"
 	"strconv"
@@ -41,6 +40,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/0xmattg/go-press/core/assets"
 	"github.com/0xmattg/go-press/core/content"
 	"github.com/0xmattg/go-press/core/hook"
 	coreI18n "github.com/0xmattg/go-press/core/i18n"
@@ -88,6 +88,7 @@ type BaseTheme struct {
 	fileConfig       *FileConfig    // full theme.toml parsed from the embedded copy
 	meta             Config         // [theme] metadata (single source of truth, baked in)
 	requires         RequiresConfig // [requires] dependency block
+	assetFS          fs.FS          // theme files when initialized with InitBaseFS
 }
 
 // InitBase initializes the BaseTheme. Call this from the theme constructor.
@@ -97,21 +98,82 @@ type BaseTheme struct {
 // into the binary — the same way plugins embed plugin.toml — rather than read
 // from disk at runtime. extraFuncs are merged after common engine functions, so
 // theme-specific helpers can add names without reimplementing the shared FuncMap.
+//
+// An empty themeTOML means the theme has no embedded copy: theme.toml is then
+// read from the theme directory, which suits themes whose files live outside
+// the binary.
 func (b *BaseTheme) InitBase(app App, themeDir, themeTOML string, extraFuncs template.FuncMap) {
+	b.initBase(app, themeDir, nil, themeTOML, extraFuncs)
+}
+
+func (b *BaseTheme) initBase(app App, themeDir string, builtin fs.FS, themeTOML string, extraFuncs template.FuncMap) {
 	b.App = app
 	b.ThemeDir = themeDir
 	b.PageTemplates = make(map[string]*template.Template)
 	b.CustomRoutes = make(map[string]map[string]gin.HandlerFunc)
 	b.archivePageSizes = make(map[string]int)
 	b.customFuncMap = extraFuncs
-	// Parse the embedded theme.toml once. It is the single source of truth for
-	// theme metadata (so Name/Version/... don't drift against hardcoded Go) and
+	b.assetFS = nil
+	if builtin != nil {
+		b.assetFS = assets.Resolve(themeDir, builtin, preferDiskAssets(app))
+	}
+	if themeTOML == "" {
+		if fsys := b.files(); fsys != nil {
+			if data, err := fs.ReadFile(fsys, "theme.toml"); err == nil {
+				themeTOML = string(data)
+			}
+		}
+	}
+	// Parse theme.toml once. It is the single source of truth for theme
+	// metadata (so Name/Version/... don't drift against hardcoded Go) and
 	// declared dependencies.
 	if cfg, err := ParseFileConfig(themeTOML); err == nil {
 		b.fileConfig = cfg
 		b.meta = cfg.Theme
 		b.requires = cfg.Requires
 	}
+}
+
+// InitBaseFS initializes the BaseTheme like InitBase and reads the theme's own
+// files (templates/, static/, locales/, demo/) from builtin, usually the
+// theme's embed.FS, instead of from themeDir. The theme can then run without
+// its source directory.
+//
+// Outside release mode the theme directory on disk is used when it exists,
+// so template and static edits show without rebuilding (assets.Resolve).
+// Call InitBaseFS before LoadTemplates or LoadPageBundle.
+func (b *BaseTheme) InitBaseFS(app App, themeDir string, builtin fs.FS, themeTOML string, extraFuncs template.FuncMap) {
+	b.initBase(app, themeDir, builtin, themeTOML, extraFuncs)
+}
+
+// AssetFS implements AssetFSProvider. It is nil for themes initialized with
+// InitBase, which read their files from TemplateDir, StaticDir and ThemeDir.
+func (b *BaseTheme) AssetFS() fs.FS {
+	if b == nil {
+		return nil
+	}
+	return b.assetFS
+}
+
+// files returns the filesystem rooted at the theme directory.
+func (b *BaseTheme) files() fs.FS {
+	if b.assetFS != nil {
+		return b.assetFS
+	}
+	if b.ThemeDir == "" {
+		return nil
+	}
+	return assets.DirFS(b.ThemeDir)
+}
+
+// preferDiskAssets reports whether the engine asks extensions to read their
+// directory on disk ahead of built-in files. Core's engine answers through
+// PreferDiskAssets; apps without that method get the built-in files.
+func preferDiskAssets(app App) bool {
+	if p, ok := app.(interface{ PreferDiskAssets() bool }); ok {
+		return p.PreferDiskAssets()
+	}
+	return false
 }
 
 const (
@@ -170,10 +232,14 @@ func (b *BaseTheme) Author() string      { return b.meta.Author }
 // is enough to show a logo on the admin theme card. Core sanitizes the markup
 // before rendering it.
 func (b *BaseTheme) LogoSVG() string {
-	if b == nil || b.ThemeDir == "" {
+	if b == nil {
 		return ""
 	}
-	data, err := os.ReadFile(filepath.Join(b.ThemeDir, "static", "logo.svg"))
+	fsys := b.files()
+	if fsys == nil {
+		return ""
+	}
+	data, err := fs.ReadFile(fsys, "static/logo.svg")
 	if err != nil {
 		return ""
 	}

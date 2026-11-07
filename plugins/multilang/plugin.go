@@ -16,12 +16,10 @@ package multilang
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"net/http"
 	"net/url"
-	"os"
 	"path/filepath"
 	"reflect"
 	"sort"
@@ -2129,48 +2127,34 @@ func (p *Plugin) handleMenuUnlink(c *gin.Context) {
 
 // --- String Translation Admin ---
 
-// readThemeLocaleKeys reads the active theme's locale JSON files and returns
-// all keys organized by language, plus a sorted list of unique keys.
+// readThemeLocaleKeys returns the active theme's locale strings by language,
+// plus a sorted list of unique keys. The strings come from core, which loaded
+// them from the theme's locales/*.json; the plugin does not read theme
+// directories itself.
 func (p *Plugin) readThemeLocaleKeys() (map[string]map[string]string, []string) {
-	result := make(map[string]map[string]string)
+	if p == nil || p.engine == nil {
+		return map[string]map[string]string{}, nil
+	}
+	return themeLocaleKeys(p.engine.ActiveThemeLocaleMessages())
+}
+
+// themeLocaleKeys returns byLang and the sorted union of its keys.
+func themeLocaleKeys(byLang map[string]map[string]string) (map[string]map[string]string, []string) {
+	if byLang == nil {
+		byLang = map[string]map[string]string{}
+	}
 	keySet := make(map[string]bool)
-
-	themeName := p.engine.ActiveThemeName()
-	if themeName == "" {
-		return result, nil
-	}
-
-	localesDir := filepath.Join("themes", themeName, "locales")
-	entries, err := os.ReadDir(localesDir)
-	if err != nil {
-		return result, nil
-	}
-
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
-			continue
-		}
-		langCode := strings.TrimSuffix(entry.Name(), ".json")
-		data, err := os.ReadFile(filepath.Join(localesDir, entry.Name()))
-		if err != nil {
-			continue
-		}
-		var flat map[string]string
-		if err := json.Unmarshal(data, &flat); err != nil {
-			continue
-		}
-		result[langCode] = flat
+	for _, flat := range byLang {
 		for k := range flat {
 			keySet[k] = true
 		}
 	}
-
 	keys := make([]string, 0, len(keySet))
 	for k := range keySet {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	return result, keys
+	return byLang, keys
 }
 
 // handleStringTranslationSave saves string translation overrides from the admin UI.

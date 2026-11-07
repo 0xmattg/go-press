@@ -436,10 +436,13 @@ func (e *Engine) RegisterUpdateTarget(target updatecheck.Target) error {
 // are reloaded into the registry during activation.
 func (e *Engine) LoadAllThemes() error {
 	for name, factory := range AllThemeFactories() {
-		themeDir := "themes/" + name
-		t := factory(e, themeDir)
+		t := factory(e, ThemeDir(name))
 		e.themes[name] = t
 		logger.Info("Theme registered", "theme", t.Name(), "slug", name)
+	}
+	if slugs := diskFallbackThemes(e.themes); len(slugs) > 0 {
+		logger.Info("Themes read their files from their directory on disk; embed them with BaseTheme.InitBaseFS so they can run outside the source tree",
+			"themes", strings.Join(slugs, ","))
 	}
 
 	// Determine active theme: options DB overrides config file
@@ -465,8 +468,8 @@ func (e *Engine) activateTheme(name string) error {
 
 	// Clear and re-register: core types first, then theme types. Prefer the
 	// theme's embedded theme.toml (baked into the binary) so runtime behavior
-	// matches the compiled version; fall back to disk only if the theme predates
-	// FileConfigProvider.
+	// matches the compiled version; fall back to the theme's files only if the
+	// theme predates FileConfigProvider.
 	e.revokePublicSubmissionCapabilities()
 	e.Registry.Clear()
 	e.registerCoreTypes()
@@ -475,7 +478,7 @@ func (e *Engine) activateTheme(name string) error {
 		themeConfig = fp.FileConfig()
 	} else {
 		var err error
-		themeConfig, err = coreTheme.LoadFileConfig("themes/" + name)
+		themeConfig, err = coreTheme.LoadFileConfigFS(e.themeFS(name))
 		if err != nil {
 			return fmt.Errorf("failed to load theme config for %q: %w", name, err)
 		}
@@ -501,7 +504,7 @@ func (e *Engine) activateTheme(name string) error {
 
 	// Load theme's locale files for core i18n
 	if e.I18n != nil {
-		e.I18n.LoadThemeLocales("themes/" + name)
+		e.I18n.LoadThemeLocalesFS(e.themeFS(name))
 	}
 
 	logger.Info("Theme activated", "theme", theme.Name(), "slug", name)
@@ -771,6 +774,9 @@ func extensionLogoSVG(x interface{}) string {
 
 // ThemeDemoSeedPath returns the seed.toml path for the given theme slug,
 // or "" if the theme does not provide demo data.
+//
+// Deprecated: it only reports DemoDataProvider paths and returns "" for themes
+// whose files come from an asset filesystem. Use HasThemeDemoData.
 func (e *Engine) ThemeDemoSeedPath(slug string) string {
 	t, ok := e.themes[slug]
 	if !ok {
@@ -789,6 +795,9 @@ func (e *Engine) IsThemeDemoImported(slug string) bool {
 
 // ThemeSettingsTemplatePath returns the admin settings template path for
 // the given theme slug, or "" if the theme does not provide a settings page.
+//
+// Deprecated: it only reports SettingsProvider paths and returns "" for themes
+// whose files come from an asset filesystem. Use ThemeSettingsTemplate.
 func (e *Engine) ThemeSettingsTemplatePath(slug string) string {
 	t, ok := e.themes[slug]
 	if !ok {
@@ -821,11 +830,11 @@ func (e *Engine) ActiveThemePageTemplates() []coreTheme.PageTemplateConfig {
 // visible immediately, and flushes caches so the next request renders from the
 // fresh database state.
 func (e *Engine) ImportThemeDemoData(slug string) error {
-	seedPath := e.ThemeDemoSeedPath(slug)
-	if seedPath == "" {
+	seed, ok := e.themeDemoSeed(slug)
+	if !ok {
 		return fmt.Errorf("theme %q does not provide demo data", slug)
 	}
-	if err := e.ForceSeedFromFile(seedPath); err != nil {
+	if err := e.ForceSeedFromFS(seed.FS, seed.Name); err != nil {
 		return err
 	}
 	// Mark as imported so the UI disables the button
@@ -883,6 +892,10 @@ func (e *Engine) LoadAllPlugins() {
 	for _, name := range names {
 		logger.Info("Loading plugin", "name", name)
 		factories[name](e)
+	}
+	if slugs := diskFallbackPlugins(e.PluginManager.RegisteredPlugins()); len(slugs) > 0 {
+		logger.Info("Plugins read their files from plugins/<slug> on disk; implement plugin.AssetsProvider so they can run outside the source tree",
+			"plugins", strings.Join(slugs, ","))
 	}
 }
 
@@ -1095,10 +1108,10 @@ func (e *Engine) serveStatic(c *gin.Context) {
 		return
 	}
 
-	// Theme static assets — serve from active theme's static directory
+	// Theme static assets — serve from the active theme's static files
 	theme := e.ActiveTheme()
 	if theme != nil {
-		e.serveStaticFile(c, filepath.Join(theme.StaticDir(), strings.TrimPrefix(fp, "/")), c.Query("v") != "")
+		serveStaticFS(c, coreTheme.StaticFS(theme), strings.TrimPrefix(fp, "/"), c.Query("v") != "")
 		return
 	}
 
@@ -1134,13 +1147,7 @@ func (e *Engine) serveStaticFile(c *gin.Context, filePath string, immutable bool
 		serveStaticNotFound(c)
 		return
 	}
-	if immutable {
-		c.Header("Cache-Control", "public, max-age=31536000, immutable")
-		c.Header("Expires", time.Now().Add(365*24*time.Hour).Format(time.RFC1123))
-	} else {
-		c.Header("Cache-Control", "public, max-age=86400")
-		c.Header("Expires", time.Now().Add(24*time.Hour).Format(time.RFC1123))
-	}
+	setStaticCacheHeaders(c, immutable)
 	c.File(filePath)
 }
 
@@ -1214,9 +1221,9 @@ func (e *Engine) SetupAdmin() {
 					Description:  t.Description,
 					Author:       t.Author,
 					Active:       t.Active,
-					HasDemoData:  e.ThemeDemoSeedPath(t.Slug) != "",
+					HasDemoData:  e.HasThemeDemoData(t.Slug),
 					DemoImported: e.IsThemeDemoImported(t.Slug),
-					HasSettings:  e.ThemeSettingsTemplatePath(t.Slug) != "",
+					HasSettings:  e.ThemeSettingsTemplate(t.Slug).Valid(),
 					LogoSVG:      template.HTML(t.LogoSVG),
 				}
 				// Dependency status for the card: blocked (can't switch) vs the
@@ -1233,9 +1240,9 @@ func (e *Engine) SetupAdmin() {
 			return result
 		},
 		ImportDemoFn:       e.ImportThemeDemoData,
-		SettingsTemplateFn: e.ThemeSettingsTemplatePath,
+		SettingsTemplateFn: e.ThemeSettingsTemplate,
 		LocaleCatalogFn: func(slug string) *coreI18n.Catalog {
-			return extensionAdminCatalog(filepath.Join("themes", slug))
+			return extensionAdminCatalogFS(e.themeFS(slug))
 		},
 		ActiveDepWarningFn: func() string {
 			if err := e.ActiveThemeDependencies().BlockingError(); err != nil {
@@ -1320,10 +1327,7 @@ func (e *Engine) SetupAdmin() {
 			result := make([]admin.PluginInfo, len(registered))
 			for i, p := range registered {
 				slug := plugin.Slug(p)
-				hasSettings := false
-				if sp, ok := p.(plugin.SettingsProvider); ok && sp.SettingsTemplatePath() != "" {
-					hasSettings = true
-				}
+				hasSettings := e.pluginSettingsTemplate(p).Valid()
 				result[i] = admin.PluginInfo{
 					Name:                  p.Name(),
 					DisplayName:           p.Name(),
@@ -1341,15 +1345,13 @@ func (e *Engine) SetupAdmin() {
 		},
 		ActivateFn:   e.activatePluginFromAdmin,
 		DeactivateFn: e.deactivatePluginFromAdmin,
-		SettingsTemplateFn: func(slug string) string {
+		SettingsTemplateFn: func(slug string) admin.TemplateRef {
 			for _, p := range e.PluginManager.ActivePlugins() {
 				if plugin.Slug(p) == slug {
-					if sp, ok := p.(plugin.SettingsProvider); ok {
-						return sp.SettingsTemplatePath()
-					}
+					return e.pluginSettingsTemplate(p)
 				}
 			}
-			return ""
+			return admin.TemplateRef{}
 		},
 		SettingsDataFn: func(slug string) map[string]interface{} {
 			for _, p := range e.PluginManager.ActivePlugins() {
@@ -1395,15 +1397,8 @@ func (e *Engine) SetupAdmin() {
 		},
 		LocaleCatalogFn: func(slug string) *coreI18n.Catalog {
 			for _, p := range e.PluginManager.RegisteredPlugins() {
-				if plugin.Slug(p) != slug {
-					continue
-				}
-				if sp, ok := p.(plugin.SettingsProvider); ok {
-					if baseDir := extensionBaseFromSettingsTemplate(sp.SettingsTemplatePath()); baseDir != "" {
-						if catalog := extensionAdminCatalog(baseDir); catalog != nil {
-							return catalog
-						}
-					}
+				if plugin.Slug(p) == slug {
+					return e.pluginAdminCatalog(p)
 				}
 			}
 			return extensionAdminCatalog(filepath.Join("plugins", slug))
@@ -1592,24 +1587,6 @@ func convertMenuItemInfoToItems(infos []admin.MenuItemInfo) []menu.Item {
 		}
 	}
 	return result
-}
-
-func extensionAdminCatalog(baseDir string) *coreI18n.Catalog {
-	messages := coreI18n.LoadFlatMessagesDir(filepath.Join(baseDir, "locales", "admin"))
-	if len(messages) == 0 {
-		messages = coreI18n.LoadFlatMessagesDir(filepath.Join(baseDir, "locales"))
-	}
-	if len(messages) == 0 {
-		return nil
-	}
-	return coreI18n.NewCatalog(coreI18n.DefaultUILanguage, messages)
-}
-
-func extensionBaseFromSettingsTemplate(tmplPath string) string {
-	if tmplPath == "" {
-		return ""
-	}
-	return filepath.Dir(filepath.Dir(filepath.Dir(tmplPath)))
 }
 
 // Start starts the HTTP server.

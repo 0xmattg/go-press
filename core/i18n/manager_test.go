@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sync"
 	"testing"
+	"testing/fstest"
 
 	goi18n "github.com/nicksnyder/go-i18n/v2/i18n"
 )
@@ -50,6 +51,24 @@ func TestThemeLocalesReplacePreviousTheme(t *testing.T) {
 	m.LoadThemeLocales(filepath.Join(t.TempDir(), "no-locales"))
 	if got := localize(m, "en", "shared"); got != "shared" {
 		t.Fatalf("shared after switching to a theme without locales = %q, want message ID", got)
+	}
+}
+
+func TestThemeLocalesFSReadsLocalesFromThemeFilesystem(t *testing.T) {
+	m := NewManager("en")
+	m.LoadThemeLocalesFS(fstest.MapFS{
+		"locales/en.json":       {Data: []byte(`{"hero.title":"Embedded"}`)},
+		"locales/admin/en.json": {Data: []byte(`{"hero.title":"Admin only"}`)},
+		"locales/broken.json":   {Data: []byte(`{`)},
+	})
+	if got := localize(m, "en", "hero.title"); got != "Embedded" {
+		t.Fatalf("hero.title = %q, want text from locales/en.json", got)
+	}
+
+	// A nil filesystem clears the theme layer like a theme without locales.
+	m.LoadThemeLocalesFS(nil)
+	if got := localize(m, "en", "hero.title"); got != "hero.title" {
+		t.Fatalf("hero.title = %q after loading a theme without locales, want the untranslated ID", got)
 	}
 }
 

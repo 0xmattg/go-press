@@ -44,7 +44,7 @@ type ThemeController interface {
 	Active() string
 	Available() []ThemeDisplayInfo
 	ImportDemo(slug string) error
-	SettingsTemplate(slug string) string
+	SettingsTemplate(slug string) TemplateRef
 	LocaleCatalog(slug string) *coreI18n.Catalog
 	ActiveDepWarning() string
 	PageTemplates() []PageTemplateOption
@@ -79,9 +79,9 @@ func (m *ThemeManager) ImportDemo(slug string) error {
 	return m.ImportDemoFn(slug)
 }
 
-func (m *ThemeManager) SettingsTemplate(slug string) string {
+func (m *ThemeManager) SettingsTemplate(slug string) TemplateRef {
 	if m == nil || m.SettingsTemplateFn == nil {
-		return ""
+		return TemplateRef{}
 	}
 	return m.SettingsTemplateFn(slug)
 }
@@ -183,7 +183,7 @@ type PluginController interface {
 	All() []PluginInfo
 	Activate(name string) error
 	Deactivate(name string) error
-	SettingsTemplate(slug string) string
+	SettingsTemplate(slug string) TemplateRef
 	SettingsData(slug string) map[string]interface{}
 	ValidateSettings(slug string, settings map[string]string) error
 	SettingsSave(slug string, settings map[string]string)
@@ -212,9 +212,9 @@ func (c *PluginCallbacks) Deactivate(name string) error {
 	return c.DeactivateFn(name)
 }
 
-func (c *PluginCallbacks) SettingsTemplate(slug string) string {
+func (c *PluginCallbacks) SettingsTemplate(slug string) TemplateRef {
 	if c == nil || c.SettingsTemplateFn == nil {
-		return ""
+		return TemplateRef{}
 	}
 	return c.SettingsTemplateFn(slug)
 }

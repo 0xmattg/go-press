@@ -21,7 +21,7 @@ import (
 	"encoding/json"
 	"io/fs"
 	"os"
-	"path/filepath"
+	"path"
 	"sort"
 	"strings"
 	"sync"
@@ -162,6 +162,16 @@ func (m *Manager) rebuildLocked() {
 // a given key (or without locales at all) no longer falls back to the previous
 // theme's text.
 func (m *Manager) LoadThemeLocales(themeDir string) {
+	if themeDir == "" {
+		themeDir = "."
+	}
+	m.LoadThemeLocalesFS(os.DirFS(themeDir))
+}
+
+// LoadThemeLocalesFS is LoadThemeLocales for a theme filesystem rooted at the
+// theme directory; it reads locales/*.json. A nil filesystem clears the theme
+// layer.
+func (m *Manager) LoadThemeLocalesFS(themeFS fs.FS) {
 	layer := make(messageLayer)
 	defer func() {
 		m.mu.Lock()
@@ -170,8 +180,11 @@ func (m *Manager) LoadThemeLocales(themeDir string) {
 		m.mu.Unlock()
 	}()
 
-	localesDir := filepath.Join(themeDir, "locales")
-	entries, err := os.ReadDir(localesDir)
+	if themeFS == nil {
+		return
+	}
+	const localesDir = "locales"
+	entries, err := fs.ReadDir(themeFS, localesDir)
 	if err != nil {
 		return
 	}
@@ -185,9 +198,9 @@ func (m *Manager) LoadThemeLocales(themeDir string) {
 			continue
 		}
 		langCode := strings.TrimSuffix(name, ".json")
-		filePath := filepath.Join(localesDir, name)
+		filePath := path.Join(localesDir, name)
 
-		data, err := os.ReadFile(filePath)
+		data, err := fs.ReadFile(themeFS, filePath)
 		if err != nil {
 			logger.Warn("i18n: failed to read locale file", "file", filePath, "error", err)
 			continue
@@ -207,6 +220,24 @@ func (m *Manager) LoadThemeLocales(themeDir string) {
 		layer.merge(langCode, msgs)
 		logger.Info("i18n: loaded theme locale", "lang", langCode, "keys", len(msgs))
 	}
+}
+
+// ThemeMessages returns a copy of the active theme's locale messages as
+// language code → message ID → text, exactly as loaded from the theme's
+// locales/*.json (language codes are the file names). Overrides and extension
+// catalogs are not included. Callers may modify the result.
+func (m *Manager) ThemeMessages() map[string]map[string]string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	out := make(map[string]map[string]string, len(m.themeLayer))
+	for lang, byID := range m.themeLayer {
+		msgs := make(map[string]string, len(byID))
+		for id, msg := range byID {
+			msgs[id] = msg.Other
+		}
+		out[lang] = msgs
+	}
+	return out
 }
 
 // LoadLocalesFS adds flat locale files from an extension-owned filesystem to

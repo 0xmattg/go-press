@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -33,10 +32,6 @@ var (
 	ErrRefundTransactionMissing   = errors.New("commerce: automatic refund returned no transaction id")
 	ErrRefundCorrelationAmbiguous = errors.New("commerce: refund webhook cannot be correlated unambiguously")
 )
-
-// adminTemplateDir holds the plugin's admin page fragments (rendered inside the
-// core admin chrome via Handler.RenderExtensionPage).
-var adminTemplateDir = filepath.Join("plugins", pluginSlug, "templates", "admin")
 
 // registerOrderAdminRoutes wires the order back office. Every route is guarded by
 // admin.RequirePermission (JWT + RBAC + same-origin CSRF for POSTs); reads need
@@ -583,8 +578,7 @@ func (p *Plugin) loadOrder(c *gin.Context) (*Order, bool) {
 
 func (p *Plugin) renderAdmin(c *gin.Context, fragment, title, active string, data gin.H) {
 	data["ExtensionCatalog"] = commerceAdminCatalog
-	path := filepath.Join(adminTemplateDir, fragment+".tmpl")
-	if err := p.engine.Admin.RenderExtensionPage(c, path, title, active, data); err != nil {
+	if err := p.engine.Admin.RenderExtensionPageFS(c, p.adminTemplate(fragment), title, active, data); err != nil {
 		c.String(http.StatusInternalServerError, "admin page unavailable")
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 
 	"github.com/0xmattg/go-press/core/agent"
+	"github.com/0xmattg/go-press/core/assets"
 	"github.com/0xmattg/go-press/core/user"
 
 	"github.com/BurntSushi/toml"
@@ -117,8 +118,24 @@ type DeactivationGuard interface {
 	CanDeactivate(app App) error
 }
 
+// AssetsProvider is implemented by plugins that ship their own files, usually
+// an embed.FS rooted at the plugin directory (templates/, static/, locales/).
+// Core reads such a plugin's settings page and admin locales from it, and
+// Engine.PluginFS hands the resolved filesystem back to the plugin for its own
+// fragments. Plugins without it keep being read from plugins/<slug>/ on disk.
+type AssetsProvider = assets.Provider
+
+// Conventional locations inside a plugin's asset filesystem. For plugins that
+// implement AssetsProvider core looks these up directly instead of asking
+// SettingsProvider for a path; "has a settings page" means the file exists.
+const (
+	SettingsTemplateName = "templates/admin/settings.tmpl"
+)
+
 // SettingsProvider is an optional interface that plugins can implement
 // to supply a custom admin settings page for plugin-specific configuration.
+// Plugins that implement AssetsProvider do not need it: core uses
+// SettingsTemplateName.
 type SettingsProvider interface {
 	// SettingsTemplatePath returns the absolute path to the plugin's admin
 	// settings template file. Return "" if no settings page is available.

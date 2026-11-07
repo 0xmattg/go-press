@@ -59,7 +59,7 @@ func (p *Plugin) handleOrderTrackingLookup(c *gin.Context) {
 
 func (p *Plugin) renderTracking(c *gin.Context, number, email, errMsg string) {
 	data := gin.H{"Title": p.t(c, "commerce.tracking.title"), "Number": number, "Email": email, "Error": errMsg}
-	if err := p.engine.RenderNamespacedInActiveTheme(c, pluginSlug, "order-tracking", commerceTemplateDir, data); err != nil {
+	if err := p.renderStorefront(c, "order-tracking", data); err != nil {
 		c.String(http.StatusInternalServerError, "%s", p.t(c, "commerce.error.tracking_unavailable"))
 	}
 }
@@ -83,7 +83,7 @@ func (p *Plugin) handleMyOrders(c *gin.Context) {
 		})
 	}
 	data := gin.H{"Title": p.t(c, "commerce.account.orders_title"), "Orders": rows}
-	if err := p.engine.RenderNamespacedInActiveTheme(c, pluginSlug, "account-orders", commerceTemplateDir, data); err != nil {
+	if err := p.renderStorefront(c, "account-orders", data); err != nil {
 		c.String(http.StatusInternalServerError, "%s", p.t(c, "commerce.error.account_unavailable"))
 	}
 }

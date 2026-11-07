@@ -163,6 +163,12 @@ func (e *Engine) RenderNamespacedInActiveTheme(c *gin.Context, namespace, fragme
 
 在当前主题的 `layouts/base.tmpl` + partials 内、用主题自己的 FuncMap 渲染扩展拥有的片段。片段解析是通用的：`<theme>/templates/<namespace>/<fragment>.tmpl` 优先于 `<extensionDefaultDir>/<fragment>.tmpl`，且 namespace/fragment 必须是安全的单路径分量。Commerce 传入 `commerce` 命名空间，core 本身不包含 Commerce 特判。`/cart`、`/checkout`、`/order-tracking`、`/my-account/*` 就是这样共用站点页头/页脚、并允许主题覆盖任意页面。`RenderInActiveTheme` 作为兼容包装保留，会从默认模板目录的 basename 通用推导 namespace。
 
+```go
+func (e *Engine) RenderNamespacedInActiveThemeFS(c *gin.Context, namespace, fragment string, defaults fs.FS, data gin.H) error
+```
+
+作用相同，但扩展的默认片段从一个文件系统读取，根目录就是放 `<fragment>.tmpl` 的目录。Commerce 传入 `Engine.PluginFS(p)` 的 `templates/commerce` 子树，也就是它打包进二进制的文件，所以店面不需要磁盘上的 `plugins/commerce/`。字符串版本把目录包成 `os.DirFS` 后调用它。
+
 ### `admin.nav.items`
 
 `buildMenuItems()` 在 System 分区之前应用此 filter，让激活插件贡献一个侧栏分区。Commerce 增加「电商」分区与**订单**。商品（内容类型）自动进「内容」分区。

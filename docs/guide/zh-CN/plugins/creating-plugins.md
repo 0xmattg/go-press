@@ -107,10 +107,38 @@ var pluginMeta = plugin.ParseMetaString(pluginTOML)
 多个站点共用 schema 时只有第一个站点能拿到；`dbschema.AutoMigrate` 会在缺失的
 站点表上补建等价的本站索引。详见[数据库表前缀](../reference/database-prefix.md)。
 
+## 插件文件
+
+实现 `plugin.AssetsProvider`，把插件的模板、语言包和静态文件打包进二进制：
+
+```go
+import (
+    "embed"
+    "io/fs"
+)
+
+//go:embed templates locales static
+var pluginFiles embed.FS
+
+func (p *MyPlugin) Assets() fs.FS { return pluginFiles }
+```
+
+之后 core 从 `templates/admin/settings.tmpl` 读取插件的后台设置页（不需要再实现 `SettingsTemplatePath()`），从 `locales/admin/` 读取后台语言包。插件自己的片段通过 `engine.PluginFS(p)` 读取：`server.mode = "release"` 时返回打包的文件，其他模式下如果磁盘上有 `plugins/<slug>/` 就读磁盘：
+
+```go
+fsys := engine.PluginFS(p)
+// 在当前主题布局内渲染店面页；主题可用 templates/<namespace>/<fragment>.tmpl 覆盖。
+engine.RenderNamespacedInActiveThemeFS(c, "my-plugin", "page", assets.Sub(fsys, "templates/my-plugin"), data)
+// 在后台外壳内渲染后台页。
+engine.Admin.RenderExtensionPageFS(c, admin.TemplateRef{FS: fsys, Name: "templates/admin/report.tmpl"}, title, active, data)
+```
+
+插件代码里不要拼以 `plugins/` 开头的路径：从外部 Go module 编译进来的插件运行时没有这个目录。`go:embed` 会跳过以 `.` 或 `_` 开头的文件，需要时在模式前加 `all:`。没有实现 `Assets()` 的插件照旧从 `plugins/<slug>/` 读取。
+
 ## Plugin 接口可选扩展
 
 ```go
-// SettingsProvider — 在后台插件管理中显示设置页面
+// SettingsProvider — 在后台插件管理中显示设置页面（实现了 Assets() 的插件不需要）
 func (p *MyPlugin) SettingsTemplatePath() string {
     return "plugins/my-plugin/templates/admin/settings.tmpl"
 }
