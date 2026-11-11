@@ -170,7 +170,11 @@ type MailConfig struct {
 }
 
 type InstallConfig struct {
-	Completed              bool   `mapstructure:"completed" toml:"completed"`
+	Completed bool `mapstructure:"completed" toml:"completed"`
+	// RequireToken makes the web installer ask for a one-time install token,
+	// printed to the log and saved next to the config, before anything else.
+	// Off by default; set it in a config created before the first start.
+	RequireToken           bool   `mapstructure:"require_token" toml:"require_token"`
 	InstalledAt            string `mapstructure:"installed_at" toml:"installed_at"`
 	InstanceID             string `mapstructure:"instance_id" toml:"instance_id"`
 	UpdatePolicyVersion    string `mapstructure:"update_policy_version" toml:"update_policy_version"`

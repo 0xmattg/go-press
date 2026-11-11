@@ -5,11 +5,14 @@ package plugin
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"sync"
 	"sync/atomic"
 
 	"github.com/0xmattg/go-press/core/agent"
 	"github.com/0xmattg/go-press/core/assets"
+	"github.com/0xmattg/go-press/core/migrate"
 	"github.com/0xmattg/go-press/core/user"
 
 	"github.com/BurntSushi/toml"
@@ -118,6 +121,34 @@ type DeactivationGuard interface {
 	CanDeactivate(app App) error
 }
 
+// MigrationProvider is implemented by plugins that own database tables and
+// want core to apply their schema changes as versioned migrations.
+//
+// Core runs the plan under the site's migration lock before every Activate
+// call, at startup and when the plugin is enabled in the admin, and records
+// each step in <prefix>schema_migrations under the module "plugin:<slug>". If
+// a blocking step fails the plugin is not activated and the error is shown.
+// Steps that accumulated while the plugin was disabled run when it is enabled
+// again. Records of a plugin that is later removed from the build stay in
+// place and are ignored.
+//
+// A plugin moving to versioned migrations usually keeps its AutoMigrate call
+// in Plan.Prepare and lists only the changes AutoMigrate cannot make as steps.
+// Tables must still be named with dbprefix.PluginTable and indexes with
+// dbschema.SiteIndexName. Plugins without this interface keep migrating
+// inside Activate as before.
+type MigrationProvider interface {
+	Migrations() migrate.Plan
+}
+
+// MigrationModule returns the migration module name for a plugin.
+func MigrationModule(p Plugin) string {
+	return "plugin:" + Slug(p)
+}
+
+// ErrNotRegistered is returned by TryActivate for an unknown plugin name.
+var ErrNotRegistered = errors.New("plugin not registered")
+
 // AssetsProvider is implemented by plugins that ship their own files, usually
 // an embed.FS rooted at the plugin directory (templates/, static/, locales/).
 // Core reads such a plugin's settings page and admin locales from it, and
@@ -205,8 +236,9 @@ type Manager struct {
 	mu         sync.RWMutex // guards registered
 	registered []Plugin
 
-	transition sync.Mutex
-	active     atomic.Pointer[map[string]Plugin]
+	transition     sync.Mutex
+	active         atomic.Pointer[map[string]Plugin]
+	beforeActivate func(Plugin) error // guarded by transition
 }
 
 // NewManager creates a new plugin Manager.
@@ -227,25 +259,46 @@ func (m *Manager) Register(p Plugin) {
 	m.registered = append(m.registered, p)
 }
 
+// SetBeforeActivate installs fn, which runs before every plugin's Activate
+// callback while the lifecycle transition is held. If fn returns an error the
+// plugin stays inactive. Engine uses it to apply MigrationProvider plans.
+func (m *Manager) SetBeforeActivate(fn func(Plugin) error) {
+	m.transition.Lock()
+	defer m.transition.Unlock()
+	m.beforeActivate = fn
+}
+
 // Activate activates a registered plugin by name.
 //
-// It returns false when no registered plugin matches name. Activating an
-// already-active plugin is a no-op that returns true, so lifecycle hooks are
-// never wired twice. The plugin becomes visible to IsActive only after its
-// Activate callback returns.
+// It returns false when no registered plugin matches name or when the
+// before-activate step (migrations) fails; TryActivate reports which.
+// Activating an already-active plugin is a no-op that returns true, so
+// lifecycle hooks are never wired twice. The plugin becomes visible to
+// IsActive only after its Activate callback returns.
 func (m *Manager) Activate(name string, app App) bool {
+	return m.TryActivate(name, app) == nil
+}
+
+// TryActivate is Activate that returns why a plugin could not be activated:
+// ErrNotRegistered, or the error of the before-activate step.
+func (m *Manager) TryActivate(name string, app App) error {
 	m.transition.Lock()
 	defer m.transition.Unlock()
 	if _, ok := m.snapshot()[name]; ok {
-		return true
+		return nil
 	}
 	p, ok := m.find(func(candidate Plugin) bool { return candidate.Name() == name })
 	if !ok {
-		return false
+		return fmt.Errorf("%w: %s", ErrNotRegistered, name)
+	}
+	if m.beforeActivate != nil {
+		if err := m.beforeActivate(p); err != nil {
+			return err
+		}
 	}
 	p.Activate(app)
 	m.publish(func(next map[string]Plugin) { next[name] = p })
-	return true
+	return nil
 }
 
 // Deactivate deactivates an active plugin.

@@ -10,7 +10,8 @@ admin and API routes, installer routes, and the active frontend theme.
 |---|---|
 | `core/engine.go` | Engine lifecycle, route setup, shutdown, and the shared `App` capability surface. |
 | `core/bootstrap.go` | One-call build and bootstrap orchestration. |
-| `core/migrate.go` | GORM AutoMigrate for core and registered extension tables. |
+| `core/migrate.go` | Core's migration module (AutoMigrate baseline plus versioned steps) and plugin migration hooks. |
+| `core/migrate/` | Versioned migration runner: per-site record table, advisory lock, blocking and online steps. |
 | `core/seeder.go` | Declarative TOML demo-data import. |
 | `core/themes.go` | Theme registry and factory lookup. |
 | `core/plugins.go` | Plugin registry and activation lifecycle. |

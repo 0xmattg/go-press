@@ -72,6 +72,63 @@ gopress serve     # 装完之后任意目录都能跑
 
 完成安装后，配置文件会被写入 `sites/<your-site>/config.toml`，下次启动直接以此为入口。
 
+### 不要让安装器暴露在公网
+
+安装完成之前，安装器没有任何登录校验：谁先访问到 `/install`，谁就能完成安装——选择数据库（可以是他自己的库）、写入 `config.toml`、创建第一个管理员。新签发的 HTTPS 证书会公开在证书透明度日志里，扫描器会据此在几分钟内来试探没装完的站点。所以**未完成的安装器任何时候都不能对公网开放**。
+
+首次启动前先创建站点配置，避免安装器按默认值监听 `0.0.0.0:8080`，并打开安装令牌：
+
+```toml
+[server]
+host = "127.0.0.1"   # 只有反向代理或 SSH 隧道能访问
+port = 8081
+
+[install]
+completed = false
+require_token = true # 默认关闭
+```
+
+如果这份配置里写了 `[pg]`，安装器会用它预填数据库表单。打开 `require_token` 后，安装器第一屏会要求输入一次性令牌，只有能登录服务器的人才看得到：
+
+```bash
+# 安装器启动时打印在日志里……
+journalctl -u gopress-example | grep "install_token"
+# ……同时保存在配置旁边（0600），安装完成后自动删除
+sudo cat sites/example.com/install-token
+```
+
+令牌能挡住陌生人完成安装，但 `/install` 仍然能被访问到。如果还想让它对外不可见，再配合下面任意一种，越靠前越安全：
+
+1. **SSH 隧道**：先不要在反向代理里发布这个站点。在自己电脑上执行 `ssh -L 18081:127.0.0.1:8081 user@server`，打开 `http://127.0.0.1:18081/install` 完成安装，之后再发布站点，并通过正式的 HTTPS 地址登录后台。
+2. **只允许自己的 IP**：在反向代理里给 `/install` 加白名单，装完再说：
+
+   ```nginx
+   location ^~ /install {
+       allow 203.0.113.10;   # 你的公网 IP
+       deny all;
+       proxy_pass http://127.0.0.1:8081;
+   }
+   ```
+
+3. **秘密路径 + cookie**：适合 IP 会变的情况。访问一个随机路径会种下短期 cookie，`/install` 没有这个 cookie 就返回 404：
+
+   ```nginx
+   # 临时配置，装完删除。两个值都用 `openssl rand -hex 24` 生成。
+   location = /<secret-path> {
+       add_header Set-Cookie "gp_install_gate=<token>; Path=/install; Max-Age=3600; Secure; HttpOnly; SameSite=Lax" always;
+       add_header Cache-Control "no-store" always;
+       return 302 /install;
+   }
+   location ^~ /install {
+       if ($cookie_gp_install_gate != "<token>") { return 404; }
+       proxy_pass http://127.0.0.1:8081;
+   }
+   ```
+
+   只把秘密路径直接转发到 `/install` 是不够的：安装器的表单提交和跳转都直接访问 `/install/...`，这些地址同样要拦住。
+
+安装完成后 `/install` 返回 404，正式站点接管。反向代理里对 `/install` 的限制可以一直保留，没有坏处。如果发现站点被别人抢先装了，先停掉进程、删除它的 `config.toml`，并检查它当时连接的数据库，然后再重新安装。
+
 ## 构建生产二进制
 
 ```bash
@@ -136,6 +193,18 @@ go build -p 1 -v -o build/gopress-server ./cmd/server
 - 端口被占用等监听失败会让进程以非零状态码退出，而不是留下一个不提供服务的进程。
 
 详见[架构总览](../architecture/overview.md)中的「存活、就绪与停机」一节。
+
+## 数据库迁移
+
+服务每次启动时，都会在报告就绪之前执行待处理的数据库迁移。如果想在不启动 HTTP
+服务的情况下查看或执行迁移，给 server 二进制加上 `-migrate`：
+
+```bash
+./build/gopress-server -config sites/example.com/config.toml -migrate=status
+./build/gopress-server -config sites/example.com/config.toml -migrate=up
+```
+
+发布新版本前请先备份数据库。详见[版本化迁移](../reference/database-prefix.md#版本化迁移)。
 
 ## 常用开发命令
 

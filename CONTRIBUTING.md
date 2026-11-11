@@ -77,6 +77,19 @@ New themes and plugins ship their own files inside the binary, so they also run 
 
 Outside `server.mode = "release"`, core reads a module's directory on disk when it exists, so template and CSS edits show without rebuilding.
 
+## Database Migrations
+
+Schema changes go into a versioned step (`CoreMigrations` in `core/migrate.go`, or a plugin's `plugin.MigrationProvider`). A release must keep running after an operator rolls back to the previous binary, and that binary still runs GORM AutoMigrate with its own model definitions on every start. So:
+
+- Add tables, nullable columns, or columns with a default. Never add a `NOT NULL` column without a default.
+- Do not widen, narrow, or relax an existing column, and do not drop or rename tables, columns, or indexes. The previous binary's AutoMigrate would alter the column back or recreate what was removed. Such changes wait for a later release, once rolling back past it is no longer supported.
+- Add a unique index only if older code paths cannot write conflicting rows; otherwise serialize the writes with `core/dblock`.
+- Make backfills `migrate.Repeatable` and idempotent, so rows the previous binary wrote after a rollback are covered on the next upgrade.
+- Name indexes with `dbschema.SiteIndexName` and tables with the `dbprefix` helpers; several sites may share one schema.
+- Steps must also work on a new install, where AutoMigrate has already created the latest model columns.
+- Slow index builds go in an `Online` step with `NoTransaction` and `CREATE INDEX CONCURRENTLY IF NOT EXISTS`.
+- Never change or renumber a released step; add a new one.
+
 ## How Pull Requests Land
 
 Maintainers carry merged pull requests into the main development branch with `git cherry-pick -x`, which keeps your authorship and `Signed-off-by` line and records the original commit.

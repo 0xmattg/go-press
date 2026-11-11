@@ -334,6 +334,13 @@ const layoutTemplate = `
 			border-color: var(--primary);
 			box-shadow: 0 0 0 3px rgba(37, 99, 235, .1);
 		}
+		.token-group {
+			margin-top: 1.25rem;
+		}
+		.form-group input.token-input {
+			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+			letter-spacing: .04em;
+		}
 		.form-help {
 			display: block;
 			margin-top: .35rem;
@@ -489,7 +496,7 @@ const layoutTemplate = `
 			{{end}}
 
 			<div class="install-content">
-				{{if .BootError}}<div class="alert alert-info">{{.BootError}}</div>{{end}}
+				{{if and .BootError (ne .Page "welcome")}}<div class="alert alert-info">{{.BootError}}</div>{{end}}
 				{{if .Error}}<div class="alert alert-error">{{.Error}}</div>{{end}}
 				{{if eq .Page "welcome"}}{{template "welcome" .}}{{end}}
 				{{if eq .Page "database"}}{{template "database" .}}{{end}}
@@ -604,6 +611,13 @@ const welcomeTemplate = `
 		</div>
 		<small class="form-help">{{T .Lang "welcome.language_help"}}</small>
 	</div>
+	{{if .RequireToken}}
+	<div class="form-group token-group">
+		<label for="install_token" data-copy-en="{{T "en" "welcome.token_label"}}" data-copy-zh-cn="{{T "zh-CN" "welcome.token_label"}}">{{T .Lang "welcome.token_label"}}</label>
+		<input id="install_token" class="token-input" name="install_token" type="text" required autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX" aria-describedby="install_token_help">
+		<small class="form-help" id="install_token_help" data-copy-en="{{T "en" "welcome.token_help"}}" data-copy-zh-cn="{{T "zh-CN" "welcome.token_help"}}">{{T .Lang "welcome.token_help"}}</small>
+	</div>
+	{{end}}
 	<section class="beta-notice" id="beta-notice" lang="{{.Lang}}" aria-labelledby="beta-notice-title">
 		<h3 class="beta-notice-title" id="beta-notice-title" data-copy-en="{{T "en" "welcome.beta_notice_title"}}" data-copy-zh-cn="{{T "zh-CN" "welcome.beta_notice_title"}}">{{T .Lang "welcome.beta_notice_title"}}</h3>
 		<p data-copy-en="{{T "en" "welcome.beta_notice_risk"}}" data-copy-zh-cn="{{T "zh-CN" "welcome.beta_notice_risk"}}">{{T .Lang "welcome.beta_notice_risk"}}</p>

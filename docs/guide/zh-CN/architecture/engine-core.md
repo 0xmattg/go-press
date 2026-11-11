@@ -10,7 +10,8 @@ GoPress 引擎是 CMS 的运行时容器，负责装配存储、内容仓储、R
 |---|---|
 | `core/engine.go` | 引擎生命周期、路由装配、优雅关停及共享 `App` 能力接口。 |
 | `core/bootstrap.go` | 一站式构建与启动编排。 |
-| `core/migrate.go` | 对 core 及已注册扩展表执行 GORM AutoMigrate。 |
+| `core/migrate.go` | core 的迁移模块（AutoMigrate 基线加版本化步骤）以及插件迁移的接入。 |
+| `core/migrate/` | 版本化迁移执行器：按站点的记录表、咨询锁、阻塞型和在线型步骤。 |
 | `core/seeder.go` | 基于 TOML 的声明式演示数据导入。 |
 | `core/themes.go` | 主题注册表与工厂查找。 |
 | `core/plugins.go` | 插件注册表与激活生命周期。 |

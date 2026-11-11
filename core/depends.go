@@ -254,12 +254,14 @@ func (e *Engine) ActivateThemeDependencies(report ThemeDepReport) []string {
 		if !ok {
 			continue
 		}
-		if e.PluginManager.Activate(p.Name(), e) {
-			if e.Options != nil {
-				_ = e.Options.Set("plugin_active_"+p.Name(), "true")
-			}
-			activated = append(activated, p.Name())
+		if err := e.PluginManager.TryActivate(p.Name(), e); err != nil {
+			logger.Error("Failed to activate plugin required by theme", "plugin", p.Name(), "theme", report.Slug, "error", err)
+			continue
 		}
+		if e.Options != nil {
+			_ = e.Options.Set("plugin_active_"+p.Name(), "true")
+		}
+		activated = append(activated, p.Name())
 	}
 	return activated
 }

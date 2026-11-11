@@ -70,6 +70,7 @@ timeout_seconds = 10
 
 [install]
 completed = true
+require_token = false        # true：Web 安装器要求输入一次性安装令牌
 ```
 
 ## 关键字段说明
@@ -142,6 +143,11 @@ completed = true
 - `timeout_seconds` — SMTP 连接超时
 
 Gmail 常用配置：`host = "smtp.gmail.com"`、`port = 587`、`encryption = "starttls"`，`username` 和 `from_email` 都填写 Gmail 地址，`mail_key` 填 Google 生成的 App Password，不要填 Google 账号登录密码。
+
+### `[install]`
+
+- `completed` — 由 Web 安装器在完成时写入；为 `false` 时服务运行安装器而不是站点
+- `require_token` — 设为 `true` 时，安装器第一屏要求输入一次性安装令牌。令牌在安装器启动时打印到服务器日志，并保存为 `config.toml` 旁边的 `install-token` 文件（权限 `0600`），安装完成后自动删除。默认关闭，需要在首次启动前创建的配置里打开。见[不要让安装器暴露在公网](installation.md#不要让安装器暴露在公网)
 
 ## 多站点配置
 

@@ -53,6 +53,7 @@ import (
 func main() {
 	configPathFlag := flag.String("config", "", "path to site config file (auto-detects from sites/ if omitted)")
 	seedFlag := flag.Bool("seed", false, "force re-seed from seed.toml (drops existing content first)")
+	migrateFlag := flag.String("migrate", "", `run database migrations and exit: "status" lists them, "up" applies them`)
 	flag.Parse()
 
 	configPath, autoDiscovered := config.ResolveConfigPath(*configPathFlag)
@@ -71,6 +72,10 @@ func main() {
 		loggerMode = cfg.Server.Mode
 	}
 	logger.Setup(loggerMode)
+
+	if *migrateFlag != "" {
+		os.Exit(runMigrateCommand(*migrateFlag, cfg, configPath))
+	}
 
 	switcher := &core.HandlerSwitcher{}
 

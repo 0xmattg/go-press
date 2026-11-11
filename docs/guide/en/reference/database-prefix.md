@@ -71,6 +71,45 @@ Core tables already use this. Plugins that declare fixed index names should
 migrate with `dbschema.AutoMigrate` instead of calling `db.AutoMigrate`
 directly.
 
+## Versioned Migrations
+
+Each site records its schema changes in its own `<prefix>schema_migrations`
+table, one row per module (`core`, or `plugin:<slug>`) and step version.
+
+- **Lock.** Before migrating, a process takes a PostgreSQL advisory lock keyed by
+  the schema and table prefix, held on one connection for the whole pass. A
+  second process of the same site waits for it (up to 5 minutes, logging the
+  holder's backend pid); sites with other prefixes never wait, even when one
+  prefix is the beginning of another (`gp_` and `gp_shop_`).
+- **Baseline.** Core still runs GORM AutoMigrate and its legacy fixes on every
+  start, exactly as before. Step 1 of `core` stands for that schema: a site
+  whose tables existed before versioned migrations records it as `adopted`, a
+  new install as `applied`. The check uses the exact table name, never a name
+  pattern.
+- **Blocking and online steps.** Blocking steps finish before `/readyz` reports
+  ready, and a failure stops the start. Online steps, such as
+  `CREATE INDEX CONCURRENTLY`, run in the background after the site is ready; a
+  failure is logged and retried on the next start.
+- **Rollback.** Migrations only add tables, nullable or defaulted columns, and
+  indexes, so the previous release still runs on a migrated database. It
+  ignores the record table, and a release that finds versions it does not know
+  (written by a newer release) logs them and starts anyway.
+- **Plugins.** A plugin that implements `plugin.MigrationProvider` has its
+  steps applied before each activation, at startup and when it is enabled in
+  the admin. If a blocking step fails the plugin stays inactive and the admin
+  shows the error. See [Creating Plugins](../plugins/creating-plugins.md#plugin-data).
+
+Inspect or apply migrations without serving HTTP:
+
+```bash
+./build/gopress-server -config sites/example.com/config.toml -migrate=status
+./build/gopress-server -config sites/example.com/config.toml -migrate=up
+```
+
+`status` changes nothing. `up` performs a full start (core, then each active
+plugin), waits for the online steps, prints the status, and exits; it exits
+with status 1 if a step failed.
+
 ## Table Registry
 
 The table registry records table ownership for admin database tooling, future uninstall workflows, and debugging.

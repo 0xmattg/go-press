@@ -30,9 +30,17 @@ func NewTemplateEngine(t Theme) *TemplateEngine {
 	}
 }
 
+// adminTemplateDir is the subdirectory of a theme's templates that holds
+// back-office pages such as SettingsTemplateName. Those are rendered by the
+// admin with the admin layout and its own template functions, so they are
+// not part of the front-end template set.
+const adminTemplateDir = "admin"
+
 // Load compiles all templates in the theme's templates directory, read
 // through TemplatesFS. Template names are slash-separated paths relative to
 // that directory, for example "single-post.tmpl" or "partials/header.tmpl".
+// The admin/ subdirectory is skipped: its templates call admin-only functions
+// and define blocks such as "content" that must not leak into the front end.
 func (e *TemplateEngine) Load() error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -48,6 +56,9 @@ func (e *TemplateEngine) Load() error {
 			return err
 		}
 		if d.IsDir() {
+			if name == adminTemplateDir {
+				return fs.SkipDir
+			}
 			return nil
 		}
 		ext := strings.ToLower(path.Ext(name))
