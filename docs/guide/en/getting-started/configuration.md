@@ -74,6 +74,7 @@ timeout_seconds = 10
 
 [install]
 completed = true
+require_token = false       # true: the web installer asks for a one-time token
 ```
 
 ## Site
@@ -183,6 +184,18 @@ back, and leaving its form field blank keeps the stored value.
 `enabled` is the transport-level switch, independent of saved notification
 rules. For Gmail, use `smtp.gmail.com`, port `587`, `starttls`, the Gmail address
 for both username and sender, and a Google App Password in `mail_key`.
+
+## Install
+
+`completed` is set by the web installer when it finishes; while it is `false`
+the server runs the installer instead of the site.
+
+`require_token = true` makes the installer ask for a one-time install token on
+its first screen. The token is printed to the server log when the installer
+starts and saved as `install-token` next to `config.toml` (permissions `0600`);
+it is removed once the site is installed. It is off by default, so set it in a
+config you create before the first start. See
+[Keep the Installer Private](installation.md#keep-the-installer-private).
 
 ## Runtime Files and Multiple Sites
 

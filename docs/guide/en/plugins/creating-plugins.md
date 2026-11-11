@@ -107,6 +107,36 @@ share a schema only the first one would get them; `dbschema.AutoMigrate` adds a
 site-owned equivalent wherever it is missing. See
 [Database Prefixes](../reference/database-prefix.md#indexes-and-prefixes).
 
+For schema changes that AutoMigrate cannot make (backfills, new indexes on
+large tables, constraints), implement `plugin.MigrationProvider`. Core applies
+the plan under the site's migration lock before every `Activate` call and
+records each step in `<prefix>schema_migrations` as `plugin:<slug>`:
+
+```go
+func (p *MyPlugin) Migrations() migrate.Plan {
+    return migrate.Plan{
+        // Runs at the start of every pass, under the lock.
+        Prepare: func(_ context.Context, db *gorm.DB) error {
+            return dbschema.AutoMigrate(db, &Item{})
+        },
+        Steps: []migrate.Step{
+            {Version: 1, Name: "backfill_item_status", Mode: migrate.Repeatable,
+                SQL: "UPDATE " + pluginMeta.Table("items") + " SET status = 'active' WHERE status IS NULL"},
+            {Version: 2, Name: "index_item_owner", Phase: migrate.Online, NoTransaction: true,
+                SQL: "CREATE INDEX CONCURRENTLY IF NOT EXISTS " +
+                    dbschema.SiteIndexName(pluginMeta.Table("items"), "idx_owner") +
+                    " ON " + pluginMeta.Table("items") + " (owner_id)"},
+        },
+    }
+}
+```
+
+If a blocking step fails, the plugin is not activated and the admin shows the
+error. Steps added while the plugin was disabled run when it is enabled again.
+Follow the rules in [Database Prefixes](../reference/database-prefix.md#versioned-migrations):
+steps only add things, so the previous plugin release keeps working. Plugins
+without this interface may keep migrating inside `Activate`.
+
 ## Plugin Files
 
 Ship the plugin's templates, locales and static files in the binary by implementing `plugin.AssetsProvider`:

@@ -4,6 +4,7 @@
 package core
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -14,22 +15,146 @@ import (
 	"github.com/0xmattg/go-press/core/dbschema"
 	coreMedia "github.com/0xmattg/go-press/core/media"
 	"github.com/0xmattg/go-press/core/menu"
+	"github.com/0xmattg/go-press/core/migrate"
 	"github.com/0xmattg/go-press/core/option"
+	"github.com/0xmattg/go-press/core/plugin"
 	"github.com/0xmattg/go-press/core/taxonomy"
 	"github.com/0xmattg/go-press/core/user"
+	"github.com/0xmattg/go-press/pkg/dbprefix"
 	"github.com/0xmattg/go-press/pkg/logger"
+	"github.com/0xmattg/go-press/version"
 
 	"gorm.io/gorm"
 )
 
-// Migrate runs database auto-migration for all GoPress core tables.
+// CoreMigrationModule is the module name of core's own migrations in the
+// <prefix>schema_migrations table.
+const CoreMigrationModule = "core"
+
+// Migrate runs the blocking core migrations for the engine's database.
 func (e *Engine) Migrate() error {
 	return MigrateDB(e.DB)
 }
 
-// MigrateDB runs database auto-migration for all GoPress core tables.
+// MigrateDB brings the core tables of the current site (dbprefix) up to date.
+//
+// It holds the site's migration lock while it runs GORM AutoMigrate and the
+// legacy patches exactly as earlier releases did, then applies every pending
+// blocking core step and records it. Online core steps are left to
+// Engine.StartOnlineMigrations. Calling it again, as the installer and the
+// first boot do, finds nothing to do apart from the idempotent AutoMigrate.
 func MigrateDB(db *gorm.DB) error {
 	logger.Info("Running GoPress core table migration...")
+	_, err := MigrationRunner(db).Run(context.Background(), migrate.Blocking, CoreMigrations())
+	return err
+}
+
+// MigrationRunner returns a migration runner for the current site.
+func MigrationRunner(db *gorm.DB) *migrate.Runner {
+	return &migrate.Runner{DB: db, Prefix: dbprefix.Get(), AppVersion: version.String()}
+}
+
+// CoreMigrations returns core's migration module.
+//
+// Steps follow the rules in the migrate package: add only, idempotent with
+// respect to AutoMigrate, and named indexes through dbschema.SiteIndexName.
+// Version 1 is the baseline: the schema that AutoMigrate and the legacy
+// patches maintain. Sites installed before versioned migrations record it as
+// adopted, new installs as applied.
+func CoreMigrations() migrate.Module {
+	return migrate.Module{
+		Name: CoreMigrationModule,
+		Plan: migrate.Plan{
+			Existing: func(ctx context.Context, db *gorm.DB) (bool, error) {
+				// Exact name: another site's prefix may start with this one.
+				return migrate.TableExists(ctx, db, (content.Content{}).TableName())
+			},
+			Prepare: func(_ context.Context, db *gorm.DB) error {
+				return prepareCoreSchema(db)
+			},
+			Steps: []migrate.Step{
+				{Version: 1, Name: "baseline", Baseline: true},
+			},
+		},
+	}
+}
+
+// migratePlugin applies a MigrationProvider plugin's blocking steps. The
+// plugin manager calls it before every Activate callback, so a failure keeps
+// the plugin inactive. After startup it also kicks off the plugin's online
+// steps; during startup StartOnlineMigrations picks them up.
+func (e *Engine) migratePlugin(p plugin.Plugin) error {
+	provider, ok := p.(plugin.MigrationProvider)
+	if !ok {
+		return nil
+	}
+	if e.DB == nil {
+		return fmt.Errorf("plugin %q has migrations but no database is configured", p.Name())
+	}
+	module := migrate.Module{Name: plugin.MigrationModule(p), Plan: provider.Migrations()}
+	if _, err := MigrationRunner(e.DB).Run(e.migrationContext(), migrate.Blocking, module); err != nil {
+		return fmt.Errorf("plugin %q migrations failed: %w", p.Name(), err)
+	}
+	if e.ready.Load() {
+		e.startOnlineMigrations(module)
+	}
+	return nil
+}
+
+// StartOnlineMigrations runs the pending online steps of core and of every
+// active plugin in the background. BuildAndBootstrap calls it right after
+// MarkReady; custom composition roots should do the same. Failures are
+// logged and retried on the next start.
+func (e *Engine) StartOnlineMigrations() {
+	modules := []migrate.Module{CoreMigrations()}
+	for _, p := range e.PluginManager.ActivePlugins() {
+		if provider, ok := p.(plugin.MigrationProvider); ok {
+			modules = append(modules, migrate.Module{Name: plugin.MigrationModule(p), Plan: provider.Migrations()})
+		}
+	}
+	e.startOnlineMigrations(modules...)
+}
+
+func (e *Engine) startOnlineMigrations(modules ...migrate.Module) {
+	if e.DB == nil || !migrate.HasPhase(migrate.Online, modules...) {
+		return
+	}
+	e.onlineMigrations.Add(1)
+	go func() {
+		defer e.onlineMigrations.Done()
+		if _, err := MigrationRunner(e.DB).Run(e.migrationContext(), migrate.Online, modules...); err != nil {
+			logger.Warn("Online migrations incomplete; they are retried on the next start", "error", err)
+		}
+	}()
+}
+
+// WaitOnlineMigrations blocks until the background online migrations
+// started so far have finished, or ctx ends.
+func (e *Engine) WaitOnlineMigrations(ctx context.Context) error {
+	done := make(chan struct{})
+	go func() {
+		e.onlineMigrations.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+func (e *Engine) migrationContext() context.Context {
+	if e.migrationCtx != nil {
+		return e.migrationCtx
+	}
+	return context.Background()
+}
+
+// prepareCoreSchema is the transitional baseline that runs on every start:
+// the same AutoMigrate and legacy patches as releases before versioned
+// migrations, so the DDL against an existing database does not change.
+func prepareCoreSchema(db *gorm.DB) error {
 	if err := dbschema.AutoMigrate(db, coreModels()...); err != nil {
 		return err
 	}

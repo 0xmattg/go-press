@@ -107,6 +107,34 @@ var pluginMeta = plugin.ParseMetaString(pluginTOML)
 多个站点共用 schema 时只有第一个站点能拿到；`dbschema.AutoMigrate` 会在缺失的
 站点表上补建等价的本站索引。详见[数据库表前缀](../reference/database-prefix.md)。
 
+AutoMigrate 做不到的表结构变更（数据回填、大表上的新索引、约束），请实现
+`plugin.MigrationProvider`。core 会在每次调用 `Activate` 之前，持站点迁移锁执行
+这份计划，并把每一步以 `plugin:<slug>` 记录到 `<前缀>schema_migrations`：
+
+```go
+func (p *MyPlugin) Migrations() migrate.Plan {
+    return migrate.Plan{
+        // 每次执行都会先跑，在锁内。
+        Prepare: func(_ context.Context, db *gorm.DB) error {
+            return dbschema.AutoMigrate(db, &Item{})
+        },
+        Steps: []migrate.Step{
+            {Version: 1, Name: "backfill_item_status", Mode: migrate.Repeatable,
+                SQL: "UPDATE " + pluginMeta.Table("items") + " SET status = 'active' WHERE status IS NULL"},
+            {Version: 2, Name: "index_item_owner", Phase: migrate.Online, NoTransaction: true,
+                SQL: "CREATE INDEX CONCURRENTLY IF NOT EXISTS " +
+                    dbschema.SiteIndexName(pluginMeta.Table("items"), "idx_owner") +
+                    " ON " + pluginMeta.Table("items") + " (owner_id)"},
+        },
+    }
+}
+```
+
+阻塞型步骤失败时插件不会被启用，后台会显示错误。插件停用期间新增的步骤，会在
+重新启用时补跑。编写规则见[数据库表前缀](../reference/database-prefix.md#版本化迁移)：
+步骤只做加法，保证上一个插件版本仍能运行。没有实现这个接口的插件，可以继续在
+`Activate` 里自行迁移。
+
 ## 插件文件
 
 实现 `plugin.AssetsProvider`，把插件的模板、语言包和静态文件打包进二进制：

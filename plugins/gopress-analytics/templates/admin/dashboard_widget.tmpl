@@ -91,14 +91,16 @@
 .gpa-donut-card { flex:1 1 0; min-height:0; display:flex; flex-direction:column; border-bottom:1px solid var(--border); padding-bottom:.75rem; }
 .gpa-donut-card:last-child { border-bottom:0; padding-bottom:0; }
 .gpa-donut-card .gpa-panel-title { margin-bottom:.4rem; }
-.gpa-donut-wrap { flex:1; display:grid; grid-template-columns:108px minmax(0,1fr); gap:.55rem; align-items:center; min-height:0; }
+.gpa-donut-wrap { flex:1; display:grid; grid-template-columns:108px minmax(0,1fr); gap:clamp(.55rem,calc(16% - 28px),2.25rem); align-items:center; min-height:0; }
 .gpa-donut { width:100px; height:100px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(#2563eb 0deg,#e2e8f0 0deg); position:relative; }
 .gpa-donut::after { content:""; position:absolute; inset:24px; border-radius:50%; background:#fff; }
 .gpa-donut span { position:relative; z-index:1; color:#0f172a; font-size:1rem; font-weight:750; }
-.gpa-donut-legend { display:grid; gap:.55rem; min-width:0; }
-.gpa-donut-legend div { display:flex; gap:.45rem; align-items:center; min-width:0; color:#475569; font-size:.76rem; }
-.gpa-donut-legend span { flex:0 1 auto; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
-.gpa-donut-legend strong { flex:0 0 auto; min-width:54px; color:#0f172a; text-align:right; font-variant-numeric:tabular-nums; }
+/* One grid per legend: dot | label (widest label) | spacer | count (right-aligned), so counts line up whatever their length.
+   The spacer column gives way when the card is narrow; labels keep at least 2.5rem before they are truncated. */
+.gpa-donut-legend { display:grid; grid-template-columns:auto minmax(2.5rem,max-content) minmax(.5rem,1.75rem) minmax(2.25rem,max-content); justify-content:start; align-items:center; gap:.55rem 0; min-width:0; color:#475569; font-size:.76rem; }
+.gpa-donut-legend > div { display:contents; }
+.gpa-donut-legend span { min-width:0; padding-left:.45rem; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.gpa-donut-legend strong { grid-column:4; color:#0f172a; text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
 .gpa-dot { width:9px; height:9px; border-radius:50%; display:inline-block; }
 .gpa-dot-primary { background:#2563eb; }
 .gpa-dot-soft { background:#93c5fd; }
@@ -112,18 +114,18 @@
 .gpa-panel-top.gpa-expanded .gpa-top-pages { overflow:visible; }
 .gpa-top-heading { display:grid; grid-template-columns:minmax(0,1fr) 54px 54px; gap:.75rem; margin-bottom:.15rem; color:#94a3b8; font-size:.68rem; text-align:right; }
 .gpa-top-heading span:first-child { text-align:left; }
-.gpa-top-row { display:grid; grid-template-columns:minmax(0,1fr) 54px 54px; gap:.75rem; padding:.48rem 0; border-bottom:1px solid var(--border); align-items:center; }
+.gpa-top-row { display:grid; grid-template-columns:minmax(0,1fr) 54px 54px; gap:.5rem .75rem; padding:.42rem 0; border-bottom:1px solid var(--border); align-items:center; }
 .gpa-top-row:last-child { border-bottom:0; }
 .gpa-top-path { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#334155; font-size:.78rem; }
 .gpa-top-count { font-size:.78rem; font-weight:700; color:#0f172a; text-align:right; }
 .gpa-top-uv { color:#64748b; }
-.gpa-top-bar { grid-column:1 / -1; height:9px; border-radius:999px; background:#edf2f7; overflow:hidden; }
+.gpa-top-bar { grid-column:1 / -1; height:12px; border-radius:3px; background:#edf2f7; overflow:hidden; }
 .gpa-top-bar span { display:block; height:100%; min-width:2px; border-radius:inherit; background:linear-gradient(90deg,#38bdf8,#2563eb); }
 .gpa-toggle { align-self:flex-start; margin-top:.65rem; border:0; background:transparent; color:var(--primary); font-size:.75rem; font-weight:700; cursor:pointer; padding:0; }
 .gpa-toggle:hover { text-decoration:underline; }
 .gpa-empty { display:grid; place-items:center; min-height:160px; color:var(--text-muted); font-size:.8rem; }
 .gpa-chart > .gpa-empty { grid-column:1 / -1; grid-row:1 / -1; }
-.gpa-donut-legend .gpa-empty { min-height:0; display:block; }
+.gpa-donut-legend .gpa-empty { grid-column:1 / -1; min-height:0; display:block; }
 @media (max-width: 980px) {
     .gpa-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .gpa-panels { grid-template-columns:1fr; }
@@ -150,7 +152,7 @@
     var showMoreLabel = {{.ShowMoreLabel}};
     var showLessLabel = {{.ShowLessLabel}};
     var numberFormat = new Intl.NumberFormat();
-    var collapsedTopRows = 6;
+    var collapsedTopRows = 5;
     var topPagesExpanded = false;
     var latestData = initial;
     var countryColors = ["#2563eb", "#38bdf8", "#22c55e", "#f59e0b", "#a855f7", "#94a3b8"];

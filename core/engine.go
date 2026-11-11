@@ -206,6 +206,12 @@ type Engine struct {
 	shutdownOnce sync.Once
 	shutdownErr  error
 
+	// Background online migrations: migrationCtx is cancelled at shutdown,
+	// which then waits for onlineMigrations.
+	migrationCtx     context.Context
+	migrationCancel  context.CancelFunc
+	onlineMigrations sync.WaitGroup
+
 	// OnRouterRebuild is called after the router is rebuilt, for example after a
 	// theme switch. cmd/server uses it to swap the active HTTP handler without
 	// restarting the process.
@@ -287,6 +293,8 @@ func New(cfg *config.Config, db *gorm.DB) *Engine {
 		themes:        make(map[string]coreTheme.Theme),
 		PluginManager: plugin.NewManager(),
 	}
+	e.migrationCtx, e.migrationCancel = context.WithCancel(context.Background())
+	e.PluginManager.SetBeforeActivate(e.migratePlugin)
 	updateRegistry := updatecheck.NewRegistry()
 	e.Updates = updatecheck.NewService(
 		e.Options,
@@ -867,7 +875,10 @@ func (e *Engine) LoadPlugin(p plugin.Plugin) {
 			"plugin", p.Name(), "version", p.Version())
 		return
 	}
-	e.PluginManager.Activate(p.Name(), e)
+	if err := e.PluginManager.TryActivate(p.Name(), e); err != nil {
+		logger.Error("Plugin not activated", "plugin", p.Name(), "version", p.Version(), "error", err)
+		return
+	}
 	logger.Info("Plugin activated", "plugin", p.Name(), "version", p.Version())
 }
 
@@ -1491,8 +1502,11 @@ func (e *Engine) activatePluginFromAdmin(name string) error {
 	if e.PluginManager.IsActive(name) {
 		return fmt.Errorf("插件「%s」已处于激活状态", name)
 	}
-	if !e.PluginManager.Activate(name, e) {
-		return fmt.Errorf("未找到插件「%s」", name)
+	if err := e.PluginManager.TryActivate(name, e); err != nil {
+		if errors.Is(err, plugin.ErrNotRegistered) {
+			return fmt.Errorf("未找到插件「%s」", name)
+		}
+		return fmt.Errorf("插件「%s」启用失败：%w", name, err)
 	}
 	if err := e.Options.Set("plugin_active_"+name, "true"); err != nil {
 		e.PluginManager.Deactivate(name, e)
@@ -1709,6 +1723,12 @@ func (e *Engine) shutdown(ctx context.Context) error {
 	}
 	if err := e.stopPlugins(ctx); err != nil {
 		errs = append(errs, err)
+	}
+	if e.migrationCancel != nil {
+		e.migrationCancel()
+	}
+	if err := e.WaitOnlineMigrations(ctx); err != nil {
+		errs = append(errs, fmt.Errorf("online migrations: %w", err))
 	}
 
 	// Stop producers before draining the queue they feed.

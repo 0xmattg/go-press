@@ -109,6 +109,63 @@ The generated `sites/<host>/config.toml` is written with `0600` permissions and 
 
 If the target database does not exist, GoPress attempts to connect to `postgres` or `template1` with the same account and create it automatically.
 
+### Keep the Installer Private
+
+Until the installer finishes, it has no login: whoever reaches `/install` first can complete it. They pick the database (possibly their own), write `config.toml`, and create the first administrator. New HTTPS certificates are published in Certificate Transparency logs, and scanners probe newly certified domains for unfinished installers within minutes. Never let an unfinished installer be reachable from the internet.
+
+Create the site config before the first start, so the installer does not listen on its default `0.0.0.0:8080`, and turn on the install token:
+
+```toml
+[server]
+host = "127.0.0.1"   # only the reverse proxy or an SSH tunnel can reach it
+port = 8081
+
+[install]
+completed = false
+require_token = true # off by default
+```
+
+The installer pre-fills the database form from any `[pg]` values in this file. With `require_token = true` its first screen asks for a one-time token that only someone with access to the server can see:
+
+```bash
+# printed when the installer starts …
+journalctl -u gopress-example | grep "install_token"
+# … and saved next to the config (0600), removed after installation
+sudo cat sites/example.com/install-token
+```
+
+The token stops strangers from completing the installer, but `/install` is still reachable and answers. To keep it out of sight as well, also use one of the following, strongest first:
+
+1. **SSH tunnel.** Do not publish the site in the reverse proxy yet. From your computer run `ssh -L 18081:127.0.0.1:8081 user@server`, open `http://127.0.0.1:18081/install`, and finish the installer. Publish the site afterwards, and sign in to the admin through its real HTTPS address.
+2. **Allow only your IP.** In the reverse proxy, restrict `/install` until you are done:
+
+   ```nginx
+   location ^~ /install {
+       allow 203.0.113.10;   # your public IP
+       deny all;
+       proxy_pass http://127.0.0.1:8081;
+   }
+   ```
+
+3. **Secret path that sets a cookie.** Useful when your IP changes. A random path sets a short-lived cookie, and `/install` answers 404 without it:
+
+   ```nginx
+   # Temporary: remove after installing. Generate both values with `openssl rand -hex 24`.
+   location = /<secret-path> {
+       add_header Set-Cookie "gp_install_gate=<token>; Path=/install; Max-Age=3600; Secure; HttpOnly; SameSite=Lax" always;
+       add_header Cache-Control "no-store" always;
+       return 302 /install;
+   }
+   location ^~ /install {
+       if ($cookie_gp_install_gate != "<token>") { return 404; }
+       proxy_pass http://127.0.0.1:8081;
+   }
+   ```
+
+   Rewriting a secret path straight to `/install` is not enough. The installer's forms and redirects go to `/install/...` directly, so those URLs must be protected as well.
+
+After installation `/install` returns 404 and the live site takes over. Keeping the proxy restriction for `/install` costs nothing. If you find a site you did not install, stop the process, delete its `config.toml`, and check the database it was pointed at before installing again.
+
 ## Make Targets
 
 | Target | Purpose |
@@ -144,6 +201,20 @@ pull requests; run the same targets locally before submitting changes.
   a non-zero status instead of leaving a process that serves nothing.
 
 See the [Architecture Overview](../architecture/overview.md#liveness-readiness-and-shutdown).
+
+## Database Migrations
+
+The server applies pending database migrations on every start, before it
+reports ready. To look at them or apply them without serving HTTP, run the
+server binary with `-migrate`:
+
+```bash
+./build/gopress-server -config sites/example.com/config.toml -migrate=status
+./build/gopress-server -config sites/example.com/config.toml -migrate=up
+```
+
+Back up the database before deploying a release. See
+[Versioned Migrations](../reference/database-prefix.md#versioned-migrations).
 
 ## Common Development Commands
 

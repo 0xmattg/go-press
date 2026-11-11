@@ -324,7 +324,7 @@ func TestDashboardWidgetRequiresAnalyticsPermission(t *testing.T) {
 		`id="gpaTopToggle"`,
 		`.gpa-panels > .gpa-panel { height:376px;`,
 		`gpa-top-bar`,
-		`collapsedTopRows = 6`,
+		`collapsedTopRows = 5`,
 		`data-days="30">30`,
 		`"days":30`,
 	} {

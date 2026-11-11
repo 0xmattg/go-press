@@ -89,5 +89,6 @@ func BuildAndBootstrap(cfg *config.Config, configPath string, seed bool) (_ *Eng
 	engine.SetupAdmin()
 	engine.SetupRouter()
 	engine.MarkReady()
+	engine.StartOnlineMigrations()
 	return engine, nil
 }

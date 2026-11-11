@@ -9,8 +9,12 @@
 // embedded templates and an English/Chinese catalog, and it has three steps:
 //
 //  1. Pick the installer language and accept the beta and update-check
-//     notice. Acceptance sets a policy cookie HMAC-signed with a per-process
-//     secret, which every later step requires.
+//     notice; with [install] require_token, also enter the install token.
+//     Until install finishes the installer has no accounts, so the token is
+//     what keeps a stranger who finds /install first from claiming the site:
+//     New generates it, prints it to the log, and saves it next to the site
+//     config. Passing this screen sets a policy cookie HMAC-signed with a
+//     per-process secret, which every later step requires.
 //  2. Enter the PostgreSQL settings (connection test, schema, table prefix,
 //     and listen port). The config file is written at this point, with a
 //     freshly generated JWT secret.
@@ -30,6 +34,8 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
+	"encoding/base32"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -41,6 +47,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/BurntSushi/toml"
 	"github.com/gin-gonic/gin"
@@ -61,6 +68,11 @@ const (
 	installerLanguageCookie = "gopress_install_lang"
 	installerPolicyCookie   = "gopress_install_policy"
 	installerPolicyMaxAge   = 2 * 60 * 60
+
+	// InstallTokenFile is the file next to the site config that holds the
+	// current install token. It is removed once the site is installed.
+	InstallTokenFile  = "install-token"
+	installTokenBytes = 15 // 120 bits, 24 base32 characters
 )
 
 func installerLanguage(c *gin.Context) string {
@@ -81,6 +93,8 @@ type Installer struct {
 	bootError     string
 	activate      ActivationFunc
 	policySecret  []byte
+	requireToken  bool   // [install] require_token
+	installToken  string // empty once installed, or if no token could be generated
 	themeOptions  []ThemeOption
 	templates     *template.Template
 	router        *gin.Engine
@@ -99,6 +113,7 @@ type pageData struct {
 	Page         string
 	Step         int
 	Lang         string
+	RequireToken bool
 	ConfigPath   string
 	BootError    string
 	Error        string
@@ -153,6 +168,12 @@ func New(configPath string, initialConfig *config.Config, bootErr error, activat
 	if bootErr != nil {
 		i.bootError = bootErr.Error()
 	}
+	if initialConfig != nil && initialConfig.Install.RequireToken {
+		i.requireToken = true
+		i.issueInstallToken()
+	} else {
+		logger.Warn("Installer is open: anyone who reaches /install can complete it. Keep it off the internet until it is done, or set [install] require_token = true in the site config")
+	}
 
 	funcMap := template.FuncMap{
 		"T": installerT,
@@ -195,28 +216,42 @@ func (i *Installer) Router() http.Handler {
 func (i *Installer) Welcome(c *gin.Context) {
 	lang := installerLanguage(c)
 	i.render(c, http.StatusOK, pageData{
-		Title:      installerT(lang, "title.welcome"),
-		Heading:    installerT(lang, "welcome.heading"),
-		Lead:       installerT(lang, "welcome.lead"),
-		Page:       "welcome",
-		Lang:       lang,
-		ConfigPath: i.configPath,
-		BootError:  i.bootError,
+		Title:        installerT(lang, "title.welcome"),
+		Heading:      installerT(lang, "welcome.heading"),
+		Lead:         installerT(lang, "welcome.lead"),
+		Page:         "welcome",
+		Lang:         lang,
+		RequireToken: i.requireToken,
+		ConfigPath:   i.configPath,
+		BootError:    i.bootError,
 	})
 }
 
 func (i *Installer) LanguageSubmit(c *gin.Context) {
 	lang := normalizeInstallerLanguage(c.PostForm("language"))
+	if !i.validInstallToken(c.PostForm("install_token")) {
+		i.render(c, http.StatusForbidden, pageData{
+			Title:        installerT(lang, "title.welcome"),
+			Heading:      installerT(lang, "welcome.heading"),
+			Lead:         installerT(lang, "welcome.lead"),
+			Page:         "welcome",
+			Lang:         lang,
+			RequireToken: true,
+			Error:        installerT(lang, "error.install_token_invalid"),
+		})
+		return
+	}
 	if c.PostForm("beta_notice_accepted") != "1" {
 		i.render(c, http.StatusBadRequest, pageData{
-			Title:      installerT(lang, "title.welcome"),
-			Heading:    installerT(lang, "welcome.heading"),
-			Lead:       installerT(lang, "welcome.lead"),
-			Page:       "welcome",
-			Lang:       lang,
-			ConfigPath: i.configPath,
-			BootError:  i.bootError,
-			Error:      installerT(lang, "error.beta_notice_required"),
+			Title:        installerT(lang, "title.welcome"),
+			Heading:      installerT(lang, "welcome.heading"),
+			Lead:         installerT(lang, "welcome.lead"),
+			Page:         "welcome",
+			Lang:         lang,
+			RequireToken: i.requireToken,
+			ConfigPath:   i.configPath,
+			BootError:    i.bootError,
+			Error:        installerT(lang, "error.beta_notice_required"),
 		})
 		return
 	}
@@ -237,6 +272,86 @@ func (i *Installer) LanguageSubmit(c *gin.Context) {
 		SameSite: http.SameSiteLaxMode,
 	})
 	c.Redirect(http.StatusSeeOther, "/install/database")
+}
+
+// issueInstallToken generates the install token, saves it next to the site
+// config with 0600 permissions, and logs it. If the file cannot be written
+// the token is still in the log; if no random token can be generated the
+// installer refuses every attempt.
+func (i *Installer) issueInstallToken() {
+	token, err := newInstallToken()
+	if err != nil {
+		logger.Error("Installer is locked: no install token could be generated", "error", err)
+		return
+	}
+	i.installToken = token
+	path := i.installTokenPath()
+	if err := writeInstallToken(path, token); err != nil {
+		logger.Warn("Could not save the install token file; use the token from this log line", "path", path, "error", err)
+		path = ""
+	}
+	logger.Warn("Installer is locked: enter this install token on its first screen", "install_token", token, "token_file", path)
+}
+
+// removeInstallToken retires the token once the site is installed.
+func (i *Installer) removeInstallToken() {
+	i.installToken = ""
+	if err := os.Remove(i.installTokenPath()); err != nil && !errors.Is(err, os.ErrNotExist) {
+		logger.Warn("Could not remove the install token file", "path", i.installTokenPath(), "error", err)
+	}
+}
+
+// installTokenPath is next to the current config; the file moves with the
+// site directory when the installer renames sites/default.
+func (i *Installer) installTokenPath() string {
+	return filepath.Join(filepath.Dir(i.configPath), InstallTokenFile)
+}
+
+func (i *Installer) validInstallToken(input string) bool {
+	if !i.requireToken {
+		return true
+	}
+	want := normalizeInstallToken(i.installToken)
+	got := normalizeInstallToken(input)
+	return want != "" && subtle.ConstantTimeCompare([]byte(got), []byte(want)) == 1
+}
+
+// newInstallToken returns 120 random bits as six groups of four base32
+// characters, for example "K7QH-3MZD-...", easy to copy or type.
+func newInstallToken() (string, error) {
+	buf := make([]byte, installTokenBytes)
+	if _, err := rand.Read(buf); err != nil {
+		return "", err
+	}
+	raw := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(buf)
+	groups := make([]string, 0, len(raw)/4)
+	for start := 0; start < len(raw); start += 4 {
+		groups = append(groups, raw[start:start+4])
+	}
+	return strings.Join(groups, "-"), nil
+}
+
+// normalizeInstallToken ignores case, hyphens, and whitespace, so a token
+// pasted from the log or typed by hand compares equal.
+func normalizeInstallToken(token string) string {
+	var b strings.Builder
+	for _, r := range strings.ToUpper(token) {
+		if r == '-' || unicode.IsSpace(r) {
+			continue
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
+}
+
+func writeInstallToken(path, token string) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	if err := os.WriteFile(path, []byte(token+"\n"), 0o600); err != nil {
+		return err
+	}
+	return os.Chmod(path, 0o600)
 }
 
 func (i *Installer) requirePolicy() gin.HandlerFunc {
@@ -581,6 +696,7 @@ func (i *Installer) SiteSubmit(c *gin.Context) {
 		})
 		return
 	}
+	i.removeInstallToken()
 
 	if i.activate != nil {
 		if err := i.activate(cfg, i.configPath); err != nil {
