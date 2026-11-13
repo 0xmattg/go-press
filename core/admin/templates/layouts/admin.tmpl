@@ -57,6 +57,13 @@
             <button type="button" class="dep-warning-close" aria-label="{{T . "action.dismiss"}}" title="{{T . "action.dismiss"}}">&times;</button>
         </div>
         {{end}}
+        {{if .ThemeFallback}}
+        <div class="alert alert-error dep-warning" role="alert">
+            <span class="dep-warning-text"><strong>{{T . "theme.fallback_title"}}</strong>
+            {{if .ThemeFallback.Requested}}{{T . "theme.fallback_message" .ThemeFallback.Requested .ThemeFallback.Used}}{{else}}{{T . "theme.fallback_message_unset" .ThemeFallback.Used}}{{end}}</span>
+            <a href="/admin/themes" class="btn btn-sm" style="text-decoration:none;white-space:nowrap;">{{T . "theme.fallback_action"}}</a>
+        </div>
+        {{end}}
         {{if .NeedsEnableModules}}
         <div class="alert alert-error dep-warning" style="display:flex;align-items:center;gap:1rem;">
             <span class="dep-warning-text"><strong>{{T . "modules.required_title"}}</strong>

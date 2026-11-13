@@ -40,3 +40,37 @@ func TestLocationsKeepRegistrationOrderAndReset(t *testing.T) {
 		t.Fatalf("after reset and re-register, locations = %v, want %v", got, want)
 	}
 }
+
+func TestStagedLocationsReplaceCurrentOnlyOnCommit(t *testing.T) {
+	s := NewStore(nil)
+	s.RegisterLocation("header", "Header")
+	s.RegisterLocation("footer", "Footer")
+
+	s.StageLocations()
+	s.RegisterLocation("top-nav", "Top")
+	s.RegisterLocation("sidebar", "Sidebar")
+	s.RegisterLocation("top-nav", "Top navigation") // relabel keeps first position
+	if got := locationNames(s); !reflect.DeepEqual(got, []string{"header", "footer"}) {
+		t.Fatalf("while staged, GetLocations = %v, want the current list", got)
+	}
+	s.CommitLocations()
+	if got := locationNames(s); !reflect.DeepEqual(got, []string{"top-nav", "sidebar"}) {
+		t.Fatalf("after commit = %v", got)
+	}
+	if label := s.GetLocations()[0].Label; label != "Top navigation" {
+		t.Fatalf("label = %q", label)
+	}
+
+	// Discard keeps the current list; registering afterwards is direct again.
+	s.StageLocations()
+	s.RegisterLocation("other", "Other")
+	s.DiscardLocations()
+	if got := locationNames(s); !reflect.DeepEqual(got, []string{"top-nav", "sidebar"}) {
+		t.Fatalf("after discard = %v", got)
+	}
+	s.CommitLocations() // nothing staged: no change
+	s.RegisterLocation("footer", "Footer")
+	if got := locationNames(s); !reflect.DeepEqual(got, []string{"top-nav", "sidebar", "footer"}) {
+		t.Fatalf("direct registration after discard = %v", got)
+	}
+}

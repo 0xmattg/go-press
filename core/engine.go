@@ -63,6 +63,7 @@ import (
 	"github.com/0xmattg/go-press/core/cache"
 	"github.com/0xmattg/go-press/core/comment"
 	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/extension"
 	"github.com/0xmattg/go-press/core/hook"
 	coreI18n "github.com/0xmattg/go-press/core/i18n"
 	coreMail "github.com/0xmattg/go-press/core/mail"
@@ -104,6 +105,26 @@ type ThemeInfo struct {
 	LogoSVG string
 }
 
+// ThemeFallback describes a boot that could not use the configured theme
+// and activated another one. The saved active_theme option is left alone,
+// so the configured theme is used again once it loads.
+type ThemeFallback struct {
+	// Requested is the configured theme (active_theme, else site.theme);
+	// empty when neither is set.
+	Requested string
+	// Used is the theme actually activated.
+	Used string
+	// Reason is why Requested could not be activated.
+	Reason string
+}
+
+// ThemeLoadIssue is a compiled-in theme whose factory failed, so it is not
+// available.
+type ThemeLoadIssue struct {
+	Slug   string
+	Reason string
+}
+
 // Engine is the main GoPress application container.
 //
 // A single Engine instance owns the process-wide runtime state for one site:
@@ -134,6 +155,10 @@ type Engine struct {
 	Mail     *coreMail.Service
 	Updates  *updatecheck.Service
 	Audit    *audit.Service
+	// Market fetches and verifies the extension market catalog. It is set by
+	// BuildAndBootstrap and is never nil there; check Market.Enabled before
+	// offering market features.
+	Market *extension.Market
 
 	// Agent foundation is protocol-neutral. Network transports such as MCP are
 	// optional plugins that consume these services through plugin.AgentHost.
@@ -178,12 +203,16 @@ type Engine struct {
 	// detection and database overrides on top of this base manager.
 	I18n *coreI18n.Manager
 
-	// Theme and plugin runtime state. Themes are initialized once, while the
-	// active theme slug can change at runtime through the admin panel.
+	// Theme and plugin runtime state. mu guards themes, activeThemeName,
+	// themeLoadIssues and themeFallback. The themes map is copy-on-write: once
+	// published it is never modified, so a snapshot read under mu can be
+	// used after unlocking. Writers also hold lifecycleMu.
 	mu                    sync.RWMutex
-	lifecycleMu           sync.Mutex                 // serializes theme switches and plugin toggles
-	themes                map[string]coreTheme.Theme // all initialized theme instances
+	lifecycleMu           sync.Mutex                 // serializes theme switches, plugin toggles and theme set changes
+	themes                map[string]coreTheme.Theme // all usable theme instances, compiled in or added at runtime
 	activeThemeName       string                     // slug of the currently active theme
+	themeLoadIssues       map[string]string          // compiled-in themes that failed to build, slug → reason
+	themeFallback         *ThemeFallback             // set when boot could not use the configured theme
 	PluginManager         *plugin.Manager
 	themeSubmissionGrants []user.CapabilityGrant
 
@@ -436,123 +465,402 @@ func (e *Engine) RegisterUpdateTarget(target updatecheck.Target) error {
 	return e.Updates.Registry().Register(target)
 }
 
-// LoadAllThemes initializes every registered theme factory and activates the
-// theme specified by the options table, falling back to config.Site.Theme.
+// LoadAllThemes builds every registered theme and activates one.
 //
-// Theme instances are kept in memory so switching themes later does not require
-// re-running factory registration. The active theme's theme.toml content models
-// are reloaded into the registry during activation.
+// A theme whose factory fails (an error, a panic, or no theme) is skipped and
+// recorded in ThemeLoadIssues; it does not stop the site (audit A21).
+//
+// The theme to activate is the active_theme option, else config site.theme.
+// When that theme is missing or fails to activate, the next candidate is
+// tried: site.theme, then every built theme in slug order. Using a fallback
+// is logged as an error and reported by ThemeFallback, and active_theme is
+// not rewritten, so the configured theme comes back once it loads again.
+// LoadAllThemes fails only when no theme can be activated.
 func (e *Engine) LoadAllThemes() error {
-	for name, factory := range AllThemeFactories() {
-		t := factory(e, ThemeDir(name))
-		e.themes[name] = t
-		logger.Info("Theme registered", "theme", t.Name(), "slug", name)
+	built := make(map[string]coreTheme.Theme)
+	issues := make(map[string]string)
+	for slug, entry := range registeredThemeFactories() {
+		t, err := buildTheme(slug, entry.factory, e, entry.source.Dir)
+		if err != nil {
+			issues[slug] = err.Error()
+			logger.Error("Theme failed to load; it is not available", "slug", slug, "error", err)
+			continue
+		}
+		built[slug] = t
+		logger.Info("Theme registered", "theme", t.Name(), "slug", slug)
 	}
-	if slugs := diskFallbackThemes(e.themes); len(slugs) > 0 {
+	e.mu.Lock()
+	next := make(map[string]coreTheme.Theme, len(e.themes)+len(built))
+	for slug, t := range e.themes {
+		next[slug] = t
+	}
+	for slug, t := range built {
+		next[slug] = t
+	}
+	e.themes = next
+	e.themeLoadIssues = issues
+	e.mu.Unlock()
+	if slugs := diskFallbackThemes(next); len(slugs) > 0 {
 		logger.Info("Themes read their files from their directory on disk; embed them with BaseTheme.InitBaseFS so they can run outside the source tree",
 			"themes", strings.Join(slugs, ","))
 	}
 
-	// Determine active theme: options DB overrides config file
-	active := e.Options.Get("active_theme")
-	if active == "" {
-		active = e.Config.Site.Theme
+	configured := ""
+	if e.Config != nil {
+		configured = e.Config.Site.Theme
 	}
+	requested := ""
+	if e.Options != nil {
+		requested = e.Options.Get("active_theme")
+	}
+	if requested == "" {
+		requested = configured
+	}
+	candidates := []string{requested, configured}
+	slugs := make([]string, 0, len(next))
+	for slug := range next {
+		slugs = append(slugs, slug)
+	}
+	sort.Strings(slugs)
+	candidates = append(candidates, slugs...)
 
-	return e.activateTheme(active)
+	tried := make(map[string]bool, len(candidates))
+	var failures []string
+	requestedReason := "no theme is configured"
+	for _, slug := range candidates {
+		if slug == "" || tried[slug] {
+			continue
+		}
+		tried[slug] = true
+		err := e.activateTheme(slug)
+		if err != nil && issues[slug] != "" {
+			err = errors.New(issues[slug])
+		}
+		if err == nil {
+			if slug != requested {
+				fallback := &ThemeFallback{Requested: requested, Used: slug, Reason: requestedReason}
+				e.mu.Lock()
+				e.themeFallback = fallback
+				e.mu.Unlock()
+				logger.Error("Configured theme unavailable; using a fallback theme until it loads again",
+					"requested", requested, "used", slug, "reason", requestedReason)
+			}
+			return nil
+		}
+		if slug == requested {
+			requestedReason = err.Error()
+		}
+		logger.Error("Theme could not be activated", "slug", slug, "error", err)
+		failures = append(failures, fmt.Sprintf("%s: %v", slug, err))
+	}
+	if len(failures) == 0 {
+		return errors.New("no theme could be activated: no themes are registered")
+	}
+	return fmt.Errorf("no theme could be activated: %s", strings.Join(failures, "; "))
+}
+
+// ThemeFallback reports a boot that used another theme because the
+// configured one could not be activated, or nil.
+func (e *Engine) ThemeFallback() *ThemeFallback {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	if e.themeFallback == nil {
+		return nil
+	}
+	copied := *e.themeFallback
+	return &copied
+}
+
+// ThemeLoadIssues lists the compiled-in themes that failed to build, sorted
+// by slug.
+func (e *Engine) ThemeLoadIssues() []ThemeLoadIssue {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	out := make([]ThemeLoadIssue, 0, len(e.themeLoadIssues))
+	for slug, reason := range e.themeLoadIssues {
+		out = append(out, ThemeLoadIssue{Slug: slug, Reason: reason})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Slug < out[j].Slug })
+	return out
+}
+
+// themeSnapshot returns the current theme set. The map must not be modified.
+func (e *Engine) themeSnapshot() map[string]coreTheme.Theme {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.themes
+}
+
+// lookupTheme returns the usable theme with the given slug.
+func (e *Engine) lookupTheme(slug string) (coreTheme.Theme, bool) {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	t, ok := e.themes[slug]
+	return t, ok
+}
+
+// withTheme returns a copy of themes with slug set to t, or removed when t
+// is nil.
+func withTheme(themes map[string]coreTheme.Theme, slug string, t coreTheme.Theme) map[string]coreTheme.Theme {
+	next := make(map[string]coreTheme.Theme, len(themes)+1)
+	for k, v := range themes {
+		next[k] = v
+	}
+	if t == nil {
+		delete(next, slug)
+	} else {
+		next[slug] = t
+	}
+	return next
+}
+
+// checkRuntimeThemeSlug rejects slugs a theme added at runtime cannot use:
+// invalid ones and those of themes or plugins compiled into the binary.
+func checkRuntimeThemeSlug(slug string) error {
+	if !plugin.ValidSlug(slug) {
+		return fmt.Errorf("invalid theme slug %q", slug)
+	}
+	if compiledExtension(slug) {
+		return fmt.Errorf("%q is the name of a theme or plugin built into GoPress", slug)
+	}
+	return nil
+}
+
+// AddTheme makes a theme available without a restart, for example an
+// installed theme package. The slug must be valid, must not belong to a theme
+// or plugin compiled into the binary, and must not be loaded already (use
+// ReplaceTheme to upgrade). Activating it is a separate SwitchTheme.
+func (e *Engine) AddTheme(slug string, t coreTheme.Theme) error {
+	if err := checkRuntimeThemeSlug(slug); err != nil {
+		return err
+	}
+	if t == nil {
+		return fmt.Errorf("theme %q is nil", slug)
+	}
+	e.lifecycleMu.Lock()
+	defer e.lifecycleMu.Unlock()
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if _, exists := e.themes[slug]; exists {
+		return fmt.Errorf("theme %q is already loaded", slug)
+	}
+	e.themes = withTheme(e.themes, slug, t)
+	logger.Info("Theme added", "theme", t.Name(), "slug", slug)
+	return nil
+}
+
+// ReplaceTheme swaps a theme added at runtime for a new instance, for an
+// upgrade or rollback. When the theme is active, the new instance is
+// activated first and replaces the old one only if activation succeeds;
+// otherwise the old instance stays active and the error is returned.
+func (e *Engine) ReplaceTheme(slug string, t coreTheme.Theme) error {
+	if err := checkRuntimeThemeSlug(slug); err != nil {
+		return err
+	}
+	if t == nil {
+		return fmt.Errorf("theme %q is nil", slug)
+	}
+	e.lifecycleMu.Lock()
+	defer e.lifecycleMu.Unlock()
+	if _, ok := e.lookupTheme(slug); !ok {
+		return fmt.Errorf("theme %q is not loaded", slug)
+	}
+	if e.ActiveThemeName() == slug {
+		if err := e.activateThemeInstance(slug, t, true); err != nil {
+			return err
+		}
+		e.flushThemeCaches()
+		if e.Router != nil {
+			e.rebuildRouter()
+		}
+		logger.Info("Active theme replaced", "theme", t.Name(), "slug", slug)
+		return nil
+	}
+	e.mu.Lock()
+	e.themes = withTheme(e.themes, slug, t)
+	e.mu.Unlock()
+	logger.Info("Theme replaced", "theme", t.Name(), "slug", slug)
+	return nil
+}
+
+// RemoveTheme removes a theme added at runtime. The active theme cannot be
+// removed; switch to another theme first.
+func (e *Engine) RemoveTheme(slug string) error {
+	if err := checkRuntimeThemeSlug(slug); err != nil {
+		return err
+	}
+	e.lifecycleMu.Lock()
+	defer e.lifecycleMu.Unlock()
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if _, ok := e.themes[slug]; !ok {
+		return fmt.Errorf("theme %q is not loaded", slug)
+	}
+	if e.activeThemeName == slug {
+		return fmt.Errorf("theme %q is active; switch to another theme before removing it", slug)
+	}
+	e.themes = withTheme(e.themes, slug, nil)
+	logger.Info("Theme removed", "slug", slug)
+	return nil
 }
 
 // activateTheme activates a theme by slug without persisting the choice.
 //
-// Activation rebuilds the content registry and the menu location list from
-// core definitions plus the selected theme's theme.toml declarations, then
-// calls Theme.Setup. This keeps stale content type, taxonomy and menu location
-// declarations from previous themes out of the active runtime.
+// Activation builds the theme's runtime state first and only then swaps it in
+// (audit A02), so concurrent requests never see an empty or half-built state
+// and a failure leaves the previous theme fully in place:
+//
+//  1. Build: a fresh content registry with core types, the theme's theme.toml
+//     types, and plugin types from the content.register_types hook (which
+//     receives the new registry); staged menu locations and translatable
+//     option keys, filled by theme.toml and Theme.Setup; the public submission
+//     capabilities the new registry asks for; and the theme's locale layer.
+//     A theme config error or a panic in Setup discards everything staged.
+//  2. Commit, without I/O: registry, menu locations, translatable keys, RBAC
+//     grants (only the difference), locales, and finally the active theme.
+//
+// Callers serialize activations (lifecycleMu, or the single-threaded boot).
 func (e *Engine) activateTheme(name string) error {
-	theme, ok := e.themes[name]
+	theme, ok := e.lookupTheme(name)
 	if !ok {
 		return fmt.Errorf("theme %q not found in registered themes", name)
 	}
+	return e.activateThemeInstance(name, theme, false)
+}
 
-	// Clear and re-register: core types first, then theme types. Prefer the
-	// theme's embedded theme.toml (baked into the binary) so runtime behavior
-	// matches the compiled version; fall back to the theme's files only if the
-	// theme predates FileConfigProvider.
-	e.revokePublicSubmissionCapabilities()
-	e.Registry.Clear()
-	e.registerCoreTypes()
+// activateThemeInstance activates theme under name. With publish, the
+// instance also replaces the theme set's entry for name in the same commit,
+// so requests never see the new instance with the old runtime state (used
+// to replace the active theme).
+func (e *Engine) activateThemeInstance(name string, theme coreTheme.Theme, publish bool) (err error) {
+	themeFS := e.themeFSFor(name, theme)
+	// Prefer the theme's embedded theme.toml (baked into the binary) so
+	// runtime behavior matches the compiled version; fall back to the theme's
+	// files only if the theme predates FileConfigProvider.
 	var themeConfig *coreTheme.FileConfig
 	if fp, ok := theme.(coreTheme.FileConfigProvider); ok && fp.FileConfig() != nil {
 		themeConfig = fp.FileConfig()
-	} else {
-		var err error
-		themeConfig, err = coreTheme.LoadFileConfigFS(e.themeFS(name))
-		if err != nil {
-			return fmt.Errorf("failed to load theme config for %q: %w", name, err)
-		}
+	} else if themeConfig, err = coreTheme.LoadFileConfigFS(themeFS); err != nil {
+		return fmt.Errorf("failed to load theme config for %q: %w", name, err)
 	}
-	coreTheme.RegisterContentTypesFromConfig(e.Registry, themeConfig)
-	// Menu locations follow the same rule: start from the selected theme's
-	// theme.toml so a previous theme's locations do not survive a switch.
-	// Theme.Setup may still add runtime-only locations below.
+
+	// 1. Build.
+	next := content.NewRegistry()
+	registerCoreTypes(next)
+	coreTheme.RegisterContentTypesFromConfig(next, themeConfig)
+
 	if e.Menus != nil {
-		e.Menus.ResetLocations()
+		e.Menus.StageLocations()
+	}
+	option.StageThemeTranslatables()
+	committed := false
+	defer func() {
+		if committed {
+			return
+		}
+		if e.Menus != nil {
+			e.Menus.DiscardLocations()
+		}
+		option.DiscardThemeTranslatables()
+	}()
+
+	if e.Menus != nil {
 		coreTheme.RegisterMenuLocationsFromConfig(e.Menus, themeConfig)
 	}
-	// Let active plugins contribute content types that must survive theme
-	// switches (the registry was just cleared and rebuilt). Fires on every
-	// activation, including the initial one and later switches.
-	e.Hooks.DoAction(context.Background(), hook.ContentRegisterTypes, e.Registry)
-	e.registerPublicSubmissionCapabilities()
-	theme.Setup(e)
+	// Active plugins contribute content types that must survive theme switches.
+	// They register them into the hook argument, which is the new registry.
+	if e.Hooks != nil {
+		e.Hooks.DoAction(context.Background(), hook.ContentRegisterTypes, next)
+	}
+	wantGrants := publicSubmissionCapabilities(next)
+	if err := setupTheme(theme, e); err != nil {
+		return err
+	}
+	var locales coreI18n.ThemeLocales
+	if e.I18n != nil {
+		locales = e.I18n.PrepareThemeLocales(themeFS)
+	}
 
+	// 2. Commit.
+	e.Registry.ReplaceWith(next)
+	if e.Menus != nil {
+		e.Menus.CommitLocations()
+	}
+	option.CommitThemeTranslatables()
+	if e.RBAC != nil {
+		e.themeSubmissionGrants = e.RBAC.ReplaceGrants(e.themeSubmissionGrants, wantGrants)
+	}
+	if e.I18n != nil {
+		e.I18n.SetThemeLocales(locales)
+	}
 	e.mu.Lock()
+	if publish {
+		e.themes = withTheme(e.themes, name, theme)
+	}
 	e.activeThemeName = name
 	e.mu.Unlock()
-
-	// Load theme's locale files for core i18n
-	if e.I18n != nil {
-		e.I18n.LoadThemeLocalesFS(e.themeFS(name))
-	}
+	committed = true
 
 	logger.Info("Theme activated", "theme", theme.Name(), "slug", name)
 	return nil
 }
 
-// registerPublicSubmissionCapabilities converts declarative content-type
-// policies into ordinary RBAC capabilities for the duration of the active
-// theme. Previous activation grants are revoked before the registry rebuild.
-func (e *Engine) registerPublicSubmissionCapabilities() {
-	if e == nil || e.RBAC == nil || e.Registry == nil {
-		return
+// setupTheme runs Theme.Setup and turns a panic into an error, so a broken
+// theme cannot leave a switch half done.
+func setupTheme(theme coreTheme.Theme, app coreTheme.App) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("theme %q setup panicked: %v", theme.Name(), r)
+		}
+	}()
+	theme.Setup(app)
+	return nil
+}
+
+// publicSubmissionCapabilities lists the RBAC capabilities that registry's
+// declarative public submission policies ask for.
+func publicSubmissionCapabilities(registry *content.Registry) []user.CapabilityRef {
+	if registry == nil {
+		return nil
 	}
-	for _, def := range e.Registry.AllTypes() {
+	var refs []user.CapabilityRef
+	for _, def := range registry.AllTypes() {
 		if def == nil || !def.PublicSubmission.Enabled {
 			continue
 		}
 		for _, role := range def.PublicSubmission.Roles {
-			e.themeSubmissionGrants = append(e.themeSubmissionGrants,
-				e.RBAC.GrantCapability(role, def.Name, "create"),
-				e.RBAC.GrantCapability(role, def.Name, "read_own"),
+			refs = append(refs,
+				user.CapabilityRef{Role: role, Resource: def.Name, Action: "create"},
+				user.CapabilityRef{Role: role, Resource: def.Name, Action: "read_own"},
 			)
 			if def.PublicSubmission.AllowUpdateOwn {
-				e.themeSubmissionGrants = append(e.themeSubmissionGrants, e.RBAC.GrantCapability(role, def.Name, "update_own"))
+				refs = append(refs, user.CapabilityRef{Role: role, Resource: def.Name, Action: "update_own"})
 			}
 			if def.PublicSubmission.AllowDeleteOwn {
-				e.themeSubmissionGrants = append(e.themeSubmissionGrants, e.RBAC.GrantCapability(role, def.Name, "delete_own"))
+				refs = append(refs, user.CapabilityRef{Role: role, Resource: def.Name, Action: "delete_own"})
 			}
 		}
 	}
+	return refs
 }
 
+// registerPublicSubmissionCapabilities converts declarative content-type
+// policies of the current registry into ordinary RBAC capabilities for the
+// duration of the active theme, replacing the previous theme's grants.
+func (e *Engine) registerPublicSubmissionCapabilities() {
+	if e == nil || e.RBAC == nil || e.Registry == nil {
+		return
+	}
+	e.themeSubmissionGrants = e.RBAC.ReplaceGrants(e.themeSubmissionGrants, publicSubmissionCapabilities(e.Registry))
+}
+
+// revokePublicSubmissionCapabilities removes the active theme's grants,
+// keeping capabilities the roles had before.
 func (e *Engine) revokePublicSubmissionCapabilities() {
 	if e == nil || e.RBAC == nil {
 		return
 	}
-	for _, grant := range e.themeSubmissionGrants {
-		e.RBAC.RevokeCapabilityGrant(grant)
-	}
-	e.themeSubmissionGrants = nil
+	e.themeSubmissionGrants = e.RBAC.ReplaceGrants(e.themeSubmissionGrants, nil)
 }
 
 // RefreshActiveTheme re-activates the current theme (rebuilding the content
@@ -583,15 +891,15 @@ func (e *Engine) refreshActiveThemeLocked() error {
 // registerCoreTypes registers content types and taxonomies that are part of
 // GoPress core and must survive theme switches.
 //
-// Theme activation clears the registry before re-registering these definitions,
-// so anything listed here is treated as framework-level surface area rather
-// than a theme-specific model.
-func (e *Engine) registerCoreTypes() {
+// Theme activation builds each new registry from these definitions first, so
+// anything listed here is treated as framework-level surface area rather than
+// a theme-specific model.
+func registerCoreTypes(registry *content.Registry) {
 	// page: root-level standalone pages (about, terms, privacy). A core type on
 	// the unified Content model — hierarchical, rootless permalinks (/about), no
 	// public archive, fully authorable in admin. Rendered through the active
 	// theme's base layout so nav/footer/styling are shared automatically.
-	e.Registry.RegisterType(content.ContentTypeDef{
+	registry.RegisterType(content.ContentTypeDef{
 		Name:         "page",
 		Label:        "页面",
 		LabelPlural:  "页面",
@@ -604,7 +912,7 @@ func (e *Engine) registerCoreTypes() {
 		MenuOrder:    20,
 	})
 
-	e.Registry.RegisterType(content.ContentTypeDef{
+	registry.RegisterType(content.ContentTypeDef{
 		Name:        "post",
 		Label:       "文章",
 		LabelPlural: "文章列表",
@@ -615,7 +923,7 @@ func (e *Engine) registerCoreTypes() {
 		MenuOrder:   100,
 	})
 
-	e.Registry.RegisterType(content.ContentTypeDef{
+	registry.RegisterType(content.ContentTypeDef{
 		Name:        "contact_message",
 		Label:       "联系留言",
 		LabelPlural: "联系留言",
@@ -628,7 +936,7 @@ func (e *Engine) registerCoreTypes() {
 		MenuOrder: 110,
 	})
 
-	e.Registry.RegisterTaxonomy(content.TaxonomyDef{
+	registry.RegisterTaxonomy(content.TaxonomyDef{
 		Name:         "category",
 		Label:        "分类",
 		LabelPlural:  "分类列表",
@@ -636,7 +944,7 @@ func (e *Engine) registerCoreTypes() {
 		Hierarchical: true,
 	})
 
-	e.Registry.RegisterTaxonomy(content.TaxonomyDef{
+	registry.RegisterTaxonomy(content.TaxonomyDef{
 		Name:         "tag",
 		Label:        "标签",
 		LabelPlural:  "标签列表",
@@ -676,6 +984,10 @@ func (e *Engine) SwitchTheme(name string) error {
 		e.restoreThemeLocked(previous, name, activated)
 		return fmt.Errorf("failed to persist active theme %q: %w", name, err)
 	}
+	// The administrator chose a theme, so any boot fallback is over.
+	e.mu.Lock()
+	e.themeFallback = nil
+	e.mu.Unlock()
 	e.flushThemeCaches()
 	logger.Info("Caches flushed after theme switch", "theme", name)
 
@@ -718,9 +1030,8 @@ func (e *Engine) flushThemeCaches() {
 // ActiveTheme returns the currently active theme instance.
 func (e *Engine) ActiveTheme() coreTheme.Theme {
 	e.mu.RLock()
-	name := e.activeThemeName
-	e.mu.RUnlock()
-	return e.themes[name]
+	defer e.mu.RUnlock()
+	return e.themes[e.activeThemeName]
 }
 
 // ActiveThemeName returns the slug of the currently active theme.
@@ -733,8 +1044,9 @@ func (e *Engine) ActiveThemeName() string {
 // AvailableThemes returns info about all registered themes.
 func (e *Engine) AvailableThemes() []ThemeInfo {
 	active := e.ActiveThemeName()
-	infos := make([]ThemeInfo, 0, len(e.themes))
-	for slug, t := range e.themes {
+	themes := e.themeSnapshot()
+	infos := make([]ThemeInfo, 0, len(themes))
+	for slug, t := range themes {
 		infos = append(infos, ThemeInfo{
 			Name:        t.Name(),
 			Slug:        slug,
@@ -755,7 +1067,7 @@ func (e *Engine) AvailableThemes() []ThemeInfo {
 // (boot) log the warnings and keep running; the CLI can treat them as errors.
 func (e *Engine) ValidateExtensionVersions() []string {
 	var problems []string
-	for slug, t := range e.themes {
+	for slug, t := range e.themeSnapshot() {
 		if !semver.Valid(t.Version()) {
 			problems = append(problems, fmt.Sprintf("theme %q has invalid semver version %q", slug, t.Version()))
 		}
@@ -786,7 +1098,7 @@ func extensionLogoSVG(x interface{}) string {
 // Deprecated: it only reports DemoDataProvider paths and returns "" for themes
 // whose files come from an asset filesystem. Use HasThemeDemoData.
 func (e *Engine) ThemeDemoSeedPath(slug string) string {
-	t, ok := e.themes[slug]
+	t, ok := e.lookupTheme(slug)
 	if !ok {
 		return ""
 	}
@@ -807,7 +1119,7 @@ func (e *Engine) IsThemeDemoImported(slug string) bool {
 // Deprecated: it only reports SettingsProvider paths and returns "" for themes
 // whose files come from an asset filesystem. Use ThemeSettingsTemplate.
 func (e *Engine) ThemeSettingsTemplatePath(slug string) string {
-	t, ok := e.themes[slug]
+	t, ok := e.lookupTheme(slug)
 	if !ok {
 		return ""
 	}
@@ -1252,6 +1564,21 @@ func (e *Engine) SetupAdmin() {
 		},
 		ImportDemoFn:       e.ImportThemeDemoData,
 		SettingsTemplateFn: e.ThemeSettingsTemplate,
+		FallbackFn: func() *admin.ThemeFallbackInfo {
+			fallback := e.ThemeFallback()
+			if fallback == nil {
+				return nil
+			}
+			return &admin.ThemeFallbackInfo{Requested: fallback.Requested, Used: fallback.Used}
+		},
+		LoadIssuesFn: func() []admin.ThemeLoadIssueInfo {
+			issues := e.ThemeLoadIssues()
+			out := make([]admin.ThemeLoadIssueInfo, len(issues))
+			for i, issue := range issues {
+				out[i] = admin.ThemeLoadIssueInfo{Slug: issue.Slug, Reason: issue.Reason}
+			}
+			return out
+		},
 		LocaleCatalogFn: func(slug string) *coreI18n.Catalog {
 			return extensionAdminCatalogFS(e.themeFS(slug))
 		},

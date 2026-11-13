@@ -30,6 +30,27 @@ type Config struct {
 	CMS     CMSConfig     `mapstructure:"cms" toml:"cms"`
 	Mail    MailConfig    `mapstructure:"mail" toml:"mail"`
 	Install InstallConfig `mapstructure:"install" toml:"install"`
+	Market  MarketConfig  `mapstructure:"market" toml:"market,omitempty"`
+}
+
+// MarketConfig points the site at a self-hosted extension market instead of
+// the official one built into this release. Set all three fields or none:
+// together they replace the official market as a whole, and a partial
+// section stops the server from starting.
+type MarketConfig struct {
+	// Endpoint is the market's base URL, e.g. https://market.example.com/api/market/v1.
+	Endpoint string `mapstructure:"endpoint" toml:"endpoint,omitempty"`
+	// CatalogKeys are the base64 Ed25519 public keys trusted to sign the
+	// market's catalog.
+	CatalogKeys []string `mapstructure:"catalog_keys" toml:"catalog_keys,omitempty"`
+	// PackageKeys are the base64 Ed25519 public keys trusted to countersign
+	// the market's packages.
+	PackageKeys []string `mapstructure:"package_keys" toml:"package_keys,omitempty"`
+}
+
+// IsZero reports whether no market setting is present.
+func (m MarketConfig) IsZero() bool {
+	return strings.TrimSpace(m.Endpoint) == "" && len(m.CatalogKeys) == 0 && len(m.PackageKeys) == 0
 }
 
 type SiteConfig struct {

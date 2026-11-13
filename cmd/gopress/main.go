@@ -19,6 +19,9 @@ Usage:
   gopress build [-o path]           Regenerate autoload and produce a server
                                     binary (default: build/gopress-server).
   gopress gen                       Regenerate internal/autoload only.
+  gopress pkg <command> [args...]   Sign and verify extension packages
+                                    (keygen, digest, sign, verify).
+                                    Works outside a GoPress checkout.
   gopress help                      Show this help.
 
 Examples:
@@ -35,6 +38,11 @@ func main() {
 	}
 
 	sub, rest := os.Args[1], os.Args[2:]
+
+	// pkg works on package files and needs no repository checkout.
+	if sub == "pkg" {
+		os.Exit(runPkg(rest, os.Stdout, os.Stderr))
+	}
 
 	root, err := findRepoRoot()
 	if err != nil {

@@ -55,7 +55,10 @@ type Store struct {
 	// locationOrder keeps registration order so the admin lists locations as
 	// the theme declared them rather than in map order.
 	locationOrder []string
-	hooks         *hook.Bus
+	// staged, when not nil, receives RegisterLocation calls during a theme
+	// activation; see StageLocations.
+	staged *stagedLocations
+	hooks  *hook.Bus
 }
 
 // NewStore creates a new menu Store.
@@ -120,10 +123,58 @@ func goroutineID() uint64 {
 func (s *Store) RegisterLocation(name, label string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.staged != nil {
+		s.staged.add(name, label)
+		return
+	}
 	if _, exists := s.locations[name]; !exists {
 		s.locationOrder = append(s.locationOrder, name)
 	}
 	s.locations[name] = LocationDef{Name: name, Label: label}
+}
+
+// stagedLocations collects locations between StageLocations and
+// CommitLocations.
+type stagedLocations struct {
+	locations map[string]LocationDef
+	order     []string
+}
+
+func (l *stagedLocations) add(name, label string) {
+	if _, exists := l.locations[name]; !exists {
+		l.order = append(l.order, name)
+	}
+	l.locations[name] = LocationDef{Name: name, Label: label}
+}
+
+// StageLocations starts collecting a replacement location list. Until
+// CommitLocations or DiscardLocations, RegisterLocation adds to the staged
+// list while GetLocations keeps returning the current one. Engine stages the
+// next theme's locations during activation, so a switch never shows an empty
+// list. Staging an already staged store starts over.
+func (s *Store) StageLocations() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.staged = &stagedLocations{locations: make(map[string]LocationDef)}
+}
+
+// CommitLocations replaces the current locations with the staged list. It
+// does nothing when nothing is staged.
+func (s *Store) CommitLocations() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.staged == nil {
+		return
+	}
+	s.locations, s.locationOrder = s.staged.locations, s.staged.order
+	s.staged = nil
+}
+
+// DiscardLocations drops the staged list and keeps the current one.
+func (s *Store) DiscardLocations() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.staged = nil
 }
 
 // ResetLocations forgets every registered location. Engine calls it when a

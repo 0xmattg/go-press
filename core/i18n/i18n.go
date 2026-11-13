@@ -170,23 +170,42 @@ func (m *Manager) LoadThemeLocales(themeDir string) {
 
 // LoadThemeLocalesFS is LoadThemeLocales for a theme filesystem rooted at the
 // theme directory; it reads locales/*.json. A nil filesystem clears the theme
-// layer.
+// layer. It is PrepareThemeLocales followed by SetThemeLocales.
 func (m *Manager) LoadThemeLocalesFS(themeFS fs.FS) {
-	layer := make(messageLayer)
-	defer func() {
-		m.mu.Lock()
-		m.themeLayer = layer
-		m.rebuildLocked()
-		m.mu.Unlock()
-	}()
+	m.SetThemeLocales(m.PrepareThemeLocales(themeFS))
+}
 
+// ThemeLocales is a theme layer read by PrepareThemeLocales and not yet in
+// use.
+type ThemeLocales struct {
+	layer messageLayer
+}
+
+// SetThemeLocales makes prepared theme messages the active theme layer. It
+// does no I/O, so Engine can call it in the short commit step of a theme
+// activation.
+func (m *Manager) SetThemeLocales(locales ThemeLocales) {
+	layer := locales.layer
+	if layer == nil {
+		layer = make(messageLayer)
+	}
+	m.mu.Lock()
+	m.themeLayer = layer
+	m.rebuildLocked()
+	m.mu.Unlock()
+}
+
+// PrepareThemeLocales reads a theme's locales/*.json without changing the
+// active messages. A nil filesystem prepares an empty layer.
+func (m *Manager) PrepareThemeLocales(themeFS fs.FS) ThemeLocales {
+	layer := make(messageLayer)
 	if themeFS == nil {
-		return
+		return ThemeLocales{layer: layer}
 	}
 	const localesDir = "locales"
 	entries, err := fs.ReadDir(themeFS, localesDir)
 	if err != nil {
-		return
+		return ThemeLocales{layer: layer}
 	}
 
 	for _, entry := range entries {
@@ -220,6 +239,7 @@ func (m *Manager) LoadThemeLocalesFS(themeFS fs.FS) {
 		layer.merge(langCode, msgs)
 		logger.Info("i18n: loaded theme locale", "lang", langCode, "keys", len(msgs))
 	}
+	return ThemeLocales{layer: layer}
 }
 
 // ThemeMessages returns a copy of the active theme's locale messages as

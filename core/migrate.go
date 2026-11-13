@@ -13,6 +13,7 @@ import (
 	"github.com/0xmattg/go-press/core/comment"
 	"github.com/0xmattg/go-press/core/content"
 	"github.com/0xmattg/go-press/core/dbschema"
+	"github.com/0xmattg/go-press/core/extension"
 	coreMedia "github.com/0xmattg/go-press/core/media"
 	"github.com/0xmattg/go-press/core/menu"
 	"github.com/0xmattg/go-press/core/migrate"
@@ -60,7 +61,8 @@ func MigrationRunner(db *gorm.DB) *migrate.Runner {
 // respect to AutoMigrate, and named indexes through dbschema.SiteIndexName.
 // Version 1 is the baseline: the schema that AutoMigrate and the legacy
 // patches maintain. Sites installed before versioned migrations record it as
-// adopted, new installs as applied.
+// adopted, new installs as applied. Version 2 creates the extension package
+// tables (core/extension), which are not part of AutoMigrate.
 func CoreMigrations() migrate.Module {
 	return migrate.Module{
 		Name: CoreMigrationModule,
@@ -72,8 +74,10 @@ func CoreMigrations() migrate.Module {
 			Prepare: func(_ context.Context, db *gorm.DB) error {
 				return prepareCoreSchema(db)
 			},
+			// Versions are numbered here, in one list, for all of core.
 			Steps: []migrate.Step{
 				{Version: 1, Name: "baseline", Baseline: true},
+				{Version: 2, Name: "create_extension_tables", Up: extension.CreateTablesV1},
 			},
 		},
 	}

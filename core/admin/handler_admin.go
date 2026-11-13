@@ -552,8 +552,13 @@ func (h *Handler) ThemeList(c *gin.Context) {
 		return
 	}
 	var themes []ThemeDisplayInfo
+	var issues []ThemeLoadIssueInfo
 	if h.themeManager != nil {
 		themes = h.themeManager.Available()
+		for _, issue := range h.themeManager.LoadIssues() {
+			issue.Reason = truncateRunes(issue.Reason, maxThemeIssueRunes)
+			issues = append(issues, issue)
+		}
 	}
 	lang := h.svc.AdminLanguage()
 	h.localizeThemes(themes, lang)
@@ -564,10 +569,23 @@ func (h *Handler) ThemeList(c *gin.Context) {
 		return themes[i].Name < themes[j].Name
 	})
 	h.render(c, "themes", gin.H{
-		"Title":  adminT(lang, "nav.themes"),
-		"Active": "themes",
-		"Themes": themes,
+		"Title":           adminT(lang, "nav.themes"),
+		"Active":          "themes",
+		"Themes":          themes,
+		"ThemeLoadIssues": issues,
 	})
+}
+
+// maxThemeIssueRunes caps a failed theme's reason on the themes page; the
+// full error is in the server log.
+const maxThemeIssueRunes = 300
+
+func truncateRunes(s string, max int) string {
+	runes := []rune(s)
+	if len(runes) <= max {
+		return s
+	}
+	return string(runes[:max]) + "…"
 }
 
 func (h *Handler) localizeThemes(themes []ThemeDisplayInfo, lang string) {

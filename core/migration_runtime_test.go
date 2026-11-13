@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/extension"
 	"github.com/0xmattg/go-press/core/migrate"
 	"github.com/0xmattg/go-press/core/option"
 	"github.com/0xmattg/go-press/core/plugin"
@@ -233,19 +234,39 @@ func TestPGCoreMigrationsAcrossInstallUpgradeAndRollback(t *testing.T) {
 		pools = append(pools, db)
 		return db
 	}
-	baseline := func(db *gorm.DB) migrate.Record {
+	coreStep := func(db *gorm.DB, version int64) migrate.Record {
 		t.Helper()
 		rows, err := MigrationRunner(db).Status(context.Background())
 		if err != nil {
 			t.Fatal(err)
 		}
 		for _, row := range rows {
-			if row.Module == CoreMigrationModule && row.Version == 1 {
+			if row.Module == CoreMigrationModule && row.Version == version {
 				return row
 			}
 		}
-		t.Fatalf("no core baseline record for %s, got %+v", dbprefix.Get(), rows)
+		t.Fatalf("no core step %d record for %s, got %+v", version, dbprefix.Get(), rows)
 		return migrate.Record{}
+	}
+	baseline := func(db *gorm.DB) migrate.Record {
+		t.Helper()
+		return coreStep(db, 1)
+	}
+	// Step 2 creates the extension tables on every site, new or upgraded,
+	// exactly once.
+	extensionTables := func(db *gorm.DB) {
+		t.Helper()
+		if rec := coreStep(db, 2); rec.Status != migrate.StatusApplied || rec.Runs != 1 || rec.Name != "create_extension_tables" {
+			t.Fatalf("%s core step 2 = %+v, want applied once", dbprefix.Get(), rec)
+		}
+		for _, table := range []string{"ext_packages", "ext_site"} {
+			if ok, err := migrate.TableExists(context.Background(), db, dbprefix.Table(table)); err != nil || !ok {
+				t.Fatalf("%s: table %s missing (%v)", dbprefix.Get(), dbprefix.Table(table), err)
+			}
+		}
+		if gen, err := extension.NewStore(db).Generation(context.Background()); err != nil || gen != 0 {
+			t.Fatalf("%s: generation = %d, %v", dbprefix.Get(), gen, err)
+		}
 	}
 
 	// New install of "gp_x_"; the installer and the first start both migrate.
@@ -258,6 +279,7 @@ func TestPGCoreMigrationsAcrossInstallUpgradeAndRollback(t *testing.T) {
 	if rec := baseline(site); rec.Status != migrate.StatusApplied || rec.Runs != 1 {
 		t.Fatalf("gp_x_ baseline = %+v, want applied once", rec)
 	}
+	extensionTables(site)
 
 	// New install of "gp_": gp_x_contents exists and must not be taken for
 	// this site's tables.
@@ -268,6 +290,7 @@ func TestPGCoreMigrationsAcrossInstallUpgradeAndRollback(t *testing.T) {
 	if rec := baseline(site); rec.Status != migrate.StatusApplied {
 		t.Fatalf("gp_ baseline = %+v, want applied (not adopted from gp_x_)", rec)
 	}
+	extensionTables(site)
 
 	// "gp_old_" was created by a release before versioned migrations, which
 	// ran exactly prepareCoreSchema on every start.
@@ -295,6 +318,7 @@ func TestPGCoreMigrationsAcrossInstallUpgradeAndRollback(t *testing.T) {
 	if rec := baseline(site); rec.Status != migrate.StatusAdopted || rec.Runs != 1 {
 		t.Fatalf("baseline after rollback = %+v, want unchanged", rec)
 	}
+	extensionTables(site)
 	var count int64
 	if err := site.Model(&content.Content{}).Count(&count).Error; err != nil || count != 1 {
 		t.Fatalf("content rows = %d, %v; want the existing row kept", count, err)

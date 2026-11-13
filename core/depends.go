@@ -204,7 +204,7 @@ func resolvePluginDeps(reqs []coreTheme.PluginRequirement, mgr *plugin.Manager) 
 // themeRequires returns the declared [requires] block of the theme registered
 // under slug, or an empty block when the theme declares none.
 func (e *Engine) themeRequires(slug string) coreTheme.RequiresConfig {
-	t, ok := e.themes[slug]
+	t, ok := e.lookupTheme(slug)
 	if !ok {
 		return coreTheme.RequiresConfig{}
 	}
@@ -270,10 +270,21 @@ func (e *Engine) ActivateThemeDependencies(report ThemeDepReport) []string {
 // theme's inactive required plugins (respecting the theme's declared need) and
 // logs any dependency that cannot be resolved at runtime (missing from build or
 // version-incompatible) — the site still boots and the admin surfaces a warning.
+//
+// While a boot fallback theme is active (see ThemeFallback) nothing is
+// activated: enabling plugins would persist plugin_active_* for a temporary
+// theme and leave them on after the configured theme returns.
 func (e *Engine) ReconcileActiveThemeDependencies() {
 	report := e.ActiveThemeDependencies()
-	for _, name := range e.ActivateThemeDependencies(report) {
-		logger.Info("Auto-activated plugin required by active theme", "plugin", name, "theme", report.Slug)
+	if fallback := e.ThemeFallback(); fallback != nil {
+		if inactive := report.InactiveDeps(); len(inactive) > 0 {
+			logger.Warn("Fallback theme needs plugins that are not active; leaving them off while the configured theme is unavailable",
+				"theme", report.Slug, "plugins", strings.Join(inactive, ","), "configured", fallback.Requested)
+		}
+	} else {
+		for _, name := range e.ActivateThemeDependencies(report) {
+			logger.Info("Auto-activated plugin required by active theme", "plugin", name, "theme", report.Slug)
+		}
 	}
 	if !report.CoreSatisfied {
 		logger.Error("Active theme requires an incompatible core version",
