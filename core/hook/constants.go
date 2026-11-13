@@ -118,7 +118,10 @@ const (
 
 	// ContentRegisterTypes fires during every theme activation, right after the
 	// active theme's theme.toml content types are registered and before
-	// Theme.Setup. Args: (*content.Registry). Plugins that contribute content
+	// Theme.Setup. Args: (*content.Registry), the registry being built for the
+	// activation; it replaces the live registry only after activation
+	// succeeds, so register into this argument, not into a registry pointer
+	// kept from elsewhere. Plugins that contribute content
 	// types (e.g. a commerce "product" type) must register them idempotently in
 	// this action so they survive theme switches, which rebuild the registry
 	// from core + active-theme definitions only. Plugins should also register

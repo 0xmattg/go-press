@@ -49,6 +49,8 @@ type ThemeController interface {
 	ActiveDepWarning() string
 	PageTemplates() []PageTemplateOption
 	NeedsEnable() []ModuleInfo
+	Fallback() *ThemeFallbackInfo
+	LoadIssues() []ThemeLoadIssueInfo
 }
 
 func (m *ThemeManager) Switch(name string) error {
@@ -112,6 +114,20 @@ func (m *ThemeManager) NeedsEnable() []ModuleInfo {
 		return nil
 	}
 	return m.NeedsEnableFn()
+}
+
+func (m *ThemeManager) Fallback() *ThemeFallbackInfo {
+	if m == nil || m.FallbackFn == nil {
+		return nil
+	}
+	return m.FallbackFn()
+}
+
+func (m *ThemeManager) LoadIssues() []ThemeLoadIssueInfo {
+	if m == nil || m.LoadIssuesFn == nil {
+		return nil
+	}
+	return m.LoadIssuesFn()
 }
 
 // CacheController exposes cache management to admin handlers.

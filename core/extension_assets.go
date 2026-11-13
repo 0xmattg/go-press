@@ -62,10 +62,16 @@ func (e *Engine) PluginFS(p plugin.Plugin) fs.FS {
 // themeFS returns the filesystem rooted at the theme's directory: its asset
 // filesystem, or the directory it was registered with (see ThemeDir).
 func (e *Engine) themeFS(slug string) fs.FS {
-	t, ok := e.themes[slug]
+	t, ok := e.lookupTheme(slug)
 	if !ok {
 		return nil
 	}
+	return e.themeFSFor(slug, t)
+}
+
+// themeFSFor is themeFS for a given theme instance, which need not be in the
+// theme set yet.
+func (e *Engine) themeFSFor(slug string, t coreTheme.Theme) fs.FS {
 	if fsys := coreTheme.AssetFSOf(t); fsys != nil {
 		return fsys
 	}
@@ -113,7 +119,7 @@ func (e *Engine) ActiveThemeLocaleMessages() map[string]map[string]string {
 // ThemeSettingsTemplate locates the admin settings template of the theme, or
 // returns the zero TemplateRef when the theme has none.
 func (e *Engine) ThemeSettingsTemplate(slug string) admin.TemplateRef {
-	t, ok := e.themes[slug]
+	t, ok := e.lookupTheme(slug)
 	if !ok {
 		return admin.TemplateRef{}
 	}
@@ -137,7 +143,7 @@ func (e *Engine) HasThemeDemoData(slug string) bool {
 
 // themeDemoSeed locates the theme's demo seed.toml.
 func (e *Engine) themeDemoSeed(slug string) (admin.TemplateRef, bool) {
-	t, ok := e.themes[slug]
+	t, ok := e.lookupTheme(slug)
 	if !ok {
 		return admin.TemplateRef{}, false
 	}

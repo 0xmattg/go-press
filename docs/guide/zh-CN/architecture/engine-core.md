@@ -11,6 +11,7 @@ GoPress 引擎是 CMS 的运行时容器，负责装配存储、内容仓储、R
 | `core/engine.go` | 引擎生命周期、路由装配、优雅关停及共享 `App` 能力接口。 |
 | `core/bootstrap.go` | 一站式构建与启动编排。 |
 | `core/migrate.go` | core 的迁移模块（AutoMigrate 基线加版本化步骤）以及插件迁移的接入。 |
+| `core/extension/` | 已安装扩展包的元数据（`ext_packages`、`ext_site`）：版本、当前版本、状态、站点 generation 和市场目录缓存。拉取并校验签名的市场目录，按其中的撤销列表更新已安装包的状态。 |
 | `core/migrate/` | 版本化迁移执行器：按站点的记录表、咨询锁、阻塞型和在线型步骤。 |
 | `core/seeder.go` | 基于 TOML 的声明式演示数据导入。 |
 | `core/themes.go` | 主题注册表与工厂查找。 |
@@ -25,6 +26,15 @@ GoPress 引擎是 CMS 的运行时容器，负责装配存储、内容仓储、R
   类型；`category`、`tag` 是核心 taxonomy，切换主题时都会保留。
 - **主题类型** — 主题在 `theme.toml` 的 `[[content_types]]` 中声明自定义
   类型，core 在主题激活时统一注册。
+- **主题激活** — 切换主题或启停插件时，core 先在一边构建好新的运行时状态
+  （内容注册表、菜单位置、可翻译设置键、前台提交授权、主题语言包），全部成功后才
+  一次性替换上线。请求不会读到空的注册表；主题配置加载失败或 `Setup` panic 时，
+  当前主题保持原样。
+- **主题回退** — 启动时 core 激活 `active_theme` 选项指定的主题，没有就用
+  `[site] theme`。这个主题找不到或激活失败时，依次尝试 `[site] theme` 和按 slug
+  排序的其他主题，记录错误并在后台显示横幅；不改写 `active_theme`，原主题恢复后
+  会自动用回。回退期间不会自动启用回退主题需要的插件。工厂函数失败的主题会被跳过，
+  并在后台主题页列为加载失败，不会拖垮站点。
 - **前台用户提交** — 主题内容类型可以声明 `public_submission` 策略。主题激活期间，Core 提供通用的所有者范围写服务和临时的内容类型 RBAC 授权，路由与 UI 仍由主题负责。详见[前台用户内容提交](public-content-submission.md)。
 - **注册表驱动行为** — 同一个 `ContentTypeDef` 同时驱动后台导航、CRUD
   表单、REST API、Rewrite、Sitemap、分类归档和 BaseTheme 归档/详情渲染。

@@ -11,6 +11,7 @@ admin and API routes, installer routes, and the active frontend theme.
 | `core/engine.go` | Engine lifecycle, route setup, shutdown, and the shared `App` capability surface. |
 | `core/bootstrap.go` | One-call build and bootstrap orchestration. |
 | `core/migrate.go` | Core's migration module (AutoMigrate baseline plus versioned steps) and plugin migration hooks. |
+| `core/extension/` | Metadata of installed extension packages (`ext_packages`, `ext_site`): versions, current version, status, the site generation, and the cached market catalog. Fetches and verifies the signed market catalog and applies its revocation list to installed packages. |
 | `core/migrate/` | Versioned migration runner: per-site record table, advisory lock, blocking and online steps. |
 | `core/seeder.go` | Declarative TOML demo-data import. |
 | `core/themes.go` | Theme registry and factory lookup. |
@@ -26,6 +27,19 @@ admin and API routes, installer routes, and the active frontend theme.
   taxonomies. All survive theme switches.
 - **Theme types** — themes declare custom types in `theme.toml` under
   `[[content_types]]`; core registers them when the theme is activated.
+- **Theme activation** — switching themes or toggling a plugin builds the next
+  runtime state on the side (content registry, menu locations, translatable
+  setting keys, public submission grants, theme locales) and swaps it in only
+  when everything succeeded. Requests never see an empty registry, and a theme
+  whose configuration fails to load or whose `Setup` panics leaves the current
+  theme fully in place.
+- **Theme fallback** — at startup core activates the `active_theme` option, else
+  `[site] theme`. If that theme is missing or fails to activate, core tries
+  `[site] theme` and then every available theme in slug order, logs an error,
+  and shows a banner in the admin; `active_theme` is not rewritten, so the saved
+  theme is used again once it loads. Required plugins are not auto-enabled for a
+  fallback theme. A theme whose factory fails is skipped and listed on the admin
+  Themes page instead of stopping the site.
 - **Public submissions** — a theme-defined type can declare a
   `public_submission` policy. Core then exposes a generic owner-scoped write
   service and temporary type-specific RBAC grants while the theme is active;

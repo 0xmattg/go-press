@@ -145,7 +145,7 @@ Commerce is built on generic core capabilities. Each is neutral — core never h
 
 ### `content.register_types`
 
-`activateTheme()` rebuilds the content registry from core + active-theme types. Plugin-contributed types (like `product`) would be lost on every theme switch. So core fires `content.register_types` after theme types are registered; Commerce (re)registers `product` idempotently in that action, and once more immediately on `Activate` (the first theme activation may precede the plugin load).
+`activateTheme()` builds a new content registry from core + active-theme types and swaps it in only when the whole activation succeeds. Plugin-contributed types (like `product`) would be lost on every theme switch. So core fires `content.register_types` after theme types are registered, passing the registry being built; Commerce (re)registers `product` idempotently **into that argument**, and once more immediately on `Activate` (the first theme activation may precede the plugin load). A handler that writes into a registry pointer saved elsewhere would write into the registry that is about to be replaced.
 
 ### `default_inactive` module gating
 

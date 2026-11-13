@@ -84,6 +84,21 @@ func (t *MyTheme) StaticDir() string               { return filepath.Join(t.Them
 
 仍然调用 `InitBase(engine, themeDir, themeTOML, funcs)` 的主题照旧从磁盘读取 `TemplateDir()`、`StaticDir()` 和主题目录。
 
+### 报告构造错误
+
+主题的工厂函数失败时不会拖垮站点：core 跳过这个主题、记录错误，并在后台「主题管理」页列为加载失败。用 `core.RegisterThemeE` 注册，就可以直接返回错误，而不是 panic：
+
+```go
+func init() {
+    core.RegisterThemeE("my-theme", core.ThemeSource{TOML: themeTOML},
+        func(engine *core.Engine, themeDir string) (coreTheme.Theme, error) {
+            return New(engine, themeDir) // New 返回 (*MyTheme, error)
+        })
+}
+```
+
+用 `RegisterTheme`、`RegisterThemeWithMeta` 注册的工厂照常可用，它们里面的 panic 也会被同样接住。
+
 配置文件 `[site] theme = "my-theme"` 即可激活该主题。
 
 > `theme.toml` 是必需的——它既是 gopress 自动发现的标记（缺它则 `themes/<name>/` 目录会被忽略），也承载内容类型与菜单位置声明，由 core 在激活时读取。

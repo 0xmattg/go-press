@@ -14,7 +14,16 @@ import (
 
 // ThemeFactory is a constructor function for creating theme instances.
 // It receives the Engine and the theme directory path.
+//
+// A ThemeFactory cannot report failure; one that panics no longer takes the
+// site down (core recovers and skips the theme), but new themes should use
+// ThemeFactoryE.
 type ThemeFactory func(engine *Engine, themeDir string) coreTheme.Theme
+
+// ThemeFactoryE is a theme constructor that reports failure. A theme whose
+// factory fails is skipped and listed as failed in the admin; the rest of
+// the site keeps running.
+type ThemeFactoryE func(engine *Engine, themeDir string) (coreTheme.Theme, error)
 
 // ThemeSource says where a registered theme's files live.
 type ThemeSource struct {
@@ -36,7 +45,7 @@ type RegisteredTheme struct {
 }
 
 type themeEntry struct {
-	factory ThemeFactory
+	factory ThemeFactoryE
 	source  ThemeSource
 }
 
@@ -62,6 +71,15 @@ func RegisterThemeWithMeta(name, themeTOML string, factory ThemeFactory) {
 // RegisterThemeSource registers a theme whose files may live outside the
 // source tree, for example a theme package unpacked into a site directory.
 func RegisterThemeSource(name string, source ThemeSource, factory ThemeFactory) {
+	RegisterThemeE(name, source, func(engine *Engine, themeDir string) (coreTheme.Theme, error) {
+		return factory(engine, themeDir), nil
+	})
+}
+
+// RegisterThemeE registers a theme whose factory reports failure instead of
+// panicking. source says where the theme's files live; the zero ThemeSource
+// means themes/<name>.
+func RegisterThemeE(name string, source ThemeSource, factory ThemeFactoryE) {
 	themeRegistryMu.Lock()
 	defer themeRegistryMu.Unlock()
 	themeRegistry[name] = themeEntry{factory: factory, source: source}
@@ -74,7 +92,9 @@ func unregisterTheme(name string) {
 	delete(themeRegistry, name)
 }
 
-// GetThemeFactory returns the registered factory for a theme name.
+// GetThemeFactory returns the registered factory for a theme name. The
+// returned factory panics if the theme fails to build, as factories always
+// did; core itself builds themes with buildTheme, which does not.
 func GetThemeFactory(name string) (ThemeFactory, error) {
 	themeRegistryMu.RLock()
 	defer themeRegistryMu.RUnlock()
@@ -87,18 +107,76 @@ func GetThemeFactory(name string) (ThemeFactory, error) {
 		sort.Strings(available)
 		return nil, fmt.Errorf("theme %q not registered; available: %v", name, available)
 	}
-	return entry.factory, nil
+	return panickingFactory(name, entry.factory), nil
 }
 
-// AllThemeFactories returns a copy of all registered theme factories.
+// AllThemeFactories returns a copy of all registered theme factories, with
+// the same panicking behavior as GetThemeFactory.
 func AllThemeFactories() map[string]ThemeFactory {
 	themeRegistryMu.RLock()
 	defer themeRegistryMu.RUnlock()
 	result := make(map[string]ThemeFactory, len(themeRegistry))
 	for k, v := range themeRegistry {
-		result[k] = v.factory
+		result[k] = panickingFactory(k, v.factory)
 	}
 	return result
+}
+
+func panickingFactory(name string, factory ThemeFactoryE) ThemeFactory {
+	return func(engine *Engine, themeDir string) coreTheme.Theme {
+		t, err := buildTheme(name, factory, engine, themeDir)
+		if err != nil {
+			panic(err)
+		}
+		return t
+	}
+}
+
+// registeredThemeFactories returns the registered error-returning factories
+// with their resolved theme directories.
+func registeredThemeFactories() map[string]themeEntry {
+	themeRegistryMu.RLock()
+	defer themeRegistryMu.RUnlock()
+	out := make(map[string]themeEntry, len(themeRegistry))
+	for slug, entry := range themeRegistry {
+		entry.source.Dir = themeDirFor(slug, entry.source)
+		out[slug] = entry
+	}
+	return out
+}
+
+// buildTheme runs a theme factory and turns every way it can fail (an
+// error, a panic, a nil theme) into an error, so one broken theme cannot
+// stop the site from starting (audit A21).
+func buildTheme(slug string, factory ThemeFactoryE, engine *Engine, themeDir string) (t coreTheme.Theme, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			t, err = nil, fmt.Errorf("theme %q factory panicked: %v", slug, r)
+		}
+	}()
+	t, err = factory(engine, themeDir)
+	if err != nil {
+		return nil, fmt.Errorf("theme %q factory failed: %w", slug, err)
+	}
+	if t == nil {
+		return nil, fmt.Errorf("theme %q factory returned no theme", slug)
+	}
+	return t, nil
+}
+
+// compiledExtension reports whether slug names a theme or plugin compiled
+// into this binary. Themes added at runtime may not take those names.
+func compiledExtension(slug string) bool {
+	themeRegistryMu.RLock()
+	_, isTheme := themeRegistry[slug]
+	themeRegistryMu.RUnlock()
+	if isTheme {
+		return true
+	}
+	pluginRegistryMu.RLock()
+	defer pluginRegistryMu.RUnlock()
+	_, isPlugin := pluginRegistry[slug]
+	return isPlugin
 }
 
 // RegisteredThemes lists every registered theme sorted by slug, with its

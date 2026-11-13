@@ -24,6 +24,7 @@ The CLI exposes three subcommands:
 |---|---|
 | `gopress serve [flags...]` | Regenerate the autoload package, then run the server. Any flag is forwarded to `cmd/server` (e.g. `-config`, `-seed`). Signals are forwarded to the child process for graceful shutdown. |
 | `gopress build [-o path]` | Regenerate the autoload package, then `go build` a single server binary. Default output is `build/gopress-server`. |
+| `gopress pkg keygen \| digest \| sign \| verify \| catalog` | Create Ed25519 signing keys, print a package's content digest, sign or verify an extension package directory or `.zip` archive, and sign or verify a market catalog (`catalog sign \| verify`). Works outside a GoPress checkout. |
 | `gopress gen` | Regenerate the autoload package only — useful in IDEs or CI hooks. |
 
 ## Clone and Run

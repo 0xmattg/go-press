@@ -90,6 +90,26 @@ type ThemeManager struct {
 	// are disabled — for a prominent "enable module" prompt. Nil/empty when the
 	// active theme's module requirements are all satisfied.
 	NeedsEnableFn func() []ModuleInfo
+	// FallbackFn reports a boot that could not use the configured theme and
+	// activated another one, for the admin-wide fallback banner. Nil result
+	// when the configured theme is in use.
+	FallbackFn func() *ThemeFallbackInfo
+	// LoadIssuesFn lists the themes that failed to load and are unavailable,
+	// for the themes page.
+	LoadIssuesFn func() []ThemeLoadIssueInfo
+}
+
+// ThemeFallbackInfo describes a fallback theme in use: Requested is the
+// configured theme ("" when none is configured), Used the active one.
+type ThemeFallbackInfo struct {
+	Requested string
+	Used      string
+}
+
+// ThemeLoadIssueInfo is a theme that failed to load, with the reason.
+type ThemeLoadIssueInfo struct {
+	Slug   string
+	Reason string
 }
 
 // ModuleInfo identifies an opt-in module (a default-inactive plugin) for the
@@ -892,6 +912,11 @@ func (h *Handler) render(c *gin.Context, name string, data gin.H) {
 		if mods := h.themeManager.NeedsEnable(); len(mods) > 0 {
 			data["NeedsEnableModules"] = mods
 		}
+		// The fallback banner points to the themes page, so it is shown to
+		// those who can open it; the underlying error stays in the server log.
+		if fallback := h.themeManager.Fallback(); fallback != nil && h.can(c, "setting", "read") {
+			data["ThemeFallback"] = fallback
+		}
 	}
 
 	if success := c.Query("success"); success != "" {
@@ -1018,6 +1043,15 @@ func (h *Handler) parseWithAdminLayout(fragment TemplateRef) (*template.Template
 }
 
 // ==================== Helpers ====================
+
+// can reports whether the current admin user holds resource.action, without
+// responding.
+func (h *Handler) can(c *gin.Context, resource, action string) bool {
+	if h.svc == nil || h.svc.rbac == nil {
+		return false
+	}
+	return h.svc.rbac.Can(c.GetString("admin_role"), h.mapResource(resource), action)
+}
 
 func (h *Handler) checkPermission(c *gin.Context, resource, action string) bool {
 	role := c.GetString("admin_role")

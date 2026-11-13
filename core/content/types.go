@@ -180,6 +180,28 @@ func (r *Registry) Clear() {
 	r.taxonomies = make(map[string]*TaxonomyDef)
 }
 
+// ReplaceWith atomically replaces this registry's contents with next's.
+//
+// Engine builds the next theme's registry separately and swaps it in with
+// ReplaceWith, so the many subsystems holding this *Registry keep their
+// pointer and never observe an empty or half-built registry. Definitions
+// returned earlier stay valid; they are simply no longer registered. next
+// must not be used after the call.
+func (r *Registry) ReplaceWith(next *Registry) {
+	if next == nil || next == r {
+		return
+	}
+	next.mu.Lock()
+	types, taxonomies := next.types, next.taxonomies
+	next.types, next.taxonomies = make(map[string]*ContentTypeDef), make(map[string]*TaxonomyDef)
+	next.mu.Unlock()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.types = types
+	r.taxonomies = taxonomies
+}
+
 // RegisterType registers or replaces a content type definition by name.
 //
 // Names are stable machine identifiers such as "post", "product", or

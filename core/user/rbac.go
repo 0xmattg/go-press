@@ -159,6 +159,83 @@ func (r *RBAC) RevokeCapabilityGrant(grant CapabilityGrant) {
 	}
 }
 
+// CapabilityRef names a capability for a role, as wanted by ReplaceGrants.
+type CapabilityRef struct {
+	Role     string
+	Resource string
+	Action   string
+}
+
+// ReplaceGrants moves a set of grants made by GrantCapability to the wanted
+// set in one step, under one lock:
+//
+//   - a wanted capability already held through one of old's grants keeps that
+//     grant, so it never disappears, even briefly;
+//   - a new wanted capability is granted (or recorded as pre-existing, so it
+//     is never revoked later);
+//   - a grant in old that is no longer wanted is revoked, unless the
+//     capability predated it.
+//
+// It returns the grants now in force, to pass as old next time. Granting the
+// new set before revoking the old one with GrantCapability and
+// RevokeCapabilityGrant would instead drop capabilities present in both,
+// because the second grant reports it added nothing.
+func (r *RBAC) ReplaceGrants(old []CapabilityGrant, want []CapabilityRef) []CapabilityGrant {
+	type key struct{ role, cap string }
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	held := make(map[key]CapabilityGrant, len(old))
+	for _, grant := range old {
+		if grant.Role == "" || grant.Cap == "" {
+			continue
+		}
+		k := key{grant.Role, grant.Cap}
+		if prev, ok := held[k]; ok && prev.Added {
+			continue
+		}
+		held[k] = grant
+	}
+
+	result := make([]CapabilityGrant, 0, len(want))
+	wanted := make(map[key]bool, len(want))
+	for _, ref := range want {
+		k := key{ref.Role, ref.Resource + "." + ref.Action}
+		if ref.Role == "" || wanted[k] {
+			continue
+		}
+		wanted[k] = true
+		if grant, ok := held[k]; ok {
+			result = append(result, grant)
+			continue
+		}
+		def, ok := r.roles[ref.Role]
+		if !ok {
+			result = append(result, CapabilityGrant{Role: ref.Role, Cap: k.cap})
+			continue
+		}
+		if def.Caps == nil {
+			def.Caps = make(map[string]bool)
+		}
+		if def.Caps[k.cap] {
+			result = append(result, CapabilityGrant{Role: ref.Role, Cap: k.cap})
+			continue
+		}
+		def.Caps[k.cap] = true
+		result = append(result, CapabilityGrant{Role: ref.Role, Cap: k.cap, Added: true})
+	}
+
+	for k, grant := range held {
+		if wanted[k] || !grant.Added {
+			continue
+		}
+		if def, ok := r.roles[k.role]; ok {
+			delete(def.Caps, k.cap)
+		}
+	}
+	return result
+}
+
 // GetRole returns a role definition.
 func (r *RBAC) GetRole(name string) *RoleDef {
 	r.mu.RLock()

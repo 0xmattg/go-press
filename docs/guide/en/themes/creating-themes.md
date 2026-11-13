@@ -73,6 +73,21 @@ No manual `cmd/server/main.go` edit is required. Drop the folder into `themes/`,
 
 Themes that call `InitBase(engine, themeDir, themeTOML, funcs)` instead keep reading `TemplateDir()`, `StaticDir()` and the theme directory from disk.
 
+### Reporting Build Errors
+
+A theme whose factory fails does not stop the site: core skips it, logs the error, and lists it as failed on the admin Themes page. Register with `core.RegisterThemeE` to return the error instead of panicking:
+
+```go
+func init() {
+    core.RegisterThemeE("my-theme", core.ThemeSource{TOML: themeTOML},
+        func(engine *core.Engine, themeDir string) (coreTheme.Theme, error) {
+            return New(engine, themeDir) // New returns (*MyTheme, error)
+        })
+}
+```
+
+Factories registered with `RegisterTheme` or `RegisterThemeWithMeta` keep working; a panic in them is recovered the same way.
+
 ## Theme Metadata
 
 `theme.toml` is required — it both serves as the auto-detection marker (the `gopress` CLI ignores a `themes/<name>/` directory without it) and supplies the content type and menu location declarations consumed by core. Minimum schema:

@@ -145,7 +145,7 @@ Commerce 建立在通用 core 能力之上。每个都保持中立 —— core �
 
 ### `content.register_types`
 
-`activateTheme()` 会用 core + 当前主题类型重建内容注册表。插件贡献的类型（如 `product`）会在每次切主题时丢失。于是 core 在注册完主题类型后触发 `content.register_types`；Commerce 在该 action 里幂等地（重）注册 `product`，并在 `Activate` 时立即再注册一次（首次主题激活可能早于插件加载）。
+`activateTheme()` 会用 core + 当前主题类型构建一个新的内容注册表，整次激活成功后才替换上线。插件贡献的类型（如 `product`）会在每次切主题时丢失。于是 core 在注册完主题类型后触发 `content.register_types`，参数就是正在构建的注册表；Commerce 在该 action 里幂等地（重）注册 `product`，**注册到这个参数里**，并在 `Activate` 时立即再注册一次（首次主题激活可能早于插件加载）。如果处理函数写入的是自己另外保存的注册表指针，写进去的就是即将被替换的旧注册表。
 
 ### `default_inactive` 模块门控
 

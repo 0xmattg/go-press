@@ -86,6 +86,10 @@ table, one row per module (`core`, or `plugin:<slug>`) and step version.
   whose tables existed before versioned migrations records it as `adopted`, a
   new install as `applied`. The check uses the exact table name, never a name
   pattern.
+- **Tables owned by steps.** Step 2 (`create_extension_tables`) creates
+  `<prefix>ext_packages` and `<prefix>ext_site`, which record installed
+  extension packages. They are not part of AutoMigrate: later changes to them
+  arrive as new steps, so no binary rewrites their columns on start.
 - **Blocking and online steps.** Blocking steps finish before `/readyz` reports
   ready, and a failure stops the start. Online steps, such as
   `CREATE INDEX CONCURRENTLY`, run in the background after the site is ready; a

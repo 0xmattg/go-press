@@ -3,7 +3,10 @@
 
 package user
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestCapabilityGrantPreservesExistingPolicy(t *testing.T) {
 	rbac := NewRBAC()
@@ -54,5 +57,51 @@ func TestDefaultPublishCapabilityIsExplicitlyLimited(t *testing.T) {
 		if rbac.Can(role, "content", "publish") {
 			t.Fatalf("%s must not receive content.publish implicitly", role)
 		}
+	}
+}
+
+func TestReplaceGrantsAppliesOnlyTheDifference(t *testing.T) {
+	r := NewRBAC()
+	// The role already had question.create before any theme grant.
+	r.GrantCapability(RoleSubscriber, "question", "create")
+
+	first := r.ReplaceGrants(nil, []CapabilityRef{
+		{Role: RoleSubscriber, Resource: "question", Action: "create"},
+		{Role: RoleSubscriber, Resource: "question", Action: "read_own"},
+		{Role: RoleSubscriber, Resource: "answer", Action: "create"},
+		{Role: RoleSubscriber, Resource: "answer", Action: "create"}, // duplicate
+		{Role: "no-such-role", Resource: "x", Action: "y"},
+	})
+	for _, c := range []string{"question.create", "question.read_own", "answer.create"} {
+		parts := strings.SplitN(c, ".", 2)
+		if !r.Can(RoleSubscriber, parts[0], parts[1]) {
+			t.Fatalf("missing %s after first replace", c)
+		}
+	}
+
+	// Next theme keeps question.read_own, drops answer.create, adds idea.create.
+	second := r.ReplaceGrants(first, []CapabilityRef{
+		{Role: RoleSubscriber, Resource: "question", Action: "read_own"},
+		{Role: RoleSubscriber, Resource: "idea", Action: "create"},
+	})
+	if !r.Can(RoleSubscriber, "question", "read_own") || !r.Can(RoleSubscriber, "idea", "create") {
+		t.Fatal("wanted capabilities missing after second replace")
+	}
+	if r.Can(RoleSubscriber, "answer", "create") {
+		t.Fatal("capability no longer wanted was not revoked")
+	}
+	if !r.Can(RoleSubscriber, "question", "create") {
+		t.Fatal("a capability that predated the grants must survive")
+	}
+
+	// Revoking everything keeps only the pre-existing policy.
+	if left := r.ReplaceGrants(second, nil); len(left) != 0 {
+		t.Fatalf("ReplaceGrants(nil) returned %v", left)
+	}
+	if r.Can(RoleSubscriber, "question", "read_own") || r.Can(RoleSubscriber, "idea", "create") {
+		t.Fatal("grants survived a full revoke")
+	}
+	if !r.Can(RoleSubscriber, "question", "create") {
+		t.Fatal("full revoke removed a pre-existing capability")
 	}
 }

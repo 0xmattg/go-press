@@ -10,9 +10,11 @@ import (
 	"time"
 
 	"github.com/0xmattg/go-press/config"
+	"github.com/0xmattg/go-press/core/extension"
 	"github.com/0xmattg/go-press/pkg/dbprefix"
 	"github.com/0xmattg/go-press/pkg/logger"
 	pg "github.com/0xmattg/go-press/pkg/postgresql"
+	"github.com/0xmattg/go-press/version"
 )
 
 // BuildAndBootstrap creates a fully initialized Engine by connecting to the
@@ -29,6 +31,12 @@ func BuildAndBootstrap(cfg *config.Config, configPath string, seed bool) (_ *Eng
 	// unique random secret, so a completed install should never hit this.
 	if cfg.CMS.JWTSecretInsecure() {
 		return nil, fmt.Errorf("insecure cms.jwt_secret in %s: it is empty or the shipped placeholder; set a unique random value before starting", configPath)
+	}
+	// A partial or malformed [market] section would leave the site trusting
+	// an inconsistent mix of markets and keys, so refuse to start.
+	marketTrust, err := extension.NewTrustRoot(cfg.Market)
+	if err != nil {
+		return nil, fmt.Errorf("invalid [market] in %s: %w", configPath, err)
 	}
 
 	// Set table prefix before any DB operations
@@ -54,6 +62,8 @@ func BuildAndBootstrap(cfg *config.Config, configPath string, seed bool) (_ *Eng
 	}()
 	engine.SiteDir = filepath.Dir(configPath)
 	engine.ConfigPath = configPath
+	engine.Market = extension.NewMarket(extension.NewStore(database), marketTrust, nil, "GoPress/"+version.String())
+	logger.Info("Extension market", "mode", marketTrust.Mode(), "host", marketTrust.Host())
 
 	if err := engine.Migrate(); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)

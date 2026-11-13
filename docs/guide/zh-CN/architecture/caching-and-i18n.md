@@ -65,7 +65,7 @@ GoPress 的国际化能力由 **Core 层** 提供，多语言插件负责数据�
 
 ### 主题设置翻译
 
-主题在 `translatable.go` 中调用 `option.RegisterTranslatable()` 声明可翻译的设置键（如 hero 标题、about 描述）。Core 的 `TranslateSettings()` 在渲染时自动翻译 settings map 中的可翻译键。multilang 插件后台「主题设置翻译」提供按分组的翻译编辑界面。
+主题在 `translatable.go` 中调用 `option.RegisterTranslatable()` 声明可翻译的设置键（如 hero 标题、about 描述）。在 `Setup` 中注册的键属于当前主题：切换主题时整组替换，上一个主题的键不再出现（已经保存的翻译不会删除，切回该主题时会重新显示）。Core 的 `TranslateSettings()` 在渲染时自动翻译 settings map 中的可翻译键。multilang 插件后台「主题设置翻译」提供按分组的翻译编辑界面。
 
 ```go
 // 主题声明可翻译设置（themes/modern-company/translatable.go）

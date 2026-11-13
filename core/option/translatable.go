@@ -20,21 +20,70 @@ var (
 	trMu       sync.RWMutex
 	trRegistry []TranslatableKey
 	trSet      = make(map[string]bool)
+	// trStaged, when not nil, receives RegisterTranslatable calls during a
+	// theme activation; see StageThemeTranslatables.
+	trStaged *stagedTranslatables
 )
+
+type stagedTranslatables struct {
+	keys []TranslatableKey
+	set  map[string]bool
+}
 
 // RegisterTranslatable registers an option key as translatable.
 //
 // Themes call this during Setup to declare text-like settings. Duplicate keys
 // are ignored so repeated setup during theme switching does not create multiple
 // rows in the in-memory registry.
+//
+// While a theme activation is staged (StageThemeTranslatables), keys go to
+// the staged set and replace the current set on commit, so a switched-away
+// theme's keys do not linger.
 func RegisterTranslatable(key, section, label string) {
 	trMu.Lock()
 	defer trMu.Unlock()
+	if trStaged != nil {
+		if !trStaged.set[key] {
+			trStaged.set[key] = true
+			trStaged.keys = append(trStaged.keys, TranslatableKey{Key: key, Section: section, Label: label})
+		}
+		return
+	}
 	if trSet[key] {
 		return
 	}
 	trSet[key] = true
 	trRegistry = append(trRegistry, TranslatableKey{Key: key, Section: section, Label: label})
+}
+
+// StageThemeTranslatables starts collecting the next theme's translatable
+// keys. Until CommitThemeTranslatables or DiscardThemeTranslatables,
+// RegisterTranslatable adds to the staged set while every reader keeps
+// seeing the current keys. Engine calls it around Theme.Setup; activations
+// are serialized, so only one set is ever staged. Staging again starts over.
+func StageThemeTranslatables() {
+	trMu.Lock()
+	defer trMu.Unlock()
+	trStaged = &stagedTranslatables{set: make(map[string]bool)}
+}
+
+// CommitThemeTranslatables replaces the registered keys with the staged set.
+// It does nothing when nothing is staged.
+func CommitThemeTranslatables() {
+	trMu.Lock()
+	defer trMu.Unlock()
+	if trStaged == nil {
+		return
+	}
+	trRegistry, trSet = trStaged.keys, trStaged.set
+	trStaged = nil
+}
+
+// DiscardThemeTranslatables drops the staged set and keeps the current keys.
+func DiscardThemeTranslatables() {
+	trMu.Lock()
+	defer trMu.Unlock()
+	trStaged = nil
 }
 
 // AllTranslatableOptions returns all registered translatable option keys.

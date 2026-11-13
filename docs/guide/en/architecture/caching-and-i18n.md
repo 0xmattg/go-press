@@ -78,6 +78,9 @@ from the active theme, rather than reading the theme directory itself.
 ### Translatable Settings
 
 Themes register copy-oriented option keys such as hero headings or About text.
+Keys registered during `Setup` belong to the active theme: switching themes
+replaces the whole set, so the previous theme's keys no longer appear (stored
+translations are kept and show again when that theme returns).
 Core translates only registered keys when rendering the settings map:
 
 ```go

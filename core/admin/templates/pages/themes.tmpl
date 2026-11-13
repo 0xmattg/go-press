@@ -3,6 +3,17 @@
     <h2>{{T . "nav.themes"}}</h2>
 </div>
 
+{{if .ThemeLoadIssues}}
+<div class="alert alert-error dep-warning" role="alert">
+    <div class="dep-warning-text">
+        <strong>{{T . "theme.load_issues_title"}}</strong>
+        <ul style="margin:.35rem 0 0;padding-left:1.25rem;">
+            {{range .ThemeLoadIssues}}<li><code>{{.Slug}}</code> — {{.Reason}}</li>{{end}}
+        </ul>
+    </div>
+</div>
+{{end}}
+
 <div class="extension-grid theme-grid">
     {{range .Themes}}
     <article class="card extension-card theme-card{{if .Active}} extension-card-active theme-active{{end}}">
