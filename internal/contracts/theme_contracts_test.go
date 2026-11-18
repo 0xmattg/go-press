@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/0xmattg/go-press/core/hook"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
 )
 
 var standardFrontendHooks = []string{
@@ -193,4 +194,28 @@ func immediatelyBeforeClosingElement(source string, offset int, tagName string) 
 		return false
 	}
 	return strings.TrimSpace(source[actionEnd:actionEnd+closing[0]]) == ""
+}
+
+// Every built-in theme's [[settings]] declaration must validate, or the theme
+// would fail to activate.
+func TestBuiltInThemeSettingsDeclarationsAreValid(t *testing.T) {
+	manifests, err := filepath.Glob(filepath.Join(testRepositoryRoot(t), "themes", "*", "theme.toml"))
+	if err != nil || len(manifests) == 0 {
+		t.Fatalf("discover theme manifests: %v (%d found)", err, len(manifests))
+	}
+	for _, manifest := range manifests {
+		t.Run(filepath.Base(filepath.Dir(manifest)), func(t *testing.T) {
+			data, err := os.ReadFile(manifest)
+			if err != nil {
+				t.Fatal(err)
+			}
+			cfg, err := coreTheme.ParseFileConfig(string(data))
+			if err != nil {
+				t.Fatalf("parse theme.toml: %v", err)
+			}
+			if err := cfg.ValidateSettings(); err != nil {
+				t.Fatalf("invalid [[settings]]: %v", err)
+			}
+		})
+	}
 }

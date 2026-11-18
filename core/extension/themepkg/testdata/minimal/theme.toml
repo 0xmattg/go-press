@@ -1,0 +1,37 @@
+# A minimal theme package. Tests in core/extension/themepkg and the
+# gopress pkg command use it; it must pass the package check.
+
+[theme]
+slug = "minimal-sample"
+name = "Minimal Sample"
+version = "1.0.0"
+description = "The smallest theme package that passes the checks."
+author = "GoPress"
+
+[requires]
+core = ">=0.7.0"
+
+[[menu_locations]]
+name = "primary"
+label = "Primary menu"
+
+[[page_templates]]
+name = "Single column"
+template = "single"
+
+[[settings]]
+key = "hero_title"
+type = "string"
+label = "Hero title"
+default = "Welcome"
+translatable = true
+
+[[external]]
+host = "fonts.googleapis.com"
+kinds = ["style"]
+purpose = "Web font stylesheet"
+
+[[external]]
+host = "fonts.gstatic.com"
+kinds = ["font"]
+purpose = "Web font files"

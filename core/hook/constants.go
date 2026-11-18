@@ -48,6 +48,17 @@ const (
 	// initialized to empty; args[0] is the current page template data. Typical
 	// use: deferred analytics, chat widgets, late-loading third-party scripts.
 	ThemeFooterEnd = "theme.footer.end"
+
+	// FrontendCSP filters the sources added to the Content-Security-Policy
+	// of front-end responses while a theme package is active. The filter
+	// value is core.CSPSources; args[0] is the request's *gin.Context.
+	// Append the sources the plugin needs on that request, for example a
+	// payment SDK's script host on the payment page. For the same path and
+	// plugin settings, return the same sources: cached pages reuse the
+	// body, and the policy is added anew on every response. Sources that
+	// would weaken the script protection are dropped. Not called while a
+	// theme built into GoPress is active.
+	FrontendCSP = "frontend.csp"
 )
 
 // Menu hooks are fired by core/menu while resolving or mutating menus. They are

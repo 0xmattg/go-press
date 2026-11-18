@@ -242,6 +242,100 @@ func (r *Repository) GetContentTaxonomiesContext(ctx context.Context, contentID 
 	return items, err
 }
 
+// relationBatchSize bounds the number of content IDs bound into one
+// ContentTaxonomiesForIDsContext query.
+const relationBatchSize = 500
+
+// ContentTaxonomiesForIDsContext returns the taxonomy rows attached to several
+// content items, keyed by content ID, in one query per 500 IDs. Only rows
+// visible in the active scope and, when names is not empty, of those taxonomy
+// types are returned. Each item's rows are ordered by relationship sort order,
+// then taxonomy ID, and carry their Term.
+func (r *Repository) ContentTaxonomiesForIDsContext(ctx context.Context, contentIDs []uint, names []string) (map[uint][]Taxonomy, error) {
+	ctx = r.context(ctx)
+	result := make(map[uint][]Taxonomy, len(contentIDs))
+	if len(contentIDs) == 0 {
+		return result, nil
+	}
+	tax := dbprefix.Table("taxonomies")
+	tr := dbprefix.Table("term_relationships")
+	tm := dbprefix.Table("terms")
+	type relationRow struct {
+		ContentID   uint
+		ID          uint
+		TermID      uint
+		Taxonomy    string
+		Description string
+		ParentID    *uint
+		Count       int
+		TermName    string
+		TermSlug    string
+	}
+	for start := 0; start < len(contentIDs); start += relationBatchSize {
+		end := min(start+relationBatchSize, len(contentIDs))
+		q := ScopedDBContext(ctx, r.db.WithContext(ctx).Model(&Taxonomy{})).
+			Select(fmt.Sprintf("tr.content_id, %[1]s.id, %[1]s.term_id, %[1]s.taxonomy, %[1]s.description, %[1]s.parent_id, %[1]s.count, tm.name AS term_name, tm.slug AS term_slug", tax)).
+			Joins(fmt.Sprintf("JOIN %s tr ON tr.taxonomy_id = %s.id", tr, tax)).
+			Joins(fmt.Sprintf("JOIN %s tm ON tm.id = %s.term_id", tm, tax)).
+			Where("tr.content_id IN ?", contentIDs[start:end])
+		if len(names) > 0 {
+			q = q.Where(tax+".taxonomy IN ?", names)
+		}
+		var rows []relationRow
+		if err := q.Order("tr.content_id, tr.sort_order, " + tax + ".id").Scan(&rows).Error; err != nil {
+			return nil, err
+		}
+		for _, row := range rows {
+			result[row.ContentID] = append(result[row.ContentID], Taxonomy{
+				ID:          row.ID,
+				TermID:      row.TermID,
+				Taxonomy:    row.Taxonomy,
+				Description: row.Description,
+				ParentID:    row.ParentID,
+				Count:       row.Count,
+				Term:        Term{ID: row.TermID, Name: row.TermName, Slug: row.TermSlug},
+			})
+		}
+	}
+	return result, nil
+}
+
+// Orders accepted by ListPublicContext.
+const (
+	PublicOrderCount = "count" // published count descending
+	PublicOrderName  = "name"  // term name ascending
+)
+
+// ListPublicContext returns at most limit taxonomy rows of one type visible
+// in the active scope, for public listings. order is PublicOrderCount or
+// PublicOrderName, with taxonomy ID as the tie-breaker. hideEmpty leaves out
+// rows whose published count is zero.
+func (r *Repository) ListPublicContext(ctx context.Context, taxonomyType, order string, limit int, hideEmpty bool) ([]Taxonomy, error) {
+	if limit < 1 {
+		return nil, fmt.Errorf("taxonomy: list limit %d must be positive", limit)
+	}
+	ctx = r.context(ctx)
+	tax := dbprefix.Table("taxonomies")
+	tm := dbprefix.Table("terms")
+	q := ScopedDBContext(ctx, r.db.WithContext(ctx).Model(&Taxonomy{})).Preload("Term").
+		Where(tax+".taxonomy = ?", taxonomyType)
+	if hideEmpty {
+		q = q.Where(tax + ".count > 0")
+	}
+	switch order {
+	case PublicOrderCount:
+		q = q.Order(tax + ".count DESC").Order(tax + ".id")
+	case PublicOrderName:
+		q = q.Joins(fmt.Sprintf("JOIN %[1]s ON %[1]s.id = %[2]s.term_id", tm, tax)).
+			Order(tm + ".name").Order(tax + ".id")
+	default:
+		return nil, fmt.Errorf("taxonomy: unknown list order %q", order)
+	}
+	var items []Taxonomy
+	err := q.Limit(limit).Find(&items).Error
+	return items, err
+}
+
 // UpdateCounts recalculates the count field for all taxonomies of a given type.
 func (r *Repository) UpdateCounts(taxonomyType string) error {
 	tax := dbprefix.Table("taxonomies")

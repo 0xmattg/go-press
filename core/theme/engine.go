@@ -101,8 +101,12 @@ func (e *TemplateEngine) Get() *template.Template {
 	return e.templates
 }
 
-// Resolve finds the first available template from a hierarchy list.
+// Resolve finds the first available template from a hierarchy list. A nil
+// engine, as themes without classic templates have, resolves nothing.
 func (e *TemplateEngine) Resolve(candidates []string) *template.Template {
+	if e == nil {
+		return nil
+	}
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	if e.templates == nil {

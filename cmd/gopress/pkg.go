@@ -16,18 +16,25 @@ import (
 	"github.com/0xmattg/go-press/pkg/sign"
 )
 
-const pkgUsage = `gopress pkg — sign and verify extension packages
+const pkgUsage = `gopress pkg — check, build, sign and verify extension packages
 
 Usage:
   gopress pkg keygen -out <prefix> [-force]
         Create an Ed25519 key pair: <prefix>.key (private, mode 0600) and
         <prefix>.pub (public, base64). Prints the key ID.
+  gopress pkg check [-core <version>] <dir|file.zip>
+        Check a theme package: layout, size limits, no scripts, theme.toml,
+        templates and declared external hosts. Exits 1 if it fails.
+  gopress pkg build [-core <version>] [-out <file.zip>] <dir>
+        Check a theme source directory and pack it into a reproducible
+        <slug>-<version>.zip. Hidden files and signatures/ are left out.
   gopress pkg digest <dir|file.zip>
         Print the package's h1 content digest (signatures/ excluded).
   gopress pkg sign -key <file.key> [-role publisher|market] [-force]
-                   [-kind theme] [-slug s] [-version v] <dir>
-        Sign a package directory and write signatures/<role>.json.
-        A market countersignature requires a valid publisher signature.
+                   [-kind theme] [-slug s] [-version v] <dir|file.zip>
+        Sign a package and write signatures/<role>.json into the directory
+        or the archive. A market countersignature requires a valid
+        publisher signature. Build first, then sign the archive.
   gopress pkg verify [-market-key <base64>]... [-require-market]
                      [-kind theme] [-slug s] [-version v] <dir|file.zip>
         Verify the publisher signature and, with -market-key, the market
@@ -58,6 +65,10 @@ func runPkg(args []string, stdout, stderr io.Writer) int {
 	switch args[0] {
 	case "keygen":
 		err = pkgKeygen(args[1:], stdout)
+	case "check":
+		err = pkgCheck(args[1:], stdout)
+	case "build":
+		err = pkgBuild(args[1:], stdout)
 	case "digest":
 		err = pkgDigest(args[1:], stdout)
 	case "sign":
@@ -196,14 +207,15 @@ func pkgSign(args []string, stdout io.Writer) error {
 		return usageError{err.Error()}
 	}
 	if *keyPath == "" || flags.NArg() != 1 {
-		return usageError{"want -key <file> and one package directory"}
+		return usageError{"want -key <file> and one package directory or .zip file"}
 	}
 	if *role != "publisher" && *role != "market" {
 		return usageError{fmt.Sprintf("unknown -role %q (publisher or market)", *role)}
 	}
-	dir := flags.Arg(0)
-	if info, err := os.Stat(dir); err != nil || !info.IsDir() {
-		return fmt.Errorf("%s is not a package directory (sign the source directory before packing)", dir)
+	target := flags.Arg(0)
+	info, err := os.Stat(target)
+	if err != nil {
+		return err
 	}
 	pemData, err := os.ReadFile(*keyPath)
 	if err != nil {
@@ -213,6 +225,10 @@ func pkgSign(args []string, stdout io.Writer) error {
 	if err != nil {
 		return err
 	}
+	if !info.IsDir() {
+		return signArchive(target, key, *role, *force, identity, stdout)
+	}
+	dir := target
 	fsys := os.DirFS(dir)
 	id, err := identity.resolve(fsys, filepath.Base(filepath.Clean(dir)))
 	if err != nil {
@@ -223,24 +239,11 @@ func pkgSign(args []string, stdout io.Writer) error {
 		return err
 	}
 
-	target := sign.PublisherSignatureFile
-	var sig sign.Signature
-	if *role == "publisher" {
-		if sig, err = key.Sign(sign.PublisherStatement(id, digest)); err != nil {
-			return err
-		}
-		sig.PublicKey = key.Public().String()
-	} else {
-		target = sign.MarketSignatureFile
-		verified, err := sign.VerifyPackage(fsys, id, sign.VerifyOptions{})
-		if err != nil {
-			return fmt.Errorf("refusing to countersign: %w", err)
-		}
-		if sig, err = key.Sign(sign.MarketStatement(id, verified.PublisherKID, digest)); err != nil {
-			return err
-		}
+	sigFile, sig, err := signPackage(fsys, id, digest, key, *role)
+	if err != nil {
+		return err
 	}
-	path := filepath.Join(dir, filepath.FromSlash(target))
+	path := filepath.Join(dir, filepath.FromSlash(sigFile))
 	if _, err := os.Stat(path); err == nil && !*force {
 		return fmt.Errorf("%s already exists (use -force to replace it)", path)
 	}

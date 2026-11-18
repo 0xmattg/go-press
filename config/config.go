@@ -34,9 +34,10 @@ type Config struct {
 }
 
 // MarketConfig points the site at a self-hosted extension market instead of
-// the official one built into this release. Set all three fields or none:
-// together they replace the official market as a whole, and a partial
-// section stops the server from starting.
+// the official one built into this release, and can lock developer mode off.
+// Set all three of endpoint, catalog_keys and package_keys or none of them:
+// together they replace the official market as a whole, and a partial set
+// stops the server from starting. lock_developer_mode is independent of them.
 type MarketConfig struct {
 	// Endpoint is the market's base URL, e.g. https://market.example.com/api/market/v1.
 	Endpoint string `mapstructure:"endpoint" toml:"endpoint,omitempty"`
@@ -46,9 +47,15 @@ type MarketConfig struct {
 	// PackageKeys are the base64 Ed25519 public keys trusted to countersign
 	// the market's packages.
 	PackageKeys []string `mapstructure:"package_keys" toml:"package_keys,omitempty"`
+	// LockDeveloperMode keeps developer mode off: the admin cannot turn it
+	// on, and a mode turned on earlier counts as off. Production sites set
+	// it, so a stolen admin session cannot allow unsigned packages.
+	LockDeveloperMode bool `mapstructure:"lock_developer_mode" toml:"lock_developer_mode,omitempty"`
 }
 
-// IsZero reports whether no market setting is present.
+// IsZero reports whether none of endpoint, catalog_keys and package_keys is
+// set, that is whether the official market is used. lock_developer_mode does
+// not count.
 func (m MarketConfig) IsZero() bool {
 	return strings.TrimSpace(m.Endpoint) == "" && len(m.CatalogKeys) == 0 && len(m.PackageKeys) == 0
 }

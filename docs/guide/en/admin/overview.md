@@ -40,7 +40,16 @@ List search is server-side and searches titles only, matching the admin placehol
 ## System Management
 
 - **Themes** — preflight dependencies, switch the active theme, rebuild routes,
-  and import optional demo data.
+  and import optional demo data. Theme package cards show where the package
+  came from, mark unsigned or revoked versions, and show a newer version the
+  market offers (*New version*, red for security updates); a revoked version
+  cannot be switched to.
+- **Theme market** — opened from the Themes page. *Browse* fetches the market
+  catalog on every visit, with search, install and upgrade; when the catalog
+  cannot be fetched it shows the error and a retry button, never an older
+  list. *Installed* lists every installed theme package, including damaged
+  ones, with its versions, update notices, rollback and uninstall. *Upload theme package*
+  installs a `.zip`. See [Theme Packages](../themes/theme-packages.md#installing-and-managing-packages).
 - **Plugins** — activate or deactivate compiled plugins, open component-owned
   settings, rebuild routes, and clear affected cache paths.
 - **Menus** — manage nested items, assign theme locations, and sort entries.
@@ -63,7 +72,23 @@ List search is server-side and searches titles only, matching the admin placehol
 System settings are split into website settings and admin settings. Website settings affect the public site, SEO metadata, sitemap, favicon, publish-time timezone, and branding options. The `site_icon` value is the shared favicon source for all themes. `site_timezone` is the shared timezone used to parse admin publish-time inputs and format content dates in admin lists and themes; timestamps are stored in UTC. Admin settings control the CMS interface, including the admin language.
 
 Saving website settings invalidates the relevant page cache. Theme activation
-is handled on the Themes page rather than by editing an arbitrary option value.
+is handled on the Themes page rather than by editing an arbitrary option value,
+and plugins are switched on the Plugins page: the settings form shows those
+states read-only, and its custom-option field cannot overwrite options GoPress
+manages.
+
+**Developer options** is a separate block below the settings, shown only to
+roles with the `extension.developer_mode` capability (super admins by
+default). Developer mode allows installing theme packages that no trusted
+market signed. Turning it on takes a confirmation of the risks and the
+account's password; too many wrong passwords block the account for 15
+minutes. Turning it off needs neither. While it is on, every admin page shows
+a banner. `[market] lock_developer_mode` in `config.toml` keeps it off; see
+[Configuration](../getting-started/configuration.md#market).
+
+When the market revokes the version of the theme in use, the theme keeps
+running and every admin page shows a banner until you switch to another theme
+or upgrade.
 
 ## Mail Settings
 

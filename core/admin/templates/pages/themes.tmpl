@@ -1,6 +1,9 @@
 {{define "content"}}
 <div class="content-header">
     <h2>{{T . "nav.themes"}}</h2>
+    {{if can .CurrentRole "extension" "read"}}
+    <a href="/admin/themes/market" class="btn btn-primary">{{T . "ext.market_title"}}</a>
+    {{end}}
 </div>
 
 {{if .ThemeLoadIssues}}
@@ -10,6 +13,9 @@
         <ul style="margin:.35rem 0 0;padding-left:1.25rem;">
             {{range .ThemeLoadIssues}}<li><code>{{.Slug}}</code> — {{.Reason}}</li>{{end}}
         </ul>
+        {{if can .CurrentRole "extension" "read"}}
+        <a href="/admin/themes/market?tab=installed" class="theme-issues-link">{{T . "theme.manage_packages"}}</a>
+        {{end}}
     </div>
 </div>
 {{end}}
@@ -24,6 +30,10 @@
                     <h3 title="{{.Name}}">{{.Name}}</h3>
                     <div class="extension-card-badges">
                         <span class="extension-version">v{{.Version}}</span>
+                        {{if .Package}}<span class="badge badge-package">{{if eq .PackageSource "market"}}{{T $ "ext.source_market"}}{{else if eq .PackageSource "upload"}}{{T $ "ext.source_upload"}}{{else}}{{T $ "ext.source_preview"}}{{end}}</span>{{end}}
+                        {{if .Unsigned}}<span class="badge badge-danger">{{T $ "ext.unsigned"}}</span>{{end}}
+                        {{if .Revoked}}<span class="badge badge-danger" title="{{T $ "theme.revoked_cannot_switch"}}">{{T $ "ext.revoked"}}</span>{{end}}
+                        {{if .UpdateVersion}}{{$urgent := or (eq .UpdateSeverity "security") (eq .UpdateSeverity "unsupported")}}{{$label := T $ "ext.update_version" .UpdateVersion}}{{if eq .UpdateSeverity "security"}}{{$label = T $ "ext.update_version_security" .UpdateVersion}}{{end}}{{if can $.CurrentRole "extension" "read"}}<a class="badge badge-update{{if $urgent}} badge-update-urgent{{end}}" href="/admin/themes/market#market-{{.Slug}}">{{$label}}</a>{{else}}<span class="badge badge-update{{if $urgent}} badge-update-urgent{{end}}">{{$label}}</span>{{end}}{{end}}
                         {{if .DepBlocked}}<span class="badge badge-dep-blocked" title="{{.DepReason}}">{{T $ "deps.badge_blocked"}}</span>
                         {{else if .DepInactivePlugins}}<span class="badge badge-dep-warn" title="{{.DepInactiveSummary}}">{{T $ "deps.badge_needs"}}</span>{{end}}
                         {{if .Active}}<span class="badge badge-active">{{T $ "theme.active"}}</span>{{end}}
@@ -66,13 +76,18 @@
                             </form>
                         {{end}}
                     {{end}}
+                {{else if .Revoked}}
+                    <button class="btn btn-secondary btn-sm btn-blocked" disabled title="{{T $ "theme.revoked_cannot_switch"}}">{{T $ "ext.revoked"}}</button>
                 {{else if .DepBlocked}}
-                    <button class="btn btn-secondary btn-sm" disabled title="{{.DepReason}}">{{T $ "deps.blocked"}}</button>
+                    <button class="btn btn-secondary btn-sm btn-blocked" disabled title="{{.DepReason}}">{{T $ "deps.blocked"}}</button>
                 {{else}}
                     <form method="POST" action="/admin/themes/switch" class="inline-form">
                         <input type="hidden" name="theme" value="{{.Slug}}">
-                        <button type="submit" class="btn btn-primary btn-sm" onclick="return confirm('{{if .DepInactiveSummary}}{{T $ "confirm.switch_theme_deps" .Name .DepInactiveSummary}}{{else}}{{T $ "confirm.switch_theme" .Name}}{{end}}')">{{T $ "action.enable_theme"}}</button>
+                        <button type="submit" class="btn btn-primary btn-sm" onclick="return confirm('{{if .DepInactiveSummary}}{{T $ "confirm.switch_theme_deps" .Name .DepInactiveSummary}}{{else}}{{T $ "confirm.switch_theme" .Name}}{{end}}{{if .ExternalSummary}} {{T $ "theme.switch_external" .ExternalSummary}}{{end}}')">{{T $ "action.enable_theme"}}</button>
                     </form>
+                {{end}}
+                {{if and .Package (ne .PackageSource "preview") (can $.CurrentRole "extension" "read")}}
+                    <a href="/admin/themes/market?tab=installed#package-{{.Slug}}" class="btn btn-secondary btn-sm">{{T $ "theme.manage_package"}}</a>
                 {{end}}
             </div>
             <div class="extension-meta">

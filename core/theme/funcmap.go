@@ -21,7 +21,7 @@ import (
 // CommonFuncMap returns template functions shared across all themes.
 // Themes can extend this with their own functions via TemplateFuncs().
 func CommonFuncMap() template.FuncMap {
-	return template.FuncMap{
+	funcs := template.FuncMap{
 		"formatDate": func(t *time.Time) string {
 			if t == nil {
 				return ""
@@ -192,6 +192,12 @@ func CommonFuncMap() template.FuncMap {
 			return seg == activePage
 		},
 	}
+	// Data functions need the engine; these stubs return empty results so
+	// templates still parse without one. BaseFuncMap binds the real ones.
+	for name, fn := range dataFuncStubs() {
+		funcs[name] = fn
+	}
+	return funcs
 }
 
 func isMenuURLActive(c *gin.Context, menuURL string) bool {

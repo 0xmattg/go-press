@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}} - {{.SiteName}} CMS</title>
-    <link rel="stylesheet" href="/static/admin/css/admin.css?v=74">
+    <link rel="stylesheet" href="/static/admin/css/admin.css?v=77">
 </head>
 <body class="admin-body">
     <aside class="sidebar" id="sidebar">
@@ -51,6 +51,18 @@
             </div>
         </header>
 
+        {{if .DeveloperModeBanner}}
+        <div class="alert alert-error dep-warning" role="alert">
+            <span class="dep-warning-text"><strong>{{T . "developer_mode.banner_title"}}</strong> {{T . "developer_mode.banner_message"}}</span>
+            {{if .DeveloperModeBanner.CanManage}}<a href="/admin/settings#developer-options" class="btn btn-sm" style="text-decoration:none;white-space:nowrap;">{{T . "developer_mode.banner_action"}}</a>{{end}}
+        </div>
+        {{end}}
+        {{if .RevokedThemeBanner}}
+        <div class="alert alert-error dep-warning" role="alert">
+            <span class="dep-warning-text"><strong>{{T . "ext.revoked_banner_title"}}</strong> {{T . "ext.revoked_banner_message" .RevokedThemeBanner.Slug .RevokedThemeBanner.Version}}</span>
+            <a href="/admin/themes" class="btn btn-sm" style="text-decoration:none;white-space:nowrap;">{{T . "ext.revoked_banner_action"}}</a>
+        </div>
+        {{end}}
         {{if .ActiveDepWarning}}
         <div class="alert alert-error dep-warning" id="dep-warning" data-dep-key="{{.ActiveDepWarning}}">
             <span class="dep-warning-text"><strong>{{T . "deps.banner_title"}}</strong> {{.ActiveDepWarning}}</span>
@@ -166,6 +178,6 @@
         editorVisualModeTitle: {{jsT . "editor.visual_mode_title"}}
     };
     </script>
-    <script src="/static/admin/js/admin.js?v=17"></script>
+    <script src="/static/admin/js/admin.js?v=18"></script>
 </body>
 </html>{{end}}

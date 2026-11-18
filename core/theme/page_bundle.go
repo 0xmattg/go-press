@@ -31,6 +31,14 @@ import (
 	"github.com/0xmattg/go-press/core/assets"
 )
 
+// NotFoundPageName is the page bundle BaseTheme renders "not found" responses
+// with.
+const NotFoundPageName = "404"
+
+// HomePageNames returns the page bundle names BaseTheme renders the home page
+// with, in order of preference.
+func HomePageNames() []string { return []string{"front-page", "home", "index"} }
+
 // LoadPageBundle composes a per-page template set for the given theme.
 // Returns a map keyed by page name (without ".tmpl") whose values are
 // fully-parsed templates ready to be executed via ExecuteTemplate("base", ...).

@@ -229,6 +229,88 @@ func TestThirdPartyTargetDoesNotReceiveOfficialInstallationID(t *testing.T) {
 	}
 }
 
+// Endpoints are independent: a market without an update endpoint must not
+// stop the core update notice.
+func TestServiceKeepsResultsOfEndpointsThatAnswer(t *testing.T) {
+	fixedNow := time.Date(2026, 8, 5, 8, 0, 0, 0, time.UTC)
+	httpClient := &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		if r.URL.Host == "127.0.0.1" {
+			return jsonResponse(http.StatusNotFound, map[string]string{"error": "no update endpoint"}), nil
+		}
+		return jsonResponse(http.StatusOK, Response{ProtocolVersion: ProtocolVersion, TTLSeconds: 86400, Updates: []Update{
+			{Kind: KindCore, Slug: "gopress", LatestVersion: "0.7.40", Severity: "security"},
+		}}), nil
+	})}
+	store := option.NewMemoryStore(map[string]string{
+		option.KeyUpdateCheckEnabled: "1", KeyInstallationID: "instance-123456", KeyPolicyVersion: CurrentPolicyVersion,
+	})
+	registry := NewRegistry()
+	for _, target := range []Target{
+		{Kind: KindCore, Slug: "gopress", CurrentVersion: "0.7.33", Endpoint: "http://localhost/check", ReportInstallation: true},
+		{Kind: KindTheme, Slug: "aurora", CurrentVersion: "1.0.0", Endpoint: "http://127.0.0.1/updates/check"},
+	} {
+		if err := registry.Register(target); err != nil {
+			t.Fatal(err)
+		}
+	}
+	service := NewService(store, registry, NewClientWithHTTPClient("GoPress/test", httpClient))
+	service.now = func() time.Time { return fixedNow }
+	// An earlier result for the market target survives its endpoint's failure.
+	service.state.Results = map[string]Status{"theme:aurora": {Kind: KindTheme, Slug: "aurora", LatestVersion: "1.1.0"}}
+	service.state.NextCheckAt = fixedNow.Add(-time.Minute)
+
+	if err := service.RunDue(context.Background()); err != nil {
+		t.Fatalf("RunDue() = %v, want success when one endpoint answers", err)
+	}
+	if got := service.Snapshot(KindCore, "gopress"); !got.HasUpdate || got.LatestVersion != "0.7.40" {
+		t.Fatalf("core status = %#v", got)
+	}
+	if got := service.Snapshot(KindTheme, "aurora"); !got.HasUpdate || got.LatestVersion != "1.1.0" {
+		t.Fatalf("market status lost on failure = %#v", got)
+	}
+	if service.state.FailureCount != 0 || service.state.NextCheckAt != fixedNow.Add(24*time.Hour) {
+		t.Fatalf("failures = %d, next = %s", service.state.FailureCount, service.state.NextCheckAt)
+	}
+}
+
+// A target that is no longer registered has no result, and the next check
+// drops what was stored for it; an answering endpoint replaces the results of
+// its targets.
+func TestServiceForgetsUnregisteredTargets(t *testing.T) {
+	fixedNow := time.Date(2026, 8, 5, 8, 0, 0, 0, time.UTC)
+	httpClient := &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+		return jsonResponse(http.StatusOK, Response{ProtocolVersion: ProtocolVersion, TTLSeconds: 86400}), nil
+	})}
+	store := option.NewMemoryStore(map[string]string{option.KeyUpdateCheckEnabled: "1"})
+	registry := NewRegistry()
+	if err := registry.Register(Target{Kind: KindTheme, Slug: "kept", CurrentVersion: "1.0.0", Endpoint: "http://localhost/updates/check"}); err != nil {
+		t.Fatal(err)
+	}
+	service := NewService(store, registry, NewClientWithHTTPClient("GoPress/test", httpClient))
+	service.now = func() time.Time { return fixedNow }
+	service.state.Results = map[string]Status{
+		"theme:gone": {Kind: KindTheme, Slug: "gone", LatestVersion: "2.0.0", HasUpdate: true},
+		"theme:kept": {Kind: KindTheme, Slug: "kept", LatestVersion: "1.5.0", HasUpdate: true},
+	}
+	if got := service.Snapshot(KindTheme, "gone"); got != (Status{}) {
+		t.Fatalf("unregistered target status = %#v", got)
+	}
+	if got := service.Snapshot(KindTheme, "kept"); !got.HasUpdate {
+		t.Fatal("registered target lost its stored result before a check")
+	}
+	service.state.NextCheckAt = fixedNow.Add(-time.Minute)
+	if err := service.RunDue(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := service.state.Results["theme:gone"]; ok {
+		t.Fatal("result of an unregistered target was kept")
+	}
+	// The endpoint answered without an update for "kept": its old result goes.
+	if got := service.Snapshot(KindTheme, "kept"); got.HasUpdate || got.LatestVersion != "" {
+		t.Fatalf("answered target kept a stale result: %#v", got)
+	}
+}
+
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (fn roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {

@@ -104,6 +104,7 @@ func SetupRoutes(r *gin.Engine, h *Handler, auth *user.Auth, registry *content.R
 		// ---- System routes (not content-type driven) ----
 		admin.GET("/settings", h.SettingList)
 		admin.POST("/settings", h.SettingUpdate)
+		admin.POST("/settings/developer-mode", h.DeveloperModeUpdate)
 		admin.GET("/mail", h.MailSettings)
 		admin.POST("/mail", h.MailSettingsSave)
 		admin.POST("/mail/test", h.MailTest)
@@ -128,10 +129,20 @@ func SetupRoutes(r *gin.Engine, h *Handler, auth *user.Auth, registry *content.R
 		admin.POST("/comments/:id/status", h.CommentStatusUpdate)
 
 		admin.GET("/themes", h.ThemeList)
+		admin.GET("/themes/market", h.ThemeMarket)
 		admin.POST("/themes/switch", h.ThemeSwitch)
 		admin.POST("/themes/demo-import", h.ThemeDemoImport)
 		admin.GET("/themes/:slug/settings", h.ThemeSettings)
 		admin.POST("/themes/:slug/settings", h.ThemeSettingsSave)
+
+		// Extension packages (JSON). Kept apart from /themes/:slug/... so a
+		// theme slug can never shadow them.
+		admin.GET("/extensions/themes", h.ExtensionThemeList)
+		admin.GET("/extensions/themes/catalog", h.ExtensionThemeCatalog)
+		admin.POST("/extensions/themes/install", h.ExtensionThemeInstall)
+		admin.POST("/extensions/themes/upload", h.ExtensionThemeUpload)
+		admin.POST("/extensions/themes/rollback", h.ExtensionThemeRollback)
+		admin.POST("/extensions/themes/uninstall", h.ExtensionThemeUninstall)
 
 		admin.GET("/plugins", h.PluginList)
 		admin.POST("/plugins/activate", h.PluginActivate)

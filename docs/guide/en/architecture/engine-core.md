@@ -52,6 +52,13 @@ admin and API routes, installer routes, and the active frontend theme.
   different visual page bundle.
 - **Fluent queries** — themes can query through the shared builder, for example
   `ContentQuery.Type("product").Published().Taxonomy("category", "hepa").Paginate(1, 20)`.
+- **Public visibility** — `Published()` keeps rows that are published and whose
+  `published_at` is empty or has passed; `Content.IsPublic(now)` is the same
+  rule for one row. Archives, BaseTheme detail pages, the REST API, and the
+  template data functions all apply it, so scheduled content stays hidden until
+  its publish time. Templates read other content through the bounded data
+  functions `contentList`, `contentBySlug`, and `taxonomyTerms`; see
+  [Creating Themes](../themes/creating-themes.md#read-only-data-functions).
 - **Taxonomies** — hierarchical categories and flat tags support many-to-many
   relationships and automatic counts. A theme attaches them to a content type
   with `taxonomies = ["category", "tag"]`.

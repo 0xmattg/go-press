@@ -215,6 +215,30 @@ SMTP 配置、通知开关和投递逻辑都留在 core 或插件扩展点里。
 
 插件注册同名 filter 输出 HTML。多语言插件消费 `header.nav.after`，`code-snippets` 插件消费三个 `theme.*` 插槽。详见 [主题前台扩展插槽](../themes/overview.md) 和 [Hook 系统](../architecture/hooks.md)。
 
+## 内容安全策略（CSP）来源
+
+活动主题是主题包时，前台响应带有只执行本站脚本的内容安全策略（见[主题包](../themes/theme-packages.md#内容安全策略csp)）。插件的前台输出需要更多来源时，例如内嵌支付组件要加载服务商的 SDK，用 `frontend.csp` filter 声明：
+
+```go
+e.Hooks.AddFilter(hook.FrontendCSP, func(value interface{}, args ...interface{}) interface{} {
+    sources, ok := value.(core.CSPSources)
+    c, isRequest := args[0].(*gin.Context)
+    if !ok || !isRequest || !strings.HasPrefix(c.Request.URL.Path, "/checkout/pay/") {
+        return value
+    }
+    sources.Script = append(sources.Script, "https://js.provider.example")
+    sources.Frame = append(sources.Frame, "https://pay.provider.example")
+    sources.Connect = append(sources.Connect, "https://api.provider.example")
+    return sources
+}, 50)
+```
+
+- `core.CSPSources` 每个指令一个列表：`Script`、`Style`、`Font`、`Image`、`Media`、`Frame`、`Connect`。可以写域名（`https://cdn.example.com`、`*.example.com`）、`'self'`、内联脚本的哈希（`'sha256-…'`）；`Script` 以外还可以写 `https:`、`data:`、`blob:`。
+- 会让任意脚本执行的来源会被丢弃并记日志：`'unsafe-inline'`、`'unsafe-eval'`、`'unsafe-hashes'`、`'strict-dynamic'`、`*`、脚本的 `https:`，以及带分隔符的值。明文 HTTP 只接受 `localhost` 和 `127.0.0.1`。
+- 同一路径、同样的设置要返回同样的来源：缓存的页面复用正文，每次响应重新加上策略。
+- 活动主题是 GoPress 内置主题时，这个 filter 不会被调用。
+- 处理器自己设置了 `Content-Security-Policy` 响应头时，以处理器的为准。
+
 ## 设计原则回顾
 
 - 主题/插件之间**不直接交互**，core 是唯一交汇点

@@ -14,17 +14,5 @@
     <p><a href="{{.CompleteURL}}" class="btn">{{T .Ctx "commerce.payment.view_status"}}</a></p>
   </div>
 </section>
-<script>
-(function () {
-  var root = document.getElementById('gopress-inline-payment');
-  if (!root) return;
-  var clientData = {};
-  try { clientData = JSON.parse(root.getAttribute('data-client') || '{}'); } catch (_) {}
-  window.dispatchEvent(new CustomEvent('gopress:payment:inline', {detail: {
-    root: root,
-    clientData: clientData,
-    completeURL: root.getAttribute('data-complete-url') || ''
-  }}));
-}());
-</script>
+<script src="{{.InlineScriptURL}}"></script>
 {{end}}

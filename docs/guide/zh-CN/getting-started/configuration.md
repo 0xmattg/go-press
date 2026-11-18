@@ -71,6 +71,9 @@ timeout_seconds = 10
 [install]
 completed = true
 require_token = false        # true：Web 安装器要求输入一次性安装令牌
+
+# [market]                   # 可选，见下文 [market]
+# lock_developer_mode = true
 ```
 
 ## 关键字段说明
@@ -149,6 +152,59 @@ Gmail 常用配置：`host = "smtp.gmail.com"`、`port = 587`、`encryption = "s
 - `completed` — 由 Web 安装器在完成时写入；为 `false` 时服务运行安装器而不是站点
 - `require_token` — 设为 `true` 时，安装器第一屏要求输入一次性安装令牌。令牌在安装器启动时打印到服务器日志，并保存为 `config.toml` 旁边的 `install-token` 文件（权限 `0600`），安装完成后自动删除。默认关闭，需要在首次启动前创建的配置里打开。见[不要让安装器暴露在公网](installation.md#不要让安装器暴露在公网)
 
+### `[market]`
+
+可选段。不配置时，站点使用这个版本内置的官方主题市场。官方市场要等签名公钥发布后才开放；在那之前，后台的主题市场页会显示「市场未启用」，仍然可以手动上传主题包。
+
+```toml
+[market]
+# 用自建市场代替官方市场：三项要么都配，要么都不配
+endpoint     = "https://market.example.com/api/market/v1"
+catalog_keys = ["<base64 编码的 Ed25519 公钥>"]
+package_keys = ["<base64 编码的 Ed25519 公钥>"]
+
+# 不论后台怎么设置，开发者模式始终关闭
+lock_developer_mode = true
+```
+
+- `endpoint`、`catalog_keys`、`package_keys` — 让站点改用自建市场，整体替换官方市场，所以三项必须一起配；只配了一部分时服务拒绝启动。`catalog_keys` 校验市场目录的签名，`package_keys` 校验市场对每个主题包的加签；每组最多 4 把公钥，同一把公钥不能同时出现在两组里。端点必须用 HTTPS（只有本机回环地址可以用 HTTP，方便本地测试）
+- `lock_developer_mode` — 运维锁。开发者模式始终关闭：后台打不开，之前打开过的也视为关闭。生产站建议开启，这样即使后台会话被盗，也装不了没有市场签名的包。只配它不算配置了自建市场
+
+自建市场需要提供：`<endpoint>/catalog?schema=1` 返回用 `gopress pkg catalog sign` 签名的目录；每个主题包放在目录条目的 `download_url`。下载只用 HTTPS、不跟随重定向，并且大小必须和目录里记录的一致，所以地址要直接指向文件本身。详见[主题包](../themes/theme-packages.md#安装和管理)。
+
+自建市场还要在 `POST <endpoint>/updates/check` 回答更新检查。后台的更新检查开关（系统设置 →「官方更新检查与 Beta 使用情况反馈」）打开时，站点会把从这个市场安装、带市场签名的主题发过去，不带安装 ID：
+
+```json
+{
+  "protocol_version": 1,
+  "targets": [
+    { "kind": "theme", "slug": "aurora", "current_version": "1.2.0" }
+  ]
+}
+```
+
+市场返回有新版本的主题：
+
+```json
+{
+  "protocol_version": 1,
+  "ttl_seconds": 86400,
+  "updates": [
+    {
+      "kind": "theme",
+      "slug": "aurora",
+      "latest_version": "1.3.0",
+      "severity": "security",
+      "release_url": "https://market.example.com/themes/aurora/1.3.0"
+    }
+  ]
+}
+```
+
+- `severity` 是 `security`、`unsupported`（已安装的版本不再受支持），普通更新不填。`release_url` 可选，必须是 HTTPS。
+- 站点没有问到的主题、版本号不合法的条目会被忽略。`ttl_seconds` 是这次结果的有效期，范围 6 小时到 7 天。
+- 返回结果只用来显示更新提示，升级仍然要经过签名目录。市场没有实现这个接口时不显示提示，站点的其他更新检查照常进行。
+
 ## 多站点配置
 
 `sites/` 下每个子目录代表一个站点：
@@ -163,5 +219,9 @@ sites/
 ```
 
 启动时通过 `-config <path>` 指定具体哪个生效。多站点可指向同一 PG 实例不同 `database` 或同一 `database` 不同 `table_prefix`。多个站点也可以共用同一个 Redis DB，缓存按 `[redis].namespace`（未配置时自动派生）隔离。
+
+已安装的主题包保存在站点目录的 `packages/archives/` 下（原始的 `.zip` 文件）。备份时要把每个站点的 `packages/` 目录和数据库一起备份：主题包是文件，数据库导出里没有它们。从市场安装的包，只要市场还提供这个版本，就能重新安装；手动上传的包只有本站这一份。
+
+每个站点只运行一个 GoPress 进程。主题包的安装和选项、菜单等其他运行中的改动一样，目前不会在多个进程之间同步。
 
 后台生成的 `sitemap.xml` 会写入当前站点目录下的 `public/`，例如 `sites/prod.gopress.xyz/public/sitemap.xml`。后续 `robots.txt`、`llms.txt` 等站点级公开生成物也应放在同一目录，避免多个站点共享应用根目录时互相覆盖。

@@ -154,6 +154,40 @@ func (s *Store) SetStatus(ctx context.Context, id int64, status string) error {
 	})
 }
 
+// errNoChange rolls back a conditional write that matched nothing, so the
+// generation increment it began with is undone.
+var errNoChange = errors.New("extension: nothing changed")
+
+// UpdateStatus changes the status of an installed version from `from` to
+// `to` and reports whether it changed. Unlike SetStatus it never overwrites
+// a status it did not expect, so writers deciding from different reads
+// cannot undo each other: boot reconciliation only moves packages between
+// ready and broken and so never touches one the market revoked meanwhile.
+// The generation is incremented only when the status changed.
+func (s *Store) UpdateStatus(ctx context.Context, id int64, from, to string) (bool, error) {
+	if !validStatus(from) || !validStatus(to) {
+		return false, fmt.Errorf("extension: unknown status %q or %q", from, to)
+	}
+	if from == to {
+		return false, nil
+	}
+	err := s.write(ctx, func(tx *gorm.DB) error {
+		result := tx.Model(&Package{}).Where("id = ? AND status = ?", id, from).
+			Updates(map[string]interface{}{"status": to, "updated_at": time.Now().UTC()})
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return errNoChange
+		}
+		return nil
+	})
+	if errors.Is(err, errNoChange) {
+		return false, nil
+	}
+	return err == nil, err
+}
+
 // Delete removes installed versions, for an uninstall or retention cleanup.
 // Unknown IDs are ignored; nothing changes when none matches.
 func (s *Store) Delete(ctx context.Context, ids ...int64) error {

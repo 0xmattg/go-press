@@ -186,6 +186,13 @@ func (r TrustRoot) catalogURL() string {
 	return r.Endpoint + "/catalog?schema=1"
 }
 
+// UpdatesURL returns the market's update check endpoint, which answers the
+// same protocol as the core update check (core/updatecheck) for the
+// packages a site installed from it.
+func (r TrustRoot) UpdatesURL() string {
+	return r.Endpoint + "/updates/check"
+}
+
 // allowsLoopbackHTTP reports whether the market itself is a loopback HTTP
 // server, in which case its download URLs may be too.
 func (r TrustRoot) allowsLoopbackHTTP() bool {

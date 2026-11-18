@@ -159,6 +159,12 @@ type Engine struct {
 	// BuildAndBootstrap and is never nil there; check Market.Enabled before
 	// offering market features.
 	Market *extension.Market
+	// ExtStore records the installed extension packages; Market shares it.
+	// PackageArchives holds their original zip files under
+	// <SiteDir>/packages/archives. Both are set by BuildAndBootstrap; when
+	// either is nil the site has no installed packages.
+	ExtStore        *extension.Store
+	PackageArchives *extension.Archives
 
 	// Agent foundation is protocol-neutral. Network transports such as MCP are
 	// optional plugins that consume these services through plugin.AgentHost.
@@ -212,9 +218,27 @@ type Engine struct {
 	themes                map[string]coreTheme.Theme // all usable theme instances, compiled in or added at runtime
 	activeThemeName       string                     // slug of the currently active theme
 	themeLoadIssues       map[string]string          // compiled-in themes that failed to build, slug → reason
+	previewLoadIssues     map[string]string          // preview theme packages that failed to load, slug or path → reason
+	installedLoadIssues   map[string]string          // installed theme packages that failed to load, slug → reason
 	themeFallback         *ThemeFallback             // set when boot could not use the configured theme
 	PluginManager         *plugin.Manager
 	themeSubmissionGrants []user.CapabilityGrant
+	// previewThemePackages are theme packages (.zip archives or source
+	// directories) loaded at boot for local development; see
+	// BootstrapOptions.ThemePackages.
+	previewThemePackages []string
+	// packageReloadMu lets one ReloadThemePackages run at a time.
+	packageReloadMu sync.Mutex
+	// packageInstallMu serializes the writes of package installs,
+	// upgrades, rollbacks and uninstalls.
+	packageInstallMu sync.Mutex
+	// themeCSP is the Content-Security-Policy of the active theme package,
+	// nil while a theme built into GoPress is active.
+	themeCSP atomic.Pointer[themeCSP]
+	// packageUpdateSlugs are the theme packages registered for update
+	// checks (theme_package_updates.go).
+	packageUpdateMu    sync.Mutex
+	packageUpdateSlugs map[string]bool
 
 	// Admin is created after repositories and the registry are ready.
 	Admin *admin.Handler
@@ -468,7 +492,10 @@ func (e *Engine) RegisterUpdateTarget(target updatecheck.Target) error {
 // LoadAllThemes builds every registered theme and activates one.
 //
 // A theme whose factory fails (an error, a panic, or no theme) is skipped and
-// recorded in ThemeLoadIssues; it does not stop the site (audit A21).
+// recorded in ThemeLoadIssues; it does not stop the site (audit A21). Theme
+// packages, previews and the current versions of installed packages, are
+// built after the compiled-in themes (see loadInstalledThemePackages), and a
+// package that fails is recorded the same way.
 //
 // The theme to activate is the active_theme option, else config site.theme.
 // When that theme is missing or fails to activate, the next candidate is
@@ -489,6 +516,19 @@ func (e *Engine) LoadAllThemes() error {
 		built[slug] = t
 		logger.Info("Theme registered", "theme", t.Name(), "slug", slug)
 	}
+	// Theme packages may not take the slug of a compiled-in theme, failed or
+	// not (the package check rejects it), so they never replace one. A
+	// preview package wins over an installed package of the same slug.
+	previewIssues := make(map[string]string)
+	preview := e.loadPreviewThemePackages(previewIssues)
+	installedIssues := make(map[string]string)
+	installed := e.loadInstalledThemePackages(context.Background(), installedIssues, preview)
+	for slug, t := range installed {
+		built[slug] = t
+	}
+	for slug, t := range preview {
+		built[slug] = t
+	}
 	e.mu.Lock()
 	next := make(map[string]coreTheme.Theme, len(e.themes)+len(built))
 	for slug, t := range e.themes {
@@ -499,7 +539,10 @@ func (e *Engine) LoadAllThemes() error {
 	}
 	e.themes = next
 	e.themeLoadIssues = issues
+	e.previewLoadIssues = previewIssues
+	e.installedLoadIssues = installedIssues
 	e.mu.Unlock()
+	issues = mergeLoadIssues(issues, previewIssues, installedIssues)
 	if slugs := diskFallbackThemes(next); len(slugs) > 0 {
 		logger.Info("Themes read their files from their directory on disk; embed them with BaseTheme.InitBaseFS so they can run outside the source tree",
 			"themes", strings.Join(slugs, ","))
@@ -571,16 +614,33 @@ func (e *Engine) ThemeFallback() *ThemeFallback {
 	return &copied
 }
 
-// ThemeLoadIssues lists the compiled-in themes that failed to build, sorted
-// by slug.
+// ThemeLoadIssues lists the compiled-in themes that failed to build and the
+// theme packages that failed to load, sorted by slug. A package whose slug
+// could not be read is listed under its path.
 func (e *Engine) ThemeLoadIssues() []ThemeLoadIssue {
 	e.mu.RLock()
-	defer e.mu.RUnlock()
-	out := make([]ThemeLoadIssue, 0, len(e.themeLoadIssues))
-	for slug, reason := range e.themeLoadIssues {
+	merged := mergeLoadIssues(e.themeLoadIssues, e.previewLoadIssues, e.installedLoadIssues)
+	e.mu.RUnlock()
+	out := make([]ThemeLoadIssue, 0, len(merged))
+	for slug, reason := range merged {
 		out = append(out, ThemeLoadIssue{Slug: slug, Reason: reason})
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Slug < out[j].Slug })
+	return out
+}
+
+// mergeLoadIssues joins issue maps into a new one; reasons for the same key
+// are joined.
+func mergeLoadIssues(sets ...map[string]string) map[string]string {
+	out := make(map[string]string)
+	for _, set := range sets {
+		for key, reason := range set {
+			if prev, ok := out[key]; ok {
+				reason = prev + "; " + reason
+			}
+			out[key] = reason
+		}
+	}
 	return out
 }
 
@@ -734,14 +794,15 @@ func (e *Engine) activateTheme(name string) error {
 // to replace the active theme).
 func (e *Engine) activateThemeInstance(name string, theme coreTheme.Theme, publish bool) (err error) {
 	themeFS := e.themeFSFor(name, theme)
-	// Prefer the theme's embedded theme.toml (baked into the binary) so
-	// runtime behavior matches the compiled version; fall back to the theme's
-	// files only if the theme predates FileConfigProvider.
-	var themeConfig *coreTheme.FileConfig
-	if fp, ok := theme.(coreTheme.FileConfigProvider); ok && fp.FileConfig() != nil {
-		themeConfig = fp.FileConfig()
-	} else if themeConfig, err = coreTheme.LoadFileConfigFS(themeFS); err != nil {
+	themeConfig, err := e.themeFileConfig(name, theme)
+	if err != nil {
 		return fmt.Errorf("failed to load theme config for %q: %w", name, err)
+	}
+	// An invalid [[settings]] declaration fails the activation before any
+	// state is staged, so the current theme stays in place.
+	settings, err := themeConfig.SettingsSchema()
+	if err != nil {
+		return fmt.Errorf("invalid settings declaration in theme %q: %w", name, err)
 	}
 
 	// 1. Build.
@@ -767,6 +828,9 @@ func (e *Engine) activateThemeInstance(name string, theme coreTheme.Theme, publi
 	if e.Menus != nil {
 		coreTheme.RegisterMenuLocationsFromConfig(e.Menus, themeConfig)
 	}
+	// Declared translatable settings join the staged set before Setup, so a
+	// theme that still registers some of them in Go does not duplicate them.
+	coreTheme.RegisterTranslatableSettings(settings)
 	// Active plugins contribute content types that must survive theme switches.
 	// They register them into the hook argument, which is the new registry.
 	if e.Hooks != nil {
@@ -799,6 +863,7 @@ func (e *Engine) activateThemeInstance(name string, theme coreTheme.Theme, publi
 	}
 	e.activeThemeName = name
 	e.mu.Unlock()
+	e.setThemeCSP(theme)
 	committed = true
 
 	logger.Info("Theme activated", "theme", theme.Name(), "slug", name)
@@ -965,6 +1030,11 @@ func (e *Engine) SwitchTheme(name string) error {
 	e.lifecycleMu.Lock()
 	defer e.lifecycleMu.Unlock()
 
+	// An installed theme package must still be installed, sound, and not
+	// revoked by the market.
+	if err := e.checkThemePackageSwitch(name); err != nil {
+		return fmt.Errorf("cannot switch to theme %q: %w", name, err)
+	}
 	// Pre-flight the target theme's declared dependencies. Missing/incompatible
 	// (non-optional) plugins or an unmet core constraint block the switch.
 	report := e.ThemeDependencies(name)
@@ -1149,12 +1219,25 @@ func (e *Engine) ActiveThemePageTemplates() []coreTheme.PageTemplateConfig {
 // then marks the theme as imported, reloads options so seeded settings become
 // visible immediately, and flushes caches so the next request renders from the
 // fresh database state.
+//
+// Demo data of a theme package is untrusted and restricted; see
+// packageSeedPolicy.
 func (e *Engine) ImportThemeDemoData(slug string) error {
 	seed, ok := e.themeDemoSeed(slug)
 	if !ok {
 		return fmt.Errorf("theme %q does not provide demo data", slug)
 	}
-	if err := e.ForceSeedFromFS(seed.FS, seed.Name); err != nil {
+	var policy *packageSeedPolicy
+	if t, ok := e.lookupTheme(slug); ok {
+		if _, isPackage := coreTheme.PackageInfoOf(t); isPackage {
+			p, err := e.packageSeedPolicyFor(slug, t)
+			if err != nil {
+				return err
+			}
+			policy = p
+		}
+	}
+	if err := e.forceSeedFS(seed.FS, seed.Name, policy); err != nil {
 		return err
 	}
 	// Mark as imported so the UI disables the button
@@ -1280,6 +1363,9 @@ func (e *Engine) SetupRouter() *gin.Engine {
 
 	// Global middleware
 	r.Use(middleware.SecurityHeaders())
+	// The theme package policy goes before the page cache, which stores
+	// bodies only, so cached responses carry it too.
+	r.Use(e.contentSecurityPolicyMiddleware())
 	r.Use(middleware.CacheControl())
 
 	// Redirect middleware (301/302 from DB, in-memory lookup)
@@ -1426,7 +1512,7 @@ func (e *Engine) serveStatic(c *gin.Context) {
 	// User uploads — serve from config upload directory
 	if strings.HasPrefix(fp, "/uploads/") {
 		relPath := strings.TrimPrefix(fp, "/uploads/")
-		applyUploadResponseGuards(c, relPath)
+		applyActiveMarkupGuards(c, relPath)
 		e.serveStaticFile(c, filepath.Join(e.Config.CMS.UploadDir, relPath), true)
 		return
 	}
@@ -1434,30 +1520,38 @@ func (e *Engine) serveStatic(c *gin.Context) {
 	// Theme static assets — serve from the active theme's static files
 	theme := e.ActiveTheme()
 	if theme != nil {
-		serveStaticFS(c, coreTheme.StaticFS(theme), strings.TrimPrefix(fp, "/"), c.Query("v") != "")
+		name := strings.TrimPrefix(fp, "/")
+		// A theme package's files come from a third party: give them the
+		// same guards as uploads, a second line behind the package check.
+		if _, isPackage := coreTheme.PackageInfoOf(theme); isPackage {
+			applyActiveMarkupGuards(c, name)
+		}
+		serveStaticFS(c, coreTheme.StaticFS(theme), name, c.Query("v") != "")
 		return
 	}
 
 	serveStaticNotFound(c)
 }
 
-// activeUploadExtensions lists user-uploadable extensions a browser may render
-// as an executable document (scripts, event handlers). Uploaded files with
-// these extensions are a stored-XSS vector when served inline from the site
-// origin, so responses for them are forced to download and sandboxed.
-var activeUploadExtensions = map[string]bool{
+// activeMarkupExtensions lists extensions a browser may render as an
+// executable document (scripts, event handlers). Untrusted files with these
+// extensions, uploads and theme package files, are a stored-XSS vector when
+// served inline from the site origin, so responses for them are forced to
+// download and sandboxed.
+var activeMarkupExtensions = map[string]bool{
 	".svg": true, ".svgz": true, ".html": true, ".htm": true,
 	".xhtml": true, ".xht": true, ".xml": true, ".mhtml": true,
 }
 
-// applyUploadResponseGuards hardens responses for user-uploaded files. Only
-// script-capable markup is affected: it is served with Content-Disposition:
-// attachment plus a locked-down CSP so navigating directly to it cannot run
-// JavaScript in the site origin. Ordinary image embeds via <img> ignore
-// Content-Disposition, so existing media (including inline SVG logos) keeps
-// rendering while the XSS vector is closed.
-func applyUploadResponseGuards(c *gin.Context, relPath string) {
-	if activeUploadExtensions[strings.ToLower(filepath.Ext(relPath))] {
+// applyActiveMarkupGuards hardens responses for untrusted files: uploads and
+// theme package static files. Only script-capable markup is affected: it is
+// served with Content-Disposition: attachment plus a locked-down CSP so
+// navigating directly to it cannot run JavaScript in the site origin.
+// Ordinary image embeds via <img> ignore Content-Disposition, so existing
+// media (including inline SVG logos) keeps rendering while the XSS vector is
+// closed.
+func applyActiveMarkupGuards(c *gin.Context, relPath string) {
+	if activeMarkupExtensions[strings.ToLower(filepath.Ext(relPath))] {
 		c.Header("Content-Disposition", "attachment")
 		c.Header("Content-Security-Policy", "sandbox; default-src 'none'")
 		c.Header("X-Content-Type-Options", "nosniff")
@@ -1535,6 +1629,7 @@ func (e *Engine) SetupAdmin() {
 		ActiveFn: e.ActiveThemeName,
 		AvailableFn: func() []admin.ThemeDisplayInfo {
 			themes := e.AvailableThemes()
+			packages := e.themePackageDisplays(e.themeSnapshot())
 			result := make([]admin.ThemeDisplayInfo, len(themes))
 			for i, t := range themes {
 				di := admin.ThemeDisplayInfo{
@@ -1546,7 +1641,7 @@ func (e *Engine) SetupAdmin() {
 					Active:       t.Active,
 					HasDemoData:  e.HasThemeDemoData(t.Slug),
 					DemoImported: e.IsThemeDemoImported(t.Slug),
-					HasSettings:  e.ThemeSettingsTemplate(t.Slug).Valid(),
+					HasSettings:  e.ThemeSettingsTemplate(t.Slug).Valid() || e.themeDeclaresSettings(t.Slug),
 					LogoSVG:      template.HTML(t.LogoSVG),
 				}
 				// Dependency status for the card: blocked (can't switch) vs the
@@ -1558,12 +1653,21 @@ func (e *Engine) SetupAdmin() {
 				}
 				di.DepInactivePlugins = rep.InactiveDeps()
 				di.DepInactiveSummary = strings.Join(di.DepInactivePlugins, ", ")
+				if pkg, ok := packages[t.Slug]; ok {
+					di.Package, di.PackageSource = true, pkg.Source
+					di.Unsigned, di.Revoked = pkg.Unsigned, pkg.Revoked
+					di.External, di.ExternalSummary = pkg.External, strings.Join(pkg.External, ", ")
+					if update := e.ThemePackageUpdate(t.Slug); update != nil {
+						di.UpdateVersion, di.UpdateSeverity = update.LatestVersion, update.Severity
+					}
+				}
 				result[i] = di
 			}
 			return result
 		},
 		ImportDemoFn:       e.ImportThemeDemoData,
 		SettingsTemplateFn: e.ThemeSettingsTemplate,
+		SettingsSchemaFn:   e.ThemeSettingsSchema,
 		FallbackFn: func() *admin.ThemeFallbackInfo {
 			fallback := e.ThemeFallback()
 			if fallback == nil {
@@ -1614,6 +1718,9 @@ func (e *Engine) SetupAdmin() {
 			return out
 		},
 	})
+
+	// Inject extension package management and developer mode
+	h.SetPackageManager(e.adminPackageManager())
 
 	// Inject cache management callbacks
 	h.SetCacheCallbacks(&admin.CacheCallbacks{

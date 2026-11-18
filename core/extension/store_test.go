@@ -217,6 +217,51 @@ func TestStoreStatusAndDelete(t *testing.T) {
 	}
 }
 
+func TestStoreUpdateStatusOnlyChangesTheExpectedStatus(t *testing.T) {
+	s, _ := sqliteStore(t, true)
+	ctx := context.Background()
+	pkg := theme("aurora", "1.0.0", "h1:aaa=")
+	if err := s.Add(ctx, pkg, true); err != nil {
+		t.Fatal(err)
+	}
+	gen := mustGeneration(t, s)
+
+	changed, err := s.UpdateStatus(ctx, pkg.ID, StatusReady, StatusBroken)
+	if err != nil || !changed {
+		t.Fatalf("ready -> broken: %v, %v", changed, err)
+	}
+	if got := mustGeneration(t, s); got != gen+1 {
+		t.Fatalf("generation = %d, want %d", got, gen+1)
+	}
+
+	// The market revokes it meanwhile; a reconciliation that read "broken"
+	// earlier must not bring it back.
+	if err := s.SetStatus(ctx, pkg.ID, StatusRevoked); err != nil {
+		t.Fatal(err)
+	}
+	gen = mustGeneration(t, s)
+	changed, err = s.UpdateStatus(ctx, pkg.ID, StatusBroken, StatusReady)
+	if err != nil || changed {
+		t.Fatalf("broken -> ready on a revoked package: %v, %v", changed, err)
+	}
+	if got, _ := s.Get(ctx, pkg.ID); got.Status != StatusRevoked {
+		t.Fatalf("status = %q, want revoked", got.Status)
+	}
+	if got := mustGeneration(t, s); got != gen {
+		t.Fatalf("an update that changed nothing moved the generation to %d", got)
+	}
+
+	if changed, err := s.UpdateStatus(ctx, 9999, StatusReady, StatusBroken); err != nil || changed {
+		t.Fatalf("unknown id: %v, %v", changed, err)
+	}
+	if changed, err := s.UpdateStatus(ctx, pkg.ID, StatusRevoked, StatusRevoked); err != nil || changed {
+		t.Fatalf("same status: %v, %v", changed, err)
+	}
+	if _, err := s.UpdateStatus(ctx, pkg.ID, "weird", StatusReady); err == nil {
+		t.Fatal("unknown status accepted")
+	}
+}
+
 func TestStoreCatalogRejectsRollback(t *testing.T) {
 	s, _ := sqliteStore(t, true)
 	ctx := context.Background()

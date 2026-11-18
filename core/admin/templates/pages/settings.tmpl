@@ -156,4 +156,27 @@
         </div>
     </form>
 </div>
+{{with .DeveloperOptions}}
+<div class="card settings-shell developer-options" id="developer-options" data-ext-devmode>
+    <section class="settings-section">
+        <h3 class="settings-section-title">{{T $ "ext.devmode_title"}}</h3>
+        <p class="developer-options-help">{{T $ "ext.devmode_help"}}</p>
+        <div class="developer-options-row">
+            <span class="developer-options-state">
+                {{if .Enabled}}<span class="badge badge-danger">{{T $ "ext.devmode_state_on"}}</span>
+                {{else}}<span class="badge badge-inactive">{{T $ "ext.devmode_state_off"}}</span>{{end}}
+                {{if .Locked}}<small>{{T $ "ext.devmode_locked"}}</small>{{end}}
+            </span>
+            {{if .Enabled}}
+            <button type="button" class="btn btn-secondary btn-sm" data-ext-devmode-off>{{T $ "ext.devmode_disable"}}</button>
+            {{else}}
+            <button type="button" class="btn btn-danger btn-sm" data-ext-devmode-on{{if .Locked}} disabled aria-disabled="true"{{end}}>{{T $ "ext.devmode_enable"}}</button>
+            {{end}}
+        </div>
+        <div class="ext-inline-error" data-ext-devmode-error role="alert" hidden></div>
+    </section>
+</div>
+<script type="application/json" id="extensionsText">{{toJSON $.ExtensionText}}</script>
+<script src="/static/admin/js/extensions.js?v=2"></script>
+{{end}}
 {{end}}

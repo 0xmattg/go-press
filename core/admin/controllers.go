@@ -4,9 +4,11 @@
 package admin
 
 import (
+	"context"
 	"errors"
 
 	coreI18n "github.com/0xmattg/go-press/core/i18n"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
 )
 
 // This file defines the small, per-domain interfaces the admin Handler depends
@@ -36,7 +38,23 @@ var (
 	_ PluginController   = (*PluginCallbacks)(nil)
 	_ SitemapController  = (*SitemapCallbacks)(nil)
 	_ MenuController     = (*MenuCallbacks)(nil)
+	_ PackageController  = (*PackageManager)(nil)
 )
+
+// PackageController exposes extension package management and developer
+// mode to admin handlers. Errors from the operations are *PackageError.
+type PackageController interface {
+	List(ctx context.Context) (*PackageList, error)
+	Catalog(ctx context.Context, lang string) (*CatalogView, error)
+	Market() MarketInfo
+	RevokedActive() *RevokedThemeBanner
+	Install(ctx context.Context, slug, version string, actor uint) (*PackageOutcome, error)
+	Upload(ctx context.Context, data []byte, confirmDigest string, actor uint) (*PackageOutcome, error)
+	Rollback(ctx context.Context, id int64) (*PackageOutcome, error)
+	Uninstall(ctx context.Context, slug string) (*PackageOutcome, error)
+	DeveloperMode() DeveloperModeInfo
+	SetDeveloperMode(on bool) error
+}
 
 // ThemeController exposes theme management to admin handlers.
 type ThemeController interface {
@@ -51,6 +69,7 @@ type ThemeController interface {
 	NeedsEnable() []ModuleInfo
 	Fallback() *ThemeFallbackInfo
 	LoadIssues() []ThemeLoadIssueInfo
+	SettingsSchema(slug string) (*coreTheme.SettingsSchema, error)
 }
 
 func (m *ThemeManager) Switch(name string) error {
@@ -86,6 +105,15 @@ func (m *ThemeManager) SettingsTemplate(slug string) TemplateRef {
 		return TemplateRef{}
 	}
 	return m.SettingsTemplateFn(slug)
+}
+
+// SettingsSchema returns the theme's [[settings]] declaration, or nil when
+// there is none or no theme manager.
+func (m *ThemeManager) SettingsSchema(slug string) (*coreTheme.SettingsSchema, error) {
+	if m == nil || m.SettingsSchemaFn == nil {
+		return nil, nil
+	}
+	return m.SettingsSchemaFn(slug)
 }
 
 func (m *ThemeManager) LocaleCatalog(slug string) *coreI18n.Catalog {

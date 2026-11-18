@@ -52,6 +52,23 @@ On activation the plugin registers three filters and retains their
 `hook.Handle` values. Deactivation removes all three; stored snippets remain in
 the options table but stop rendering immediately.
 
+## Theme Packages
+
+While a theme package is the active theme, pages carry a
+Content-Security-Policy that runs only scripts the site knows about. The
+plugin declares the snippets' scripts automatically:
+
+- `<script src="https://…">` allows that script's host;
+- an inline `<script>` is allowed by the hash of its exact text, so editing
+  a snippet updates it on the next request;
+- when any snippet runs a script, requests to `https:` hosts are allowed, for
+  analytics and widgets.
+
+Under a theme package these do not run: inline event handler attributes such
+as `onclick=`, code that needs `eval` (for example Tag Manager custom
+JavaScript variables), and scripts that a snippet's script loads from other
+hosts. Themes built into GoPress have no such policy.
+
 ## Safety Notes
 
 The plugin intentionally stores raw snippets because its purpose is code injection. Only trusted administrators should have access to this settings page. Avoid using it for large application logic; create a plugin or theme change instead.

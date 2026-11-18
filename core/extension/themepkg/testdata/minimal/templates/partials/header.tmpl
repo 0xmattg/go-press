@@ -1,0 +1,6 @@
+{{define "header"}}<header class="site-header">
+  <a class="brand" href="{{langPrefixURL .Ctx "/"}}">{{settingOr .Settings "site_name" "GoPress"}}</a>
+  {{with menuByLocation "primary"}}<nav aria-label="{{T $.Ctx "primary_menu"}}">
+    <ul>{{range .Items}}<li><a href="{{.URL}}"{{if isMenuURLActive $.Ctx .URL}} aria-current="page"{{end}}>{{.Title}}</a></li>{{end}}</ul>
+  </nav>{{end}}
+</header>{{end}}

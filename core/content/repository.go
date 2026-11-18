@@ -256,6 +256,44 @@ func (r *Repository) GetMeta(contentID uint) (map[string]string, error) {
 	return result, nil
 }
 
+// metaBatchSize bounds the number of IDs bound into one MetaForIDs query.
+const metaBatchSize = 500
+
+// MetaForIDs returns the meta of several content items, keyed by content ID,
+// in one query per 500 IDs. Every requested ID has an entry, empty when the
+// item has no meta. Legacy duplicate rows for one key hold the same value
+// (see saveMeta), so the result matches GetMeta.
+func (r *Repository) MetaForIDs(ctx context.Context, ids []uint) (map[uint]map[string]string, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	result := make(map[uint]map[string]string, len(ids))
+	for _, id := range ids {
+		if _, ok := result[id]; !ok {
+			result[id] = map[string]string{}
+		}
+	}
+	unique := make([]uint, 0, len(result))
+	for id := range result {
+		unique = append(unique, id)
+	}
+	sort.Slice(unique, func(i, j int) bool { return unique[i] < unique[j] })
+	for start := 0; start < len(unique); start += metaBatchSize {
+		end := min(start+metaBatchSize, len(unique))
+		var metas []ContentMeta
+		if err := r.db.WithContext(ctx).
+			Where("content_id IN ?", unique[start:end]).
+			Order("id").
+			Find(&metas).Error; err != nil {
+			return nil, err
+		}
+		for _, m := range metas {
+			result[m.ContentID][m.MetaKey] = m.MetaValue
+		}
+	}
+	return result, nil
+}
+
 // CountByType returns the count of content items of a given type and status.
 func (r *Repository) CountByType(contentType, status string) (int64, error) {
 	q := r.db.Model(&Content{}).Where("type = ?", contentType)

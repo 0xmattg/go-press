@@ -6,6 +6,7 @@ package content
 import (
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/0xmattg/go-press/pkg/dbprefix"
@@ -182,6 +183,52 @@ func (q *ContentQuery) Meta(key, value string) *ContentQuery {
 // OrderBy adds an ORDER BY clause.
 func (q *ContentQuery) OrderBy(field, dir string) *ContentQuery {
 	q.db = q.db.Order(field + " " + dir)
+	return q
+}
+
+// publicOrderFields are the content columns public callers may sort by.
+var publicOrderFields = []string{"created_at", "updated_at", "published_at", "title", "sort_order"}
+
+// PublicOrderFields returns the content columns that public callers (the REST
+// API, theme data functions) may sort by.
+func PublicOrderFields() []string {
+	return append([]string(nil), publicOrderFields...)
+}
+
+// IsPublicOrderField reports whether field is one of PublicOrderFields.
+func IsPublicOrderField(field string) bool {
+	for _, allowed := range publicOrderFields {
+		if field == allowed {
+			return true
+		}
+	}
+	return false
+}
+
+// OrderStable orders by one of PublicOrderFields, then by ID descending, so
+// rows that share a value keep the same order across requests. Both columns
+// are qualified with the content table, so they never collide with a joined
+// table's column of the same name (term_relationships also has sort_order).
+// An unknown field falls back to published_at, and any direction other than
+// ASC to DESC.
+func (q *ContentQuery) OrderStable(field, dir string) *ContentQuery {
+	tbl := dbprefix.Table("contents")
+	if !IsPublicOrderField(field) {
+		field = "published_at"
+	}
+	if strings.ToUpper(dir) == "ASC" {
+		dir = "ASC"
+	} else {
+		dir = "DESC"
+	}
+	q.db = q.db.Order(tbl + "." + field + " " + dir).Order(tbl + ".id DESC")
+	return q
+}
+
+// ExcludeID leaves out the row with the given primary key.
+func (q *ContentQuery) ExcludeID(id uint) *ContentQuery {
+	tbl := dbprefix.Table("contents")
+	q.db = q.db.Where(tbl+".id <> ?", id)
 	return q
 }
 

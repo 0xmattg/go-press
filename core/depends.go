@@ -217,7 +217,12 @@ func (e *Engine) themeRequires(slug string) coreTheme.RequiresConfig {
 // ThemeDependencies resolves the dependency status of the theme registered under
 // slug against the current plugin manager and the running core version.
 func (e *Engine) ThemeDependencies(slug string) ThemeDepReport {
-	req := e.themeRequires(slug)
+	return e.dependencyReport(slug, e.themeRequires(slug))
+}
+
+// dependencyReport resolves a [requires] block for the theme slug, which
+// need not be registered yet (a package about to replace it, for example).
+func (e *Engine) dependencyReport(slug string, req coreTheme.RequiresConfig) ThemeDepReport {
 	return ThemeDepReport{
 		Slug:           slug,
 		CoreConstraint: req.Core,

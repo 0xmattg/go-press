@@ -1,5 +1,7 @@
 # 创建主题
 
+本文介绍编译进 GoPress 的 Go 主题。不含 Go 代码、以 `.zip` 分发的主题见[主题包](theme-packages.md)。
+
 ## 最小可用主题
 
 ```go
@@ -236,6 +238,8 @@ archive
 
 如果页面 bundle 没命中，BaseTheme 仍会回退到旧的根模板层级（`archive-product.tmpl` / `single-product.tmpl` / `archive.tmpl` / `single.tmpl` / `index.tmpl`），最后再使用内置 fallback 模板。
 
+首页依次查找页面 bundle `front-page`、`home`、`index`。找不到页面时（状态码 404）使用页面 bundle `404`，没有这一页就返回纯文本。主题自己注册的路由优先，例如 `AddRoute("GET", "/")`。
+
 模板内链应走 core helper，避免路径和 `theme.toml` 配置脱节：
 
 ```gotemplate
@@ -272,6 +276,49 @@ BaseTheme 提供给模板的 taxonomy 行已经应用当前请求 Scope。插件
 ```gotemplate
 <span>GoPress Core v{{goPressVersion}}</span>
 ```
+
+## 只读数据函数
+
+BaseTheme 页面只给模板准备本页的数据：归档页的 `.Items`、详情页的 `.Item`，以及每页都有的 `.RecentPosts`。要展示其他内容，例如首页的 6 个产品、某个区块里嵌一页正文，就调用 core 的数据函数。它们不需要写 Go 代码，所有主题都能用：
+
+```gotemplate
+{{range contentList .Ctx "product" 6 "order" "sort_order asc"}}
+  <a href="{{langPrefixURL $.Ctx .URL}}">{{.Title}}</a>
+{{end}}
+
+{{with contentBySlug .Ctx "page" "about"}}{{safeHTML .Content}}{{end}}
+
+{{range taxonomyTerms .Ctx "category" "hide_empty" true}}
+  <a href="{{.URL}}">{{.Name}}（{{.Count}}）</a>
+{{end}}
+```
+
+| 函数 | 返回 |
+|---|---|
+| `contentList CTX TYPE LIMIT [KEY VALUE]...` | 某个内容类型的已发布内容 |
+| `contentBySlug CTX TYPE SLUG` | 一条已发布内容，没有时为空（用 `with`） |
+| `taxonomyTerms CTX TAXONOMY [KEY VALUE]...` | 某个分类法下的 term |
+
+- `CTX` 是当前请求：写 `.Ctx`，或者整页数据 `$`。在 `range`、`with` 里面 `.` 是当前条目，要写 `$.Ctx` 或 `$`。
+- `LIMIT` 必填，可以是数字，也可以是数字字符串，所以能直接来自设置：`contentList .Ctx "product" (settingOr .Settings "home_products_max" "6")`。
+
+`contentList` 的选项：
+
+| 键 | 值 |
+|---|---|
+| `order` | 字段加可选方向，例如 `"published_at desc"`、`"title asc"`。字段：`published_at`、`created_at`、`updated_at`、`title`、`sort_order`；方向默认 `desc`。不写时和归档页一样：类型支持 `sort_order` 就按它升序，否则最新的在前。值相同时按 ID 排序。 |
+| `taxonomy`、`term` | 成对使用，只取某个 term 下的内容，例如 `"taxonomy" "product_cat" "term" "pumps"`。分类法必须声明在该内容类型上。 |
+| `exclude` | 排除一个内容 ID，用于「相关内容」：`contentList .Ctx .Item.Type 3 "exclude" .Item.ID` |
+| `offset` | 跳过 0–50 条，用于「头条 + 列表」 |
+| `meta_key`、`meta_value` | 成对使用，只取某个 meta 字段等于该值的内容，例如 `"meta_key" "featured" "meta_value" "1"` |
+
+`taxonomyTerms` 的选项：`limit`（1–50，默认 50）、`order`（默认 `"count"`，内容多的在前；或 `"name"`）、`hide_empty`（`true` 时不列出没有已发布内容的 term）。
+
+**能读到什么。** 只能读当前主题注册、并且有公开路由的内容类型（有归档页，或者像 `page` 这样的根路径单页）；只返回已发布、并且发布时间已到的内容。请求作用域照常生效，装了多语言插件时，结果就是当前语言的内容。也就是说，访客自己打不开的内容，这些函数也读不到。
+
+**字段。** 内容条目的字段和归档页 `.Items` 相同：`ID`、`Type`、`Title`、`Slug`、`Content`、`Excerpt`、`ImageURL`、`PublishedAt`、`URL`、`Meta`、按名称平铺的每个 meta 字段、`Categories`、`Tags`、`Category`，以及 `Terms`：以该类型声明的每个分类法为键的 term 列表（`{{range index .Terms "product_cat"}}`）。`Content` 是原始 HTML，要用 `safeHTML` 输出。`URL` 不带语言前缀，要套 `langPrefixURL`。term 的字段有 `ID`、`Name`、`Slug`、`Taxonomy`、`URL`（带语言前缀）、`Count`、`Description`、`ParentID`。
+
+**限额。** 每次调用最多返回 50 条，`LIMIT` 更大时按 50 取。每个请求最多 20 次不同的调用；参数完全相同的重复调用（例如页头、页脚各取一次）复用第一次的结果，不计次数。每次调用的查询条数固定，与取多少条无关。超出限额或参数不对（未知选项、没有公开路由的类型、该类型没有声明的分类法）时，函数返回空结果，并且每个请求只记一次警告，页面照常渲染。不要在另一次调用结果的 `range` 里再调用数据函数，那样每一条都会用掉一次调用。
 
 ## 基础布局契约
 
@@ -413,12 +460,62 @@ func (t *MyTheme) DemoSeedPath() string {
 
 ## 主题设置页
 
-主题通常会提供一个「主题设置」页让运营调内容（hero 图、品牌名、CTA 文案等）。约定：
+在 `theme.toml` 里声明主题提供的设置。之后由 core 负责：校验并保存这些设置；为多语言站点注册可翻译的项；在 `.Settings` 里给没保存过的项补上默认值；主题没有自己的设置模板时，按声明生成设置页。
 
-- 设置 key 用 `home_` / `about_` / `social_` / `footer_` 等前缀，引擎才会持久化
-- 如果设置页也提供 `site_name`、`site_timezone`、`site_icon` 等核心系统设置项，它们沿用「系统设置」页的校验；整张表单在一个事务里保存，任一字段失败时不会部分写入，错误会显示在设置页
-- 全主题共用的"站点名称 / 简介" **不要** 用 `company_name` 之类的本地 key 收集，统一走 admin「系统设置 > 网站设置」的 `site_name` / `site_description`。详见 [SEO 接入规范](seo-integration.md)
-- 把 `home_logo_image` / `home_logo_combined_image` 这类图片字段配上「选择图片」按钮调用 `openMediaPicker(callback)`
+```toml
+[[setting_groups]]            # 可选：设置页的分节，按声明顺序显示
+key = "hero"
+label = "首页横幅"
+label_key = "settings.group.hero"   # 可选：在 locales/admin/<lang>.json 里查翻译
+
+[[settings]]
+key = "home_hero_title"
+group = "hero"
+type = "string"
+label = "主标题"
+label_key = "settings.home_hero_title"
+help = "显示在首页顶部。"
+default = "Build faster"
+translatable = true
+max_length = 200
+
+[[settings]]
+key = "home_hero_{n}_image"   # repeat 展开为 home_hero_1_image … home_hero_6_image
+repeat = 6
+group = "hero"
+type = "image"
+label = "轮播 {n} 图片"
+
+[[settings]]
+key = "showcase_layout"
+type = "select"
+default = "grid"
+options = [{ value = "grid", label = "网格" }, { value = "list", label = "列表" }]
+```
+
+| 类型 | 控件 | 接受的值 |
+|---|---|---|
+| `string` | 单行文本 | 不超过 `max_length` 个字符（默认 2048） |
+| `text` | 多行文本 | 不超过 `max_length` 个字符（默认 20000） |
+| `int` | 数字 | 整数，可用 `min`、`max` 限定范围 |
+| `bool` | 复选框 | 存为 `1` 或 `0` |
+| `select` | 下拉 | `options` 中的某个值 |
+| `image` | 路径 + 媒体库选择 | 站内路径（如 `/uploads/a.png`）或 `http(s)` 地址 |
+| `url` | 网址 | 站内路径、`http(s)` 地址、`#锚点`、`mailto:` 或 `tel:` |
+| `email` | 邮箱 | 单个邮箱地址 |
+
+- 键只能用小写字母、数字和下划线，最长 64 个字符。`repeat`（2–24）会把键、标签、说明以及翻译后的标签里的 `{n}` 换成序号。
+- 除非写了 `required = true`，所有类型都允许留空。`default` 可以写成字符串、数字或布尔值。
+- `translatable = true` 只用于 `string`、`text`、`url`、`image`、`email`。
+- 设置是全站共用的配置项：同一个键无论哪个主题声明，都是同一个值，所以公司信息这类共用内容在切换主题时会自动沿用。
+- 不能声明以 `plugin_`、`market_`、`demo_imported_` 开头的键，也不能声明系统设置里的键，可翻译的 `site_name`、`site_description` 除外。插件配置和站点行为只能在各自的页面修改。
+- 声明不合法的主题无法启用，它的设置页会显示错误。
+
+保存时只接受声明过的键。只要表单里有没声明的键，或者有值不符合类型，就什么都不保存，并列出所有问题。`site_name`、`site_description` 仍按「系统设置」的规则校验。整张表单在一个事务里保存。
+
+Go 主题仍然可以提供 `templates/admin/theme_settings.tmpl`，自定义设置页的布局；有它时用它代替生成的页面，保存仍按声明校验。没有 `[[settings]]` 的主题按旧约定保存：只接受已注册为可翻译的键，以及以 `home_`、`about_`、`company_`、`social_`、`footer_`、`showcase_`、`site_`、`nav_`、`contact_`、`package_` 开头的键。这个约定以后会移除，请改为声明设置。
+
+全主题共用的"站点名称 / 简介" **不要** 用 `company_name` 之类的本地 key 收集，统一走 admin「系统设置 > 网站设置」的 `site_name` / `site_description`。详见 [SEO 接入规范](seo-integration.md)。
 
 ## 日期与站点时区
 
