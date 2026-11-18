@@ -31,6 +31,8 @@ Commerce 对支付媒介保持无关。网关在结算时描述「下一步该�
 | `InlineAction{ClientData}` | tokenize 卡 SDK | 渲染内联组件（不落卡号） |
 | `CompletedAction{}` | 店铺余额、赠单 | 同步结算 |
 
+内联组件渲染在 `commerce.payment.inline` 钩子里。commerce 的启动脚本从 `/commerce/assets/payment-inline.js` 加载，不是内联脚本。活动主题是主题包时，页面带有内容安全策略，所以组件要加载服务商 SDK、iframe 或调用接口的网关，需要在支付页用 `frontend.csp` filter 声明这些域名（见[扩展点](../admin/extension-points.md#内容安全策略csp来源)）。
+
 ### 运行时可用性与安全启动支付
 
 就绪状态取决于设置的网关实现可选的 `GatewayAvailability.Available` 契约；只接受特定订单币种的网关还实现 `GatewayCurrencySupport.SupportsCurrency`。结算页在生成可见选项和校验提交方式时都会计算这两项能力，因此已激活但被禁用、配置不完整或币种不兼容的网关既不会显示，也无法用伪造/过期表单值选中。未实现这些可选接口的旧网关为兼容仍视为可用且不限制币种。

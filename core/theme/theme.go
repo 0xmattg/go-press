@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/0xmattg/go-press/core/assets"
@@ -140,6 +141,44 @@ type AssetFSProvider interface {
 	AssetFS() fs.FS
 }
 
+// PackageInfo describes a theme loaded from a theme package rather than
+// compiled into the binary.
+type PackageInfo struct {
+	Slug    string
+	Version string
+	// Digest is the package's h1 content digest.
+	Digest string
+	// Source says where the package came from: PackageSourcePreview or
+	// PackageSourceInstalled.
+	Source string
+}
+
+// Package sources.
+const (
+	// PackageSourcePreview is a package loaded for local development with
+	// the server's -theme-package flag.
+	PackageSourcePreview = "preview"
+	// PackageSourceInstalled is a package installed on the site.
+	PackageSourceInstalled = "installed"
+)
+
+// PackageInfoProvider is implemented by themes loaded from a theme package.
+// Core treats their files as untrusted: it never renders their admin
+// templates, serves their active markup files as downloads, and restricts
+// their demo data.
+type PackageInfoProvider interface {
+	PackageInfo() PackageInfo
+}
+
+// PackageInfoOf returns t's package information and true when t was loaded
+// from a theme package.
+func PackageInfoOf(t Theme) (PackageInfo, bool) {
+	if p, ok := t.(PackageInfoProvider); ok {
+		return p.PackageInfo(), true
+	}
+	return PackageInfo{}, false
+}
+
 // Conventional locations inside a theme's asset filesystem. For themes with an
 // asset filesystem core looks these up directly instead of asking the theme
 // for paths through DemoDataProvider and SettingsProvider.
@@ -216,6 +255,9 @@ type LogoProvider interface {
 
 // Config holds the [theme] metadata parsed from theme.toml.
 type Config struct {
+	// Slug identifies a theme package. Go themes may leave it empty: their
+	// slug is the name they register with.
+	Slug        string `toml:"slug"`
 	Name        string `toml:"name"`
 	Version     string `toml:"version"`
 	Description string `toml:"description"`
@@ -235,6 +277,17 @@ type FileConfig struct {
 	MenuLocations []MenuLocationConfig `toml:"menu_locations"`
 	PageTemplates []PageTemplateConfig `toml:"page_templates"`
 	Requires      RequiresConfig       `toml:"requires"`
+	// SettingGroups and Settings declare the theme's settings; see
+	// SettingsSchema in settings.go.
+	SettingGroups []SettingGroupConfig `toml:"setting_groups"`
+	Settings      []SettingConfig      `toml:"settings"`
+	// External lists the other hosts the theme loads resources from; see
+	// external.go.
+	External []ExternalConfig `toml:"external"`
+
+	schemaOnce sync.Once
+	schema     *SettingsSchema
+	schemaErr  error
 }
 
 // PageTemplateConfig maps a [[page_templates]] entry in theme.toml. It lets a

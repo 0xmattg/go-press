@@ -20,9 +20,9 @@ CLI 三个子命令：
 
 | 命令 | 作用 |
 |---|---|
-| `gopress serve [flags...]` | 重新生成 autoload 并启动服务。任何 flag 都会原样透传给 `cmd/server`（例如 `-config`、`-seed`）。终止信号会转发给子进程，沿用 graceful shutdown。 |
+| `gopress serve [flags...]` | 重新生成 autoload 并启动服务。任何 flag 都会原样透传给 `cmd/server`（例如 `-config`、`-seed`，以及在本地预览主题包的 `-theme-package`）。终止信号会转发给子进程，沿用 graceful shutdown。 |
 | `gopress build [-o path]` | 重新生成 autoload 并 `go build` 出一个 server 二进制，默认输出到 `build/gopress-server`。 |
-| `gopress pkg keygen \| digest \| sign \| verify \| catalog` | 生成 Ed25519 签名密钥、输出扩展包的内容摘要，对扩展包目录或 `.zip` 文件签名、验签，以及对市场目录签名、验签（`catalog sign \| verify`）。不需要 GoPress 源码目录。 |
+| `gopress pkg keygen \| check \| build \| digest \| sign \| verify \| catalog` | 生成 Ed25519 签名密钥；检查主题包、把主题目录打包成可复现的 `.zip`（见[主题包](../themes/theme-packages.md)）；输出扩展包的内容摘要；对扩展包目录或 `.zip` 文件签名、验签；对市场目录签名、验签（`catalog sign \| verify`）。不需要 GoPress 源码目录。 |
 | `gopress gen` | 只重新生成 autoload 包——适合 IDE 或 CI 钩子调用。 |
 
 ## 安装步骤
@@ -218,6 +218,9 @@ go build -p 1 -v -o build/gopress-server ./cmd/server
 # 透传 flag 给 cmd/server
 ./build/gopress serve -config sites/localhost/config.toml
 ./build/gopress serve -seed
+
+# 本地预览一个主题包（目录或 .zip，可以写多次；release 模式下不可用）
+./build/gopress serve -theme-package ../aurora
 
 # 只刷新 autoload（不启动任何东西）
 ./build/gopress gen

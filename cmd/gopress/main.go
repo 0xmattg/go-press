@@ -19,15 +19,17 @@ Usage:
   gopress build [-o path]           Regenerate autoload and produce a server
                                     binary (default: build/gopress-server).
   gopress gen                       Regenerate internal/autoload only.
-  gopress pkg <command> [args...]   Sign and verify extension packages
-                                    (keygen, digest, sign, verify).
-                                    Works outside a GoPress checkout.
+  gopress pkg <command> [args...]   Check, build, sign and verify extension
+                                    packages (keygen, check, build, digest,
+                                    sign, verify, catalog). Works outside a
+                                    GoPress checkout.
   gopress help                      Show this help.
 
 Examples:
   gopress serve
   gopress serve -config ./sites/foo.toml
   gopress serve -seed
+  gopress serve -theme-package ../aurora
   gopress build -o build/myserver
 `
 

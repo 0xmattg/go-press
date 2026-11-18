@@ -25,7 +25,28 @@ import (
 // If any step after the database connection fails, the partially built engine
 // is shut down so its workers, tickers, cache sweepers, and connections do not
 // leak (the installer retries bootstrap inside the same process).
-func BuildAndBootstrap(cfg *config.Config, configPath string, seed bool) (_ *Engine, err error) {
+func BuildAndBootstrap(cfg *config.Config, configPath string, seed bool) (*Engine, error) {
+	return BuildAndBootstrapWithOptions(cfg, configPath, BootstrapOptions{Seed: seed})
+}
+
+// BootstrapOptions are the optional inputs of BuildAndBootstrapWithOptions.
+type BootstrapOptions struct {
+	// Seed seeds from seed.toml next to the config file on first run.
+	Seed bool
+	// ThemePackages are theme packages, .zip archives or theme source
+	// directories, to load at boot for local development. Each is checked
+	// like an installed package but not verified, so they are refused when
+	// server.mode is "release".
+	ThemePackages []string
+}
+
+// BuildAndBootstrapWithOptions is BuildAndBootstrap with optional inputs.
+func BuildAndBootstrapWithOptions(cfg *config.Config, configPath string, opts BootstrapOptions) (_ *Engine, err error) {
+	// Previewing unsigned theme packages is a development tool; production
+	// sites install packages through the signed install flow.
+	if len(opts.ThemePackages) > 0 && cfg.Server.Mode == "release" {
+		return nil, fmt.Errorf("theme package previews are not available when server.mode is \"release\" (%s)", configPath)
+	}
 	// Refuse to start with an empty or placeholder admin token secret: with a
 	// known secret anyone can forge admin sessions. The installer generates a
 	// unique random secret, so a completed install should never hit this.
@@ -62,14 +83,17 @@ func BuildAndBootstrap(cfg *config.Config, configPath string, seed bool) (_ *Eng
 	}()
 	engine.SiteDir = filepath.Dir(configPath)
 	engine.ConfigPath = configPath
-	engine.Market = extension.NewMarket(extension.NewStore(database), marketTrust, nil, "GoPress/"+version.String())
+	engine.previewThemePackages = append([]string(nil), opts.ThemePackages...)
+	engine.ExtStore = extension.NewStore(database)
+	engine.PackageArchives = extension.NewArchives(filepath.Join(engine.SiteDir, "packages", "archives"))
+	engine.Market = extension.NewMarket(engine.ExtStore, marketTrust, nil, "GoPress/"+version.String())
 	logger.Info("Extension market", "mode", marketTrust.Mode(), "host", marketTrust.Host())
 
 	if err := engine.Migrate(); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
-	if seed {
+	if opts.Seed {
 		seedPath := filepath.Join(filepath.Dir(configPath), "seed.toml")
 		if err := engine.SeedFromFile(seedPath); err != nil {
 			return nil, fmt.Errorf("failed to seed data: %w", err)
@@ -79,6 +103,7 @@ func BuildAndBootstrap(cfg *config.Config, configPath string, seed bool) (_ *Eng
 	if err := engine.Bootstrap(); err != nil {
 		return nil, fmt.Errorf("failed to bootstrap engine: %w", err)
 	}
+	engine.logDeveloperMode()
 
 	if err := engine.LoadAllThemes(); err != nil {
 		return nil, fmt.Errorf("failed to load themes: %w", err)

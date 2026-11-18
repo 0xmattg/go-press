@@ -30,12 +30,20 @@ func (h *Handler) SettingList(c *gin.Context) {
 	}
 	adminLang := h.svc.AdminLanguage()
 	items := h.svc.GetAllSettings(adminLang)
-	h.render(c, "settings", gin.H{
+	data := gin.H{
 		"Title":   adminT(adminLang, "settings.system_settings"),
 		"Active":  "settings",
 		"Items":   items,
 		"Modules": h.optInModules(adminLang),
-	})
+	}
+	// Developer options are their own form and endpoint (D1 4.4), shown
+	// only to those who may change them.
+	if h.packageManager != nil && h.can(c, "extension", "developer_mode") {
+		mode := h.packageManager.DeveloperMode()
+		data["DeveloperOptions"] = &mode
+		data["ExtensionText"] = extensionScriptText(adminLang)
+	}
+	h.render(c, "settings", data)
 }
 
 // optInModules returns the opt-in (default-inactive) plugins for the settings
@@ -59,6 +67,15 @@ func (h *Handler) SettingUpdate(c *gin.Context) {
 		return
 	}
 	adminLang := h.svc.AdminLanguage()
+	// new_key adds a custom option. It cannot create or overwrite one that
+	// core manages: those have their own fields and pages, which check
+	// their own capabilities and rules (switching themes, activating
+	// plugins, developer mode).
+	newKey := strings.TrimSpace(c.PostForm("new_key"))
+	if newKey != "" && coreOwnedOption(newKey) {
+		c.Redirect(http.StatusFound, "/admin/settings?error="+url.QueryEscape(adminT(adminLang, "error.setting_key_reserved")))
+		return
+	}
 	items := h.svc.GetAllSettings(adminLang)
 	for _, s := range items {
 		if s.Key != "site_icon" || s.ReadOnly {
@@ -90,9 +107,8 @@ func (h *Handler) SettingUpdate(c *gin.Context) {
 			h.svc.UpdateSetting(s.Key, newValue)
 		}
 	}
-	if newKey := c.PostForm("new_key"); newKey != "" {
-		newValue := c.PostForm("new_value")
-		h.svc.CreateSetting(newKey, newValue)
+	if newKey != "" {
+		h.svc.CreateSetting(newKey, c.PostForm("new_value"))
 	}
 	h.invalidatePageCache()
 	h.fireOptionsBulkUpdated(c)
@@ -643,145 +659,6 @@ func (h *Handler) ThemeDemoImport(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/admin/themes?success="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "notice.theme_demo_imported")))
 }
 
-// ThemeSettings displays the settings page for a specific theme.
-func (h *Handler) ThemeSettings(c *gin.Context) {
-	if !h.checkPermission(c, "setting", "read") {
-		return
-	}
-	slug := c.Param("slug")
-
-	// Find theme display info
-	var themeName string
-	if h.themeManager != nil {
-		for _, t := range h.themeManager.Available() {
-			if t.Slug == slug {
-				themeName = t.Name
-				break
-			}
-		}
-	}
-	if themeName == "" {
-		c.Redirect(http.StatusFound, "/admin/themes?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.theme_not_found")))
-		return
-	}
-
-	// Locate the theme settings template
-	settingsTmpl := h.themeManager.SettingsTemplate(slug)
-	if !settingsTmpl.Valid() {
-		c.Redirect(http.StatusFound, "/admin/themes?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.theme_settings_unavailable")))
-		return
-	}
-
-	// Compile the theme settings template with admin layout
-	tmpl, err := h.parseWithAdminLayout(settingsTmpl)
-	if err != nil {
-		log.Printf("Theme settings template error (%s): %v", slug, err)
-		c.Redirect(http.StatusFound, "/admin/themes?error="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "error.theme_template_failed")))
-		return
-	}
-
-	colorScheme := h.svc.GetOption("theme_color_scheme")
-	if colorScheme == "" {
-		colorScheme = "orange"
-	}
-
-	data := gin.H{
-		"Title":            adminT(h.svc.AdminLanguage(), "title.theme_settings", themeName),
-		"Active":           "themes",
-		"ThemeName":        themeName,
-		"ThemeSlug":        slug,
-		"ColorScheme":      colorScheme,
-		"Settings":         h.svc.GetAllOptions(),
-		"ExtensionCatalog": h.themeCatalog(slug),
-	}
-
-	adminLang := h.svc.AdminLanguage()
-	data["AdminLanguage"] = adminLang
-	data["CurrentUser"] = c.GetString("admin_username")
-	data["CurrentRole"] = c.GetString("admin_role")
-	data["MenuItems"] = h.buildMenuItems(adminLang, c.GetString("admin_role"))
-	data["SiteName"] = h.svc.SiteName()
-	data["PublicBaseURL"] = requestBaseURL(c)
-	h.injectVersionStatus(data)
-
-	if success := c.Query("success"); success != "" {
-		data["Success"] = success
-	}
-	if errMsg := c.Query("error"); errMsg != "" {
-		data["Error"] = errMsg
-	}
-
-	c.Header("Content-Type", "text/html; charset=utf-8")
-	if err := tmpl.ExecuteTemplate(c.Writer, "admin", data); err != nil {
-		log.Printf("Theme settings render error (%s): %v", slug, err)
-		c.String(http.StatusInternalServerError, "Template error")
-	}
-}
-
-// ThemeSettingsSave saves theme-specific settings.
-//
-// Theme forms may also edit core-owned keys (for example site_name). Those
-// keys keep the system settings page's rules — read-only keys are rejected,
-// values are validated, and site_icon regenerates the favicon — no matter which
-// form submits them. All accepted values are written in one transaction so a
-// failure never reports success or leaves a partial save.
-func (h *Handler) ThemeSettingsSave(c *gin.Context) {
-	if !h.checkPermission(c, "setting", "update") {
-		return
-	}
-	slug := c.Param("slug")
-	lang := h.svc.AdminLanguage()
-	settingsURL := "/admin/themes/" + url.PathEscape(slug) + "/settings"
-	fail := func(message string) {
-		c.Redirect(http.StatusFound, settingsURL+"?error="+url.QueryEscape(message))
-	}
-
-	values := make(map[string]string)
-	// Save color scheme. Core does not know which palette names a theme defines,
-	// so we only sanity-check the shape (CSS-class-safe token) and let the theme
-	// own the list of valid values.
-	if cs := c.PostForm("color_scheme"); isSafeSchemeToken(cs) {
-		values["theme_color_scheme"] = cs
-	}
-
-	// Save all theme-related settings from form. A key is accepted if it is
-	// either registered as translatable (themes opt-in via option.RegisterTranslatable
-	// during Setup) or matches one of the conventional theme-setting prefixes
-	// used for non-translatable values like image URLs and links.
-	if c.Request.Form == nil {
-		c.Request.ParseForm()
-	}
-	themeSettingPrefixes := []string{"home_", "about_", "company_", "social_", "footer_", "showcase_", "site_", "nav_", "contact_", "package_"}
-	for key, formValues := range c.Request.PostForm {
-		if len(formValues) == 0 {
-			continue
-		}
-		if !option.IsTranslatable(key) && !hasAnyPrefix(key, themeSettingPrefixes) {
-			continue
-		}
-		if err := h.validateSystemSettingValue(key, formValues[0], lang); err != nil {
-			fail(err.Error())
-			return
-		}
-		values[key] = formValues[0]
-	}
-	if icon, ok := values["site_icon"]; ok && icon != h.svc.options.Get("site_icon") {
-		if err := h.svc.SyncSiteIcon(icon); err != nil {
-			fail(err.Error())
-			return
-		}
-	}
-	if err := h.svc.UpdateSettings(values); err != nil {
-		fail(adminT(lang, "error.update_failed", err.Error()))
-		return
-	}
-
-	h.invalidatePageCache()
-	h.fireOptionsBulkUpdated(c)
-	h.logAction(c, "update", "theme_settings", 0, "theme settings updated")
-	c.Redirect(http.StatusFound, settingsURL+"?success="+url.QueryEscape(adminT(lang, "notice.theme_settings_saved")))
-}
-
 // validateSystemSettingValue applies the system settings rules to a write of
 // a core-owned option. Keys that core does not own are always accepted here;
 // their shape is the owning theme's or plugin's concern.
@@ -800,16 +677,6 @@ func (h *Handler) validateSystemSettingValue(key, value, lang string) error {
 		return errors.New(adminT(lang, "error.invalid_registration_role"))
 	}
 	return nil
-}
-
-// hasAnyPrefix reports whether s has any of the given prefixes.
-func hasAnyPrefix(s string, prefixes []string) bool {
-	for _, p := range prefixes {
-		if strings.HasPrefix(s, p) {
-			return true
-		}
-	}
-	return false
 }
 
 // isSafeSchemeToken validates a color-scheme value is a short, CSS-class-safe
@@ -1113,6 +980,7 @@ func (h *Handler) PluginSettings(c *gin.Context) {
 	data["SiteName"] = h.svc.SiteName()
 	data["PublicBaseURL"] = requestBaseURL(c)
 	h.injectVersionStatus(data)
+	h.injectExtensionBanners(c, data)
 
 	if success := c.Query("success"); success != "" {
 		data["Success"] = success

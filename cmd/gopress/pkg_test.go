@@ -167,3 +167,102 @@ func TestPkgUsageErrors(t *testing.T) {
 		t.Fatalf("bad directory slug accepted: code=%d err=%s", code, errOut)
 	}
 }
+
+// themeSample is the theme package core's checker tests use.
+const themeSample = "../../core/extension/themepkg/testdata/minimal"
+
+func TestPkgBuildCheckSignArchiveFlow(t *testing.T) {
+	work := t.TempDir()
+	publisherKey := filepath.Join(work, "publisher")
+	marketKey := filepath.Join(work, "market")
+	for _, prefix := range []string{publisherKey, marketKey} {
+		if code, _, errOut := pkgRun(t, "keygen", "-out", prefix); code != 0 {
+			t.Fatalf("keygen: %s", errOut)
+		}
+	}
+	marketPub, _ := os.ReadFile(marketKey + ".pub")
+
+	if code, out, errOut := pkgRun(t, "check", "-core", "0.7.22", themeSample); code != 0 || !strings.Contains(out, "check:   ok") || !strings.Contains(out, "external: fonts.googleapis.com") {
+		t.Fatalf("check directory: code=%d out=%s err=%s", code, out, errOut)
+	}
+	archive := filepath.Join(work, "dist", "minimal.zip")
+	code, out, errOut := pkgRun(t, "build", "-out", archive, themeSample)
+	if code != 0 || !strings.Contains(out, "wrote "+archive) {
+		t.Fatalf("build: code=%d out=%s err=%s", code, out, errOut)
+	}
+	first, _ := os.ReadFile(archive)
+	if code, _, errOut := pkgRun(t, "build", "-out", archive, themeSample); code != 0 {
+		t.Fatalf("rebuild: %s", errOut)
+	}
+	if second, _ := os.ReadFile(archive); !bytes.Equal(first, second) {
+		t.Fatal("building twice gave different archives")
+	}
+	_, digest, _ := pkgRun(t, "digest", archive)
+	_, dirDigest, _ := pkgRun(t, "digest", themeSample)
+	if digest != dirDigest {
+		t.Fatalf("archive digest %q, directory %q", digest, dirDigest)
+	}
+	if code, out, _ := pkgRun(t, "check", archive); code != 0 || !strings.Contains(out, strings.TrimSpace(digest)) {
+		t.Fatalf("check archive: code=%d out=%s", code, out)
+	}
+
+	// Sign the archive as publisher, then countersign it as the market.
+	if code, _, errOut := pkgRun(t, "sign", "-key", marketKey+".key", "-role", "market", archive); code != 1 || !strings.Contains(errOut, "refusing to countersign") {
+		t.Fatalf("market signed an unsigned archive: code=%d err=%s", code, errOut)
+	}
+	if code, out, errOut := pkgRun(t, "sign", "-key", publisherKey+".key", archive); code != 0 || !strings.Contains(out, "signed theme minimal-sample 1.0.0 as publisher") {
+		t.Fatalf("publisher sign: code=%d out=%s err=%s", code, out, errOut)
+	}
+	if code, _, errOut := pkgRun(t, "sign", "-key", publisherKey+".key", archive); code != 1 || !strings.Contains(errOut, "-force") {
+		t.Fatalf("re-signed without -force: code=%d err=%s", code, errOut)
+	}
+	if code, _, errOut := pkgRun(t, "sign", "-key", publisherKey+".key", "-force", archive); code != 0 {
+		t.Fatalf("re-sign with -force: %s", errOut)
+	}
+	if code, _, errOut := pkgRun(t, "sign", "-key", marketKey+".key", "-role", "market", archive); code != 0 {
+		t.Fatalf("market sign: %s", errOut)
+	}
+	code, out, errOut = pkgRun(t, "verify", "-market-key", strings.TrimSpace(string(marketPub)), "-require-market", archive)
+	if code != 0 || !strings.Contains(out, "market signature:    ok") {
+		t.Fatalf("verify: code=%d out=%s err=%s", code, out, errOut)
+	}
+	if _, after, _ := pkgRun(t, "digest", archive); after != digest {
+		t.Fatalf("signing changed the digest from %q to %q", digest, after)
+	}
+	// The signed archive still passes the check: signature files are allowed.
+	if code, out, _ := pkgRun(t, "check", archive); code != 0 {
+		t.Fatalf("check signed archive: %s", out)
+	}
+}
+
+func TestPkgCheckAndBuildReportProblems(t *testing.T) {
+	src := t.TempDir()
+	if err := os.CopyFS(src, os.DirFS(themeSample)); err != nil {
+		t.Fatal(err)
+	}
+	writeTree(t, src, map[string]string{
+		"static/js/main.js":           "alert(1)",
+		"templates/pages/single.tmpl": `{{define "content"}}<a href="/" onclick="x()">x</a>{{end}}`,
+	})
+	code, out, errOut := pkgRun(t, "check", src)
+	if code != 1 || !strings.Contains(errOut, "did not pass") {
+		t.Fatalf("check: code=%d err=%s", code, errOut)
+	}
+	for _, want := range []string{"problems (2):", "  script.file\n    static/js/main.js:", "  script.handler\n    templates/pages/single.tmpl:1:"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("report lacks %q:\n%s", want, out)
+		}
+	}
+	archive := filepath.Join(t.TempDir(), "bad.zip")
+	if code, _, _ := pkgRun(t, "build", "-out", archive, src); code != 1 {
+		t.Fatalf("build of a failing package: code=%d", code)
+	}
+	if _, err := os.Stat(archive); !os.IsNotExist(err) {
+		t.Fatal("a failing build wrote an archive")
+	}
+	for _, args := range [][]string{{"check"}, {"build"}, {"build", "a", "b"}} {
+		if code, _, _ := pkgRun(t, args...); code != 2 {
+			t.Errorf("%v: code=%d, want 2", args, code)
+		}
+	}
+}

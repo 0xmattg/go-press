@@ -52,6 +52,10 @@ type Plugin struct {
 	// Hook handles for clean Deactivate; without these, leftover filters
 	// would keep injecting snippets after the plugin is disabled.
 	hookHandles []hook.Handle
+
+	// csp caches the Content-Security-Policy sources of the current
+	// snippets (see csp.go).
+	csp cspCache
 }
 
 // New constructs a fresh Plugin instance.
@@ -88,6 +92,9 @@ func (p *Plugin) Activate(app plugin.App) {
 		e.Hooks.AddFilter(hook.ThemeBodyOpen, p.injectBodyOpen, 50))
 	p.hookHandles = append(p.hookHandles,
 		e.Hooks.AddFilter(hook.ThemeFooterEnd, p.injectFooter, 50))
+	// Declare the snippets' scripts to the theme package policy.
+	p.hookHandles = append(p.hookHandles,
+		e.Hooks.AddFilter(hook.FrontendCSP, p.addCSPSources, 50))
 
 	logger.Info("code-snippets plugin activated")
 }

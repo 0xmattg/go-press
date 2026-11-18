@@ -4,6 +4,7 @@ import (
 	"crypto/subtle"
 	"encoding/json"
 	"errors"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"strings"
@@ -22,6 +23,22 @@ func (p *Plugin) registerCheckoutRoutes(r *gin.Engine) {
 	r.POST("/checkout", p.handleCheckoutSubmit)
 	r.GET("/checkout/pay/:number", p.handleCheckoutPay)
 	r.GET("/checkout/complete/:number", p.handleCheckoutComplete)
+	r.GET(inlinePaymentScriptPath, p.handleInlinePaymentScript)
+}
+
+// inlinePaymentScriptPath serves the inline payment bootstrap. It is a
+// static file, not an inline script, so the payment page also works where a
+// Content-Security-Policy refuses inline scripts.
+const inlinePaymentScriptPath = "/commerce/assets/payment-inline.js"
+
+func (p *Plugin) handleInlinePaymentScript(c *gin.Context) {
+	data, err := fs.ReadFile(p.files(), "static/payment-inline.js")
+	if err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	c.Header("Cache-Control", "public, max-age=86400")
+	c.Data(http.StatusOK, "text/javascript; charset=utf-8", data)
 }
 
 // gatewayView is a payment method rendered as a checkout radio option.
@@ -204,6 +221,8 @@ func (p *Plugin) renderInlinePayment(c *gin.Context, order *Order, action coreco
 		"InlineAction":   action,
 		"ClientDataJSON": string(payload),
 		"CompleteURL":    p.checkoutCompleteURL(order, false),
+		// The version busts browser caches when the script changes.
+		"InlineScriptURL": inlinePaymentScriptPath + "?v=" + url.QueryEscape(p.Version()),
 	}
 	if err := p.renderStorefront(c, "payment-inline", data); err != nil {
 		c.String(http.StatusInternalServerError, "%s", p.t(c, "commerce.error.payment_unavailable"))

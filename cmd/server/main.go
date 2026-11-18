@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -54,6 +55,8 @@ func main() {
 	configPathFlag := flag.String("config", "", "path to site config file (auto-detects from sites/ if omitted)")
 	seedFlag := flag.Bool("seed", false, "force re-seed from seed.toml (drops existing content first)")
 	migrateFlag := flag.String("migrate", "", `run database migrations and exit: "status" lists them, "up" applies them`)
+	var themePackages stringList
+	flag.Var(&themePackages, "theme-package", "load a theme package (.zip or source directory) for local preview; repeatable; not available when server.mode is \"release\"")
 	flag.Parse()
 
 	configPath, autoDiscovered := config.ResolveConfigPath(*configPathFlag)
@@ -85,7 +88,7 @@ func main() {
 	)
 
 	activateApp := func(finalCfg *config.Config, finalConfigPath string) error {
-		engine, err := core.BuildAndBootstrap(finalCfg, finalConfigPath, false)
+		engine, err := core.BuildAndBootstrapWithOptions(finalCfg, finalConfigPath, core.BootstrapOptions{ThemePackages: themePackages})
 		if err != nil {
 			return err
 		}
@@ -124,7 +127,10 @@ func main() {
 			log.Fatal("No site config available")
 		}
 
-		engine, err := core.BuildAndBootstrap(cfg, configPath, !cfg.Install.Completed)
+		engine, err := core.BuildAndBootstrapWithOptions(cfg, configPath, core.BootstrapOptions{
+			Seed:          !cfg.Install.Completed,
+			ThemePackages: themePackages,
+		})
 		if err != nil {
 			log.Fatalf("Failed to bootstrap application: %v", err)
 		}
@@ -209,4 +215,14 @@ func main() {
 	if exitCode != 0 {
 		os.Exit(exitCode)
 	}
+}
+
+// stringList is a flag that can be given more than once.
+type stringList []string
+
+func (l *stringList) String() string { return strings.Join(*l, ",") }
+
+func (l *stringList) Set(value string) error {
+	*l = append(*l, value)
+	return nil
 }

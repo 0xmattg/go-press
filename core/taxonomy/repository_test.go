@@ -40,7 +40,7 @@ func taxonomyTestDB(t *testing.T) *gorm.DB {
 		`CREATE TABLE gp_terms (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, slug TEXT NOT NULL)`,
 		`CREATE TABLE gp_taxonomies (id INTEGER PRIMARY KEY AUTOINCREMENT, term_id INTEGER NOT NULL DEFAULT 0, taxonomy TEXT NOT NULL, description TEXT, parent_id INTEGER, count INTEGER DEFAULT 0)`,
 		`CREATE TABLE gp_contents (id INTEGER PRIMARY KEY, status TEXT NOT NULL, deleted_at DATETIME)`,
-		`CREATE TABLE gp_term_relationships (content_id INTEGER NOT NULL, taxonomy_id INTEGER NOT NULL, PRIMARY KEY (content_id, taxonomy_id))`,
+		`CREATE TABLE gp_term_relationships (content_id INTEGER NOT NULL, taxonomy_id INTEGER NOT NULL, sort_order INTEGER DEFAULT 0, PRIMARY KEY (content_id, taxonomy_id))`,
 		`CREATE TABLE gp_test_taxonomy_languages (taxonomy_id INTEGER PRIMARY KEY, language_code TEXT NOT NULL)`,
 	} {
 		if err := db.Exec(stmt).Error; err != nil {
@@ -182,5 +182,101 @@ func TestContentReferenceCountsUsesCurrentActiveRelationships(t *testing.T) {
 	}
 	if _, ok := counts[4]; ok {
 		t.Fatal("tag count leaked into category aggregate")
+	}
+}
+
+// publicTaxonomyFixture creates two English categories, one Chinese category
+// and an English tag, and attaches them to content 1 and 2.
+func publicTaxonomyFixture(t *testing.T) (*gorm.DB, *Repository) {
+	t.Helper()
+	db := taxonomyTestDB(t)
+	for _, stmt := range []string{
+		`INSERT INTO gp_terms (id, name, slug) VALUES (1, 'Beta', 'beta'), (2, 'Alpha', 'alpha'), (3, '新闻', 'xinwen'), (4, 'Hot', 'hot'), (5, 'Empty', 'empty')`,
+		`INSERT INTO gp_taxonomies (id, term_id, taxonomy, description, count) VALUES (1, 1, 'category', 'b', 5), (2, 2, 'category', 'a', 9), (3, 3, 'category', '', 7), (4, 4, 'tag', '', 1), (5, 5, 'category', '', 0)`,
+		`INSERT INTO gp_test_taxonomy_languages (taxonomy_id, language_code) VALUES (1, 'en'), (2, 'en'), (3, 'zh'), (4, 'en'), (5, 'en')`,
+		`INSERT INTO gp_term_relationships (content_id, taxonomy_id, sort_order) VALUES (1, 2, 1), (1, 1, 0), (1, 3, 0), (1, 4, 0), (2, 2, 0)`,
+	} {
+		if err := db.Exec(stmt).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
+	return db, NewRepository(db)
+}
+
+func TestContentTaxonomiesForIDsGroupsScopedRowsInRelationshipOrder(t *testing.T) {
+	db, repo := publicTaxonomyFixture(t)
+	queries := 0
+	if err := db.Callback().Row().After("gorm:row").Register("count_relation_rows", func(*gorm.DB) { queries++ }); err != nil {
+		t.Fatal(err)
+	}
+	got, err := repo.ContentTaxonomiesForIDsContext(taxonomyLanguageContext("en"), []uint{1, 2, 3}, []string{"category"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if queries != 1 {
+		t.Fatalf("ran %d queries, want 1", queries)
+	}
+	slugs := func(items []Taxonomy) []string {
+		out := []string{}
+		for _, item := range items {
+			out = append(out, item.Term.Slug)
+		}
+		return out
+	}
+	// Content 1: sort_order puts beta (0) before alpha (1); the Chinese
+	// category is out of scope and the tag is not a requested taxonomy.
+	if s := strings.Join(slugs(got[1]), ","); s != "beta,alpha" {
+		t.Fatalf("content 1 = %s, want beta,alpha", s)
+	}
+	if s := strings.Join(slugs(got[2]), ","); s != "alpha" {
+		t.Fatalf("content 2 = %s, want alpha", s)
+	}
+	if len(got[3]) != 0 {
+		t.Fatalf("content 3 = %v, want none", got[3])
+	}
+	first := got[1][0]
+	if first.ID != 1 || first.TermID != 1 || first.Taxonomy != "category" || first.Description != "b" || first.Count != 5 || first.Term.Name != "Beta" {
+		t.Fatalf("row fields not filled: %+v", first)
+	}
+
+	all, err := repo.ContentTaxonomiesForIDsContext(taxonomyLanguageContext("en"), []uint{1}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s := strings.Join(slugs(all[1]), ","); s != "beta,hot,alpha" {
+		t.Fatalf("all taxonomies of content 1 = %s, want beta,hot,alpha", s)
+	}
+}
+
+func TestListPublicContextBoundsOrdersAndHidesEmpty(t *testing.T) {
+	_, repo := publicTaxonomyFixture(t)
+	ctx := taxonomyLanguageContext("en")
+	names := func(items []Taxonomy) string {
+		out := []string{}
+		for _, item := range items {
+			out = append(out, item.Term.Name)
+		}
+		return strings.Join(out, ",")
+	}
+
+	byCount, err := repo.ListPublicContext(ctx, "category", PublicOrderCount, 50, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := names(byCount); got != "Alpha,Beta,Empty" {
+		t.Fatalf("by count = %s", got)
+	}
+	byName, err := repo.ListPublicContext(ctx, "category", PublicOrderName, 2, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := names(byName); got != "Alpha,Beta" {
+		t.Fatalf("by name, limit 2, hide empty = %s", got)
+	}
+	if _, err := repo.ListPublicContext(ctx, "category", "random()", 5, false); err == nil {
+		t.Fatal("unknown order was accepted")
+	}
+	if _, err := repo.ListPublicContext(ctx, "category", PublicOrderCount, 0, false); err == nil {
+		t.Fatal("zero limit was accepted")
 	}
 }

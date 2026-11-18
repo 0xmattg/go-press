@@ -21,6 +21,7 @@ import (
 	"github.com/0xmattg/go-press/core/content"
 	"github.com/0xmattg/go-press/core/hook"
 	coreI18n "github.com/0xmattg/go-press/core/i18n"
+	coreTheme "github.com/0xmattg/go-press/core/theme"
 	"github.com/0xmattg/go-press/core/updatecheck"
 	"github.com/0xmattg/go-press/pkg/middleware"
 	"github.com/0xmattg/go-press/version"
@@ -68,6 +69,19 @@ type ThemeDisplayInfo struct {
 	DepReason          string
 	DepInactivePlugins []string
 	DepInactiveSummary string // e.g. "multilang, seo-extras"
+
+	// Theme package details, empty for themes built into GoPress.
+	Package         bool     // installed or previewed theme package
+	PackageSource   string   // "market", "upload" or "preview"
+	Unsigned        bool     // installed without a valid market signature
+	Revoked         bool     // the market revoked the installed version
+	External        []string // hosts the theme loads resources from
+	ExternalSummary string   // External joined for the switch confirmation
+	// UpdateVersion is a newer version the daily update check found for an
+	// installed market package; UpdateSeverity is "normal", "security" or
+	// "unsupported".
+	UpdateVersion  string
+	UpdateSeverity string
 }
 
 // ThemeManager provides theme switching callbacks to the admin handler.
@@ -97,6 +111,10 @@ type ThemeManager struct {
 	// LoadIssuesFn lists the themes that failed to load and are unavailable,
 	// for the themes page.
 	LoadIssuesFn func() []ThemeLoadIssueInfo
+	// SettingsSchemaFn returns a theme's [[settings]] declaration: nil when
+	// the theme is unknown or declares none, or the validation error of an
+	// invalid one.
+	SettingsSchemaFn func(slug string) (*coreTheme.SettingsSchema, error)
 }
 
 // ThemeFallbackInfo describes a fallback theme in use: Requested is the
@@ -256,7 +274,11 @@ type Handler struct {
 	sitemapCallbacks  SitemapController
 	menuCallbacks     MenuController
 	updateStatus      UpdateStatusProvider
+	packageManager    PackageController
 	loginThrottle     *loginThrottle
+	// developerModeThrottle limits wrong passwords when turning developer
+	// mode on, per account.
+	developerModeThrottle *loginThrottle
 }
 
 // SetHookBus injects the engine's hook bus so handlers can invoke plugin filters.
@@ -313,6 +335,8 @@ func NewHandler(svc *Service, registry *content.Registry, templateDir string) *H
 		registry:      registry,
 		tmplDir:       templateDir,
 		loginThrottle: newLoginThrottle(10, 5*time.Minute),
+
+		developerModeThrottle: newLoginThrottle(developerModeMaxFailures, developerModeWindow),
 	}
 	h.buildFuncMap()
 	h.loadTemplates(templateDir)
@@ -905,6 +929,7 @@ func (h *Handler) render(c *gin.Context, name string, data gin.H) {
 	data["SiteName"] = h.svc.SiteName()
 	data["PublicBaseURL"] = requestBaseURL(c)
 	h.injectVersionStatus(data)
+	h.injectExtensionBanners(c, data)
 	if h.themeManager != nil {
 		if w := h.themeManager.ActiveDepWarning(); w != "" {
 			data["ActiveDepWarning"] = w
@@ -1014,6 +1039,7 @@ func (h *Handler) RenderExtensionPageFS(c *gin.Context, fragment TemplateRef, ti
 		"PublicBaseURL": requestBaseURL(c),
 	}
 	h.injectVersionStatus(data)
+	h.injectExtensionBanners(c, data)
 	for k, v := range extra {
 		data[k] = v
 	}

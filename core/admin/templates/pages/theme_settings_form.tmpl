@@ -1,0 +1,75 @@
+{{define "content"}}
+<div class="content-header">
+    <div class="content-header-left">
+        <a href="/admin/themes" class="btn btn-secondary btn-back">← {{T . "theme.settings_back"}}</a>
+        <h2>{{.Title}}</h2>
+    </div>
+</div>
+<div class="card settings-shell">
+    <form method="POST" action="/admin/themes/{{.ThemeSlug}}/settings" class="settings-form theme-settings-form">
+        {{range .Groups}}
+        <section class="settings-section">
+            <h3 class="settings-section-title">{{.Title}}</h3>
+            <div class="settings-grid">
+                {{range .Fields}}
+                <div class="form-group settings-item{{if .Wide}} settings-item-wide{{end}}">
+                    {{if eq .Type "bool"}}
+                    <label class="checkbox-label settings-checkbox-label" for="{{.ID}}">
+                        <input type="checkbox" id="{{.ID}}" name="{{.Key}}" value="1" {{if .Checked}}checked{{end}}{{if .Help}} aria-describedby="{{.ID}}-help"{{end}}>
+                        <span>{{.Label}}</span>
+                    </label>
+                    <input type="hidden" name="{{.Key}}" value="0">
+                    {{else}}
+                    <label for="{{.ID}}">{{.Label}}{{if .Required}} <span class="settings-required" aria-hidden="true">*</span>{{end}}</label>
+                    {{if eq .Type "text"}}
+                    <textarea id="{{.ID}}" name="{{.Key}}" rows="4"{{if .MaxLength}} maxlength="{{.MaxLength}}"{{end}}{{if .Required}} required aria-required="true"{{end}}{{if .Help}} aria-describedby="{{.ID}}-help"{{end}}>{{.Value}}</textarea>
+                    {{else if eq .Type "select"}}
+                    {{$value := .Value}}
+                    <select id="{{.ID}}" name="{{.Key}}" class="form-control"{{if .Required}} required aria-required="true"{{end}}{{if .Help}} aria-describedby="{{.ID}}-help"{{end}}>
+                        {{if not .Required}}<option value="" {{if eq $value ""}}selected{{end}}>—</option>{{end}}
+                        {{range .Options}}
+                        <option value="{{.Value}}" {{if eq $value .Value}}selected{{end}}>{{.Label}}</option>
+                        {{end}}
+                    </select>
+                    {{else if eq .Type "image"}}
+                    <div class="settings-media-field">
+                        <input type="text" id="{{.ID}}" name="{{.Key}}" value="{{.Value}}" placeholder="/uploads/…"{{if .MaxLength}} maxlength="{{.MaxLength}}"{{end}}{{if .Required}} required aria-required="true"{{end}}{{if .Help}} aria-describedby="{{.ID}}-help"{{end}} data-media-input>
+                        <button type="button" class="btn btn-secondary" data-media-pick="{{.ID}}">{{T $ "action.choose_image"}}</button>
+                    </div>
+                    <div class="settings-media-preview" id="{{.ID}}-preview-wrap"{{if not .Value}} hidden{{end}}>
+                        <img id="{{.ID}}-preview" src="{{.Value}}" alt="">
+                    </div>
+                    {{else}}
+                    <input type="{{.InputType}}" id="{{.ID}}" name="{{.Key}}" value="{{.Value}}"{{if .MaxLength}} maxlength="{{.MaxLength}}"{{end}}{{if .Min}} min="{{.Min}}"{{end}}{{if .Max}} max="{{.Max}}"{{end}}{{if .Required}} required aria-required="true"{{end}}{{if .Help}} aria-describedby="{{.ID}}-help"{{end}}>
+                    {{end}}
+                    {{end}}
+                    {{if .Help}}<small id="{{.ID}}-help">{{.Help}}</small>{{end}}
+                </div>
+                {{end}}
+            </div>
+        </section>
+        {{end}}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{{T . "action.save_settings"}}</button>
+            {{if .HasRequired}}<span class="settings-required-hint">{{T . "theme.settings_required_hint"}}</span>{{end}}
+        </div>
+    </form>
+</div>
+<script>
+(function () {
+    document.querySelectorAll('.theme-settings-form [data-media-pick]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            var id = button.getAttribute('data-media-pick');
+            openMediaPicker(function (url) {
+                var input = document.getElementById(id);
+                var preview = document.getElementById(id + '-preview');
+                var wrap = document.getElementById(id + '-preview-wrap');
+                input.value = url;
+                preview.src = url;
+                wrap.hidden = false;
+            });
+        });
+    });
+})();
+</script>
+{{end}}

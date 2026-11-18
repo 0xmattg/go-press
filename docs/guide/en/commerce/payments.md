@@ -31,6 +31,14 @@ All confirmation paths — push (webhook), manual (admin "mark paid"), and pull 
 | `InlineAction{ClientData}` | tokenized card SDKs | render an inline widget (no PAN stored) |
 | `CompletedAction{}` | store credit, comps | settle synchronously |
 
+An inline widget renders into the `commerce.payment.inline` hook. Commerce
+loads its bootstrap from `/commerce/assets/payment-inline.js` rather than an
+inline script. When the active theme is a theme package, pages carry a
+Content-Security-Policy, so a gateway whose widget loads a provider SDK,
+frames or API calls declares those hosts on the payment page with the
+`frontend.csp` filter (see
+[Extension Points](../admin/extension-points.md#content-security-policy-sources)).
+
 ### Runtime availability and safe payment start
 
 A gateway whose readiness depends on settings implements the optional `GatewayAvailability.Available` contract. A gateway limited to particular order currencies also implements `GatewayCurrencySupport.SupportsCurrency`. Checkout evaluates both contracts while building the visible choices and again when validating the submitted method. An active but disabled, incompletely configured, or currency-incompatible gateway is therefore neither displayed nor selectable through a forged/stale form value. Gateways without these optional interfaces remain available and currency-agnostic for compatibility.

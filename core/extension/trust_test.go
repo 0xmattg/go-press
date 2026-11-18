@@ -45,6 +45,9 @@ func TestBuiltinTrustRoot(t *testing.T) {
 	if root.catalogURL() != DefaultMarketEndpoint+"/catalog?schema=1" {
 		t.Fatalf("catalogURL() = %q", root.catalogURL())
 	}
+	if root.UpdatesURL() != DefaultMarketEndpoint+"/updates/check" {
+		t.Fatalf("UpdatesURL() = %q", root.UpdatesURL())
+	}
 }
 
 func TestCustomTrustRoot(t *testing.T) {
@@ -62,6 +65,9 @@ func TestCustomTrustRoot(t *testing.T) {
 	}
 	if root.Endpoint != "https://market.example.com/api/market/v1" {
 		t.Fatalf("Endpoint = %q", root.Endpoint)
+	}
+	if root.UpdatesURL() != "https://market.example.com/api/market/v1/updates/check" {
+		t.Fatalf("UpdatesURL() = %q", root.UpdatesURL())
 	}
 	if len(root.CatalogKeys) != 2 || len(root.PackageKeys) != 1 {
 		t.Fatalf("keys = %d catalog, %d package", len(root.CatalogKeys), len(root.PackageKeys))

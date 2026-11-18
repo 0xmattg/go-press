@@ -246,14 +246,7 @@ func (h *Handler) List(c *gin.Context) {
 		orderDir = "DESC"
 	}
 	// Whitelist allowed order fields to prevent SQL injection
-	allowedOrder := map[string]bool{
-		"created_at":   true,
-		"updated_at":   true,
-		"published_at": true,
-		"title":        true,
-		"sort_order":   true,
-	}
-	if !allowedOrder[orderBy] {
+	if !content.IsPublicOrderField(orderBy) {
 		orderBy = "created_at"
 	}
 	q = q.OrderBy(orderBy, orderDir)
@@ -375,8 +368,5 @@ func (h *Handler) canExpose(item *content.Content, requestedType interface{}) bo
 	if typeName, ok := requestedType.(string); ok && typeName != "" && item.Type != typeName {
 		return false
 	}
-	if item.Status != content.StatusPublished {
-		return false
-	}
-	return item.PublishedAt == nil || !item.PublishedAt.After(time.Now())
+	return item.IsPublic(time.Now())
 }

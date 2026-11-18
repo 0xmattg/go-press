@@ -1,0 +1,5 @@
+:root { --text: #1f2933; --accent: #2563eb; }
+body { margin: 0; font-family: "Inter", system-ui, sans-serif; color: var(--text); }
+.site-header { display: flex; gap: 1rem; padding: 1rem; }
+.hero { padding: 4rem 1rem; background: url(/static/css/hero.svg) center / cover no-repeat; }
+a { color: var(--accent); }

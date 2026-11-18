@@ -30,6 +30,7 @@
 - [Theme Development](themes/overview.md)
   - [Theme System Overview](themes/overview.md)
   - [Creating Themes](themes/creating-themes.md)
+  - [Theme Packages](themes/theme-packages.md)
   - [Dependencies and Versioning](themes/dependencies.md)
   - [SEO Integration](themes/seo-integration.md)
   - [Image Integration](themes/image-pipeline.md)

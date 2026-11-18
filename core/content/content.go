@@ -58,6 +58,17 @@ type Content struct {
 // TableName overrides the default table name.
 func (Content) TableName() string { return dbprefix.Table("contents") }
 
+// IsPublic reports whether the row is visible on the public site at now. It is
+// the single-row form of ContentQuery.Published: the status is published and
+// PublishedAt is unset or not after now, so scheduled content stays hidden
+// until its publish time.
+func (c *Content) IsPublic(now time.Time) bool {
+	if c == nil || c.Status != StatusPublished || c.DeletedAt.Valid {
+		return false
+	}
+	return c.PublishedAt == nil || !c.PublishedAt.After(now)
+}
+
 // GetMeta returns the value of a meta key, or empty string if not found.
 func (c *Content) GetMeta(key string) string {
 	for _, m := range c.Meta {

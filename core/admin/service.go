@@ -24,6 +24,7 @@ import (
 	"github.com/0xmattg/go-press/core/audit"
 	"github.com/0xmattg/go-press/core/comment"
 	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/extension"
 	coreMail "github.com/0xmattg/go-press/core/mail"
 	coreMedia "github.com/0xmattg/go-press/core/media"
 	"github.com/0xmattg/go-press/core/option"
@@ -722,10 +723,24 @@ func (s *Service) isSettingReadOnly(key string) bool {
 	if def, ok := option.SystemDefinition(key); ok {
 		return def.ReadOnly
 	}
-	if strings.HasPrefix(key, "demo_imported_") {
+	// Plugins are switched on the plugins page, which checks plugin.update
+	// and the active theme's dependencies; the settings form only shows the
+	// state.
+	if strings.HasPrefix(key, "demo_imported_") || strings.HasPrefix(key, "plugin_active_") {
 		return true
 	}
 	return false
+}
+
+// coreOwnedOption reports options the generic settings save must not create
+// or overwrite through new_key: core's system settings (active_theme among
+// them), plugin activation and demo import flags, and developer mode, which
+// only its own endpoint writes.
+func coreOwnedOption(key string) bool {
+	return option.IsSystemSetting(key) ||
+		strings.HasPrefix(key, "plugin_active_") ||
+		strings.HasPrefix(key, "demo_imported_") ||
+		key == extension.OptionDeveloperMode
 }
 
 func (s *Service) humanizeSettingKey(key string) string {

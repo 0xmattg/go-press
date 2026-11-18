@@ -135,6 +135,42 @@ Themes declare these locations with `renderHook`; plugins return markup that
 matches the surrounding semantics. Extensions must not scan or post-process a
 complete HTML response to find an insertion point.
 
+## Content-Security-Policy Sources
+
+While a theme package is active, front-end responses carry a
+Content-Security-Policy that runs only this site's scripts (see
+[Theme Packages](../themes/theme-packages.md#content-security-policy)). A plugin
+whose front-end output needs more, such as an inline payment widget loading a
+provider's SDK, declares it with the `frontend.csp` filter:
+
+```go
+e.Hooks.AddFilter(hook.FrontendCSP, func(value interface{}, args ...interface{}) interface{} {
+    sources, ok := value.(core.CSPSources)
+    c, isRequest := args[0].(*gin.Context)
+    if !ok || !isRequest || !strings.HasPrefix(c.Request.URL.Path, "/checkout/pay/") {
+        return value
+    }
+    sources.Script = append(sources.Script, "https://js.provider.example")
+    sources.Frame = append(sources.Frame, "https://pay.provider.example")
+    sources.Connect = append(sources.Connect, "https://api.provider.example")
+    return sources
+}, 50)
+```
+
+- `core.CSPSources` has a list per directive: `Script`, `Style`, `Font`,
+  `Image`, `Media`, `Frame`, `Connect`. Entries are hosts
+  (`https://cdn.example.com`, `*.example.com`), `'self'`, and hashes of inline
+  scripts (`'sha256-…'`); outside `Script`, also `https:`, `data:` and
+  `blob:`.
+- Sources that would let arbitrary scripts run are dropped and logged:
+  `'unsafe-inline'`, `'unsafe-eval'`, `'unsafe-hashes'`, `'strict-dynamic'`,
+  `*`, `https:` for scripts, and anything containing separators. Plain HTTP
+  is accepted only for `localhost` and `127.0.0.1`.
+- Return the same sources for the same path and settings: cached pages reuse
+  their body and get the policy anew on each response.
+- The filter is not called while a theme built into GoPress is active.
+- A handler that sets its own `Content-Security-Policy` header keeps it.
+
 ## Translation Requirements
 
 Admin-facing theme and plugin settings should not hard-code Chinese or English in templates. They should use the admin translation helper or component-owned locale files. If a component ships only one language, the admin should fall back to that available language instead of hiding the UI.

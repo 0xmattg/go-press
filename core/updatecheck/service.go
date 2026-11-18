@@ -118,17 +118,24 @@ func (s *Service) RunDue(ctx context.Context) error {
 	return err
 }
 
+// Snapshot returns the last result for a registered target. A target that
+// is no longer registered (an uninstalled extension) has no result, whatever
+// was stored for it.
 func (s *Service) Snapshot(kind Kind, slug string) Status {
 	if s == nil || !s.Enabled() {
 		return Status{}
 	}
+	target, registered := s.registry.Get(kind, slug)
+	if !registered {
+		return Status{}
+	}
 	s.mu.Lock()
-	status := s.state.Results[string(kind)+":"+strings.TrimSpace(slug)]
+	status := s.state.Results[target.Key()]
 	s.mu.Unlock()
 	// A process may have been upgraded since this result was persisted. Always
 	// compare against the currently registered version so a stale badge cannot
 	// announce the version that is already running.
-	if target, ok := s.registry.Get(kind, slug); ok && status.LatestVersion != "" {
+	if status.LatestVersion != "" {
 		status.CurrentVersion = target.CurrentVersion
 		if comparison, err := semver.Compare(target.CurrentVersion, status.LatestVersion); err == nil {
 			status.HasUpdate = comparison < 0
@@ -137,6 +144,12 @@ func (s *Service) Snapshot(kind Kind, slug string) Status {
 	return status
 }
 
+// check asks every endpoint about its targets. Endpoints are independent:
+// one that fails (a market without an update endpoint, an outage) is logged
+// and keeps its previous results, while the others are saved as usual. Only
+// when every endpoint fails does the next check back off. A successful
+// response is authoritative for its targets, and results of targets that are
+// no longer registered are dropped.
 func (s *Service) check(ctx context.Context) error {
 	targets := s.registry.All()
 	if len(targets) == 0 {
@@ -156,6 +169,7 @@ func (s *Service) check(ctx context.Context) error {
 	nextTTL := maximumTTL
 	haveSuccess := false
 	results := make(map[string]Status)
+	answered := make(map[string]bool)
 	var failures []string
 	for _, endpoint := range endpoints {
 		requestTargets := groups[endpoint]
@@ -182,6 +196,9 @@ func (s *Service) check(ctx context.Context) error {
 			continue
 		}
 		haveSuccess = true
+		for _, target := range requestTargets {
+			answered[target.Key()] = true
+		}
 		ttl := clampTTL(time.Duration(response.TTLSeconds) * time.Second)
 		if ttl < nextTTL {
 			nextTTL = ttl
@@ -214,17 +231,29 @@ func (s *Service) check(ctx context.Context) error {
 		}
 	}
 
-	if len(failures) > 0 {
+	if len(failures) > 0 && !haveSuccess {
 		failureErr := fmt.Errorf("update check failed: %s", strings.Join(failures, "; "))
 		s.recordFailure(failureErr)
 		return failureErr
 	}
+	if len(failures) > 0 {
+		logger.Warn("GoPress update check failed for some endpoints; the others were saved", "errors", strings.Join(failures, "; "))
+	}
 	if !haveSuccess {
 		nextTTL = defaultTTL
+	}
+	registered := make(map[string]bool, len(targets))
+	for _, target := range targets {
+		registered[target.Key()] = true
 	}
 	s.mu.Lock()
 	if s.state.Results == nil {
 		s.state.Results = make(map[string]Status)
+	}
+	for key := range s.state.Results {
+		if !registered[key] || answered[key] {
+			delete(s.state.Results, key)
+		}
 	}
 	for key, status := range results {
 		s.state.Results[key] = status

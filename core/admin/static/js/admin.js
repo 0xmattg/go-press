@@ -23,8 +23,10 @@ function adminFormat(template) {
         });
     }
 
-    // Auto-dismiss alerts after 4 seconds
-    var alerts = document.querySelectorAll('.alert');
+    // Auto-dismiss flash messages after 4 seconds. Banners (.dep-warning)
+    // report a lasting state, such as developer mode or a fallback theme,
+    // and stay until that state changes.
+    var alerts = document.querySelectorAll('.alert:not(.dep-warning)');
     alerts.forEach(function(el) {
         setTimeout(function() {
             el.style.transition = 'opacity .3s';

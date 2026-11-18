@@ -78,6 +78,39 @@ func (e *Engine) themeFSFor(slug string, t coreTheme.Theme) fs.FS {
 	return assets.DirFS(ThemeDir(slug))
 }
 
+// themeFileConfig returns the theme's parsed theme.toml. The embedded copy
+// (baked into the binary) wins, so runtime behavior matches the compiled
+// version; themes that predate FileConfigProvider are read from their files.
+func (e *Engine) themeFileConfig(slug string, t coreTheme.Theme) (*coreTheme.FileConfig, error) {
+	if fp, ok := t.(coreTheme.FileConfigProvider); ok && fp.FileConfig() != nil {
+		return fp.FileConfig(), nil
+	}
+	return coreTheme.LoadFileConfigFS(e.themeFSFor(slug, t))
+}
+
+// ThemeSettingsSchema returns the [[settings]] declaration of an available
+// theme, active or not. It returns nil and no error when the theme is unknown
+// or declares no settings, and the validation error of an invalid
+// declaration.
+func (e *Engine) ThemeSettingsSchema(slug string) (*coreTheme.SettingsSchema, error) {
+	t, ok := e.lookupTheme(slug)
+	if !ok || t == nil {
+		return nil, nil
+	}
+	cfg, err := e.themeFileConfig(slug, t)
+	if err != nil {
+		return nil, nil
+	}
+	return cfg.SettingsSchema()
+}
+
+// themeDeclaresSettings reports whether the theme declares settings, valid or
+// not; an invalid declaration still gets a settings page that shows the error.
+func (e *Engine) themeDeclaresSettings(slug string) bool {
+	schema, err := e.ThemeSettingsSchema(slug)
+	return schema != nil || err != nil
+}
+
 // diskFallbackThemes lists, sorted, the themes that still read their files
 // from their directory on disk instead of an asset filesystem.
 func diskFallbackThemes(themes map[string]coreTheme.Theme) []string {
@@ -117,10 +150,15 @@ func (e *Engine) ActiveThemeLocaleMessages() map[string]map[string]string {
 }
 
 // ThemeSettingsTemplate locates the admin settings template of the theme, or
-// returns the zero TemplateRef when the theme has none.
+// returns the zero TemplateRef when the theme has none. Theme packages never
+// have one: their markup must not run in the admin, so their settings page
+// is always generated from [[settings]].
 func (e *Engine) ThemeSettingsTemplate(slug string) admin.TemplateRef {
 	t, ok := e.lookupTheme(slug)
 	if !ok {
+		return admin.TemplateRef{}
+	}
+	if _, isPackage := coreTheme.PackageInfoOf(t); isPackage {
 		return admin.TemplateRef{}
 	}
 	if fsys := coreTheme.AssetFSOf(t); fsys != nil {

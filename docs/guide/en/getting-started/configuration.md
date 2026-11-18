@@ -75,6 +75,9 @@ timeout_seconds = 10
 [install]
 completed = true
 require_token = false       # true: the web installer asks for a one-time token
+
+# [market]                  # optional; see Market below
+# lock_developer_mode = true
 ```
 
 ## Site
@@ -197,6 +200,84 @@ it is removed once the site is installed. It is off by default, so set it in a
 config you create before the first start. See
 [Keep the Installer Private](installation.md#keep-the-installer-private).
 
+## Market
+
+The `[market]` section is optional. Without it the site uses the official
+theme market built into this release. The official market opens once its
+signing keys are published; until then the admin's theme market page reports
+that no market is available, and theme packages can still be uploaded.
+
+```toml
+[market]
+# A self-hosted market instead of the official one: set all three or none.
+endpoint     = "https://market.example.com/api/market/v1"
+catalog_keys = ["<base64 Ed25519 public key>"]
+package_keys = ["<base64 Ed25519 public key>"]
+
+# Keep developer mode off whatever the admin says.
+lock_developer_mode = true
+```
+
+- `endpoint`, `catalog_keys`, `package_keys` — point the site at a
+  self-hosted market. They replace the official market as a whole, so set all
+  three together; a section with only some of them stops the server from
+  starting. `catalog_keys` verify the market's signed catalog and
+  `package_keys` its countersignature on each package; each list holds up to
+  4 keys, and a key may not appear in both. The endpoint must use HTTPS
+  (plain HTTP only on a loopback address, for local testing).
+- `lock_developer_mode` — keeps developer mode off: the admin cannot turn it
+  on, and a mode turned on earlier counts as off. Set it on production sites,
+  so a stolen admin session cannot allow packages without a market signature.
+  It does not count as configuring a market.
+
+A self-hosted market serves its catalog at `<endpoint>/catalog?schema=1`,
+signed with `gopress pkg catalog sign`, and each package at the
+`download_url` of its catalog entry. Downloads use HTTPS, follow no
+redirects, and must be exactly the size the catalog lists, so link to the
+file itself. See [Theme Packages](../themes/theme-packages.md#installing-and-managing-packages).
+
+A self-hosted market also answers update checks at `POST <endpoint>/updates/check`.
+While the update check setting is on (Settings → *Official Updates and Beta
+Usage Feedback*), the site sends the themes it installed from that market
+with the market's signature, and no installation identifier:
+
+```json
+{
+  "protocol_version": 1,
+  "targets": [
+    { "kind": "theme", "slug": "aurora", "current_version": "1.2.0" }
+  ]
+}
+```
+
+The market answers with the themes that have a newer version:
+
+```json
+{
+  "protocol_version": 1,
+  "ttl_seconds": 86400,
+  "updates": [
+    {
+      "kind": "theme",
+      "slug": "aurora",
+      "latest_version": "1.3.0",
+      "severity": "security",
+      "release_url": "https://market.example.com/themes/aurora/1.3.0"
+    }
+  ]
+}
+```
+
+- `severity` is `security`, `unsupported` (the installed version is no longer
+  supported) or left out for a normal update. `release_url` is optional and
+  must use HTTPS.
+- Entries for themes the site did not ask about, or with an invalid version,
+  are ignored. `ttl_seconds` is how long the answer holds, from 6 hours to
+  7 days.
+- The answer only shows an update notice; upgrading still goes through the
+  signed catalog. A market without this endpoint shows no notices, and the
+  site's other update checks carry on.
+
 ## Runtime Files and Multiple Sites
 
 ```text
@@ -204,11 +285,22 @@ sites/
   localhost/
     config.toml
     public/            generated sitemap.xml and future public artifacts
+    packages/
+      archives/        installed theme packages (their original .zip files)
   example.com/
     config.toml
 uploads/
   YYYY/MM/             originals and generated media variants
 ```
+
+Back up each site's `packages/` directory together with its database:
+installed theme packages are files, so a database dump does not contain
+them. A package installed from the market can be installed again while the
+market still offers that version; an uploaded package exists only on its
+site.
+
+Run one GoPress process per site. Package installs, like other runtime
+changes such as options and menus, are not yet shared between processes.
 
 Use `-config sites/example.com/config.toml` to choose a site explicitly. Sites
 may share one PostgreSQL database through different table prefixes and one

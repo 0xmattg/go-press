@@ -1,0 +1,6 @@
+{{define "content"}}<section class="hero">
+  <h1>{{settingOr .Settings "hero_title" "Welcome"}}</h1>
+</section>
+{{with contentList .Ctx "post" 6}}<ul class="posts">
+  {{range .}}<li><a href="{{.URL}}">{{.Title}}</a></li>{{end}}
+</ul>{{else}}<p>{{T $.Ctx "no_posts"}}</p>{{end}}{{end}}

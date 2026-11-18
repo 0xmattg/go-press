@@ -22,9 +22,9 @@ The CLI exposes three subcommands:
 
 | Command | What it does |
 |---|---|
-| `gopress serve [flags...]` | Regenerate the autoload package, then run the server. Any flag is forwarded to `cmd/server` (e.g. `-config`, `-seed`). Signals are forwarded to the child process for graceful shutdown. |
+| `gopress serve [flags...]` | Regenerate the autoload package, then run the server. Any flag is forwarded to `cmd/server` (e.g. `-config`, `-seed`, or `-theme-package` to preview a theme package locally). Signals are forwarded to the child process for graceful shutdown. |
 | `gopress build [-o path]` | Regenerate the autoload package, then `go build` a single server binary. Default output is `build/gopress-server`. |
-| `gopress pkg keygen \| digest \| sign \| verify \| catalog` | Create Ed25519 signing keys, print a package's content digest, sign or verify an extension package directory or `.zip` archive, and sign or verify a market catalog (`catalog sign \| verify`). Works outside a GoPress checkout. |
+| `gopress pkg keygen \| check \| build \| digest \| sign \| verify \| catalog` | Create Ed25519 signing keys; check a theme package and pack a theme directory into a reproducible `.zip` (see [Theme Packages](../themes/theme-packages.md)); print a package's content digest; sign or verify an extension package directory or `.zip` archive; sign or verify a market catalog (`catalog sign \| verify`). Works outside a GoPress checkout. |
 | `gopress gen` | Regenerate the autoload package only — useful in IDEs or CI hooks. |
 
 ## Clone and Run
@@ -228,6 +228,9 @@ Examples use `./build/gopress` (local build). After `make install` you can drop 
 # Forward flags to cmd/server
 ./build/gopress serve -config sites/localhost/config.toml
 ./build/gopress serve -seed
+
+# Preview a theme package locally (a directory or a .zip; repeatable; not in release mode)
+./build/gopress serve -theme-package ../aurora
 
 # Regenerate autoload only (does not start anything)
 ./build/gopress gen

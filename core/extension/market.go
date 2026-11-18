@@ -19,6 +19,9 @@ import (
 // it is longer than the update check's.
 const fetchTimeout = 15 * time.Second
 
+// downloadTimeout bounds one package download, body included.
+const downloadTimeout = 60 * time.Second
+
 var (
 	// ErrMarketDisabled reports that no market is configured: the release
 	// has no built-in market keys and config.toml has no [market] section.
@@ -29,6 +32,10 @@ var (
 	// stored one but different content. A market never does this; it points
 	// to a market bug or a leaked catalog key.
 	ErrCatalogEquivocation = errors.New("extension: market served different catalogs under the same sequence")
+	// ErrPackageDownload reports a failed package download: a network
+	// error, a response other than 200, or a body whose size is not the one
+	// the catalog lists.
+	ErrPackageDownload = errors.New("extension: could not download the package")
 )
 
 // Market fetches and verifies the market catalog and applies its revocation
@@ -244,4 +251,64 @@ func (m *Market) applyRevocations(ctx context.Context, cat *Catalog) error {
 		}
 	}
 	return nil
+}
+
+// ApplyStoredRevocations applies the revocation list of the stored catalog
+// to installed packages, without fetching. Checks that must work offline use
+// it: switching to a theme, rolling back, uploading. It does nothing when no
+// market is configured or no stored catalog verifies.
+func (m *Market) ApplyStoredRevocations(ctx context.Context) error {
+	cat, err := m.Stored(ctx)
+	if err != nil || cat == nil {
+		return err
+	}
+	if err := m.applyRevocations(ctx, cat); err != nil {
+		return fmt.Errorf("extension: apply stored catalog revocations: %w", err)
+	}
+	return nil
+}
+
+// Download fetches the package a catalog item offers. Like the catalog
+// fetch it sends no cookies or instance details and follows no redirects,
+// so the market must link to the file itself. The body must be exactly
+// item.Size bytes. Download does not check the content: the caller compares
+// its digest with item.Digest, which the catalog signatures cover.
+func (m *Market) Download(ctx context.Context, item Item) ([]byte, error) {
+	if !m.root.Enabled() {
+		return nil, ErrMarketDisabled
+	}
+	if item.Size <= 0 || item.Size > maxPackageBytes {
+		return nil, fmt.Errorf("%w: size %d is outside 1 to %d bytes", ErrPackageDownload, item.Size, maxPackageBytes)
+	}
+	if err := checkURL("download_url", item.DownloadURL, true, m.root.allowsLoopbackHTTP()); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrPackageDownload, err)
+	}
+	ctx, cancel := context.WithTimeout(ctx, downloadTimeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, item.DownloadURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrPackageDownload, err)
+	}
+	req.Header.Set("Accept", "application/zip, application/octet-stream")
+	if m.userAgent != "" {
+		req.Header.Set("User-Agent", m.userAgent)
+	}
+	client := *m.client
+	client.Timeout = downloadTimeout
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrPackageDownload, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("%w: %s returned %s", ErrPackageDownload, item.DownloadURL, resp.Status)
+	}
+	data, err := io.ReadAll(io.LimitReader(resp.Body, item.Size+1))
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrPackageDownload, err)
+	}
+	if int64(len(data)) != item.Size {
+		return nil, fmt.Errorf("%w: received %d bytes, the catalog lists %d", ErrPackageDownload, len(data), item.Size)
+	}
+	return data, nil
 }

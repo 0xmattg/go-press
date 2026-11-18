@@ -42,6 +42,11 @@ GoPress 引擎是 CMS 的运行时容器，负责装配存储、内容仓储、R
   可把内容类型映射到不同名称的视觉页面 bundle。
 - **链式查询** — 主题可使用共享查询构建器，例如
   `ContentQuery.Type("product").Published().Taxonomy("category", "hepa").Paginate(1, 20)`。
+- **公开可见性** — `Published()` 只保留已发布、并且 `published_at` 为空或已到的行；
+  `Content.IsPublic(now)` 是同一条规则的单行版本。归档页、BaseTheme 详情页、REST API
+  和模板数据函数都用它，所以定时发布的内容在发布时间之前不可见。模板通过有上限的数据函数
+  `contentList`、`contentBySlug`、`taxonomyTerms` 读取其他内容，见
+  [创建主题](../themes/creating-themes.md#只读数据函数)。
 - **分类法系统** — 层级分类与扁平标签支持多对多关系和自动计数；主题通过
   `taxonomies = ["category", "tag"]` 挂载到内容类型。
 - **Taxonomy 请求 Scope** — `taxonomy.Scope`、`AddScope`、`WithScope` 和

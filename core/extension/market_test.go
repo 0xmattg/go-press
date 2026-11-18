@@ -4,6 +4,7 @@
 package extension
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"net/http"
@@ -382,5 +383,117 @@ func TestMarketSharesConcurrentRefreshes(t *testing.T) {
 	f.mu.Unlock()
 	if _, err := m.Refresh(context.Background()); err != nil || f.requestCount() != 2 {
 		t.Fatalf("second refresh: %v, %d requests", err, f.requestCount())
+	}
+}
+
+func TestMarketDownload(t *testing.T) {
+	k := newTestKeys(t)
+	f := newFakeMarket(t)
+	m, _ := testMarket(t, f, k)
+	body := bytes.Repeat([]byte("z"), 64)
+	var gotUA, gotCookie string
+	files := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotUA, gotCookie = r.Header.Get("User-Agent"), r.Header.Get("Cookie")
+		switch r.URL.Path {
+		case "/ok.zip":
+			_, _ = w.Write(body)
+		case "/moved.zip":
+			http.Redirect(w, r, "/ok.zip", http.StatusFound)
+		case "/missing.zip":
+			http.NotFound(w, r)
+		case "/slow.zip":
+			<-r.Context().Done()
+		}
+	}))
+	t.Cleanup(files.Close)
+	item := func(path string, size int64) Item {
+		return Item{Kind: KindTheme, Slug: "aurora", Version: "1.0.0", Size: size, DownloadURL: files.URL + path}
+	}
+	ctx := context.Background()
+
+	data, err := m.Download(ctx, item("/ok.zip", int64(len(body))))
+	if err != nil || !bytes.Equal(data, body) {
+		t.Fatalf("Download = %d bytes, %v", len(data), err)
+	}
+	if gotUA != "GoPress/test" || gotCookie != "" {
+		t.Fatalf("request headers: User-Agent %q, Cookie %q", gotUA, gotCookie)
+	}
+
+	for name, it := range map[string]Item{
+		"shorter than listed": item("/ok.zip", int64(len(body))+1),
+		"longer than listed":  item("/ok.zip", int64(len(body))-1),
+		"redirect":            item("/moved.zip", int64(len(body))),
+		"not found":           item("/missing.zip", int64(len(body))),
+		"too large":           item("/ok.zip", maxPackageBytes+1),
+		"not https":           {Size: 1, DownloadURL: "http://downloads.example.com/x.zip"},
+	} {
+		if _, err := m.Download(ctx, it); !errors.Is(err, ErrPackageDownload) {
+			t.Errorf("%s: Download = %v, want ErrPackageDownload", name, err)
+		}
+	}
+
+	short, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
+	defer cancel()
+	if _, err := m.Download(short, item("/slow.zip", 1)); !errors.Is(err, ErrPackageDownload) {
+		t.Fatalf("timed out download = %v", err)
+	}
+
+	disabled := NewMarket(nil, TrustRoot{Endpoint: f.endpoint()}, nil, "")
+	if _, err := disabled.Download(ctx, item("/ok.zip", int64(len(body)))); !errors.Is(err, ErrMarketDisabled) {
+		t.Fatalf("disabled market Download = %v", err)
+	}
+}
+
+func TestMarketApplyStoredRevocations(t *testing.T) {
+	k := newTestKeys(t)
+	f := newFakeMarket(t)
+	m, store := testMarket(t, f, k)
+	ctx := context.Background()
+	pkg := theme("aurora", "1.0.0", testDigest("a"))
+	if err := store.Add(ctx, pkg, true); err != nil {
+		t.Fatal(err)
+	}
+
+	// No stored catalog yet: nothing happens and nothing is fetched.
+	if err := m.ApplyStoredRevocations(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := store.Get(ctx, pkg.ID); got.Status != StatusReady || f.requestCount() != 0 {
+		t.Fatalf("status = %s, requests = %d", got.Status, f.requestCount())
+	}
+
+	// A catalog is stored, then the package is installed again as ready, as
+	// if the revocation had not reached it.
+	p := newPayload(1)
+	p.Revoked = []Revocation{{Kind: KindTheme, Slug: "aurora", Versions: []string{"1.0.0"}, Severity: SeverityHigh, Reason: ReasonVulnerability}}
+	f.set(p.envelope(t, k.catalog))
+	if _, err := m.Refresh(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.SetStatus(ctx, pkg.ID, StatusReady); err != nil {
+		t.Fatal(err)
+	}
+	requests := f.requestCount()
+	if err := m.ApplyStoredRevocations(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := store.Get(ctx, pkg.ID); got.Status != StatusRevoked {
+		t.Fatalf("status = %s, want revoked", got.Status)
+	}
+	if f.requestCount() != requests {
+		t.Fatal("ApplyStoredRevocations fetched the catalog")
+	}
+
+	// A stored catalog that no longer verifies (another market's keys) is
+	// ignored.
+	other := NewMarket(store, newTestKeys(t).root(t, f.endpoint()), nil, "")
+	if err := store.SetStatus(ctx, pkg.ID, StatusReady); err != nil {
+		t.Fatal(err)
+	}
+	if err := other.ApplyStoredRevocations(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := store.Get(ctx, pkg.ID); got.Status != StatusReady {
+		t.Fatalf("status = %s after a catalog that does not verify", got.Status)
 	}
 }

@@ -1,0 +1,54 @@
+{{define "content"}}
+<div class="content-header market-header">
+    <div class="content-header-left">
+        <h2>{{T . "ext.market_title"}}</h2>
+        {{if eq .Market.Mode "custom"}}<span class="market-host" title="{{.Market.Host}}">{{T . "ext.market_host" .Market.Host}}</span>{{end}}
+    </div>
+    <div class="content-header-actions">
+        <a href="/admin/themes" class="btn btn-secondary">{{T . "ext.back_to_themes"}}</a>
+        {{if .CanInstall}}<button type="button" class="btn btn-primary" data-ext-upload>{{T . "ext.upload_button"}}</button>{{end}}
+    </div>
+</div>
+
+<div class="market-notice" data-ext-notice role="status" aria-live="polite"></div>
+
+<nav class="content-list-tabs market-tabs" aria-label="{{T . "ext.market_title"}}">
+    <a href="/admin/themes/market" class="content-list-tab{{if eq .Tab "browse"}} active{{end}}"{{if eq .Tab "browse"}} aria-current="page"{{end}}>{{T . "ext.tab_browse"}}</a>
+    <a href="/admin/themes/market?tab=installed" class="content-list-tab{{if eq .Tab "installed"}} active{{end}}"{{if eq .Tab "installed"}} aria-current="page"{{end}}>{{T . "ext.tab_installed"}}</a>
+</nav>
+
+<div class="card market-panel" data-ext-market data-tab="{{.Tab}}"
+     data-market-enabled="{{.Market.Enabled}}"
+     data-can-install="{{.CanInstall}}" data-can-delete="{{.CanDelete}}"
+     data-can-developer="{{.CanDeveloperMode}}" data-can-switch="{{.CanSwitchTheme}}">
+    {{if eq .Tab "browse"}}
+        {{if .Market.Enabled}}
+        <div class="market-toolbar" data-ext-toolbar hidden>
+            <input type="search" class="content-list-search-input market-search" data-ext-search
+                   placeholder="{{T . "ext.search_placeholder"}}" aria-label="{{T . "ext.search_placeholder"}}">
+        </div>
+        <div class="market-state" data-ext-state>
+            <span class="market-spinner" aria-hidden="true"></span>{{T . "ext.loading_catalog"}}
+        </div>
+        <div class="revoked-installed" data-ext-revoked hidden></div>
+        <div class="extension-grid market-grid" data-ext-list></div>
+        <div class="market-more" data-ext-more-wrap hidden>
+            <button type="button" class="btn btn-secondary" data-ext-more>{{T . "ext.show_more"}}</button>
+        </div>
+        {{else}}
+        <div class="market-state market-state-disabled">
+            <strong>{{T . "ext.market_disabled_title"}}</strong>
+            <p>{{T . "ext.market_disabled_help"}}</p>
+        </div>
+        {{end}}
+    {{else}}
+        <div class="market-state" data-ext-state>
+            <span class="market-spinner" aria-hidden="true"></span>{{T . "status.loading"}}
+        </div>
+        <div class="package-list" data-ext-list></div>
+    {{end}}
+</div>
+
+<script type="application/json" id="extensionsText">{{toJSON .ExtensionText}}</script>
+<script src="/static/admin/js/extensions.js?v=2"></script>
+{{end}}

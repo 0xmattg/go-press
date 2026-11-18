@@ -21,9 +21,10 @@
 // Every query goes through the request's content and taxonomy scopes, so
 // plugins such as multilang can partition results without the theme knowing.
 // Archives list published items only, and single views 404 for anything not
-// published. SEO metadata comes from the shared SEOBuilder plus site option
-// overrides, and BaseFuncMap provides the helpers every theme template can
-// rely on.
+// published or scheduled for later. SEO metadata comes from the shared
+// SEOBuilder plus site option overrides, and BaseFuncMap provides the helpers
+// every theme template can rely on, including the read-only data functions in
+// datafuncs.go.
 
 package theme
 
@@ -46,6 +47,7 @@ import (
 	coreI18n "github.com/0xmattg/go-press/core/i18n"
 	"github.com/0xmattg/go-press/core/mail"
 	"github.com/0xmattg/go-press/core/menu"
+	"github.com/0xmattg/go-press/core/option"
 	"github.com/0xmattg/go-press/core/rewrite"
 	"github.com/0xmattg/go-press/core/taxonomy"
 	"github.com/0xmattg/go-press/core/user"
@@ -487,6 +489,12 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 	funcs["embedHTML"] = func(s string) template.HTML {
 		return template.HTML(content.SanitizeEmbed(s))
 	}
+	// The data functions enforce public visibility and the per-request
+	// budget, and package checks rely on their names, so a theme function of
+	// the same name cannot replace them.
+	for name, fn := range b.dataFuncMap() {
+		funcs[name] = fn
+	}
 	return funcs
 }
 
@@ -595,10 +603,13 @@ func (b *BaseTheme) ServeHTTP(c *gin.Context) {
 	}
 }
 
-// renderHome renders the homepage using front-page.tmpl → home.tmpl → index.tmpl.
+// renderHome renders the home page: the front-page, home or index page
+// bundle, else the classic front-page.tmpl → home.tmpl → index.tmpl.
 func (b *BaseTheme) renderHome(c *gin.Context) {
-	candidates := ResolveTemplate("", "", "", "", false, true, false)
-	tmpl := b.Templates.Resolve(candidates)
+	tmpl := b.resolvePageTemplate(HomePageNames())
+	if tmpl == nil {
+		tmpl = b.Templates.Resolve(ResolveTemplate("", "", "", "", false, true, false))
+	}
 	if tmpl == nil {
 		c.String(http.StatusInternalServerError, "No home template found")
 		return
@@ -724,8 +735,9 @@ func (b *BaseTheme) renderSingle(c *gin.Context, route *rewrite.ResolvedRoute) {
 		return
 	}
 
-	// Only show published content
-	if item.Status != content.StatusPublished {
+	// Only show content a visitor may see: published, and not scheduled for
+	// later. This is the same rule archive and data function queries apply.
+	if !item.IsPublic(time.Now()) {
 		b.render404(c)
 		return
 	}
@@ -913,8 +925,24 @@ func (b *BaseTheme) renderTaxonomy(c *gin.Context, route *rewrite.ResolvedRoute)
 	}
 }
 
-// render404 renders the 404 page using the template hierarchy.
+// render404 renders the 404 page: the 404 page bundle with the base layout,
+// else the classic 404.tmpl → index.tmpl, else plain text.
 func (b *BaseTheme) render404(c *gin.Context) {
+	if tmpl := b.resolvePageTemplate([]string{NotFoundPageName}); tmpl != nil {
+		data := b.buildBaseData(c, "Page Not Found")
+		if b.App != nil && b.App.SEOBuilder() != nil {
+			seo := rewrite.SEOMeta{Title: "Page Not Found | " + b.App.SEOBuilder().SiteName(), Robots: "noindex,follow"}
+			ApplySiteOptionOverridesForRequest(c, b.App, &seo)
+			data["SEO"] = seo
+		}
+		data["Ctx"] = c
+		c.Status(http.StatusNotFound)
+		c.Header("Content-Type", "text/html; charset=utf-8")
+		if err := tmpl.ExecuteTemplate(c.Writer, "base", data); err != nil {
+			logger.Error("BaseTheme: 404 template render error", "template", tmpl.Name(), "error", err)
+		}
+		return
+	}
 	candidates := ResolveTemplate("", "", "", "", false, false, true)
 	tmpl := b.Templates.Resolve(candidates)
 	if tmpl == nil {
@@ -946,10 +974,29 @@ func (b *BaseTheme) buildBaseData(c *gin.Context, title string) gin.H {
 		"Title": title,
 	}
 	if b.App != nil && b.App.OptionsStore() != nil {
-		data["Settings"] = b.App.OptionsStore().All()
+		data["Settings"] = b.TemplateSettings(c)
 	}
 	data["RecentPosts"] = b.recentPostViews(c, 3)
 	return data
+}
+
+// TemplateSettings returns the site options as templates see them: a setting
+// the theme declares in [[settings]] but that was never saved has its default,
+// and translatable settings are translated for the request language. A saved
+// empty value is kept, because it means the setting was cleared. Themes that
+// build their own page data can use it for the same view.
+func (b *BaseTheme) TemplateSettings(c *gin.Context) map[string]string {
+	if b.App == nil || b.App.OptionsStore() == nil {
+		return map[string]string{}
+	}
+	settings := b.App.OptionsStore().All()
+	if schema, err := b.fileConfig.SettingsSchema(); err == nil {
+		settings = schema.ApplyDefaults(settings)
+	}
+	if mgr := b.App.I18nManager(); mgr != nil && c != nil {
+		settings = mgr.TranslateSettings(c, settings, option.IsTranslatable, option.AllTranslatableKeys())
+	}
+	return settings
 }
 
 // executeTemplate renders a resolved template with the given data.
@@ -1197,18 +1244,102 @@ func uniqueStrings(in []string) []string {
 	return out
 }
 
+// contentViews builds the template view of each item. Meta and taxonomy rows
+// for the whole batch are loaded with one query each, so the number of queries
+// does not grow with the number of items.
 func (b *BaseTheme) contentViews(c *gin.Context, items []content.Content) []map[string]interface{} {
 	views := make([]map[string]interface{}, len(items))
+	if len(items) == 0 {
+		return views
+	}
+	ids := make([]uint, len(items))
 	for i, item := range items {
-		views[i] = b.contentView(c, item)
+		ids[i] = item.ID
+	}
+	metas, err := b.App.ContentRepo().MetaForIDs(content.RequestContext(c), ids)
+	if err != nil {
+		logger.Warn("BaseTheme: loading content meta failed", "error", err)
+	}
+	terms := b.contentTermViews(c, items, ids)
+	for i, item := range items {
+		views[i] = b.buildContentView(item, metas[item.ID], terms[item.ID])
 	}
 	return views
 }
 
 func (b *BaseTheme) contentView(c *gin.Context, item content.Content) map[string]interface{} {
-	meta, _ := b.App.ContentRepo().GetMeta(item.ID)
-	categories := b.termViews(c, item.ID, "category")
-	tags := b.termViews(c, item.ID, "tag")
+	return b.contentViews(c, []content.Content{item})[0]
+}
+
+// itemTermViews holds one item's taxonomy views: category and tag, which every
+// view carries, plus each taxonomy the item's content type declares.
+type itemTermViews struct {
+	categories []map[string]interface{}
+	tags       []map[string]interface{}
+	declared   map[string][]map[string]interface{}
+}
+
+// contentTermViews loads the taxonomy rows of all items in one query. Without
+// a taxonomy repository every item gets nil categories and tags, as before.
+func (b *BaseTheme) contentTermViews(c *gin.Context, items []content.Content, ids []uint) map[uint]itemTermViews {
+	result := make(map[uint]itemTermViews, len(items))
+	repo := b.App.TaxonomyRepo()
+	if repo == nil {
+		return result
+	}
+	names := []string{"category", "tag"}
+	declaredByType := map[string][]string{}
+	registry := b.App.ContentRegistry()
+	for _, item := range items {
+		if _, seen := declaredByType[item.Type]; seen {
+			continue
+		}
+		var declared []string
+		if registry != nil {
+			if typeDef := registry.GetType(item.Type); typeDef != nil {
+				declared = typeDef.Taxonomies
+			}
+		}
+		declaredByType[item.Type] = declared
+		for _, name := range declared {
+			if !stringInList(names, name) {
+				names = append(names, name)
+			}
+		}
+	}
+	rows, err := repo.ContentTaxonomiesForIDsContext(taxonomy.RequestContext(c), ids, names)
+	if err != nil {
+		logger.Warn("BaseTheme: loading content taxonomies failed", "error", err)
+		rows = nil
+	}
+	for _, item := range items {
+		views := itemTermViews{
+			categories: []map[string]interface{}{},
+			tags:       []map[string]interface{}{},
+			declared:   map[string][]map[string]interface{}{},
+		}
+		for _, name := range declaredByType[item.Type] {
+			views.declared[name] = []map[string]interface{}{}
+		}
+		for _, row := range rows[item.ID] {
+			view := taxonomyView(c, b.App, row)
+			switch row.Taxonomy {
+			case "category":
+				views.categories = append(views.categories, view)
+			case "tag":
+				views.tags = append(views.tags, view)
+			}
+			if list, ok := views.declared[row.Taxonomy]; ok {
+				views.declared[row.Taxonomy] = append(list, view)
+			}
+		}
+		result[item.ID] = views
+	}
+	return result
+}
+
+func (b *BaseTheme) buildContentView(item content.Content, meta map[string]string, terms itemTermViews) map[string]interface{} {
+	categories, tags := terms.categories, terms.tags
 
 	view := map[string]interface{}{
 		"ID":          item.ID,
@@ -1229,6 +1360,7 @@ func (b *BaseTheme) contentView(c *gin.Context, item content.Content) map[string
 		"Meta":        meta,
 		"Categories":  categories,
 		"Tags":        tags,
+		"Terms":       terms.declared,
 	}
 	if len(categories) > 0 {
 		view["Category"] = categories[0]
@@ -1311,14 +1443,6 @@ func (b *BaseTheme) recentPostViews(c *gin.Context, limit int) []map[string]inte
 		return nil
 	}
 	return b.contentViews(c, items)
-}
-
-func (b *BaseTheme) termViews(c *gin.Context, contentID uint, taxName string) []map[string]interface{} {
-	if b.App == nil || b.App.TaxonomyRepo() == nil {
-		return nil
-	}
-	items, _ := b.App.TaxonomyRepo().GetContentTaxonomiesContext(taxonomy.RequestContext(c), contentID, taxName)
-	return taxonomyViews(c, b.App, items)
 }
 
 func taxonomyViews(c *gin.Context, app App, items []taxonomy.Taxonomy) []map[string]interface{} {

@@ -17,8 +17,9 @@
 // The whole file is parsed and checked against the active content registry
 // before any row is read or deleted, so a malformed seed, an undeclared term,
 // or a content type from an inactive extension leaves the site untouched.
-// Remote images are downloaded into the media library. After a successful
-// commit the seed.completed hook fires, letting plugins derive their own
+// Remote images are downloaded into the media library. Demo data of a theme
+// package is untrusted and restricted further (packageSeedPolicy). After a
+// successful commit the seed.completed hook fires, letting plugins derive their own
 // satellite rows from the seeded content and meta without core knowing their
 // schema.
 
@@ -104,6 +105,9 @@ type SeedTaxonomy struct {
 type preparedSeedData struct {
 	data         SeedData
 	taxonomyDefs []SeedTaxonomy
+	// untrusted marks demo data from a theme package: remote images are
+	// kept as URLs instead of downloaded, and content bodies are sanitized.
+	untrusted bool
 }
 
 // coreOptionKeys lists option keys that must survive a demo-data import.
@@ -129,6 +133,12 @@ func (e *Engine) ForceSeedFromFile(path string) error {
 // ForceSeedFromFS is ForceSeedFromFile for a seed file inside a filesystem,
 // such as a theme's asset filesystem.
 func (e *Engine) ForceSeedFromFS(fsys fs.FS, name string) error {
+	return e.forceSeedFS(fsys, name, nil)
+}
+
+// forceSeedFS is ForceSeedFromFS with the seed checked against policy first
+// when policy is not nil.
+func (e *Engine) forceSeedFS(fsys fs.FS, name string, policy *packageSeedPolicy) error {
 	if fsys == nil {
 		return fmt.Errorf("failed to parse seed file: no filesystem for %q", name)
 	}
@@ -139,6 +149,11 @@ func (e *Engine) ForceSeedFromFS(fsys fs.FS, name string) error {
 	prepared, err := prepareSeedData(string(data))
 	if err != nil {
 		return err
+	}
+	if policy != nil {
+		if err := policy.check(prepared); err != nil {
+			return err
+		}
 	}
 	return e.forceSeed(prepared)
 }
@@ -326,9 +341,10 @@ func (e *Engine) writeSeedData(tx *gorm.DB, prepared *preparedSeedData) error {
 			body = c.Description
 		}
 
-		// Download remote image to local uploads directory
+		// Download remote image to local uploads directory. Untrusted
+		// seeds only have URLs on declared hosts, kept as they are.
 		imageURL := c.ImageURL
-		if strings.HasPrefix(imageURL, "http://") || strings.HasPrefix(imageURL, "https://") {
+		if !prepared.untrusted && (strings.HasPrefix(imageURL, "http://") || strings.HasPrefix(imageURL, "https://")) {
 			remoteURL := imageURL
 			if local, ok := downloadedImages[remoteURL]; ok {
 				imageURL = local
@@ -339,6 +355,10 @@ func (e *Engine) writeSeedData(tx *gorm.DB, prepared *preparedSeedData) error {
 				imageURL = local
 				downloadedImages[remoteURL] = local
 			}
+		}
+
+		if prepared.untrusted {
+			body = content.SanitizeHTML(body)
 		}
 
 		item := content.Content{
