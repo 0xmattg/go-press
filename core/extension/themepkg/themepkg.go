@@ -71,11 +71,12 @@ const (
 	RuleSizeFile     = "size.file"
 	RuleSizeTemplate = "size.template"
 
-	RuleFileType    = "file.type"
-	RuleFilePlace   = "file.place"
-	RuleFileContent = "file.content"
-	RuleFileJSON    = "file.json"
-	RuleFileTOML    = "file.toml"
+	RuleFileType     = "file.type"
+	RuleFilePlace    = "file.place"
+	RuleFileContent  = "file.content"
+	RuleFileJSON     = "file.json"
+	RuleFileTOML     = "file.toml"
+	RuleFileShadowed = "file.shadowed"
 
 	RuleScriptFile    = "script.file"
 	RuleScriptTag     = "script.tag"

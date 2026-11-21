@@ -31,6 +31,7 @@
   - [Theme System Overview](themes/overview.md)
   - [Creating Themes](themes/creating-themes.md)
   - [Theme Packages](themes/theme-packages.md)
+  - [Theme Interactions](themes/interactions.md)
   - [Dependencies and Versioning](themes/dependencies.md)
   - [SEO Integration](themes/seo-integration.md)
   - [Image Integration](themes/image-pipeline.md)

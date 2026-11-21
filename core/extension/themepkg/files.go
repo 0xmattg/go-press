@@ -10,6 +10,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/0xmattg/go-press/core/frontend"
 	"github.com/0xmattg/go-press/pkg/sign"
 
 	"github.com/BurntSushi/toml"
@@ -38,6 +39,11 @@ var (
 	topDirs   = map[string]bool{"templates": true, "static": true, "locales": true, "demo": true, sign.SignaturesDir: true}
 	rootFiles = map[string]bool{"theme.toml": true, "README.md": true, "LICENSE": true, "CHANGELOG.md": true}
 )
+
+// coreStaticDirs are the directories under /static/ that core serves itself
+// (admin assets, uploads, front-end assets): a theme's files there can never
+// be requested.
+var coreStaticDirs = []string{"admin/", "uploads/", frontend.Dir + "/"}
 
 // checkFile applies the type, placement and content rules to one file.
 func (c *checker) checkFile(f *file) {
@@ -90,7 +96,22 @@ func (c *checker) checkFile(f *file) {
 		}
 	}
 
+	if top == "static" {
+		c.checkShadowed(rest)
+	}
 	c.checkContent(f, ext)
+}
+
+// checkShadowed warns, once per directory, about files under a static/
+// directory core serves itself. It is a warning: such a file is unreachable,
+// not unsafe, and an installed package must not turn broken over it.
+func (c *checker) checkShadowed(rest string) {
+	for _, dir := range coreStaticDirs {
+		if strings.HasPrefix(rest, dir) {
+			c.warn(RuleFileShadowed, "static/"+dir, 0, "/static/%s is served by GoPress itself; files here can never be requested", dir)
+			return
+		}
+	}
 }
 
 // checkTemplatePlace checks a file under templates/; rest is its path below

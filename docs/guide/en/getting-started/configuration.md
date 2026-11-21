@@ -203,9 +203,19 @@ config you create before the first start. See
 ## Market
 
 The `[market]` section is optional. Without it the site uses the official
-theme market built into this release. The official market opens once its
-signing keys are published; until then the admin's theme market page reports
-that no market is available, and theme packages can still be uploaded.
+theme market at gopress.xyz, whose signing keys are built into GoPress (from
+0.7.40).
+
+A site contacts the market only when an administrator opens **Themes → Theme
+market** in the admin (to fetch the catalog), when it installs or upgrades a
+package, and, if update checks are on, about once a day to ask whether themes
+installed from the market have new versions. Requests carry
+`User-Agent: GoPress/<version>` and no installation ID; update checks send only
+each theme's identifier and installed version. A site that never opens the
+market page and has update checks off never contacts the market.
+
+Setting the three keys below replaces the official market with a self-hosted
+one.
 
 ```toml
 [market]

@@ -61,6 +61,21 @@ const (
 	FrontendCSP = "frontend.csp"
 )
 
+// User hooks let extensions add to a member's own account page without the
+// theme knowing which extension is active.
+const (
+	// UserAccountActions filters the entries a signed-in member sees on
+	// their own account page, such as the way into a member area. The filter
+	// value is []user.AccountAction; args[0] is the request's *gin.Context.
+	// Append entries for the current user only, with text translated for
+	// the request. Themes render them through the accountActions template
+	// function, which calls the filter only for signed-in members, drops
+	// entries without a title or label or whose URL is not a path on this
+	// site, sorts by Order and keeps at most user.MaxAccountActions. The
+	// theme owns the markup; an extension never returns HTML here.
+	UserAccountActions = "user.account_actions"
+)
+
 // Menu hooks are fired by core/menu while resolving or mutating menus. They are
 // intentionally feature-neutral: a plugin may use them for translations,
 // permissions, A/B navigation, cleanup, or other menu-related behavior without

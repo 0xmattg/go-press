@@ -41,6 +41,13 @@
 - **Delivery tooling** — web installer with live handler switch, `gopress`
   autoload/build workflow, Swagger generation, site-scoped configuration, and
   generated public artifacts.
+- **Theme packages and the official market** — a signed, code-free theme
+  package format with static checks and `gopress pkg` build and signing
+  commands; install, upgrade, rollback, uninstall and revocation; a
+  Content-Security-Policy for theme packages and built-in front-end
+  interactions; browsing, installing and upgrading free theme packages from the
+  official market at gopress.xyz in the admin, with update notices for
+  installed packages.
 - **Runtime stability** — concurrency-safe plugin lifecycle and i18n snapshots,
   liveness and readiness probes, ordered graceful shutdown, per-site Redis cache
   namespaces, and Go CI covering formatting, vet, build, tests, and race
@@ -59,7 +66,7 @@
   and a release pipeline.
 - Benchmark suite and performance tuning.
 - Theme and plugin version migration hooks.
-- Online theme marketplace and one-click installation.
+- Paid themes in the theme market, and a plugin market.
 
 ## Contributing
 

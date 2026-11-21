@@ -50,6 +50,33 @@ func TestBuiltinTrustRoot(t *testing.T) {
 	}
 }
 
+// TestBuiltinKeysArePinned pins the official market's keys by key ID. Every
+// site trusts them, so a key that changes by accident (a mistyped character
+// still decodes to a valid key) would ship a release that cannot reach the
+// official market. Rotating a key means updating this list on purpose.
+func TestBuiltinKeysArePinned(t *testing.T) {
+	root, err := NewTrustRoot(config.MarketConfig{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if root.Mode() != MarketOfficial {
+		t.Fatalf("Mode() = %q, want %q", root.Mode(), MarketOfficial)
+	}
+	check := func(name string, set sign.KeySet, want ...string) {
+		t.Helper()
+		if len(set) != len(want) {
+			t.Fatalf("%s: %d keys, want %d", name, len(set), len(want))
+		}
+		for _, kid := range want {
+			if _, ok := set[kid]; !ok {
+				t.Errorf("%s: missing key %s", name, kid)
+			}
+		}
+	}
+	check("catalog keys", root.CatalogKeys, "c43f20fbbb0fa6b8", "0007fc76614ef75d")
+	check("package keys", root.PackageKeys, "c3753561967aac02", "1f277e92513c8b04")
+}
+
 func TestCustomTrustRoot(t *testing.T) {
 	keys := publicKeys(t, 3)
 	root, err := NewTrustRoot(config.MarketConfig{
