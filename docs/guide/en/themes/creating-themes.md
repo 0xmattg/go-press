@@ -344,6 +344,8 @@ Use `pageTitleFor`, `seoHeadFor`, `settingOr`, `archiveURL`, `contentURL`, `taxo
 <span>GoPress Core v{{goPressVersion}}</span>
 ```
 
+`uiScript` loads core's front-end interaction script: menus, dialogs, carousels and more, configured with `data-gp-*` attributes. See [Theme Interactions](interactions.md).
+
 ### Navigation Extension Styling And Interaction
 
 Scope theme navigation styles to the structure owned by the theme so they do not overwrite nested menus contributed by extensions:

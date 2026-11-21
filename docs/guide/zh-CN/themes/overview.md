@@ -12,7 +12,7 @@ GoPress 的主题系统借鉴 WordPress 设计：主题是一个 Go 包，通过
 - **Theme 接口** — 实现 `Name()` / `Setup()` / `ServeHTTP()` / `TemplateFuncs()` 即可
 - **App 接口** — 主题通过 `theme.App` 接口访问 DB、ContentRepo、RewriteEngine、SEOBuilder、MediaRepo、HookBus、SiteLocation 等引擎能力
 - **模板层级回退** — 类 WordPress 的模板查找：`single-{type}-{slug}.tmpl` → `single-{type}.tmpl` → `single.tmpl` → `index.tmpl`
-- **统一模板函数（Single-Source FuncMap）** — `CommonFuncMap()` + BaseTheme 的引擎感知 helpers（`buildURL`、`archiveURL`、`contentURL`、`taxonomyURL`、`pageTitleFor`、`seoHeadFor`、`seoHead`、`menuByLocation`、`isMenuURLActive`、`goPressVersion`、`formatDate`、`formatDateTime`、`T`、`currentLang`、`langPrefixURL`、`renderHook`、`responsiveImage`、`responsiveImagePriority`、`responsiveImagePreload`）通过 `BaseFuncMap()` 统一下发。**所有主题、所有模板加载路径共享同一份 funcmap**。`goPressVersion` 直接读取当前 Core 版本；`formatDate` / `formatDateTime` 会按 `site_timezone` 展示内容时间；`isMenuActive` 仅保留给旧主题兼容，新主题应使用请求感知的 `isMenuURLActive`
+- **统一模板函数（Single-Source FuncMap）** — `CommonFuncMap()` + BaseTheme 的引擎感知 helpers（`buildURL`、`archiveURL`、`contentURL`、`taxonomyURL`、`pageTitleFor`、`seoHeadFor`、`seoHead`、`menuByLocation`、`isMenuURLActive`、`goPressVersion`、`uiScript`、`formatDate`、`formatDateTime`、`T`、`currentLang`、`langPrefixURL`、`renderHook`、`responsiveImage`、`responsiveImagePriority`、`responsiveImagePreload`）通过 `BaseFuncMap()` 统一下发。**所有主题、所有模板加载路径共享同一份 funcmap**。`goPressVersion` 直接读取当前 Core 版本；`uiScript` 引入前台交互脚本（见[主题交互组件](interactions.md)）；`formatDate` / `formatDateTime` 会按 `site_timezone` 展示内容时间；`isMenuActive` 仅保留给旧主题兼容，新主题应使用请求感知的 `isMenuURLActive`
 - **前台模板 Hook 插槽** — 主题在语义位置声明 `{{renderHook "theme.head.end" .}}` / `{{renderHook "theme.body.open" .}}` / `{{renderHook "theme.footer.end" .}}` / `{{renderHook "header.nav.after" .}}` 等标准插槽，插件注册同名 filter 输出 HTML
 - **LoadPageBundle 核心级页面模板编译器** — `core/theme/page_bundle.go` 提供 `LoadPageBundle(theme, pages)` 和 `LoadAllPageBundles(theme)`：自动发现 `layouts/base.tmpl` + `partials/*.tmpl` + `pages/*.tmpl`，对每个页面独立编译（允许不同页面重新定义同名 block）
 - **自定义路由 + 动态路由** — 静态页面（`/about`）通过 `AddRoute()` 注册，动态 URL（例如主题声明的 `product` 对应 `/products/:slug`）由 Rewrite 引擎按当前内容类型配置自动解析；`product` / `service` / `showcase` 只是常见示例，不是 core 固定模型
@@ -145,6 +145,8 @@ e.Hooks.RemoveFilter(handle)
 主题可以通过 core 提供的 `currentUser`、`isLoggedIn`、`loginURL`、`loginProviderURL`、`logoutURL` 和 `loginProviders` helper 渲染与 Provider 无关的账号界面。主题负责决定账号入口的布局和视觉，但不能 import 或特判 Google Identity、MetaMask Identity 等插件。
 
 主题应通过 `loginProviders` 发现当前启用的登录方式，再用 `loginProviderURL` 为 core 发布的 Provider 起始路径附加经校验的站内回跳地址。模板示例、页面缓存和安全注意事项见[前台账号与外部身份登录](../architecture/public-authentication.md#主题接入)。
+
+主题的账户页可以用 `accountActions .Ctx` 列出插件提供的入口（例如进入插件的会员区），按自己的风格渲染标题、说明、状态和按钮。主题不需要知道是哪个插件提供的；协议和示例见[账户操作](../architecture/hooks.md#账户操作)。
 
 ## 主题与插件边界
 

@@ -43,6 +43,7 @@ import (
 
 	"github.com/0xmattg/go-press/core/assets"
 	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/frontend"
 	"github.com/0xmattg/go-press/core/hook"
 	coreI18n "github.com/0xmattg/go-press/core/i18n"
 	"github.com/0xmattg/go-press/core/mail"
@@ -413,6 +414,21 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 				}
 			}
 		}
+		hooks := b.App.HookBus()
+		// accountActions lists the entries extensions add to the signed-in
+		// member's account page (hook.UserAccountActions). It takes the
+		// page data or its gin context.
+		engineFuncs["accountActions"] = func(data interface{}) []user.AccountAction {
+			c := templateGinContext(data)
+			if hooks == nil || c == nil || !user.IsLoggedIn(c) {
+				return nil
+			}
+			list, ok := hooks.ApplyFilter(hook.UserAccountActions, []user.AccountAction{}, c).([]user.AccountAction)
+			if !ok {
+				return nil
+			}
+			return user.NormalizeAccountActions(list)
+		}
 		engineFuncs["currentUser"] = user.CurrentUserView
 		engineFuncs["isLoggedIn"] = user.IsLoggedIn
 		engineFuncs["loginURL"] = user.LoginURL
@@ -478,6 +494,9 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 	// The runtime version has one authoritative source. Themes may consume this
 	// helper, but cannot replace it with a stale theme-local version string.
 	funcs["goPressVersion"] = version.String
+	// uiScript loads core's front-end interaction script. It is core's: a
+	// theme function of the same name cannot point it at another file.
+	funcs["uiScript"] = frontend.ScriptTag
 	// safeHTML is a framework trust boundary. Themes may add helpers, but they
 	// must not replace rich-text sanitization with an unchecked conversion.
 	funcs["safeHTML"] = func(s string) template.HTML {

@@ -37,3 +37,21 @@ func TestSanitizeHTMLPreservesRichTextTables(t *testing.T) {
 		}
 	}
 }
+
+// Core's front-end interaction script acts on data-gp-* attributes. Only
+// theme templates may write them: content and embed codes must not be able
+// to open dialogs, copy text or drive any other component.
+func TestSanitizersRemoveInteractionAttributes(t *testing.T) {
+	input := `<p data-gp-toggle="site-nav" data-gp-dismiss="outside">a</p>` +
+		`<a href="/x" data-gp-dialog-open="login">b</a><div data-gp-copy="share-url" data-gp-reveal>c</div>` +
+		`<span data-gp-is-open data-gp-progress="">d</span><dialog data-gp-dialog id="login" open>e</dialog>`
+	for name, sanitize := range map[string]func(string) string{"SanitizeHTML": SanitizeHTML, "SanitizeEmbed": SanitizeEmbed} {
+		got := sanitize(input)
+		if strings.Contains(got, "data-gp") || strings.Contains(got, "<dialog") {
+			t.Fatalf("%s kept interaction markup: %s", name, got)
+		}
+		if !strings.Contains(got, ">a<") || !strings.Contains(got, ">c<") {
+			t.Fatalf("%s dropped the text: %s", name, got)
+		}
+	}
+}

@@ -81,8 +81,11 @@ func CommonFuncMap() template.FuncMap {
 		"currentLang": func(c *gin.Context) string {
 			return "en"
 		},
-		"currentUser":      user.CurrentUserView,
-		"isLoggedIn":       user.IsLoggedIn,
+		"currentUser": user.CurrentUserView,
+		"isLoggedIn":  user.IsLoggedIn,
+		"accountActions": func(data interface{}) []user.AccountAction {
+			return nil
+		},
 		"loginURL":         user.LoginURL,
 		"loginProviderURL": user.LoginProviderURL,
 		"logoutURL":        user.LogoutURL,

@@ -12,7 +12,7 @@ This version provides the package format, the tools to check, build and sign pac
 | Template functions | Core's functions plus the theme's own | Core's functions only, including the [read-only data functions](creating-themes.md#read-only-data-functions) |
 | Template layout | Page bundles or the classic hierarchy | Page bundles only |
 | Settings page | `[[settings]]` or a custom admin template | `[[settings]]` only; core generates the page |
-| Scripts | Allowed | **Not allowed** |
+| Scripts | Allowed | **Not allowed**; use core's [interaction components](interactions.md) |
 | External resources | Unrestricted | Must be declared in `[[external]]` |
 
 ## Layout
@@ -122,7 +122,7 @@ Theme packages cannot contain scripts in any form. The check rejects:
 
 The rules also apply when template syntax splits the text. The check removes actions and `{{if}}` branches and checks the text that is left, so `<scr{{""}}ipt>` and `java{{""}}script:` are still found. Element and attribute names must not be built from actions or branches, as in `<h{{.Level}}>` or `<a o{{"nclick"}}=…>`; write the full name in each branch instead. An attribute that `{{if}}` switches on as a whole is fine, such as `<input {{if .Checked}}checked{{end}}>`, and so are actions in `data-` and `aria-` attribute names.
 
-Build interactions such as expanding menus or tabs with HTML and CSS, for example `<details>`, `:target` and `:focus-within`.
+For menus, dialogs, carousels and other common interactions, use the [interaction components](interactions.md) that come with GoPress: call `{{uiScript}}` in the layout and configure them with `data-gp-*` attributes. The script tag that `{{uiScript}}` outputs is not part of the package text, so the rules above do not apply to it. Simpler interactions need only HTML and CSS, such as `<details>` and `:focus-within`.
 
 ## Content-Security-Policy
 
@@ -327,4 +327,4 @@ Every problem carries a stable rule ID:
 | `manifest.missing`, `manifest.syntax`, `manifest.slug`, `manifest.reserved`, `manifest.name`, `manifest.version`, `manifest.core`, `manifest.core-unmet`, `manifest.requires`, `manifest.settings`, `manifest.page-template`, `manifest.screenshot` | `theme.toml` requirements |
 | `external.invalid`, `external.undeclared`, `external.kind` | Invalid `[[external]]`, undeclared host, host not declared for that kind |
 
-Warnings do not fail the check: `template.unused` (files in `layouts/` other than `base.tmpl` are not loaded), `manifest.unknown` (unknown `theme.toml` key), `external.insecure` (an `http://` resource) and `source.hidden` (hidden paths left out of the build).
+Warnings do not fail the check: `template.unused` (files in `layouts/` other than `base.tmpl` are not loaded), `file.shadowed` (files under `static/admin/`, `static/uploads/` or `static/gopress/`, paths GoPress serves itself, can never be requested), `manifest.unknown` (unknown `theme.toml` key), `external.insecure` (an `http://` resource) and `source.hidden` (hidden paths left out of the build).

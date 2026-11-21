@@ -12,7 +12,7 @@
 | 模板函数 | core 的函数，加主题自己的函数 | 只能用 core 的函数，包括[只读数据函数](creating-themes.md#只读数据函数) |
 | 模板结构 | 页面 bundle 或经典层级 | 只支持页面 bundle |
 | 设置页 | `[[settings]]` 或自定义后台模板 | 只能用 `[[settings]]`，由 core 生成设置页 |
-| 脚本 | 可以 | **不允许** |
+| 脚本 | 可以 | **不允许**，改用 core 的[交互组件](interactions.md) |
 | 外部资源 | 不限制 | 必须在 `[[external]]` 里声明 |
 
 ## 目录结构
@@ -122,7 +122,7 @@ purpose = "Web font files"
 
 这些规则也作用于被模板拆开的写法。检查会把模板里的动作和 `{{if}}` 等分支去掉，再检查剩下的文本，所以 `<scr{{""}}ipt>`、`java{{""}}script:` 一样会被发现。元素名或属性名不能由动作或分支拼出来，例如 `<h{{.Level}}>`、`<a o{{"nclick"}}=…>`：请在每个分支里写出完整的名字。属性整体由 `{{if}}` 控制是可以的，例如 `<input {{if .Checked}}checked{{end}}>`；`data-` 和 `aria-` 开头的属性名也可以带动作。
 
-菜单展开、选项卡这类交互，请用 HTML 和 CSS 实现，例如 `<details>`、`:target`、`:focus-within`。
+菜单、弹窗、轮播这类常用交互，请用 GoPress 自带的[交互组件](interactions.md)：在布局里调用 `{{uiScript}}`，再用 `data-gp-*` 属性配置。`{{uiScript}}` 输出的脚本标签不属于包里的文本，不受上面的规则限制。更简单的交互只用 HTML 和 CSS 就行，例如 `<details>`、`:focus-within`。
 
 ## 内容安全策略（CSP）
 
@@ -281,4 +281,4 @@ gopress pkg verify aurora-1.2.0.zip
 | `manifest.missing`、`manifest.syntax`、`manifest.slug`、`manifest.reserved`、`manifest.name`、`manifest.version`、`manifest.core`、`manifest.core-unmet`、`manifest.requires`、`manifest.settings`、`manifest.page-template`、`manifest.screenshot` | `theme.toml` 的各项要求 |
 | `external.invalid`、`external.undeclared`、`external.kind` | `[[external]]` 写法无效、域名没有声明、域名没有声明这种资源 |
 
-警告不影响通过：`template.unused`（`layouts/` 里除 `base.tmpl` 外的文件不会被加载）、`manifest.unknown`（`theme.toml` 里未知的键）、`external.insecure`（`http://` 资源）、`source.hidden`（打包时略过的隐藏路径）。
+警告不影响通过：`template.unused`（`layouts/` 里除 `base.tmpl` 外的文件不会被加载）、`file.shadowed`（`static/admin/`、`static/uploads/`、`static/gopress/` 由 GoPress 自己提供，这些目录下的文件永远访问不到）、`manifest.unknown`（`theme.toml` 里未知的键）、`external.insecure`（`http://` 资源）、`source.hidden`（打包时略过的隐藏路径）。

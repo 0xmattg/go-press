@@ -73,6 +73,51 @@ Global slots belong in the base layout and should appear exactly once:
 
 See [Theme Frontend Slots](../themes/overview.md#frontend-extension-slots).
 
+## Account Actions
+
+`user.account_actions` (`hook.UserAccountActions`) lets a plugin add entries to
+a signed-in member's own account page, for example the way into a member area
+it provides. Plugins supply data; the theme draws it, so a plugin never depends
+on a theme's markup and a theme never checks which plugins are active.
+
+- Filter value: `[]user.AccountAction`; `args[0]` is the request's `*gin.Context`.
+- Append entries for the current user only, with text already translated.
+- Fields: `ID`, `Title`, `Text`, `Label` (button text), `URL` (a path on this
+  site starting with `/`), `Badge` (short status, optional), `Tone` (`""`,
+  `info`, `success` or `warning`) and `Order` (lower first).
+
+```go
+e.Hooks.AddFilter(hook.UserAccountActions, func(value interface{}, args ...interface{}) interface{} {
+    list, _ := value.([]user.AccountAction)
+    c, _ := args[0].(*gin.Context)
+    // Look at user.CurrentUser(c) and decide what to offer.
+    return append(list, user.AccountAction{
+        ID: "orders", Title: "Your orders", Text: "Track and download what you bought.",
+        Label: "View orders", URL: "/account/orders", Order: 20,
+    })
+}, 10)
+```
+
+Themes render the list on their account page with `accountActions`, which
+returns nothing for visitors who are not signed in, drops entries without a
+title or label or whose URL is not a path on this site, sorts by `Order` and
+keeps at most six:
+
+```gotemplate
+{{with accountActions .Ctx}}
+<div class="account-actions">
+  {{range .}}
+  <article id="action-{{.ID}}">
+    {{if .Badge}}<span class="badge badge-{{.Tone}}">{{.Badge}}</span>{{end}}
+    <h3>{{.Title}}</h3>
+    {{if .Text}}<p>{{.Text}}</p>{{end}}
+    <a href="{{.URL}}">{{.Label}}</a>
+  </article>
+  {{end}}
+</div>
+{{end}}
+```
+
 ## Menu Hooks
 
 | Hook | Go constant | Contract |

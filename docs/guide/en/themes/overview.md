@@ -12,6 +12,7 @@ GoPress themes are Go packages that register themselves with the engine. A theme
 - Menu locations and language-aware menu rendering.
 - URL-based active menu helper from the core funcmap.
 - Runtime Core version helper (`goPressVersion`) sourced from `version/version.go`.
+- Front-end interaction components loaded with `uiScript` and configured with `data-gp-*` attributes ([Theme Interactions](interactions.md)).
 - Site-timezone-aware `formatDate` and `formatDateTime` helpers from `BaseFuncMap`.
 - Responsive image helpers backed by media variants.
 - Demo data import through `DemoDataProvider`.
@@ -95,6 +96,8 @@ semantics and remove their filter handles when deactivated.
 Themes can render provider-neutral account UI with the core helpers `currentUser`, `isLoggedIn`, `loginURL`, `loginProviderURL`, `logoutURL`, and `loginProviders`. A theme may choose where and how account controls appear, but it must not import or special-case identity plugins such as Google Identity or MetaMask Identity.
 
 Use `loginProviders` to discover enabled sign-in choices and `loginProviderURL` to attach a validated same-site return path to each provider's core-published begin URL. See [Public Accounts and External Identity](../architecture/public-authentication.md#theme-integration) for template examples and cache/security notes.
+
+A theme's account page can list the entries plugins offer, such as the way into a plugin's member area, with `accountActions .Ctx`, and draw their title, text, status and button in its own style. The theme does not need to know which plugin supplied them; see [Account Actions](../architecture/hooks.md#account-actions) for the contract and an example.
 
 ## Theme and Plugin Boundary
 

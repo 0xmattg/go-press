@@ -277,6 +277,8 @@ BaseTheme 提供给模板的 taxonomy 行已经应用当前请求 Scope。插件
 <span>GoPress Core v{{goPressVersion}}</span>
 ```
 
+`uiScript` 引入 core 的前台交互脚本：菜单、对话框、轮播等，用 `data-gp-*` 属性配置。见[主题交互组件](interactions.md)。
+
 ## 只读数据函数
 
 BaseTheme 页面只给模板准备本页的数据：归档页的 `.Items`、详情页的 `.Item`，以及每页都有的 `.RecentPosts`。要展示其他内容，例如首页的 6 个产品、某个区块里嵌一页正文，就调用 core 的数据函数。它们不需要写 Go 代码，所有主题都能用：

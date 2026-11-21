@@ -22,16 +22,25 @@ const DefaultMarketEndpoint = "https://gopress.xyz/api/market/v1"
 // rotation; a few more leave room for a self-hosted market's own policy.
 const maxTrustedKeys = 4
 
-// The official market's public keys, base64. Keys are rotated by releasing a
-// new version of GoPress.
+// The official market's public keys, base64, with their key IDs. Each set
+// holds a primary key and a standby: if the primary is lost or leaks, the
+// market switches to the standby and a later release replaces the pair. Keys
+// are only ever rotated by releasing a new version of GoPress.
 //
-// Both lists stay empty until the release keys are created; while they are
-// empty the official market is disabled and only a self-hosted market
-// configured in config.toml can be used. Test keys never go here: anyone
-// holding a test private key could sign catalogs and packages.
+// Catalog keys sign the catalog the market serves; package keys countersign
+// each reviewed package. The private keys never leave the market operator's
+// machines. Test keys never go here: anyone holding a test private key could
+// sign catalogs and packages. TestBuiltinKeysArePinned fails when a key here
+// changes, so a change is always deliberate.
 var (
-	builtinCatalogKeys = []string{}
-	builtinPackageKeys = []string{}
+	builtinCatalogKeys = []string{
+		"T5+UAW5tNmH5l418ZPzNOc7iKTXHu1MPHBcY/h9QdEs=", // catalog-a, kid c43f20fbbb0fa6b8 (primary)
+		"oqJsAwsafOqEEWl5Bge1JkG1h9tRG/TphKFg7C4KfIQ=", // catalog-b, kid 0007fc76614ef75d (standby)
+	}
+	builtinPackageKeys = []string{
+		"Zxxsu3WMgKKPVdgQicggdO7RsDv1oV8M4KXspMkhug4=", // market-pkg-a, kid c3753561967aac02 (primary)
+		"62jw/Cm37qgKWp7jSw7Afmwhq61Sc9dYExn0QGW5qVU=", // market-pkg-b, kid 1f277e92513c8b04 (standby)
+	}
 )
 
 // Market modes, as reported by TrustRoot.Mode.

@@ -392,10 +392,16 @@
             var article = el('article', { 'class': 'card extension-card market-card', id: 'market-' + item.slug });
             // Without a screenshot the card looks like a theme card; a
             // screenshot that fails to load is removed the same way.
+            // With a market page, the title and the screenshot open it; the
+            // screenshot link repeats the title's, so it is skipped by
+            // keyboards and screen readers.
+            var listing = safeHTTPS(item.listing_url);
             var shot = null;
             var src = safeHTTPS(item.screenshot_url);
             if (src) {
-                shot = el('div', { 'class': 'market-shot' });
+                shot = listing
+                    ? el('a', { 'class': 'market-shot', href: listing, target: '_blank', rel: 'noopener noreferrer', tabindex: '-1', 'aria-hidden': 'true' })
+                    : el('div', { 'class': 'market-shot' });
                 var img = el('img', { src: src, alt: '', loading: 'lazy', decoding: 'async', referrerpolicy: 'no-referrer' });
                 img.addEventListener('error', function () {
                     if (shot.parentNode) shot.parentNode.removeChild(shot);
@@ -409,7 +415,12 @@
             else if (item.installed) badges.appendChild(badge('badge-active', t('installed')));
 
             var content = el('div', { 'class': 'extension-card-content' }, [
-                el('div', { 'class': 'extension-card-heading' }, [el('h3', { text: item.title, title: item.title }), badges]),
+                el('div', { 'class': 'extension-card-heading' }, [
+                    listing
+                        ? el('h3', { title: item.title }, el('a', { 'class': 'market-title-link', href: listing, target: '_blank', rel: 'noopener noreferrer', text: item.title }))
+                        : el('h3', { text: item.title, title: item.title }),
+                    badges
+                ]),
                 item.author ? el('p', { 'class': 'market-author', text: t('by_author', item.author) }) : null,
                 item.summary ? el('p', { 'class': 'extension-desc market-summary', text: item.summary }) : null
             ]);
@@ -425,7 +436,6 @@
                     actions.appendChild(install);
                 }
             }
-            var listing = safeHTTPS(item.listing_url);
             var meta = el('div', { 'class': 'extension-meta' }, [
                 el('span', { 'class': 'extension-slug', text: item.slug, title: item.slug }),
                 listing ? el('a', { href: listing, target: '_blank', rel: 'noopener noreferrer', 'class': 'market-listing', text: t('view_listing') }) : null

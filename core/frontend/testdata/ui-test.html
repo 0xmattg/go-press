@@ -1,0 +1,591 @@
+<!doctype html>
+<!--
+  Behaviour tests for core/frontend/ui.js. Open this file in a browser; the
+  tests run on load and print their results at the top of the page. The page
+  title becomes "PASS n" or "FAIL n". Add ?reduced to the URL to run them as
+  a visitor who prefers reduced motion. Serve the folder over HTTP (scripts do
+  not load from a file: URL in every browser). CI does not run it.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ui.js tests</title>
+<style>
+  body { font: 14px/1.5 system-ui, sans-serif; margin: 0; padding: 16px; }
+  #results { white-space: pre-wrap; padding: 12px; border: 2px solid #999; margin-bottom: 24px; }
+  #results.pass { border-color: #1a7f37; }
+  #results.fail { border-color: #cf222e; }
+  section.fixture { border: 1px dashed #bbb; padding: 8px; margin: 8px 0; }
+  [data-gp-toggle][aria-expanded="true"] { outline: 2px solid #1a7f37; }
+  #nav:not([data-gp-is-open]), #drop-a:not([data-gp-is-open]), #drop-b:not([data-gp-is-open]) { display: none; }
+  [data-gp-menu] li > ul { display: none; }
+  [data-gp-menu] li[data-gp-is-open] > ul { display: block; }
+  dialog { padding: 24px; width: 240px; }
+  [data-gp-slide]:not([data-gp-is-active]) { display: none; }
+  .spacer { height: 2400px; background: linear-gradient(#fff, #eee); }
+  html[data-gp-ready] [data-gp-reveal]:not([data-gp-is-visible]) { opacity: 0; }
+  #page-progress { position: fixed; left: 0; right: 0; bottom: 0; height: 4px; background: #1a7f37;
+    transform-origin: left; transform: scaleX(var(--gp-progress, 0)); }
+</style>
+<script>
+  // ?reduced: report prefers-reduced-motion: reduce to the script.
+  if (/[?&]reduced\b/.test(location.search)) {
+    const realMatchMedia = window.matchMedia.bind(window);
+    window.matchMedia = (query) => query.indexOf('prefers-reduced-motion: reduce') >= 0
+      ? { matches: true, media: query, addEventListener() {}, removeEventListener() {} }
+      : realMatchMedia(query);
+  }
+  // Collect the script's configuration warnings.
+  window.uiWarnings = [];
+  console.warn = function () { window.uiWarnings.push(Array.prototype.join.call(arguments, ' ')); };
+</script>
+</head>
+<body>
+<pre id="results">Running…</pre>
+
+<header id="site-header" data-gp-scroll="48">Header</header>
+<button type="button" id="top-button" data-gp-scroll="400" data-gp-to-top>Top</button>
+<div id="page-progress" data-gp-progress aria-hidden="true"></div>
+<div id="post-progress" data-gp-progress="post" aria-hidden="true"></div>
+
+<main id="main">
+<section class="fixture" id="toggles">
+  <button type="button" id="nav-toggle" data-gp-toggle="nav">Menu</button>
+  <button type="button" id="nav-toggle-2" data-gp-toggle="nav">Menu 2</button>
+  <nav id="nav" data-gp-dismiss="escape outside link">
+    <a href="#nav-link" id="nav-link">Link</a>
+    <button type="button" id="nav-inner">Inner button</button>
+  </nav>
+  <p id="outside">Outside</p>
+
+  <button type="button" id="reply-button" data-gp-toggle="reply">Reply</button>
+  <form id="reply" hidden>
+    <textarea id="reply-text" data-gp-autofocus></textarea>
+    <button type="button" id="reply-cancel" data-gp-toggle="reply">Cancel</button>
+  </form>
+
+  <button type="button" id="drop-a-toggle" data-gp-toggle="drop-a">A</button>
+  <div id="drop-a" data-gp-group="tools">A</div>
+  <button type="button" id="drop-b-toggle" data-gp-toggle="drop-b">B</button>
+  <div id="drop-b" data-gp-group="tools">B</div>
+
+  <button type="button" id="dup-toggle" data-gp-toggle="dup">Duplicate ID</button>
+  <div id="dup">Theme element</div>
+  <div class="user-content"><p id="dup">A post repeats the ID</p></div>
+
+  <button type="button" id="bad-toggle" data-gp-toggle="1 bad">Bad ID</button>
+  <div id="bad-dismiss-target" data-gp-dismiss="escape sideways"></div>
+  <button type="button" id="bad-dismiss" data-gp-toggle="bad-dismiss-target">Bad dismiss</button>
+
+  <button type="button" id="behind-toggle" data-gp-toggle="behind">Behind</button>
+  <div id="behind" data-gp-dismiss="escape" hidden>Panel behind a dialog</div>
+</section>
+
+<section class="fixture" id="menus">
+  <ul id="narrow-menu" data-gp-menu data-gp-menu-below="2000">
+    <li id="m-docs"><a href="#docs" id="m-docs-link">Docs</a>
+      <ul>
+        <li id="m-guides"><a href="#guides" id="m-guides-link">Guides</a>
+          <ul><li><a href="#guide-1" id="m-guide-1">Guide 1</a></li></ul>
+        </li>
+        <li><a href="#api" id="m-api">API</a></li>
+      </ul>
+    </li>
+    <li id="m-blog"><a href="#blog" id="m-blog-link">Blog</a><button type="button" id="m-blog-button">More</button>
+      <ul><li><a href="#archive" id="m-archive">Archive</a></li></ul>
+    </li>
+    <li><a href="#plain" id="m-plain">Plain</a></li>
+  </ul>
+  <ul id="wide-menu" data-gp-menu data-gp-menu-below="320">
+    <li id="w-docs"><a href="#wide-docs" id="w-docs-link">Docs</a><ul><li><a href="#wide-a">A</a></li></ul></li>
+  </ul>
+  <ul id="bad-menu" data-gp-menu data-gp-menu-below="99999"><li><a href="#b">B</a><ul><li>x</li></ul></li></ul>
+</section>
+
+<section class="fixture" id="dialogs">
+  <a href="#login-page" id="login-open" data-gp-dialog-open="login">Sign in</a>
+  <a href="#no-dialog" id="not-dialog-open" data-gp-dialog-open="outside">Not a dialog</a>
+  <dialog id="login" data-gp-dialog data-gp-dismiss="outside link">
+    <button type="button" id="login-first">First</button>
+    <input id="login-name" data-gp-autofocus>
+    <button type="button" id="login-close" data-gp-dialog-close>Close</button>
+    <button type="button" id="dialog-toggle" data-gp-toggle="dialog-panel">More</button>
+    <div id="dialog-panel" data-gp-dismiss="escape" hidden><button type="button" id="dialog-panel-button">In panel</button></div>
+    <a href="#from-dialog" id="dialog-link">Link</a>
+  </dialog>
+</section>
+
+<section class="fixture" id="carousels">
+  <section id="carousel" data-gp-carousel aria-roledescription="carousel" aria-label="Test">
+    <div data-gp-slide id="s0"><a href="#s0" id="s0-link">Slide 0</a></div>
+    <div data-gp-slide id="s1">Slide 1</div>
+    <div data-gp-slide id="s2">Slide 2</div>
+    <button type="button" id="c-prev" data-gp-carousel-prev>Prev</button>
+    <button type="button" id="c-next" data-gp-carousel-next>Next</button>
+    <button type="button" id="c-to-0" data-gp-carousel-to="0">1</button>
+    <button type="button" id="c-to-1" data-gp-carousel-to="1">2</button>
+    <button type="button" id="c-to-2" data-gp-carousel-to="2">3</button>
+  </section>
+  <section id="auto" data-gp-carousel data-gp-interval="2000">
+    <div data-gp-slide id="a0">A0</div>
+    <div data-gp-slide id="a1" data-gp-is-active>A1</div>
+    <div data-gp-slide id="a2">A2</div>
+    <button type="button" id="auto-pause" data-gp-carousel-pause>Pause</button>
+  </section>
+  <section id="bad-auto" data-gp-carousel data-gp-interval="500">
+    <div data-gp-slide id="b0">B0</div><div data-gp-slide id="b1">B1</div>
+  </section>
+</section>
+
+<section class="fixture" id="copies">
+  <input id="share-url" value="https://example.com/post" readonly>
+  <button type="button" id="copy-url" data-gp-copy="share-url" data-gp-copy-done="copy-note">Copy link</button>
+  <span role="status"><span id="copy-note" hidden>Copied</span></span>
+  <code id="snippet">  go run ./cmd/gopress  </code>
+  <button type="button" id="copy-snippet" data-gp-copy="snippet">Copy code</button>
+  <button type="button" id="copy-dup" data-gp-copy="dup">Copy duplicate</button>
+</section>
+
+<article id="post">
+  <div id="reveal-top" data-gp-reveal>Shown near the top</div>
+  <div class="spacer"></div>
+  <div id="reveal-bottom" data-gp-reveal>Shown at the end</div>
+</article>
+</main>
+<div class="spacer"></div>
+
+<script src="../ui.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const results = [];
+  let current = '';
+
+  function ok(cond, message) {
+    results.push({ ok: Boolean(cond), name: current + ': ' + message });
+  }
+  function eq(got, want, message) {
+    ok(got === want, message + ' (got ' + JSON.stringify(got) + ', want ' + JSON.stringify(want) + ')');
+  }
+  // A listener on window runs after the script's listener on document: it
+  // records whether the script prevented the default, then stops links from
+  // navigating so the page stays put.
+  let lastPrevented = false;
+  window.addEventListener('click', (event) => {
+    lastPrevented = event.defaultPrevented;
+    event.preventDefault();
+  });
+  // click dispatches a click and reports whether the script prevented the
+  // default.
+  function click(el, init) {
+    lastPrevented = false;
+    el.dispatchEvent(new MouseEvent('click', Object.assign({ bubbles: true, cancelable: true }, init || {})));
+    return lastPrevented;
+  }
+  function key(name, on) {
+    const event = new KeyboardEvent('keydown', { key: name, bubbles: true, cancelable: true });
+    (on || document.activeElement || document.body).dispatchEvent(event);
+    return event.defaultPrevented;
+  }
+  const has = (el, attr) => el.hasAttribute(attr);
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const frames = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  async function scrollToY(y) {
+    window.scrollTo(0, y);
+    await frames();
+  }
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const warned = (text) => window.uiWarnings.some((w) => w.indexOf(text) >= 0);
+
+  const tests = [];
+  const test = (name, fn) => tests.push({ name: name, fn: fn });
+
+  // ---- Page ----
+  test('page', async () => {
+    ok(has(document.documentElement, 'data-gp-ready'), 'html has data-gp-ready');
+  });
+
+  test('reveal', async () => {
+    $('reveal-top').scrollIntoView({ block: 'start' });
+    await frames();
+    await frames();
+    ok(has($('reveal-top'), 'data-gp-is-visible'), 'element in view revealed');
+    if (reduced) {
+      ok(has($('reveal-bottom'), 'data-gp-is-visible'), 'reduced motion shows everything at once');
+    } else {
+      ok(!has($('reveal-bottom'), 'data-gp-is-visible'), 'element further down not yet');
+    }
+    $('reveal-bottom').scrollIntoView();
+    await frames();
+    await frames();
+    ok(has($('reveal-bottom'), 'data-gp-is-visible'), 'revealed once scrolled to');
+    await scrollToY(0);
+  });
+
+  // ---- Toggle ----
+  test('toggle init', async () => {
+    eq($('nav-toggle').getAttribute('aria-controls'), 'nav', 'aria-controls');
+    eq($('nav-toggle').getAttribute('aria-expanded'), 'false', 'aria-expanded starts false');
+    eq($('nav-toggle-2').getAttribute('aria-expanded'), 'false', 'second toggle synced');
+  });
+  test('toggle open and close', async () => {
+    ok(click($('nav-toggle')), 'click prevented');
+    ok(has($('nav'), 'data-gp-is-open'), 'target open');
+    eq($('nav-toggle').getAttribute('aria-expanded'), 'true', 'aria-expanded true');
+    eq($('nav-toggle-2').getAttribute('aria-expanded'), 'true', 'other toggle synced');
+    click($('nav-toggle-2'));
+    ok(!has($('nav'), 'data-gp-is-open'), 'second toggle closes');
+    eq($('nav-toggle').getAttribute('aria-expanded'), 'false', 'aria-expanded false');
+  });
+  test('toggle hidden target and autofocus', async () => {
+    click($('reply-button'));
+    ok(!has($('reply'), 'hidden'), 'hidden removed');
+    ok(has($('reply'), 'data-gp-is-open'), 'data-gp-is-open set');
+    eq(document.activeElement, $('reply-text'), 'autofocus');
+    click($('reply-cancel'));
+    ok(has($('reply'), 'hidden'), 'hidden restored');
+    eq(document.activeElement, $('reply-button'), 'focus back to the opener');
+    eq($('reply-cancel').getAttribute('aria-expanded'), 'false', 'inner toggle synced');
+  });
+  test('toggle dismiss escape', async () => {
+    click($('nav-toggle'));
+    $('nav-inner').focus();
+    ok(key('Escape'), 'escape handled');
+    ok(!has($('nav'), 'data-gp-is-open'), 'closed');
+    eq(document.activeElement, $('nav-toggle'), 'focus back to the toggle');
+  });
+  test('toggle dismiss outside', async () => {
+    click($('nav-toggle'));
+    click($('nav-inner'));
+    ok(has($('nav'), 'data-gp-is-open'), 'a click inside keeps it open');
+    click($('outside'));
+    ok(!has($('nav'), 'data-gp-is-open'), 'a click outside closes it');
+  });
+  test('toggle dismiss link', async () => {
+    click($('nav-toggle'));
+    $('nav-link').focus();
+    ok(!click($('nav-link')), 'the link is followed');
+    ok(!has($('nav'), 'data-gp-is-open'), 'closed');
+    ok(document.activeElement !== $('nav-toggle'), 'focus is left to the followed link');
+  });
+  test('toggle group', async () => {
+    click($('drop-a-toggle'));
+    click($('drop-b-toggle'));
+    ok(!has($('drop-a'), 'data-gp-is-open'), 'A closed');
+    ok(has($('drop-b'), 'data-gp-is-open'), 'B open');
+    eq($('drop-a-toggle').getAttribute('aria-expanded'), 'false', 'A toggle synced');
+    click($('drop-b-toggle'));
+  });
+  test('toggle refuses a shared ID', async () => {
+    ok(!click($('dup-toggle')), 'click not prevented');
+    ok(!document.querySelector('[id="dup"][data-gp-is-open]'), 'neither element opened');
+    ok(!has($('dup-toggle'), 'aria-expanded'), 'no aria-expanded');
+    ok(warned('2 elements share'), 'warning');
+  });
+  test('toggle invalid values', async () => {
+    ok(!click($('bad-toggle')), 'invalid ID does nothing');
+    ok(warned('data-gp-toggle must be an element ID'), 'ID warning');
+    click($('bad-dismiss'));
+    ok(has($('bad-dismiss-target'), 'data-gp-is-open'), 'invalid dismiss still toggles');
+    click($('outside'));
+    key('Escape', document.body);
+    ok(has($('bad-dismiss-target'), 'data-gp-is-open'), 'invalid dismiss dismisses nothing');
+    ok(warned('data-gp-dismiss allows only'), 'dismiss warning');
+    click($('bad-dismiss'));
+  });
+  test('toggle inserted later', async () => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.setAttribute('data-gp-toggle', 'late');
+    const panel = document.createElement('div');
+    panel.id = 'late';
+    panel.hidden = true;
+    $('toggles').append(button, panel);
+    click(button);
+    ok(!panel.hidden && has(panel, 'data-gp-is-open'), 'opens');
+    eq(button.getAttribute('aria-expanded'), 'true', 'aria-expanded');
+    click(button);
+    ok(panel.hidden, 'closes');
+  });
+
+  // ---- Menu ----
+  test('menu narrow init', async () => {
+    eq($('m-docs-link').getAttribute('aria-expanded'), 'false', 'link trigger');
+    eq($('m-blog-button').getAttribute('aria-expanded'), 'false', 'button trigger');
+    ok(!has($('m-blog-link'), 'aria-expanded'), 'link beside a button is not a trigger');
+    ok(!has($('m-plain'), 'aria-expanded'), 'item without a sublist');
+    ok(!has($('w-docs-link'), 'aria-expanded'), 'wide menu untouched');
+  });
+  test('menu narrow click', async () => {
+    ok(click($('m-docs-link')), 'parent link prevented');
+    ok(has($('m-docs'), 'data-gp-is-open'), 'item open');
+    eq($('m-docs-link').getAttribute('aria-expanded'), 'true', 'aria-expanded');
+    click($('m-guides-link'));
+    ok(has($('m-guides'), 'data-gp-is-open'), 'nested item open');
+    click($('m-docs-link'));
+    ok(!has($('m-docs'), 'data-gp-is-open') && !has($('m-guides'), 'data-gp-is-open'), 'closing the parent closes the nested item');
+    eq($('m-guides-link').getAttribute('aria-expanded'), 'false', 'nested aria-expanded');
+    ok(!click($('m-api')), 'a leaf link is followed');
+  });
+  test('menu button trigger', async () => {
+    ok(!click($('m-blog-link')), 'the link beside the button is followed');
+    ok(!has($('m-blog'), 'data-gp-is-open'), 'and does not open');
+    ok(click($('m-blog-button')), 'the button opens');
+    ok(has($('m-blog'), 'data-gp-is-open'), 'open');
+  });
+  test('menu escape', async () => {
+    click($('m-docs-link'));
+    $('m-api').focus();
+    ok(key('Escape'), 'handled');
+    ok(!has($('m-docs'), 'data-gp-is-open'), 'closed');
+    eq(document.activeElement, $('m-docs-link'), 'focus on the trigger');
+    $('m-blog-button').focus();
+    key('Escape');
+    ok(!has($('m-blog'), 'data-gp-is-open'), 'escape on an open trigger closes it');
+  });
+  test('menu modified click', async () => {
+    ok(!click($('m-docs-link'), { metaKey: true }), 'cmd-click goes to the browser');
+    ok(!has($('m-docs'), 'data-gp-is-open'), 'not opened');
+  });
+  test('menu wide', async () => {
+    ok(!click($('w-docs-link')), 'not prevented');
+    ok(!has($('w-docs'), 'data-gp-is-open'), 'not opened');
+    ok(warned('data-gp-menu-below must be a whole number from 320 to 2000'), 'invalid breakpoint warns');
+  });
+
+  // ---- Dialog ----
+  test('dialog open and close', async () => {
+    // Safari does not focus a clicked link, so the browser's own focus
+    // restore has nothing to go back to; the script must use the opener.
+    document.activeElement.blur();
+    ok(click($('login-open')), 'link prevented');
+    ok($('login').open, 'open');
+    ok(document.querySelector('#login:modal') !== null, 'modal');
+    ok(has(document.documentElement, 'data-gp-is-locked'), 'page locked');
+    eq(document.activeElement, $('login-name'), 'autofocus');
+    click($('login-close'));
+    await frames();
+    ok(!$('login').open, 'closed by the close control');
+    ok(!has(document.documentElement, 'data-gp-is-locked'), 'unlocked');
+    eq(document.activeElement, $('login-open'), 'focus back to the opener');
+  });
+  test('dialog closed another way', async () => {
+    document.activeElement.blur();
+    click($('login-open'));
+    $('login').close();
+    await frames();
+    ok(!has(document.documentElement, 'data-gp-is-locked'), 'unlocked after close()');
+    eq(document.activeElement, $('login-open'), 'focus restored');
+  });
+  test('dialog backdrop', async () => {
+    click($('login-open'));
+    const box = $('login').getBoundingClientRect();
+    click($('login'), { clientX: box.left + 4, clientY: box.top + 4 });
+    ok($('login').open, 'a click on the padding keeps it open');
+    click($('login'), { clientX: Math.max(0, box.left - 10), clientY: Math.max(0, box.top - 10) });
+    ok(!$('login').open, 'a click on the backdrop closes it');
+    await frames();
+  });
+  test('dialog link dismiss', async () => {
+    click($('login-open'));
+    ok(!click($('dialog-link')), 'link followed');
+    ok(!$('login').open, 'closed');
+    await frames();
+  });
+  test('dialog escape scope', async () => {
+    click($('behind-toggle'));
+    click($('login-open'));
+    click($('dialog-toggle'));
+    $('dialog-panel-button').focus();
+    ok(key('Escape'), 'escape handled inside the dialog');
+    ok($('dialog-panel').hidden, 'the panel in the dialog closed');
+    eq(document.activeElement, $('dialog-toggle'), 'focus back to the toggle in the dialog');
+    ok($('login').open, 'the dialog stayed open');
+    ok(!key('Escape'), 'nothing else for the script in the dialog');
+    ok(!$('behind').hidden, 'the panel behind the dialog is not touched');
+    $('login').close();
+    await frames();
+    key('Escape', document.body);
+    ok($('behind').hidden, 'with the dialog closed, escape reaches it');
+  });
+  test('dialog target is not a dialog', async () => {
+    ok(!click($('not-dialog-open')), 'link followed');
+    ok(warned('must name a <dialog data-gp-dialog>'), 'warning');
+  });
+
+  // ---- Carousel ----
+  const active = (root) => Array.prototype.map.call(root.querySelectorAll('[data-gp-slide][data-gp-is-active]'), (s) => s.id).join(',');
+  test('carousel init', async () => {
+    eq(active($('carousel')), 's0', 'first slide');
+    ok(has($('s1'), 'inert') && $('s1').getAttribute('aria-hidden') === 'true', 'other slides hidden and inert');
+    ok(!has($('s0'), 'inert') && !has($('s0'), 'aria-hidden'), 'active slide usable');
+    eq($('c-to-0').getAttribute('aria-current'), 'true', 'current dot');
+    eq(active($('auto')), 'a1', 'a slide marked active in markup starts');
+  });
+  test('carousel controls', async () => {
+    click($('c-next'));
+    eq(active($('carousel')), 's1', 'next');
+    eq($('c-to-1').getAttribute('aria-current'), 'true', 'dot follows');
+    ok(!has($('c-to-0'), 'aria-current'), 'old dot cleared');
+    click($('c-prev'));
+    click($('c-prev'));
+    eq(active($('carousel')), 's2', 'prev wraps');
+    click($('c-to-0'));
+    eq(active($('carousel')), 's0', 'go to');
+  });
+  test('carousel keys', async () => {
+    $('c-next').focus();
+    ok(key('ArrowRight'), 'arrow handled');
+    eq(active($('carousel')), 's1', 'right moves on');
+    key('ArrowLeft');
+    eq(active($('carousel')), 's0', 'left moves back');
+    $('s0-link').focus();
+    ok(!key('ArrowRight'), 'not inside a slide');
+    eq(active($('carousel')), 's0', 'unchanged');
+    document.activeElement.blur();
+  });
+  test('carousel autoplay', async () => {
+    if (reduced) {
+      eq($('auto-pause').getAttribute('aria-pressed'), 'true', 'reduced motion starts paused');
+      const before = active($('auto'));
+      await sleep(2300);
+      eq(active($('auto')), before, 'and does not play');
+      click($('auto-pause'));
+      eq($('auto-pause').getAttribute('aria-pressed'), 'false', 'the visitor can start it');
+      click($('auto-pause'));
+      return;
+    }
+    eq($('auto-pause').getAttribute('aria-pressed'), 'false', 'playing');
+    const ids = ['a0', 'a1', 'a2'];
+    // mouseleave restarts the timer, so the next change is 2 s from now.
+    $('auto').dispatchEvent(new MouseEvent('mouseleave'));
+    const start = ids.indexOf(active($('auto')));
+    await sleep(2300);
+    eq(active($('auto')), ids[(start + 1) % 3], 'advanced after the interval');
+    $('auto').dispatchEvent(new MouseEvent('mouseenter'));
+    await sleep(2300);
+    eq(active($('auto')), ids[(start + 1) % 3], 'held while hovered');
+    $('auto').dispatchEvent(new MouseEvent('mouseleave'));
+    click($('auto-pause'));
+    eq($('auto-pause').getAttribute('aria-pressed'), 'true', 'paused');
+    await sleep(2300);
+    eq(active($('auto')), ids[(start + 1) % 3], 'held while paused');
+    ok(warned('data-gp-interval must be 0 or from 2000 to 60000'), 'short interval warns');
+    eq(active($('bad-auto')), 'b0', 'short interval does not play');
+  });
+
+  // ---- Copy ----
+  test('copy field', async () => {
+    if (!navigator.clipboard) {
+      ok(false, 'this browser exposes no clipboard API here');
+      return;
+    }
+    let written = null;
+    navigator.clipboard.writeText = (text) => { written = text; return Promise.resolve(); };
+    ok(click($('copy-url')), 'prevented');
+    await frames();
+    eq(written, 'https://example.com/post', 'value copied');
+    ok(!$('copy-note').hidden, 'note shown');
+    ok(has($('copy-url'), 'data-gp-is-done'), 'button marked');
+    await sleep(3100);
+    ok($('copy-note').hidden, 'note hidden again');
+    ok(!has($('copy-url'), 'data-gp-is-done'), 'mark cleared');
+  });
+  test('copy text', async () => {
+    let written = null;
+    navigator.clipboard.writeText = (text) => { written = text; return Promise.resolve(); };
+    click($('copy-snippet'));
+    await frames();
+    eq(written, 'go run ./cmd/gopress', 'trimmed text copied');
+  });
+  test('copy fallback', async () => {
+    navigator.clipboard.writeText = () => Promise.reject(new Error('denied'));
+    click($('copy-url'));
+    await frames();
+    eq(document.activeElement, $('share-url'), 'field focused');
+    eq($('share-url').selectionEnd - $('share-url').selectionStart, $('share-url').value.length, 'field selected');
+    ok($('copy-note').hidden, 'no note');
+    click($('copy-snippet'));
+    await frames();
+    eq(window.getSelection().toString().trim(), 'go run ./cmd/gopress', 'text selected');
+    window.getSelection().removeAllRanges();
+  });
+  test('copy refuses a shared ID', async () => {
+    let written = null;
+    navigator.clipboard.writeText = (text) => { written = text; return Promise.resolve(); };
+    ok(!click($('copy-dup')), 'not prevented');
+    await frames();
+    eq(written, null, 'nothing copied');
+  });
+
+  // ---- Scroll, reveal, progress ----
+  test('scroll state', async () => {
+    await scrollToY(0);
+    ok(!has($('site-header'), 'data-gp-is-past'), 'top');
+    await scrollToY(100);
+    ok(has($('site-header'), 'data-gp-is-past'), 'past 48');
+    ok(!has($('top-button'), 'data-gp-is-past'), 'not past 400');
+    await scrollToY(600);
+    ok(has($('top-button'), 'data-gp-is-past'), 'past 400');
+  });
+  test('progress', async () => {
+    await scrollToY(0);
+    eq($('page-progress').style.getPropertyValue('--gp-progress'), '0.0000', 'page start');
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    await scrollToY(max);
+    eq($('page-progress').style.getPropertyValue('--gp-progress'), '1.0000', 'page end');
+    await scrollToY(Math.round(max / 2));
+    const half = parseFloat($('page-progress').style.getPropertyValue('--gp-progress'));
+    ok(half > 0.45 && half < 0.55, 'page middle ' + half);
+    const post = $('post');
+    const top = post.getBoundingClientRect().top + window.scrollY;
+    const span = post.offsetHeight - window.innerHeight;
+    await scrollToY(top);
+    eq($('post-progress').style.getPropertyValue('--gp-progress'), '0.0000', 'post start');
+    await scrollToY(top + Math.round(span / 2));
+    const mid = parseFloat($('post-progress').style.getPropertyValue('--gp-progress'));
+    ok(mid > 0.45 && mid < 0.55, 'post middle ' + mid);
+    await scrollToY(top + span);
+    eq($('post-progress').style.getPropertyValue('--gp-progress'), '1.0000', 'post end');
+  });
+  test('back to top', async () => {
+    await scrollToY(800);
+    ok(click($('top-button')), 'prevented');
+    if (reduced) {
+      eq(window.scrollY, 0, 'reduced motion jumps at once');
+    }
+    for (let i = 0; i < 60 && window.scrollY > 0; i++) {
+      await sleep(50);
+    }
+    eq(window.scrollY, 0, 'at the top');
+    eq(document.activeElement, $('main'), 'focus on main');
+    eq($('main').getAttribute('tabindex'), '-1', 'main focusable');
+  });
+
+  async function run() {
+    for (const t of tests) {
+      current = t.name;
+      try {
+        await t.fn();
+      } catch (err) {
+        results.push({ ok: false, name: t.name + ': threw ' + err });
+      }
+    }
+    const failed = results.filter((r) => !r.ok);
+    const out = $('results');
+    out.className = failed.length ? 'fail' : 'pass';
+    out.textContent = (failed.length ? 'FAIL ' + failed.length + ' of ' : 'PASS ') + results.length +
+      (reduced ? ' (reduced motion)' : '') + '\n\n' +
+      results.map((r) => (r.ok ? 'ok   ' : 'FAIL ') + r.name).join('\n');
+    document.title = (failed.length ? 'FAIL ' : 'PASS ') + results.length;
+    window.uiTestResults = { failed: failed.map((r) => r.name), total: results.length };
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('load', () => setTimeout(run, 50));
+})();
+</script>
+</body>
+</html>

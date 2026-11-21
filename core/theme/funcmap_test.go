@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/0xmattg/go-press/core/content"
+	"github.com/0xmattg/go-press/core/frontend"
 	coreI18n "github.com/0xmattg/go-press/core/i18n"
 	"github.com/0xmattg/go-press/core/rewrite"
 	"github.com/0xmattg/go-press/version"
@@ -84,6 +85,26 @@ func TestBaseFuncMapExposesCurrentCoreVersion(t *testing.T) {
 	}
 	if got := fn(); got != version.String() {
 		t.Fatalf("goPressVersion() = %q, want %q", got, version.String())
+	}
+}
+
+func TestBaseFuncMapUIScriptIsCores(t *testing.T) {
+	var base BaseTheme
+	base.InitBase(nil, "", "", template.FuncMap{
+		"uiScript": func() template.HTML { return `<script src="/static/js/other.js"></script>` },
+	})
+
+	tpl := template.Must(template.New("x").Funcs(base.BaseFuncMap()).Parse(`<head>{{uiScript}}</head>`))
+	var out strings.Builder
+	if err := tpl.Execute(&out, nil); err != nil {
+		t.Fatal(err)
+	}
+	want := `<head><script src="` + frontend.ScriptURL() + `" defer></script></head>`
+	if out.String() != want {
+		t.Fatalf("output = %s, want %s", out.String(), want)
+	}
+	if !strings.HasPrefix(frontend.ScriptURL(), "/static/gopress/ui.js?v=") {
+		t.Fatalf("script URL = %s", frontend.ScriptURL())
 	}
 }
 

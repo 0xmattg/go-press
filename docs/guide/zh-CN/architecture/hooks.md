@@ -71,6 +71,43 @@ payload；不要把主题私有 struct 或插件 SDK 类型暴露给另一侧。
 
 详见 [主题前台扩展插槽](../themes/overview.md)。
 
+## 账户操作
+
+`user.account_actions`（`hook.UserAccountActions`）让插件在已登录会员自己的账户页上加入口，例如进入插件提供的会员区。插件只提供数据，由主题负责画：插件不依赖主题的标记，主题也不判断启用了哪些插件。
+
+- filter value：`[]user.AccountAction`；`args[0]` 是当前请求的 `*gin.Context`。
+- 只为当前用户添加条目，文字按当前请求的语言翻译好。
+- 字段：`ID`、`Title`、`Text`、`Label`（按钮文字）、`URL`（本站路径，以 `/` 开头）、`Badge`（简短状态，可空）、`Tone`（`""`、`info`、`success` 或 `warning`）、`Order`（小的在前）。
+
+```go
+e.Hooks.AddFilter(hook.UserAccountActions, func(value interface{}, args ...interface{}) interface{} {
+    list, _ := value.([]user.AccountAction)
+    c, _ := args[0].(*gin.Context)
+    // 根据 user.CurrentUser(c) 决定提供什么入口。
+    return append(list, user.AccountAction{
+        ID: "orders", Title: "我的订单", Text: "查看和下载已购买的内容。",
+        Label: "查看订单", URL: "/account/orders", Order: 20,
+    })
+}, 10)
+```
+
+主题在账户页用 `accountActions` 渲染这份列表。未登录时它返回空；没有标题或按钮文字、地址不是本站路径的条目会被去掉；按 `Order` 排序，最多 6 个：
+
+```gotemplate
+{{with accountActions .Ctx}}
+<div class="account-actions">
+    {{range .}}
+    <article id="action-{{.ID}}">
+        {{if .Badge}}<span class="badge badge-{{.Tone}}">{{.Badge}}</span>{{end}}
+        <h3>{{.Title}}</h3>
+        {{if .Text}}<p>{{.Text}}</p>{{end}}
+        <a href="{{.URL}}">{{.Label}}</a>
+    </article>
+    {{end}}
+</div>
+{{end}}
+```
+
 ## 菜单 Hook
 
 | Hook 名称 | Go 常量 | 用途 |

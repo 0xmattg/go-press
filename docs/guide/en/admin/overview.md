@@ -45,11 +45,13 @@ List search is server-side and searches titles only, matching the admin placehol
   market offers (*New version*, red for security updates); a revoked version
   cannot be switched to.
 - **Theme market** — opened from the Themes page. *Browse* fetches the market
-  catalog on every visit, with search, install and upgrade; when the catalog
-  cannot be fetched it shows the error and a retry button, never an older
-  list. *Installed* lists every installed theme package, including damaged
-  ones, with its versions, update notices, rollback and uninstall. *Upload theme package*
-  installs a `.zip`. See [Theme Packages](../themes/theme-packages.md#installing-and-managing-packages).
+  catalog on every visit, with search, install and upgrade; when the market
+  gives a theme a page of its own, the card's title, screenshot and *Details*
+  open it in a new tab. When the catalog cannot be fetched it shows the error
+  and a retry button, never an older list. *Installed* lists every installed
+  theme package, including damaged ones, with its versions, update notices,
+  rollback and uninstall. *Upload theme package* installs a `.zip`. See
+  [Theme Packages](../themes/theme-packages.md#installing-and-managing-packages).
 - **Plugins** — activate or deactivate compiled plugins, open component-owned
   settings, rebuild routes, and clear affected cache paths.
 - **Menus** — manage nested items, assign theme locations, and sort entries.

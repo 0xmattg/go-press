@@ -64,6 +64,7 @@ import (
 	"github.com/0xmattg/go-press/core/comment"
 	"github.com/0xmattg/go-press/core/content"
 	"github.com/0xmattg/go-press/core/extension"
+	"github.com/0xmattg/go-press/core/frontend"
 	"github.com/0xmattg/go-press/core/hook"
 	coreI18n "github.com/0xmattg/go-press/core/i18n"
 	coreMail "github.com/0xmattg/go-press/core/mail"
@@ -1499,13 +1500,31 @@ func (e *Engine) rebuildRouter() {
 }
 
 // serveStatic handles all /static/* requests.
-// Routes to admin assets, uploads, or active theme static files.
+// Routes to admin assets, core's front-end assets, uploads, or active theme
+// static files.
 func (e *Engine) serveStatic(c *gin.Context) {
 	fp := c.Param("filepath") // e.g. "/admin/css/admin.css" or "/css/style.css"
+
+	// Browsers resolve ".." before sending a request, so a path that still
+	// has such a segment names no asset. Refuse it before any lookup: the
+	// disk lookups below would otherwise answer for files outside their
+	// directory (os.Stat succeeds, then http.ServeFile refuses with 400),
+	// telling a prober which files exist on the server.
+	if hasDotDotSegment(fp) {
+		serveStaticNotFound(c)
+		return
+	}
 
 	// Admin static assets
 	if strings.HasPrefix(fp, "/admin/") {
 		e.serveStaticFile(c, filepath.Join("core/admin/static", strings.TrimPrefix(fp, "/admin/")), c.Query("v") != "")
+		return
+	}
+
+	// Core front-end assets. The directory is reserved: a missing file is a
+	// 404, never the theme's file of the same name.
+	if name, ok := strings.CutPrefix(fp, "/"+frontend.Dir+"/"); ok {
+		serveFrontendAsset(c, name)
 		return
 	}
 
@@ -1531,6 +1550,29 @@ func (e *Engine) serveStatic(c *gin.Context) {
 	}
 
 	serveStaticNotFound(c)
+}
+
+// hasDotDotSegment reports whether a URL path has a ".." segment, with
+// either slash as the separator (backslash separates paths on Windows).
+func hasDotDotSegment(p string) bool {
+	for _, seg := range strings.FieldsFunc(p, func(r rune) bool { return r == '/' || r == '\\' }) {
+		if seg == ".." {
+			return true
+		}
+	}
+	return false
+}
+
+// serveFrontendAsset serves one of core's embedded front-end assets.
+func serveFrontendAsset(c *gin.Context, name string) {
+	ctype, ok := frontend.ContentType(name)
+	if !ok {
+		serveStaticNotFound(c)
+		return
+	}
+	c.Header("Content-Type", ctype)
+	c.Header("X-Content-Type-Options", "nosniff")
+	serveStaticFS(c, frontend.FS(), name, c.Query("v") != "")
 }
 
 // activeMarkupExtensions lists extensions a browser may render as an

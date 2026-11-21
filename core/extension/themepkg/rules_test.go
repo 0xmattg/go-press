@@ -4,6 +4,7 @@
 package themepkg
 
 import (
+	"sort"
 	"strings"
 	"testing"
 )
@@ -137,6 +138,27 @@ func TestFileRules(t *testing.T) {
 			t.Fatalf("warnings = %v", report.Warnings)
 		}
 	})
+	t.Run("core static directories", func(t *testing.T) {
+		report := check(t, sample(t, map[string]string{
+			"static/admin/css/admin.css": "a{}",
+			"static/admin/x.css":         "a{}",
+			"static/uploads/logo.png":    "\x89PNG\r\n\x1a\nrest",
+			"static/gopress/ui.css":      "a{}",
+			"static/gopress-x/a.css":     "a{}",
+			"static/img/admin/a.css":     "a{}",
+		}))
+		expectOK(t, report)
+		var shadowed []string
+		for _, w := range report.Warnings {
+			if w.Rule == RuleFileShadowed {
+				shadowed = append(shadowed, w.Path)
+			}
+		}
+		sort.Strings(shadowed)
+		if strings.Join(shadowed, " ") != "static/admin/ static/gopress/ static/uploads/" {
+			t.Fatalf("shadowed = %v", shadowed)
+		}
+	})
 }
 
 func TestTemplateRules(t *testing.T) {
@@ -163,6 +185,19 @@ func TestTemplateRules(t *testing.T) {
 		page := `<p>{{T .Ctx "x"}} {{seoHead .SEO}} {{renderHook "x" .}} {{responsiveImage "/a.png" "a" "" "" "lazy"}}</p>
 {{range taxonomyTerms .Ctx "category"}}{{.Name}}{{end}}{{with contentBySlug .Ctx "page" "about"}}{{.Title}}{{end}}
 {{if canCurrentUser .Ctx "post" "create"}}<a href="{{buildURL "post" "x"}}">x</a>{{end}}`
+		expectOK(t, check(t, withPage(t, page)))
+	})
+	t.Run("interaction attributes", func(t *testing.T) {
+		page := `{{uiScript}}
+<button type="button" data-gp-toggle="site-nav" aria-label="{{T .Ctx "menu"}}">=</button>
+<nav id="site-nav" data-gp-dismiss="escape outside link" data-gp-group="{{.Group}}"><ul data-gp-menu data-gp-menu-below="980"><li><a href="/docs">Docs</a><ul><li><a href="/a">A</a></li></ul></li></ul></nav>
+<a href="/login" data-gp-dialog-open="login" aria-haspopup="dialog">Sign in</a>
+<dialog id="login" data-gp-dialog data-gp-dismiss="outside"><input data-gp-autofocus><button type="button" data-gp-dialog-close>x</button></dialog>
+<section data-gp-carousel data-gp-interval="{{.Interval}}">{{range $i, $s := .Slides}}<div data-gp-slide>{{$s}}</div><button type="button" data-gp-carousel-to="{{$i}}"></button>{{end}}<button type="button" data-gp-carousel-pause aria-pressed="false">||</button></section>
+<header data-gp-scroll="48"></header><button type="button" data-gp-scroll="400" data-gp-to-top>^</button>
+<div data-gp-reveal></div><div data-gp-progress="post-{{.ID}}" aria-hidden="true"></div>
+<input id="share-url" value="{{.URL}}" readonly><button type="button" data-gp-copy="share-url" data-gp-copy-done="share-done">Copy</button><span role="status"><span id="share-done" hidden>Copied</span></span>
+<button popovertarget="fn-1">1</button><aside id="fn-1" popover>Note</aside>`
 		expectOK(t, check(t, withPage(t, page)))
 	})
 	t.Run("no layout", func(t *testing.T) {
