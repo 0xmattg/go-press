@@ -118,6 +118,51 @@ keeps at most six:
 {{end}}
 ```
 
+## Public Badges
+
+`user.public_badges` (`hook.UserPublicBadges`) lets a plugin give members a
+short public mark shown next to their name, for example "GoPress developer"
+or "Verified seller". As with account actions, plugins supply data and the
+theme draws it.
+
+- Filter value: `[]user.PublicBadge`; `args[0]` is the member's user ID
+  (`uint`) and `args[1]` the request's `*gin.Context`, for translating labels.
+- Append badges for that member only, and only what may be shown publicly.
+- Fields: `Source` (your plugin's slug), `Key` (the badge within your plugin,
+  for example `developer`; `Source` and `Key` use lowercase letters, digits
+  and hyphens), `Label` (plain text, already translated), `URL` (optional,
+  a path on this site starting with `/`) and `Level` (`official`, `verified`
+  or `info`).
+
+```go
+e.Hooks.AddFilter(hook.UserPublicBadges, func(value interface{}, args ...interface{}) interface{} {
+    list, _ := value.([]user.PublicBadge)
+    userID, _ := args[0].(uint)
+    if !isSeller(userID) {
+        return list
+    }
+    return append(list, user.PublicBadge{
+        Source: "my-shop", Key: "seller", Label: "Verified seller",
+        URL: "/sellers/" + strconv.FormatUint(uint64(userID), 10), Level: user.BadgeLevelVerified,
+    })
+}, 10)
+```
+
+Themes show the badges next to a name with `userBadges .Ctx <user ID>`. It
+drops badges without a label or with a malformed `Source` or `Key`, clears a
+URL that is not a path on this site, keeps one badge per `Source` and `Key`,
+sorts by level (`official`, `verified`, `info`) and keeps at most three. It
+asks the filter once per member and request, so a name that appears many
+times on a page costs one lookup:
+
+```gotemplate
+<a href="/members/{{.Author.ID}}">{{.Author.DisplayName}}</a>
+{{range userBadges $.Ctx .Author.ID}}
+  {{if .URL}}<a class="badge badge-{{.Level}}" href="{{.URL}}">{{.Label}}</a>
+  {{else}}<span class="badge badge-{{.Level}}">{{.Label}}</span>{{end}}
+{{end}}
+```
+
 ## Menu Hooks
 
 | Hook | Go constant | Contract |

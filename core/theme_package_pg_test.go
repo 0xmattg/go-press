@@ -365,3 +365,61 @@ func TestPGThemePackageResponsesCarryAContentSecurityPolicy(t *testing.T) {
 		t.Fatalf("a built-in theme got a policy: %s", policy)
 	}
 }
+
+// A package without single and 404 pages: core's generic blocks render inside
+// the package's own layout instead of the standalone fallback pages.
+func TestPGPagesWithoutATemplateUseThePackageLayout(t *testing.T) {
+	manifest, err := os.ReadFile(filepath.Join("extension", "themepkg", "testdata", "minimal", "theme.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	selectable := "[[page_templates]]\nname = \"Single column\"\ntemplate = \"single\"\n"
+	if !strings.Contains(string(manifest), selectable) {
+		t.Fatal("the sample package no longer declares the single page template")
+	}
+	e := packageSiteEngine(t, samplePackageDir(t, map[string]string{
+		"theme.toml":                  strings.Replace(string(manifest), selectable, "", 1),
+		"templates/pages/single.tmpl": "",
+		"templates/pages/404.tmpl":    "",
+	}))
+	if e.ActiveThemeName() != samplePackageSlug {
+		t.Fatalf("active theme = %q", e.ActiveThemeName())
+	}
+	past := time.Now().Add(-time.Hour)
+	if err := e.Content.Create(&content.Content{Type: "page", Status: content.StatusPublished, Title: "Terms of use", Slug: "terms",
+		Content: `<h2>Accounts</h2><ul><li>Apply</li></ul><img src="x" onerror="alert(1)">`, PublishedAt: &past}); err != nil {
+		t.Fatal(err)
+	}
+	publishPost(t, e, "hello", "Hello package", "<p>Body</p>")
+	get := func(path string) *httptest.ResponseRecorder {
+		w := httptest.NewRecorder()
+		e.Router.ServeHTTP(w, httptest.NewRequest(http.MethodGet, path, nil))
+		return w
+	}
+	inLayout := func(name string, w *httptest.ResponseRecorder, status int, wants ...string) {
+		t.Helper()
+		html := w.Body.String()
+		if w.Code != status || !strings.Contains(html, `<main class="site-main">`) || !strings.Contains(html, `<footer class="site-footer">`) ||
+			!strings.Contains(html, `/static/css/style.css`) {
+			t.Fatalf("%s = %d, not in the package layout: %s", name, w.Code, html)
+		}
+		if strings.Contains(html, `<html lang="zh-CN">`) {
+			t.Fatalf("%s used the standalone fallback", name)
+		}
+		for _, want := range wants {
+			if !strings.Contains(html, want) {
+				t.Errorf("%s lacks %q", name, want)
+			}
+		}
+	}
+
+	page := get("/terms")
+	inLayout("page", page, http.StatusOK, "gp-page--single", `<h1 class="gp-page__title">Terms of use</h1>`, "<h2>Accounts</h2><ul><li>Apply</li></ul>",
+		"<title>Terms of use", `rel="canonical" href="https://example.test/terms"`)
+	if strings.Contains(page.Body.String(), "onerror") {
+		t.Fatal("the page body was not sanitized")
+	}
+	inLayout("post", get("/blog/hello"), http.StatusOK, "gp-page--single", "Hello package", "<p>Body</p>", "<time datetime=")
+	inLayout("archive", get("/blog"), http.StatusOK, "gp-page--archive", `<a href="/blog/hello">Hello package</a>`)
+	inLayout("404", get("/blog/no-such-post"), http.StatusNotFound, "gp-page--not-found", "Page not found", `<a href="/">`)
+}

@@ -215,9 +215,11 @@ product
 archive
 ```
 
-If no page bundle matches, BaseTheme falls back to the classic root-template hierarchy (`archive-product.tmpl`, `single-product.tmpl`, `archive.tmpl`, `single.tmpl`, `index.tmpl`) and finally to built-in fallback templates.
+If no page bundle matches, BaseTheme falls back to the classic root-template hierarchy (`archive-product.tmpl`, `single-product.tmpl`, `archive.tmpl`, `single.tmpl`, `index.tmpl`). When nothing matches there either, a theme with `templates/layouts/base.tmpl` still renders the page in its own layout: core fills the layout's `content` block with a generic block (title, summary, cover image and body for a single item; a list with pagination for an archive; a term list for a taxonomy page). Themes without a layout get core's standalone fallback pages.
 
-The home page uses the first of the page bundles `front-page`, `home` and `index`. "Not found" responses (status 404) use the page bundle `404`, or plain text when there is none. A route the theme registers itself, such as `AddRoute("GET", "/")`, takes priority.
+The home page uses the first of the page bundles `front-page`, `home` and `index`. "Not found" responses (status 404) use the page bundle `404`, then the classic `404.tmpl`, then core's generic "page not found" block in the theme's layout, and plain text when the theme has no layout. A route the theme registers itself, such as `AddRoute("GET", "/")`, takes priority.
+
+The generic blocks have their own small stylesheet: width and spacing only, with colors and fonts inherited from the theme, so they fit light and dark themes. To restyle them, target their classes in the theme's CSS: `.gp-page` (with `--single`, `--archive`, `--taxonomy` or `--not-found`), `.gp-page__title`, `.gp-page__summary`, `.gp-page__body`, `.gp-page__list`, `.gp-page__entry` and `.gp-page__pager`. Their few texts ("Nothing has been published here yet.", "Page not found", pagination) come in English and Chinese; a theme or site translation of `gopress.fallback.<key>` (`empty`, `back_home`, `not_found_title`, `not_found_text`, `previous`, `next`, `page_of`, `pagination`) replaces them. The layout's `content` block is the only one core fills, so a layout that also needs a block only its pages define keeps the standalone fallbacks. To control the design fully, add a `page` (standalone pages), `single`, `archive`, `taxonomy` or `404` page bundle.
 
 Inside templates, prefer core URL helpers:
 

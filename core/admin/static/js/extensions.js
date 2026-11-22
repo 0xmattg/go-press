@@ -291,7 +291,13 @@
         return el('a', { href: '/admin/themes', text: t('activate_link') });
     }
 
-    function installedNotice(name, version) {
+    // A package that is the site's current theme is live at once, so the
+    // notice says so instead of pointing to the Themes page.
+    function installedNotice(name, version, active) {
+        if (active) {
+            notice('success', t('installed_active_notice', name, version));
+            return;
+        }
         notice('success', [t('installed_notice', name, version), ' ', themesLink()]);
     }
 
@@ -474,7 +480,7 @@
                         item.update = false;
                         var old = document.getElementById('market-' + item.slug);
                         if (old) old.parentNode.replaceChild(card(item), old);
-                        installedNotice(item.title, item.latest.version);
+                        installedNotice(item.title, item.latest.version, !!(data.result && data.result.active));
                         return true;
                     });
                 }
@@ -672,7 +678,7 @@
     function uploaded(result) {
         var name = result.summary && result.summary.name ? result.summary.name : result.slug;
         var version = result.package ? result.package.version : '';
-        installedNotice(name, version);
+        installedNotice(name, version, !!result.active);
         if (market && typeof market.reloadInstalled === 'function') market.reloadInstalled();
     }
 

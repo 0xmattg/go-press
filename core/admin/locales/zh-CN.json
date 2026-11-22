@@ -282,6 +282,7 @@
   "ext.external_none": "无，全部由本站提供。",
   "ext.no_scripts": "主题包不含脚本。",
   "ext.installed_notice": "已安装 %s %s。",
+  "ext.installed_active_notice": "已安装 %s %s，站点已经在使用这个版本。",
   "ext.activate_link": "去主题页启用",
   "ext.installed_empty": "还没有安装主题包。",
   "ext.current_version": "当前版本",

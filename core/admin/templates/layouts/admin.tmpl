@@ -85,10 +85,10 @@
         </div>
         {{end}}
         {{if .Success}}
-        <div class="alert alert-success">{{.Success}}</div>
+        <div class="alert alert-success" role="status">{{.Success}}</div>
         {{end}}
         {{if .Error}}
-        <div class="alert alert-error">{{.Error}}</div>
+        <div class="alert alert-error" role="alert">{{.Error}}</div>
         {{end}}
 
         <div class="admin-content">

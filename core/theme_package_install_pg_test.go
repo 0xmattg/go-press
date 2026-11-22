@@ -1012,3 +1012,33 @@ func TestPGInstalledMarketPackagesAreCheckedForUpdates(t *testing.T) {
 		}
 	}
 }
+
+// The admin learns whether an install changed the theme the site runs, so
+// it does not send the operator to the Themes page to enable a theme that
+// is already live.
+func TestPGAdminInstallReportsTheActiveTheme(t *testing.T) {
+	ctx := context.Background()
+	market := newPGMarket(t)
+	market.offer(packageVersion(t, "1.0.0"), nil)
+	market.offer(packageVersion(t, "1.1.0"), nil)
+	e := marketSite(t, newPackageSite(t), market, nil)
+	pm := e.adminPackageManager()
+
+	out, err := pm.Install(ctx, samplePackageSlug, "1.0.0", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out.Active {
+		t.Fatal("a theme the site does not run was reported as active")
+	}
+	if err := e.SwitchTheme(samplePackageSlug); err != nil {
+		t.Fatal(err)
+	}
+	out, err = pm.Install(ctx, samplePackageSlug, "1.1.0", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !out.Active || out.Package == nil || out.Package.Version != "1.1.0" {
+		t.Fatalf("upgrade of the running theme = %+v, want active 1.1.0", out)
+	}
+}

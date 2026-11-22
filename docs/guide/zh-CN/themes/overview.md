@@ -7,7 +7,7 @@ GoPress 的主题系统借鉴 WordPress 设计：主题是一个 Go 包，通过
 - **BaseTheme 运行时引擎** — 主题嵌入 `BaseTheme` 即可获得 URL 解析、模板层级、SEO 注入等运行时能力
 - **核心类型保护** — 引擎在 `Registry.Clear()` 后自动 `registerCoreTypes()`，`post` / `page` / `contact_message` / `category` / `tag` 跨主题切换永久保留
 - **配置化内容类型** — 主题自定义内容类型由 `theme.toml` 的 `[[content_types]]` 声明；后台导航、CRUD、REST API、Rewrite、模板映射和菜单图标都从注册表读取
-- **内置回退模板** — 当主题未提供对应模板时，BaseTheme 自动使用内置的分类归档、单页、列表回退模板，避免 404
+- **内置回退模板** — 当主题未提供对应模板时，BaseTheme 自动为归档、单篇、分类页和 404 提供回退：主题有基础布局时在主题自己的布局里显示（见[创建主题](creating-themes.md)），否则使用内置的独立页面
 - **详情页标签展示** — 任意挂载 `tag` 分类法的内容详情页都可以显示关联 Tags，链接到对应分类归档页
 - **Theme 接口** — 实现 `Name()` / `Setup()` / `ServeHTTP()` / `TemplateFuncs()` 即可
 - **App 接口** — 主题通过 `theme.App` 接口访问 DB、ContentRepo、RewriteEngine、SEOBuilder、MediaRepo、HookBus、SiteLocation 等引擎能力
@@ -147,6 +147,8 @@ e.Hooks.RemoveFilter(handle)
 主题应通过 `loginProviders` 发现当前启用的登录方式，再用 `loginProviderURL` 为 core 发布的 Provider 起始路径附加经校验的站内回跳地址。模板示例、页面缓存和安全注意事项见[前台账号与外部身份登录](../architecture/public-authentication.md#主题接入)。
 
 主题的账户页可以用 `accountActions .Ctx` 列出插件提供的入口（例如进入插件的会员区），按自己的风格渲染标题、说明、状态和按钮。主题不需要知道是哪个插件提供的；协议和示例见[账户操作](../architecture/hooks.md#账户操作)。
+
+主题显示会员名字的地方（评论作者、论坛帖子、会员主页等），可以用 `userBadges .Ctx <用户 ID>` 加上插件给这位会员的公开徽章，例如链接到他在插件区域主页的「已认证」标识。见[公开徽章](../architecture/hooks.md#公开徽章)。
 
 ## 主题与插件边界
 

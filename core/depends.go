@@ -108,11 +108,12 @@ func (r ThemeDepReport) InactiveDeps() []string {
 
 // NeedsEnable returns the slugs of present-but-inactive required plugins that
 // are opt-in modules (default-inactive) — they are NOT auto-activated; the admin
-// surfaces a prominent "enable" prompt for them.
+// surfaces a prominent "enable" prompt for them. Optional requirements are left
+// out: the theme works without them, so the admin must not say it needs them.
 func (r ThemeDepReport) NeedsEnable() []string {
 	var out []string
 	for _, p := range r.Plugins {
-		if p.State == DepNeedsEnable {
+		if p.State == DepNeedsEnable && !p.Optional {
 			out = append(out, p.Slug)
 		}
 	}

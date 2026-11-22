@@ -78,7 +78,7 @@ func pkgCatalogVerify(args []string, stdout io.Writer) error {
 		return usageError{err.Error()}
 	}
 	if len(catalogKeys) == 0 || len(packageKeys) == 0 || flags.NArg() != 1 {
-		return usageError{"want -catalog-key, -package-key and one catalog file"}
+		return usageError{"want -catalog-key, -package-key and one catalog file (and -endpoint for a market other than the official one)"}
 	}
 	root, err := extension.NewTrustRoot(config.MarketConfig{Endpoint: *endpoint, CatalogKeys: catalogKeys, PackageKeys: packageKeys})
 	if err != nil {

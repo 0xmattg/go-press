@@ -236,9 +236,11 @@ product
 archive
 ```
 
-如果页面 bundle 没命中，BaseTheme 仍会回退到旧的根模板层级（`archive-product.tmpl` / `single-product.tmpl` / `archive.tmpl` / `single.tmpl` / `index.tmpl`），最后再使用内置 fallback 模板。
+如果页面 bundle 没命中，BaseTheme 仍会回退到旧的根模板层级（`archive-product.tmpl` / `single-product.tmpl` / `archive.tmpl` / `single.tmpl` / `index.tmpl`）。这里也没有命中时，只要主题有 `templates/layouts/base.tmpl`，页面仍在主题自己的布局里显示：core 用一个通用块填充布局的 `content` 块（单篇是标题、摘要、封面和正文；归档是带分页的列表；分类页是条目列表）。没有布局的主题使用 core 的独立兜底页面。
 
-首页依次查找页面 bundle `front-page`、`home`、`index`。找不到页面时（状态码 404）使用页面 bundle `404`，没有这一页就返回纯文本。主题自己注册的路由优先，例如 `AddRoute("GET", "/")`。
+首页依次查找页面 bundle `front-page`、`home`、`index`。找不到页面时（状态码 404）依次使用页面 bundle `404`、旧层级的 `404.tmpl`、主题布局里的 core 通用「页面不存在」块；主题没有布局时返回纯文本。主题自己注册的路由优先，例如 `AddRoute("GET", "/")`。
+
+通用块自带一小段样式，只管宽度和间距，颜色和字体继承主题，所以浅色和深色主题都适用。要调整样式，在主题 CSS 里覆盖这些类名：`.gp-page`（加 `--single`、`--archive`、`--taxonomy` 或 `--not-found`）、`.gp-page__title`、`.gp-page__summary`、`.gp-page__body`、`.gp-page__list`、`.gp-page__entry`、`.gp-page__pager`。通用块里少量文字（「这里还没有发布内容。」「页面不存在」、翻页）自带中英文；主题或站点对 `gopress.fallback.<key>`（`empty`、`back_home`、`not_found_title`、`not_found_text`、`previous`、`next`、`page_of`、`pagination`）的翻译会替换它们。core 只填充布局的 `content` 块，布局如果还依赖只有页面才定义的其他块，就继续使用独立兜底页面。想完全控制设计，就提供 `page`（独立页面）、`single`、`archive`、`taxonomy` 或 `404` 页面 bundle。
 
 模板内链应走 core helper，避免路径和 `theme.toml` 配置脱节：
 

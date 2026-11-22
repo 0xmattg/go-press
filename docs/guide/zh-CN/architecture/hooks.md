@@ -108,6 +108,38 @@ e.Hooks.AddFilter(hook.UserAccountActions, func(value interface{}, args ...inter
 {{end}}
 ```
 
+## 公开徽章
+
+`user.public_badges`（`hook.UserPublicBadges`）让插件给会员加一个显示在名字旁边的公开标识，例如「GoPress 开发者」「认证卖家」。和账户操作一样，插件只提供数据，由主题负责画。
+
+- filter value：`[]user.PublicBadge`；`args[0]` 是这位会员的用户 ID（`uint`），`args[1]` 是当前请求的 `*gin.Context`，用来翻译文字。
+- 只为这位会员添加徽章，并且只添加可以公开的内容。
+- 字段：`Source`（你的插件 slug）、`Key`（插件内的徽章标识，例如 `developer`；`Source` 和 `Key` 只能用小写字母、数字和连字符）、`Label`（纯文本，已翻译）、`URL`（可空，本站路径，以 `/` 开头）、`Level`（`official`、`verified` 或 `info`）。
+
+```go
+e.Hooks.AddFilter(hook.UserPublicBadges, func(value interface{}, args ...interface{}) interface{} {
+    list, _ := value.([]user.PublicBadge)
+    userID, _ := args[0].(uint)
+    if !isSeller(userID) {
+        return list
+    }
+    return append(list, user.PublicBadge{
+        Source: "my-shop", Key: "seller", Label: "认证卖家",
+        URL: "/sellers/" + strconv.FormatUint(uint64(userID), 10), Level: user.BadgeLevelVerified,
+    })
+}, 10)
+```
+
+主题用 `userBadges .Ctx <用户 ID>` 在名字旁边显示徽章。没有文字、`Source` 或 `Key` 格式不对的徽章会被去掉；地址不是本站路径的会被清空；同一个 `Source` 和 `Key` 只留一个；按等级（`official`、`verified`、`info`）排序，最多 3 个。同一个请求里每位会员只查询一次，页面上同一个名字出现多次也只查一次：
+
+```gotemplate
+<a href="/members/{{.Author.ID}}">{{.Author.DisplayName}}</a>
+{{range userBadges $.Ctx .Author.ID}}
+    {{if .URL}}<a class="badge badge-{{.Level}}" href="{{.URL}}">{{.Label}}</a>
+    {{else}}<span class="badge badge-{{.Level}}">{{.Label}}</span>{{end}}
+{{end}}
+```
+
 ## 菜单 Hook
 
 | Hook 名称 | Go 常量 | 用途 |

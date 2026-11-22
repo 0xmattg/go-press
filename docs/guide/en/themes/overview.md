@@ -7,7 +7,7 @@ GoPress themes are Go packages that register themselves with the engine. A theme
 - `BaseTheme` runtime for rewrite resolution, template fallback, SEO injection, and common helpers.
 - Theme-declared content types from `theme.toml`, including rewrite slugs and optional page-template mapping.
 - WordPress-like template hierarchy.
-- Built-in fallback templates for archives, singles, and taxonomy pages.
+- Fallbacks for archives, singles, taxonomy pages and 404 responses: inside the theme's own layout when it has one (see [Creating Themes](creating-themes.md)), otherwise built-in standalone pages.
 - Standard frontend hook slots for plugins.
 - Menu locations and language-aware menu rendering.
 - URL-based active menu helper from the core funcmap.
@@ -98,6 +98,8 @@ Themes can render provider-neutral account UI with the core helpers `currentUser
 Use `loginProviders` to discover enabled sign-in choices and `loginProviderURL` to attach a validated same-site return path to each provider's core-published begin URL. See [Public Accounts and External Identity](../architecture/public-authentication.md#theme-integration) for template examples and cache/security notes.
 
 A theme's account page can list the entries plugins offer, such as the way into a plugin's member area, with `accountActions .Ctx`, and draw their title, text, status and button in its own style. The theme does not need to know which plugin supplied them; see [Account Actions](../architecture/hooks.md#account-actions) for the contract and an example.
+
+Wherever a theme shows a member's name, such as comment authors, forum posts and member pages, it can add the public badges plugins give that member with `userBadges .Ctx <user ID>`, for example a "verified" mark that links to the member's page in the plugin's area. See [Public Badges](../architecture/hooks.md#public-badges).
 
 ## Theme and Plugin Boundary
 
