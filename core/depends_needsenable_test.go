@@ -47,6 +47,26 @@ func TestDefaultInactiveDependencyNeedsEnable(t *testing.T) {
 	}
 }
 
+// TestOptionalModuleIsNotPrompted: an optional requirement on a
+// default-inactive module resolves to DepNeedsEnable too, but the admin must
+// not tell the operator the theme needs it.
+func TestOptionalModuleIsNotPrompted(t *testing.T) {
+	mgr := plugin.NewManager()
+	mgr.Register(fakeModule{})
+
+	deps := resolvePluginDeps([]coreTheme.PluginRequirement{{Slug: "commerce", Optional: true}}, mgr)
+	if len(deps) != 1 || deps[0].State != DepNeedsEnable || !deps[0].Optional {
+		t.Fatalf("state = %+v, want an optional DepNeedsEnable", deps)
+	}
+	report := ThemeDepReport{CoreSatisfied: true, Plugins: deps}
+	if !report.OK() {
+		t.Fatal("an optional module must not block the theme")
+	}
+	if got := report.NeedsEnable(); len(got) != 0 {
+		t.Fatalf("NeedsEnable = %v, want none for an optional requirement", got)
+	}
+}
+
 // TestManagerIsDefaultInactive checks the Manager helper both ways.
 func TestManagerIsDefaultInactive(t *testing.T) {
 	mgr := plugin.NewManager()

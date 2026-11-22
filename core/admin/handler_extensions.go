@@ -149,6 +149,9 @@ type PackageOutcome struct {
 	Notice  string               `json:"notice,omitempty"`
 	Summary *PackageSummaryView  `json:"summary,omitempty"`
 	Removed []PackageVersionView `json:"removed,omitempty"`
+	// Active is true when the package is the theme the site runs: an
+	// install or upgrade took effect at once.
+	Active bool `json:"active,omitempty"`
 }
 
 // CatalogView answers GET /admin/extensions/themes/catalog.

@@ -92,6 +92,10 @@ type BaseTheme struct {
 	meta             Config         // [theme] metadata (single source of truth, baked in)
 	requires         RequiresConfig // [requires] dependency block
 	assetFS          fs.FS          // theme files when initialized with InitBaseFS
+
+	// LayoutFallbacks wrap core's generic blocks in the theme's layout for
+	// pages the theme has no template for (see LoadLayoutFallbacks).
+	LayoutFallbacks *LayoutFallbacks
 }
 
 // InitBase initializes the BaseTheme. Call this from the theme constructor.
@@ -286,6 +290,13 @@ func (b *BaseTheme) LoadTemplates(t Theme) {
 	if err := b.Templates.Load(); err != nil {
 		logger.Error("BaseTheme: failed to load templates", "error", err)
 	}
+
+	b.LayoutFallbacks = nil
+	if fallbacks, err := LoadLayoutFallbacks(t); err != nil {
+		logger.Warn("BaseTheme: pages without a template use the standalone fallback", "theme", t.Name(), "reason", err)
+	} else {
+		b.LayoutFallbacks = fallbacks
+	}
 }
 
 // BaseFuncMap returns shared template helpers plus theme-specific functions.
@@ -429,6 +440,31 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 			}
 			return user.NormalizeAccountActions(list)
 		}
+		// userBadges lists the public badges extensions give a member
+		// (hook.UserPublicBadges), for showing next to their name. It takes
+		// the page data or its gin context and a user ID; results are kept
+		// for the rest of the request, so a member who appears many times on
+		// a page is looked up once.
+		engineFuncs["userBadges"] = func(data interface{}, id interface{}) []user.PublicBadge {
+			c := templateGinContext(data)
+			userID, ok := badgeUserID(id)
+			if hooks == nil || c == nil || !ok {
+				return nil
+			}
+			cache, _ := c.Get(publicBadgesCacheKey)
+			byUser, _ := cache.(map[uint][]user.PublicBadge)
+			if byUser == nil {
+				byUser = map[uint][]user.PublicBadge{}
+				c.Set(publicBadgesCacheKey, byUser)
+			}
+			if badges, done := byUser[userID]; done {
+				return badges
+			}
+			list, _ := hooks.ApplyFilter(hook.UserPublicBadges, []user.PublicBadge{}, userID, c).([]user.PublicBadge)
+			badges := user.NormalizePublicBadges(list)
+			byUser[userID] = badges
+			return badges
+		}
 		engineFuncs["currentUser"] = user.CurrentUserView
 		engineFuncs["isLoggedIn"] = user.IsLoggedIn
 		engineFuncs["loginURL"] = user.LoginURL
@@ -524,6 +560,32 @@ func containsGinContext(args []interface{}) bool {
 		}
 	}
 	return false
+}
+
+// publicBadgesCacheKey holds a request's userBadges results by user ID.
+const publicBadgesCacheKey = "gopress.public_badges"
+
+// badgeUserID accepts the integer types templates pass for a user ID and
+// reports false for anything else or for 0.
+func badgeUserID(id interface{}) (uint, bool) {
+	var n int64
+	switch v := id.(type) {
+	case uint:
+		return v, v > 0
+	case uint64:
+		return uint(v), v > 0
+	case uint32:
+		return uint(v), v > 0
+	case int:
+		n = int64(v)
+	case int64:
+		n = v
+	case int32:
+		n = int64(v)
+	default:
+		return 0, false
+	}
+	return uint(n), n > 0
 }
 
 func templateGinContext(data interface{}) *gin.Context {
@@ -732,7 +794,19 @@ func (b *BaseTheme) renderArchive(c *gin.Context, route *rewrite.ResolvedRoute) 
 		return
 	}
 
-	// Fallback: use built-in archive template
+	// No template: core's archive block inside the theme's layout, else the
+	// standalone fallback.
+	if b.LayoutFallbacks != nil {
+		if result.Page > 1 {
+			data["FallbackPrevURL"] = archivePageURL(c, result.Page-1)
+		}
+		if result.Page < result.TotalPages {
+			data["FallbackNextURL"] = archivePageURL(c, result.Page+1)
+		}
+		if b.renderLayoutFallback(c, b.LayoutFallbacks.Archive, data, http.StatusOK) {
+			return
+		}
+	}
 	if rw := b.App.RewriteEngine(); rw != nil {
 		data["BuildURL"] = rw.BuildURL
 	}
@@ -848,7 +922,11 @@ func (b *BaseTheme) renderSingle(c *gin.Context, route *rewrite.ResolvedRoute) {
 		return
 	}
 
-	// Fallback: use built-in single template
+	// No template: core's single block inside the theme's layout, else the
+	// standalone fallback.
+	if b.LayoutFallbacks != nil && b.renderLayoutFallback(c, b.LayoutFallbacks.Single, data, http.StatusOK) {
+		return
+	}
 	c.Status(http.StatusOK)
 	c.Header("Content-Type", "text/html; charset=utf-8")
 	if ferr := FallbackSingleTemplate().Execute(c.Writer, data); ferr != nil {
@@ -933,7 +1011,11 @@ func (b *BaseTheme) renderTaxonomy(c *gin.Context, route *rewrite.ResolvedRoute)
 		return
 	}
 
-	// Fallback: use built-in template (standalone, no "base" block)
+	// No template: core's taxonomy block inside the theme's layout, else the
+	// standalone fallback (no "base" block).
+	if b.LayoutFallbacks != nil && b.renderLayoutFallback(c, b.LayoutFallbacks.Taxonomy, data, http.StatusOK) {
+		return
+	}
 	if rw := b.App.RewriteEngine(); rw != nil {
 		data["BuildURL"] = rw.BuildURL
 	}
@@ -948,12 +1030,7 @@ func (b *BaseTheme) renderTaxonomy(c *gin.Context, route *rewrite.ResolvedRoute)
 // else the classic 404.tmpl → index.tmpl, else plain text.
 func (b *BaseTheme) render404(c *gin.Context) {
 	if tmpl := b.resolvePageTemplate([]string{NotFoundPageName}); tmpl != nil {
-		data := b.buildBaseData(c, "Page Not Found")
-		if b.App != nil && b.App.SEOBuilder() != nil {
-			seo := rewrite.SEOMeta{Title: "Page Not Found | " + b.App.SEOBuilder().SiteName(), Robots: "noindex,follow"}
-			ApplySiteOptionOverridesForRequest(c, b.App, &seo)
-			data["SEO"] = seo
-		}
+		data := b.notFoundData(c)
 		data["Ctx"] = c
 		c.Status(http.StatusNotFound)
 		c.Header("Content-Type", "text/html; charset=utf-8")
@@ -963,8 +1040,16 @@ func (b *BaseTheme) render404(c *gin.Context) {
 		return
 	}
 	candidates := ResolveTemplate("", "", "", "", false, false, true)
-	tmpl := b.Templates.Resolve(candidates)
+	var tmpl *template.Template
+	if b.Templates != nil {
+		tmpl = b.Templates.Resolve(candidates)
+	}
 	if tmpl == nil {
+		// No 404 template: core's block inside the theme's layout, else
+		// plain text.
+		if b.LayoutFallbacks != nil && b.renderLayoutFallback(c, b.LayoutFallbacks.NotFound, b.notFoundData(c), http.StatusNotFound) {
+			return
+		}
 		c.String(http.StatusNotFound, "404 - Page Not Found")
 		return
 	}
@@ -974,6 +1059,18 @@ func (b *BaseTheme) render404(c *gin.Context) {
 	if err := tmpl.Execute(c.Writer, data); err != nil {
 		logger.Error("BaseTheme: 404 template render error", "error", err)
 	}
+}
+
+// notFoundData is the page data of a "not found" response: the base data
+// with a noindex SEO title.
+func (b *BaseTheme) notFoundData(c *gin.Context) gin.H {
+	data := b.buildBaseData(c, "Page Not Found")
+	if b.App != nil && b.App.SEOBuilder() != nil {
+		seo := rewrite.SEOMeta{Title: "Page Not Found | " + b.App.SEOBuilder().SiteName(), Robots: "noindex,follow"}
+		ApplySiteOptionOverridesForRequest(c, b.App, &seo)
+		data["SEO"] = seo
+	}
+	return data
 }
 
 // registeredTypeNames returns the names of all content types currently in the Registry.

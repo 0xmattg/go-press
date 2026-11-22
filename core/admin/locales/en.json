@@ -282,6 +282,7 @@
   "ext.external_none": "None; everything is served by this site.",
   "ext.no_scripts": "Theme packages contain no scripts.",
   "ext.installed_notice": "%s %s is installed.",
+  "ext.installed_active_notice": "%s %s is installed. The site is using it now.",
   "ext.activate_link": "Enable it on the Themes page",
   "ext.installed_empty": "No theme packages are installed yet.",
   "ext.current_version": "Current",

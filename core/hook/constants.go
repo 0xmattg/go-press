@@ -61,8 +61,9 @@ const (
 	FrontendCSP = "frontend.csp"
 )
 
-// User hooks let extensions add to a member's own account page without the
-// theme knowing which extension is active.
+// User hooks let extensions add to a member's own account page, and to how
+// members appear to others, without the theme knowing which extension is
+// active.
 const (
 	// UserAccountActions filters the entries a signed-in member sees on
 	// their own account page, such as the way into a member area. The filter
@@ -74,6 +75,18 @@ const (
 	// site, sorts by Order and keeps at most user.MaxAccountActions. The
 	// theme owns the markup; an extension never returns HTML here.
 	UserAccountActions = "user.account_actions"
+
+	// UserPublicBadges filters the public badges shown next to a member's
+	// name, such as "GoPress developer". The filter value is
+	// []user.PublicBadge; args[0] is the member's user ID (uint) and args[1]
+	// the request's *gin.Context, for translating labels. Append badges for
+	// that member only, with Source set to the extension's own slug. Themes
+	// render them through the userBadges template function, which drops
+	// badges without a label or with a malformed Source or Key, clears URLs
+	// that are not paths on this site, sorts by level and keeps at most
+	// user.MaxPublicBadges. It asks the filter once per member and request.
+	// The theme owns the markup; an extension never returns HTML here.
+	UserPublicBadges = "user.public_badges"
 )
 
 // Menu hooks are fired by core/menu while resolving or mutating menus. They are

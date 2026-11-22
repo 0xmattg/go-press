@@ -54,15 +54,15 @@ func (e *Engine) adminPackageManager() *admin.PackageManager {
 		},
 		InstallFn: func(ctx context.Context, slug, version string, actor uint) (*admin.PackageOutcome, error) {
 			result, err := e.InstallThemePackage(ctx, slug, version, actor)
-			return adminPackageOutcome(result), e.adminPackageError(err)
+			return e.adminPackageOutcome(result), e.adminPackageError(err)
 		},
 		UploadFn: func(ctx context.Context, data []byte, confirmDigest string, actor uint) (*admin.PackageOutcome, error) {
 			result, err := e.UploadThemePackage(ctx, data, confirmDigest, actor)
-			return adminPackageOutcome(result), e.adminPackageError(err)
+			return e.adminPackageOutcome(result), e.adminPackageError(err)
 		},
 		RollbackFn: func(ctx context.Context, id int64) (*admin.PackageOutcome, error) {
 			result, err := e.RollbackThemePackage(ctx, id)
-			return adminPackageOutcome(result), e.adminPackageError(err)
+			return e.adminPackageOutcome(result), e.adminPackageError(err)
 		},
 		UninstallFn: func(ctx context.Context, slug string) (*admin.PackageOutcome, error) {
 			removed, err := e.UninstallThemePackage(ctx, slug)
@@ -149,12 +149,16 @@ func adminPackageSummary(s *PackageSummary) *admin.PackageSummaryView {
 		Size: s.Size, Files: s.Files, External: external, Signature: s.Signature}
 }
 
-func adminPackageOutcome(r *PackageResult) *admin.PackageOutcome {
+// adminPackageOutcome converts a result for the admin. Active tells the
+// admin that the package is the theme the site runs, so a new version is
+// already live and there is nothing to switch to.
+func (e *Engine) adminPackageOutcome(r *PackageResult) *admin.PackageOutcome {
 	if r == nil {
 		return nil
 	}
 	v := adminPackageVersion(r.Package)
-	return &admin.PackageOutcome{Slug: r.Package.Slug, Package: &v, Notice: r.Notice, Summary: adminPackageSummary(r.Summary)}
+	return &admin.PackageOutcome{Slug: r.Package.Slug, Package: &v, Notice: r.Notice, Summary: adminPackageSummary(r.Summary),
+		Active: r.Package.Slug != "" && r.Package.Slug == e.ActiveThemeName()}
 }
 
 // adminPackageError converts an error of a package operation for the

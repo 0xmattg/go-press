@@ -1,7 +1,5 @@
 {{define "content"}}
 <div class="content-header"><div style="display:flex;align-items:center;gap:1rem;"><a href="/admin/themes" class="btn btn-secondary" style="text-decoration:none;">← {{X $ "shopstarter.settings.back" "Back to themes"}}</a><h2>{{X $ "shopstarter.settings.title" "%s Settings" .ThemeName}}</h2></div></div>
-{{if .Success}}<div class="alert alert-success">{{.Success}}</div>{{end}}
-{{if .Error}}<div class="alert alert-error">{{.Error}}</div>{{end}}
 {{$s := .Settings}}
 <div class="card settings-shell"><form method="POST" action="/admin/themes/{{.ThemeSlug}}/settings" class="settings-form">
   <section class="settings-section"><h3 class="settings-section-title">{{X $ "shopstarter.settings.identity" "Store identity"}}</h3><div class="settings-grid">

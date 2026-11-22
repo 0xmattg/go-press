@@ -51,6 +51,12 @@ func New(app coreTheme.App, pkg *themepkg.Package, source string) (*Theme, error
 		return nil, fmt.Errorf("filetheme: %s: the package has no pages", id.Slug)
 	}
 	t.PageTemplates = pages
+	// Pages the package has no template for render core's generic blocks in
+	// its layout. A layout that cannot take them keeps the standalone
+	// fallback; the package still loads.
+	if fallbacks, err := coreTheme.LoadLayoutFallbacks(t); err == nil {
+		t.LayoutFallbacks = fallbacks
+	}
 	return t, nil
 }
 
