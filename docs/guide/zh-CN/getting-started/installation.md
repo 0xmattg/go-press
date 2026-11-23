@@ -207,6 +207,19 @@ go build -p 1 -v -o build/gopress-server ./cmd/server
 
 发布新版本前请先备份数据库。详见[版本化迁移](../reference/database-prefix.md#版本化迁移)。
 
+## 重置两步验证
+
+如果管理员的手机和恢复码都丢了，又没有其他超级管理员能在后台为他重置，可以在
+服务器上关闭这个账号的两步验证：
+
+```bash
+./build/gopress-server -config sites/example.com/config.toml -reset-2fa admin
+```
+
+命令会让这个账号的所有会话失效、写入审计日志，然后退出，不启动 HTTP 服务。之后
+这个账号用密码登录，再重新设置两步验证。能运行这个命令的人本来就能读取
+`config.toml`，所以它不会带来服务器 shell 之外的额外权限。
+
 ## 常用开发命令
 
 下面例子统一用 `./build/gopress`（本地构建）。如果跑过 `make install`，可以省掉 `./build/` 前缀。

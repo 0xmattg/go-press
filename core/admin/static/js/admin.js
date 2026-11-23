@@ -25,8 +25,9 @@ function adminFormat(template) {
 
     // Auto-dismiss flash messages after 4 seconds. Banners (.dep-warning)
     // report a lasting state, such as developer mode or a fallback theme,
-    // and stay until that state changes.
-    var alerts = document.querySelectorAll('.alert:not(.dep-warning)');
+    // and stay until that state changes; notice-center notices
+    // (.admin-notice) stay until the user dismisses them.
+    var alerts = document.querySelectorAll('.alert:not(.dep-warning):not(.admin-notice)');
     alerts.forEach(function(el) {
         setTimeout(function() {
             el.style.transition = 'opacity .3s';
@@ -1176,3 +1177,172 @@ function generateSitemap() {
         });
     }
 })();
+
+// Notice center: "Got it" and "×" dismiss a notice for the current user
+// only. The server records it, so the notice stays hidden on other pages and
+// browsers; on success the notice is removed without reloading the page.
+(function () {
+    var region = document.getElementById('adminNotices');
+    if (!region) return;
+
+    function updateFolded() {
+        var more = region.querySelector('.admin-notices-more');
+        if (!more) return;
+        var count = more.querySelectorAll('.admin-notice').length;
+        if (count === 0) {
+            more.remove();
+            return;
+        }
+        var summary = more.querySelector('summary');
+        if (!summary) return;
+        summary.textContent = count === 1
+            ? summary.getAttribute('data-more-one')
+            : adminFormat(summary.getAttribute('data-more-many') || '%d', count);
+    }
+
+    region.addEventListener('click', function (event) {
+        var btn = event.target.closest('[data-notice-mode]');
+        if (!btn || !region.contains(btn)) return;
+        var item = btn.closest('.admin-notice');
+        if (!item) return;
+        var buttons = item.querySelectorAll('[data-notice-mode]');
+        var error = item.querySelector('.admin-notice-error');
+        buttons.forEach(function (b) { b.disabled = true; });
+        if (error) error.hidden = true;
+
+        var form = new FormData();
+        form.append('source', item.getAttribute('data-notice-source') || '');
+        form.append('id', item.getAttribute('data-notice-id') || '');
+        form.append('revision', item.getAttribute('data-notice-revision') || '');
+        form.append('mode', btn.getAttribute('data-notice-mode'));
+        fetch('/admin/notices/dismiss', {
+            method: 'POST',
+            body: form,
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json' }
+        }).then(function (res) {
+            return res.json().catch(function () { return {}; }).then(function (data) {
+                // 404: already dismissed elsewhere or no longer provided.
+                if (!(res.ok && data.ok) && res.status !== 404) throw new Error('dismiss failed');
+            });
+        }).then(function () {
+            var next = item.nextElementSibling;
+            item.remove();
+            updateFolded();
+            if (!region.querySelector('.admin-notice')) {
+                region.remove();
+                return;
+            }
+            // Keep keyboard focus in the notice list: the next notice, or
+            // the first control left.
+            var scope = next && next.isConnected && next.classList.contains('admin-notice') ? next : region;
+            var target = scope.querySelector('.admin-notice-link, [data-notice-mode], .admin-notices-more > summary');
+            if (target) target.focus();
+        }).catch(function () {
+            buttons.forEach(function (b) { b.disabled = false; });
+            if (error) error.hidden = false;
+        });
+    });
+})();
+
+// Two-step verification helpers on the account security page: copy buttons
+// ([data-copy-target] copies the text of that element) and the "Done" link
+// that stays disabled until the "I saved my recovery codes" box is ticked.
+(function () {
+    document.querySelectorAll('[data-copy-target]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var target = document.getElementById(btn.getAttribute('data-copy-target'));
+            if (!target || !navigator.clipboard) return;
+            var text = target.tagName === 'UL'
+                ? Array.prototype.map.call(target.querySelectorAll('li'), function (li) { return li.textContent.trim(); }).join('\n')
+                : target.textContent.trim();
+            navigator.clipboard.writeText(text).then(function () {
+                var label = btn.textContent;
+                btn.textContent = btn.getAttribute('data-copied') || label;
+                setTimeout(function () { btn.textContent = label; }, 2000);
+            });
+        });
+    });
+    document.querySelectorAll('[data-disabled-link]').forEach(function (link) {
+        link.addEventListener('click', function (event) {
+            if (link.getAttribute('aria-disabled') === 'true') event.preventDefault();
+        });
+    });
+    document.querySelectorAll('[data-enable-target]').forEach(function (box) {
+        var link = document.getElementById(box.getAttribute('data-enable-target'));
+        if (!link) return;
+        box.addEventListener('change', function () {
+            link.setAttribute('aria-disabled', box.checked ? 'false' : 'true');
+        });
+    });
+})();
+
+// Sensitive actions: a form with data-second-factor asks for a code from
+// the authenticator app before it is sent, and sends it as otp_code. Each
+// code works once. Plugin pages can use it as is; the server checks the
+// code (admin.RequireSecondFactor).
+(function () {
+    function ask(form) {
+        var dialog = document.createElement('dialog');
+        dialog.className = 'ext-dialog';
+        dialog.setAttribute('aria-labelledby', 'secondFactorTitle');
+        dialog.innerHTML =
+            '<form method="dialog" class="ext-dialog-form">' +
+            '<div class="modal-header"><h3 id="secondFactorTitle"></h3>' +
+            '<button type="button" class="modal-close" data-close>&times;</button></div>' +
+            '<div class="modal-body"><p data-help></p><div class="form-group">' +
+            '<label for="secondFactorCode" data-label></label>' +
+            '<input type="text" id="secondFactorCode" class="mfa-code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required>' +
+            '</div></div>' +
+            '<div class="modal-footer"><button type="button" class="btn btn-secondary" data-close></button>' +
+            '<button type="submit" class="btn btn-primary" data-submit disabled></button></div></form>';
+        dialog.querySelector('#secondFactorTitle').textContent = adminText('secondFactorTitle', 'Two-step verification');
+        dialog.querySelector('[data-help]').textContent = adminText('secondFactorHelp', 'Enter the 6-digit code from your authenticator app.');
+        dialog.querySelector('[data-label]').textContent = adminText('secondFactorLabel', 'Code');
+        dialog.querySelector('.modal-close').setAttribute('aria-label', adminText('secondFactorCancel', 'Cancel'));
+        dialog.querySelector('.modal-footer [data-close]').textContent = adminText('secondFactorCancel', 'Cancel');
+        var submit = dialog.querySelector('[data-submit]');
+        submit.textContent = adminText('secondFactorSubmit', 'Continue');
+        var input = dialog.querySelector('input');
+        input.addEventListener('input', function () {
+            submit.disabled = input.value.replace(/\s/g, '').length !== 6;
+        });
+        dialog.querySelectorAll('[data-close]').forEach(function (b) {
+            b.addEventListener('click', function () { dialog.close(); });
+        });
+        dialog.addEventListener('close', function () {
+            dialog.remove();
+            var opener = form.querySelector('[type="submit"]');
+            if (opener) opener.focus();
+        });
+        dialog.querySelector('form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            var field = form.querySelector('input[name="otp_code"]');
+            if (!field) {
+                field = document.createElement('input');
+                field.type = 'hidden';
+                field.name = 'otp_code';
+                form.appendChild(field);
+            }
+            field.value = input.value;
+            form.setAttribute('data-second-factor-ready', '1');
+            dialog.close();
+            if (typeof form.requestSubmit === 'function') form.requestSubmit();
+            else form.submit();
+        });
+        document.body.appendChild(dialog);
+        dialog.showModal();
+        input.focus();
+    }
+    document.addEventListener('submit', function (event) {
+        var form = event.target;
+        if (!form.hasAttribute || !form.hasAttribute('data-second-factor')) return;
+        if (form.getAttribute('data-second-factor-ready') === '1') {
+            form.removeAttribute('data-second-factor-ready');
+            return;
+        }
+        event.preventDefault();
+        ask(form);
+    }, true);
+})();
+

@@ -153,7 +153,10 @@ connection settings change, for example after moving the database host.
 - `jwt_secret` signs admin sessions and API bearer tokens. It must be a unique
   random value for every site. The installer generates one; the server refuses
   to start when it is empty or equals the shipped legacy placeholder. Generate
-  one manually with `openssl rand -base64 32`.
+  one manually with `openssl rand -base64 32`. The keys that protect
+  two-step verification secrets and recovery codes are derived from it, so
+  changing it signs everyone out and makes accounts with two-step verification
+  on sign in with a recovery code and set it up again.
 - `jwt_expire_hours` controls token lifetime. Disabled users and role changes
   take effect on the next request because account state is revalidated against
   the database.
@@ -168,6 +171,12 @@ Core also enables these protections without extra configuration:
   `Origin`/`Referer` checks.
 - Failed admin logins are rate-limited per source IP and recorded in the audit
   log.
+- Admin accounts can turn on two-step verification with an authenticator app;
+  see [Account Security](../admin/overview.md#account-security).
+- Official announcements are accepted only from the official update check,
+  only when signed with the announcement keys built into GoPress, and never
+  older than the last bundle accepted; see
+  [Notices](../admin/overview.md#notices).
 - Client IPs cannot be spoofed: `X-Forwarded-For` / `X-Real-IP` are honored
   only from `[server].trusted_proxies` (loopback by default), so direct clients
   cannot forge headers to evade the limits above.

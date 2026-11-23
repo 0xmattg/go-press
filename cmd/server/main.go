@@ -55,6 +55,7 @@ func main() {
 	configPathFlag := flag.String("config", "", "path to site config file (auto-detects from sites/ if omitted)")
 	seedFlag := flag.Bool("seed", false, "force re-seed from seed.toml (drops existing content first)")
 	migrateFlag := flag.String("migrate", "", `run database migrations and exit: "status" lists them, "up" applies them`)
+	reset2FAFlag := flag.String("reset-2fa", "", "turn two-step verification off for the named admin account, end its sessions, and exit")
 	var themePackages stringList
 	flag.Var(&themePackages, "theme-package", "load a theme package (.zip or source directory) for local preview; repeatable; not available when server.mode is \"release\"")
 	flag.Parse()
@@ -78,6 +79,9 @@ func main() {
 
 	if *migrateFlag != "" {
 		os.Exit(runMigrateCommand(*migrateFlag, cfg, configPath))
+	}
+	if *reset2FAFlag != "" {
+		os.Exit(runResetSecondFactor(*reset2FAFlag, cfg, configPath))
 	}
 
 	switcher := &core.HandlerSwitcher{}

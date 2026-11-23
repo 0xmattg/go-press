@@ -157,7 +157,7 @@
     </form>
 </div>
 {{with .DeveloperOptions}}
-<div class="card settings-shell developer-options" id="developer-options" data-ext-devmode>
+<div class="card settings-shell developer-options" id="developer-options" data-ext-devmode{{if $.DeveloperSecondFactor}} data-ext-devmode-otp{{end}}>
     <section class="settings-section">
         <h3 class="settings-section-title">{{T $ "ext.devmode_title"}}</h3>
         <p class="developer-options-help">{{T $ "ext.devmode_help"}}</p>
@@ -177,6 +177,6 @@
     </section>
 </div>
 <script type="application/json" id="extensionsText">{{toJSON $.ExtensionText}}</script>
-<script src="/static/admin/js/extensions.js?v=4"></script>
+<script src="/static/admin/js/extensions.js?v=5"></script>
 {{end}}
 {{end}}

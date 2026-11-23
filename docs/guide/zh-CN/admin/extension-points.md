@@ -28,6 +28,77 @@ GoPress 在 core 侧暴露了一组通用扩展点，允许任何插件向 admin
 `gopress-analytics` 使用该插槽展示访问趋势，其 JSON 接口要求
 `analytics.read`。
 
+## 后台通知
+
+插件可以通过 `admin.notices` filter 在后台每个页面顶部显示通知，例如提醒
+管理员补全插件设置。filter value 为 `[]notice.Notice`（`core/notice` 包），
+args 为当前请求的 `*gin.Context` 和后台语言。按该语言填写文案；页面结构由
+后台负责，插件不返回 HTML。
+
+```go
+handle := e.Hooks.AddFilter(hook.AdminNotices, func(v interface{}, args ...interface{}) interface{} {
+    list := v.([]notice.Notice)
+    if gatewayKeySet() {
+        return list
+    }
+    lang, _ := args[1].(string)
+    return append(list, notice.Notice{
+        Source:    "commerce",         // 插件 slug
+        ID:        "gateway-key",      // 在本插件内唯一
+        Category:  notice.CategoryConfiguration,
+        Severity:  notice.SeverityWarning,
+        Title:     t(lang, "gateway.key_missing"),
+        Link:      &notice.Link{URL: "/admin/plugins/commerce/settings", Label: t(lang, "gateway.open_settings")},
+        Snoozable: true,
+        Resource:  "commerce_settings", // 能处理问题的人才能看到
+        Action:    "update",
+    })
+}, 10)
+```
+
+- **谁能看到**：拥有 `Resource.Action` 权限的角色；不设置时为 `notice.read`，
+  默认只有超级管理员拥有。
+- **关闭方式**：`Snoozable` 显示「×」，对当前用户隐藏 `RemindAfter`（1 小时
+  到 7 天，默认 24 小时），到期后如仍适用会再次显示；`Acknowledgeable` 显示
+  「我已知晓」，对当前用户永久隐藏这个 `Revision`。内容有实质变化、需要大家
+  重新阅读时提高 `Revision`。两者都不设置时，通知一直显示，直到过期或插件
+  不再提供，适合反映当前状态的通知。
+- **限制**：只支持纯文本；标题超过 120 字、正文超过 1000 字会被截断。链接
+  必须是 https 或 `/admin/` 开头的后台路径，否则丢弃链接。每个插件最多 10
+  条；缺少合法来源、ID 或标题的通知会被丢弃并记录日志。需要自动结束的通知请
+  设置 `ExpiresAt`。
+- **开销**：每个后台页面都会调用这个 filter，请从内存读取状态，不要在其中
+  请求远程服务。
+
+插件停用时移除 filter，它的通知随即消失。
+
+## 敏感操作
+
+绝不能在被盗会话上执行的插件路由（例如向所有站点发布消息），在
+`admin.RequirePermission` 之后加上 `engine.RequireSecondFactor()`。当前用户必须
+已开启两步验证，并且每次请求都带上验证器 App 上的新验证码，放在表单字段
+`otp_code` 或请求头 `X-GoPress-OTP` 里：
+
+```go
+group.POST("/broadcasts/:id/publish",
+    admin.RequirePermission(e.Auth, e.RBAC, "broadcast", "publish"),
+    e.RequireSecondFactor(),
+    h.publish)
+```
+
+拒绝时返回 JSON `{"ok": false, "error": {"code": ...}}`：
+`second_factor_not_enrolled`（403，账号未开启两步验证）、`second_factor_invalid`
+（403，验证码错误或已用过）、`second_factor_locked`（429，错误次数过多）或
+`second_factor_unavailable`（503）。每个验证码只能用一次，这里不接受恢复码。
+
+返回页面而不是 JSON 的处理函数改用 `engine.VerifySecondFactor(c)`：检查方式
+相同，返回 `""` 或上面的错误码，处理函数可以据此带着提示跳回原页面。
+`engine.HasSecondFactor(userID)` 用来判断页面上是否把操作显示为可用。
+
+页面上给表单加 `data-second-factor` 属性，后台会在提交前弹出对话框询问验证码，
+并作为 `otp_code` 一起提交；也可以在表单里自己放一个 `otp_code` 输入框。账号未
+开启两步验证时，请把操作显示为不可用，并链接到 `/admin/account/security`。
+
 ## 内容列表过滤 Tab
 
 允许任何插件向 admin 列表页注入过滤条：

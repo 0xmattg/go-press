@@ -76,6 +76,87 @@ every backing API with core authentication plus a specific RBAC capability.
 The `gopress-analytics` plugin uses this slot for its traffic summary, while its
 JSON endpoint requires `analytics.read`.
 
+## Admin Notices
+
+A plugin can show a notice at the top of every admin page, for example when
+its settings need attention, through the `admin.notices` filter. The value is
+`[]notice.Notice` (package `core/notice`); the arguments are the request's
+`*gin.Context` and the admin language. Append notices with text in that
+language; the admin owns the markup, so a plugin never returns HTML.
+
+```go
+handle := e.Hooks.AddFilter(hook.AdminNotices, func(v interface{}, args ...interface{}) interface{} {
+    list := v.([]notice.Notice)
+    if gatewayKeySet() {
+        return list
+    }
+    lang, _ := args[1].(string)
+    return append(list, notice.Notice{
+        Source:    "commerce",         // your plugin's slug
+        ID:        "gateway-key",      // unique within your plugin
+        Category:  notice.CategoryConfiguration,
+        Severity:  notice.SeverityWarning,
+        Title:     t(lang, "gateway.key_missing"),
+        Link:      &notice.Link{URL: "/admin/plugins/commerce/settings", Label: t(lang, "gateway.open_settings")},
+        Snoozable: true,
+        Resource:  "commerce_settings", // who can fix it sees it
+        Action:    "update",
+    })
+}, 10)
+```
+
+- **Who sees it** — roles with `Resource.Action`; without them, `notice.read`,
+  which only super admins hold by default.
+- **Dismissing** — `Snoozable` shows "×", which hides the notice for that
+  user for `RemindAfter` (1 hour to 7 days, 24 hours by default);
+  `Acknowledgeable` shows "Got it", which hides this `Revision` for that user
+  for good. Raise `Revision` when the content changes enough that people must
+  read it again. With neither, the notice stays until it expires or you stop
+  providing it, which suits a notice that reports a current state.
+- **Limits** — plain text only; titles are cut at 120 characters and messages
+  at 1,000. A link must be https or an `/admin/` path, or it is dropped. A
+  plugin provides at most 10 notices; notices without a valid source, ID or
+  title are dropped and logged. Set `ExpiresAt` for a notice that should end on
+  its own.
+- **Cost** — the filter runs on every admin page, so read from memory rather
+  than calling a remote service.
+
+Remove the filter when the plugin is deactivated, and its notices disappear.
+
+## Sensitive Actions
+
+A plugin route that must never run on a stolen session, such as publishing to
+every site, adds `engine.RequireSecondFactor()` after `admin.RequirePermission`.
+The signed-in user must have two-step verification on and send a fresh code
+from their authenticator app with every request, in the `otp_code` form field
+or the `X-GoPress-OTP` header:
+
+```go
+group.POST("/broadcasts/:id/publish",
+    admin.RequirePermission(e.Auth, e.RBAC, "broadcast", "publish"),
+    e.RequireSecondFactor(),
+    h.publish)
+```
+
+Refusals are JSON `{"ok": false, "error": {"code": ...}}`:
+`second_factor_not_enrolled` (403, two-step verification is off for the
+account), `second_factor_invalid` (403, wrong or already used code),
+`second_factor_locked` (429, too many wrong codes) or
+`second_factor_unavailable` (503). Each code works once, and recovery codes are
+not accepted here.
+
+A handler that answers with a page rather than JSON calls
+`engine.VerifySecondFactor(c)` instead: it checks the code the same way and
+returns `""` or one of the codes above, so the handler can redirect back with
+a message. `engine.HasSecondFactor(userID)` tells a page whether to show the
+action as available.
+
+On the page, add `data-second-factor` to the form: the admin asks for the code
+in a dialog before sending the form and adds it as `otp_code`. A page can also
+put its own `otp_code` field in the form. Show the action as unavailable, with a
+link to `/admin/account/security`, while the account has two-step verification
+off.
+
 ## Mail and Notification Hooks
 
 Mail is split into two layers: `core/mail` owns message delivery, while notification rules listen to core events and call the mail service. Plugins can filter outgoing messages, observe delivery results, or customize the default contact-message notification.

@@ -22,6 +22,8 @@
 package admin
 
 import (
+	"strings"
+
 	"github.com/0xmattg/go-press/core/content"
 	"github.com/0xmattg/go-press/core/user"
 
@@ -50,6 +52,10 @@ func SetupRoutes(r *gin.Engine, h *Handler, auth *user.Auth, registry *content.R
 	// Public routes (no auth)
 	r.GET("/admin/login", h.LoginPage)
 	r.POST("/admin/login", h.LoginSubmit)
+	// The code step of signing in; a short-lived ticket cookie names the
+	// user whose password was accepted.
+	r.GET(loginVerifyPath, h.LoginVerifyPage)
+	r.POST(loginVerifyPath, h.LoginVerifySubmit)
 
 	// Protected routes
 	admin := r.Group("/admin")
@@ -105,6 +111,19 @@ func SetupRoutes(r *gin.Engine, h *Handler, auth *user.Auth, registry *content.R
 		admin.GET("/settings", h.SettingList)
 		admin.POST("/settings", h.SettingUpdate)
 		admin.POST("/settings/developer-mode", h.DeveloperModeUpdate)
+		// Each user dismisses only notices they can see; NoticeDismiss
+		// checks the notice's own capability.
+		admin.POST("/notices/dismiss", h.NoticeDismiss)
+
+		// Two-step verification for the signed-in account (profile.update),
+		// and the roles that must use it (setting.update).
+		security := strings.TrimPrefix(AccountSecurityPath, "/admin")
+		admin.GET(security, h.AccountSecurity)
+		admin.POST(security+"/begin", h.AccountSecurityBegin)
+		admin.POST(security+"/confirm", h.AccountSecurityConfirm)
+		admin.POST(security+"/recovery", h.AccountSecurityRecovery)
+		admin.POST(security+"/disable", h.AccountSecurityDisable)
+		admin.POST(security+"/policy", h.AccountSecurityPolicy)
 		admin.GET("/mail", h.MailSettings)
 		admin.POST("/mail", h.MailSettingsSave)
 		admin.POST("/mail/test", h.MailTest)
@@ -124,6 +143,7 @@ func SetupRoutes(r *gin.Engine, h *Handler, auth *user.Auth, registry *content.R
 		admin.GET("/users/:id/edit", h.UserEdit)
 		admin.POST("/users/:id/edit", h.UserUpdate)
 		admin.POST("/users/:id/delete", h.UserDelete)
+		admin.POST("/users/:id/mfa-reset", h.UserMFAReset)
 
 		admin.GET("/comments", h.CommentList)
 		admin.POST("/comments/:id/status", h.CommentStatusUpdate)

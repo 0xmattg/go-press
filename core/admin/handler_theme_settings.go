@@ -101,8 +101,7 @@ func (h *Handler) ThemeSettings(c *gin.Context) {
 	data["MenuItems"] = h.buildMenuItems(lang, c.GetString("admin_role"))
 	data["SiteName"] = h.svc.SiteName()
 	data["PublicBaseURL"] = requestBaseURL(c)
-	h.injectVersionStatus(data)
-	h.injectExtensionBanners(c, data)
+	h.injectLayoutBanners(c, data)
 
 	if success := c.Query("success"); success != "" {
 		data["Success"] = success

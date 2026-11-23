@@ -15,6 +15,7 @@ import (
 
 	"github.com/0xmattg/go-press/core/content"
 	"github.com/0xmattg/go-press/core/extension"
+	"github.com/0xmattg/go-press/core/mfa"
 	"github.com/0xmattg/go-press/core/migrate"
 	"github.com/0xmattg/go-press/core/option"
 	"github.com/0xmattg/go-press/core/plugin"
@@ -266,6 +267,20 @@ func TestPGCoreMigrationsAcrossInstallUpgradeAndRollback(t *testing.T) {
 		}
 		if gen, err := extension.NewStore(db).Generation(context.Background()); err != nil || gen != 0 {
 			t.Fatalf("%s: generation = %d, %v", dbprefix.Get(), gen, err)
+		}
+		// Step 3 creates the two-step verification table the same way.
+		if rec := coreStep(db, 3); rec.Status != migrate.StatusApplied || rec.Runs != 1 || rec.Name != "create_user_mfa" {
+			t.Fatalf("%s core step 3 = %+v, want applied once", dbprefix.Get(), rec)
+		}
+		if ok, err := migrate.TableExists(context.Background(), db, dbprefix.Table("user_mfa")); err != nil || !ok {
+			t.Fatalf("%s: table %s missing (%v)", dbprefix.Get(), dbprefix.Table("user_mfa"), err)
+		}
+		svc, err := mfa.New(db, "test-secret")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := svc.Begin(context.Background(), 1, "GoPress", "admin"); err != nil {
+			t.Fatalf("%s: user_mfa is not usable: %v", dbprefix.Get(), err)
 		}
 	}
 

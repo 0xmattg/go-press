@@ -21,6 +21,7 @@ import (
 	"github.com/0xmattg/go-press/core/content"
 	"github.com/0xmattg/go-press/core/hook"
 	coreI18n "github.com/0xmattg/go-press/core/i18n"
+	"github.com/0xmattg/go-press/core/notice"
 	coreTheme "github.com/0xmattg/go-press/core/theme"
 	"github.com/0xmattg/go-press/core/updatecheck"
 	"github.com/0xmattg/go-press/pkg/middleware"
@@ -257,6 +258,9 @@ type MenuCallbacks struct {
 type UpdateStatusProvider interface {
 	Enabled() bool
 	Snapshot(kind updatecheck.Kind, slug string) updatecheck.Status
+	// OfficialNotices returns the signed official announcements that apply
+	// to this site, for the notice center (source core.official).
+	OfficialNotices(lang string) []notice.Notice
 }
 
 // Handler manages all admin HTTP endpoints.
@@ -279,6 +283,10 @@ type Handler struct {
 	// developerModeThrottle limits wrong passwords when turning developer
 	// mode on, per account.
 	developerModeThrottle *loginThrottle
+
+	// reauthThrottle limits wrong passwords on the account security page,
+	// per account.
+	reauthThrottle *loginThrottle
 }
 
 // SetHookBus injects the engine's hook bus so handlers can invoke plugin filters.
@@ -337,6 +345,7 @@ func NewHandler(svc *Service, registry *content.Registry, templateDir string) *H
 		loginThrottle: newLoginThrottle(10, 5*time.Minute),
 
 		developerModeThrottle: newLoginThrottle(developerModeMaxFailures, developerModeWindow),
+		reauthThrottle:        newLoginThrottle(developerModeMaxFailures, developerModeWindow),
 	}
 	h.buildFuncMap()
 	h.loadTemplates(templateDir)
@@ -724,15 +733,21 @@ func (h *Handler) metaFieldLabel(lang, typeName, key, fallback string) string {
 	return fallback
 }
 
+// standaloneAdminPages are the sign-in pages, drawn without the admin layout;
+// each defines a template of its own name.
+var standaloneAdminPages = map[string]bool{"login": true, "login_mfa": true}
+
 func (h *Handler) loadTemplates(dir string) {
 	h.templates = make(map[string]*template.Template)
 
-	// Login page (standalone, no layout)
-	h.templates["login"] = template.Must(
-		template.New("login.tmpl").Funcs(h.funcMap).ParseFiles(
-			filepath.Join(dir, "pages", "login.tmpl"),
-		),
-	)
+	// Sign-in pages (standalone, no layout)
+	for page := range standaloneAdminPages {
+		h.templates[page] = template.Must(
+			template.New(page + ".tmpl").Funcs(h.funcMap).ParseFiles(
+				filepath.Join(dir, "pages", page+".tmpl"),
+			),
+		)
+	}
 
 	// Generic pages with admin layout. Discovering page templates keeps route
 	// additions from silently missing the loader's registration list.
@@ -743,7 +758,7 @@ func (h *Handler) loadTemplates(dir string) {
 	}
 	for _, pagePath := range pagePaths {
 		page := strings.TrimSuffix(filepath.Base(pagePath), filepath.Ext(pagePath))
-		if page == "login" {
+		if standaloneAdminPages[page] {
 			continue
 		}
 		h.templates[page] = template.Must(
@@ -928,8 +943,7 @@ func (h *Handler) render(c *gin.Context, name string, data gin.H) {
 	data["MenuItems"] = h.buildMenuItems(adminLang, c.GetString("admin_role"))
 	data["SiteName"] = h.svc.SiteName()
 	data["PublicBaseURL"] = requestBaseURL(c)
-	h.injectVersionStatus(data)
-	h.injectExtensionBanners(c, data)
+	h.injectLayoutBanners(c, data)
 	if h.themeManager != nil {
 		if w := h.themeManager.ActiveDepWarning(); w != "" {
 			data["ActiveDepWarning"] = w
@@ -952,8 +966,8 @@ func (h *Handler) render(c *gin.Context, name string, data gin.H) {
 	}
 
 	execName := "admin"
-	if name == "login" {
-		execName = "login"
+	if standaloneAdminPages[name] {
+		execName = name
 	}
 
 	c.Header("Content-Type", "text/html; charset=utf-8")
@@ -961,6 +975,15 @@ func (h *Handler) render(c *gin.Context, name string, data gin.H) {
 		log.Printf("Template render error (%s): %v", name, err)
 		c.String(http.StatusInternalServerError, "Template error")
 	}
+}
+
+// injectLayoutBanners adds the layout data every admin page needs: the
+// version and update badge, the extension banners and the notice center.
+// Every render path calls it, so a page cannot miss a notice.
+func (h *Handler) injectLayoutBanners(c *gin.Context, data gin.H) {
+	h.injectVersionStatus(data)
+	h.injectExtensionBanners(c, data)
+	h.injectNotices(c, data)
 }
 
 func (h *Handler) injectVersionStatus(data gin.H) {
@@ -1038,8 +1061,7 @@ func (h *Handler) RenderExtensionPageFS(c *gin.Context, fragment TemplateRef, ti
 		"SiteName":      h.svc.SiteName(),
 		"PublicBaseURL": requestBaseURL(c),
 	}
-	h.injectVersionStatus(data)
-	h.injectExtensionBanners(c, data)
+	h.injectLayoutBanners(c, data)
 	for k, v := range extra {
 		data[k] = v
 	}
@@ -1156,10 +1178,25 @@ func (h *Handler) LoginSubmit(c *gin.Context) {
 		return
 	}
 
-	u, token, err := h.svc.Login(username, password)
+	u, err := h.svc.Authenticate(username, password)
 	if err != nil {
 		h.loginThrottle.fail(clientIP)
 		h.svc.LogActionContext(c.Request.Context(), 0, username, "login_failed", "auth", 0, "failed admin login", clientIP)
+		h.render(c, "login", gin.H{"Title": adminT(lang, "page.login"), "Error": adminT(lang, "error.invalid_login")})
+		return
+	}
+	// With two-step verification on, the password only opens the code step.
+	if _, on, err := h.secondFactorEnabled(u.ID); err != nil {
+		log.Printf("admin login: two-step verification state for user %d: %v", u.ID, err)
+		h.render(c, "login", gin.H{"Title": adminT(lang, "page.login"), "Error": adminT(lang, "mfa.error.second_factor_unavailable")})
+		return
+	} else if on {
+		h.beginSecondStep(c, u)
+		return
+	}
+	token, err := h.svc.auth.IssueSession(u, time.Time{})
+	if err != nil {
+		log.Printf("admin login: issue session for user %d: %v", u.ID, err)
 		h.render(c, "login", gin.H{"Title": adminT(lang, "page.login"), "Error": adminT(lang, "error.invalid_login")})
 		return
 	}

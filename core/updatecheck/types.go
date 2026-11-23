@@ -93,6 +93,10 @@ type Response struct {
 	ProtocolVersion int      `json:"protocol_version"`
 	TTLSeconds      int      `json:"ttl_seconds"`
 	Updates         []Update `json:"updates"`
+	// Notices is the signed announcement bundle. Sites read it only from
+	// the official core endpoint (see notices.go); clients that predate it
+	// ignore the field, so the protocol version stays 1.
+	Notices *SignedNotices `json:"notices,omitempty"`
 }
 
 // Status is a cached, read-only result suitable for admin UI consumers.

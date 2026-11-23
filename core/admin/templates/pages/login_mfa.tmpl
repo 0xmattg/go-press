@@ -1,0 +1,40 @@
+{{define "login_mfa"}}<!DOCTYPE html>
+<html lang="{{.AdminLanguage}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - {{.SiteName}}</title>
+    <link rel="stylesheet" href="/static/admin/css/admin.css?v=82">
+</head>
+<body class="login-body">
+    <div class="login-card">
+        <h1>{{.SiteName}}</h1>
+        <p class="login-subtitle">{{.Title}}</p>
+        {{if .Error}}
+        <div class="alert alert-error" role="alert">{{.Error}}</div>
+        {{end}}
+        <form method="POST" action="/admin/login/verify">
+            {{if .Recovery}}
+            <input type="hidden" name="recovery" value="1">
+            <div class="form-group">
+                <label for="code">{{T . "mfa.recovery_label"}}</label>
+                <input type="text" id="code" name="code" required autofocus autocomplete="off" autocapitalize="off" spellcheck="false" class="mfa-code-input mfa-recovery-input" placeholder="xxxxx-xxxxx" maxlength="16">
+                <p class="form-help">{{T . "mfa.recovery_help"}}</p>
+            </div>
+            {{else}}
+            <div class="form-group">
+                <label for="code">{{T . "mfa.code_label"}}</label>
+                <input type="text" id="code" name="code" required autofocus inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" maxlength="7" class="mfa-code-input" placeholder="123456">
+                <p class="form-help">{{T . "mfa.code_help"}}</p>
+            </div>
+            {{end}}
+            <button type="submit" class="btn btn-primary btn-block">{{T . "mfa.verify"}}</button>
+        </form>
+        <p class="login-alt">
+            {{if .Recovery}}<a href="/admin/login/verify">{{T . "mfa.use_app"}}</a>{{else}}<a href="/admin/login/verify?recovery=1">{{T . "mfa.use_recovery"}}</a>{{end}}
+            <span aria-hidden="true">·</span>
+            <a href="/admin/login">{{T . "mfa.start_over"}}</a>
+        </p>
+    </div>
+</body>
+</html>{{end}}

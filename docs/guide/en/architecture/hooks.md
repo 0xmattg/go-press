@@ -181,8 +181,15 @@ Language-aware menu assignment is implemented through these generic hooks;
 | `admin.content.permalink_prefix` | `admin.HookContentPermalinkPrefix` | Filter an editor permalink prefix. Value: `string`; args: `*gin.Context, *content.Content`. |
 | `admin.content_form.fields` | `hook.AdminContentFormFields` | Filter editor meta-box HTML. Value: `template.HTML`; args: `*content.Content, *content.ContentTypeDef`. |
 | `admin.content.saved` | `hook.AdminContentSaved` | Action after the content row is saved. Args: `*gin.Context, *content.Content`. |
+| `admin.notices` | `hook.AdminNotices` | Filter the notices shown at the top of every admin page. Value: `[]notice.Notice`; args: `*gin.Context, lang string`. |
 
 See [Admin Extension Points](../admin/extension-points.md).
+
+## Update Check Hook
+
+| Hook | Go constant | Contract |
+|---|---|---|
+| `updatecheck.response` | `hook.UpdateCheckResponse` | Filter the answer of a plugin that serves update checks, before it is sent. Value: `updatecheck.Response`; args: `updatecheck.Request, *gin.Context`. Lets another plugin add a signed announcement bundle (`Notices`) or lower `TTLSeconds` without the two plugins knowing each other. |
 
 ## SEO Hook
 

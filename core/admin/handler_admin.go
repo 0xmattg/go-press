@@ -42,6 +42,9 @@ func (h *Handler) SettingList(c *gin.Context) {
 		mode := h.packageManager.DeveloperMode()
 		data["DeveloperOptions"] = &mode
 		data["ExtensionText"] = extensionScriptText(adminLang)
+		if _, on, err := h.secondFactorEnabled(adminUserID(c)); err == nil && on {
+			data["DeveloperSecondFactor"] = true
+		}
 	}
 	h.render(c, "settings", data)
 }
@@ -458,11 +461,28 @@ func (h *Handler) UserNew(c *gin.Context) {
 		return
 	}
 	lang := h.svc.AdminLanguage()
-	h.render(c, "user_form", gin.H{
-		"Title":  adminT(lang, "user.new"),
-		"Active": "users",
-		"Roles":  h.svc.GetRoles(),
-	})
+	h.renderUserForm(c, nil, gin.H{"Title": adminT(lang, "user.new")})
+}
+
+// renderUserForm draws the user form. It asks for a second-factor code
+// when the current user has two-step verification on (making someone a
+// super admin and setting a password need one), and offers to reset the
+// edited user's two-step verification.
+func (h *Handler) renderUserForm(c *gin.Context, item *user.User, data gin.H) {
+	data["Active"] = "users"
+	data["Roles"] = h.svc.GetRoles()
+	if item != nil {
+		data["Item"] = item
+		if item.ID != adminUserID(c) {
+			if _, on, err := h.secondFactorEnabled(item.ID); err == nil && on {
+				data["TargetSecondFactor"] = true
+			}
+		}
+	}
+	if _, on, err := h.secondFactorEnabled(adminUserID(c)); err == nil && on {
+		data["AskSecondFactor"] = true
+	}
+	h.render(c, "user_form", data)
 }
 
 func (h *Handler) UserCreate(c *gin.Context) {
@@ -477,20 +497,20 @@ func (h *Handler) UserCreate(c *gin.Context) {
 	lang := h.svc.AdminLanguage()
 
 	if username == "" || email == "" || password == "" {
-		h.render(c, "user_form", gin.H{
-			"Title": adminT(lang, "user.new"), "Active": "users",
-			"Roles": h.svc.GetRoles(),
-			"Error": adminT(lang, "error.user_required"),
-		})
+		h.renderUserForm(c, nil, gin.H{"Title": adminT(lang, "user.new"), "Error": adminT(lang, "error.user_required")})
 		return
+	}
+	// A new super admin needs a code from an account with two-step
+	// verification on.
+	if role == user.RoleSuperAdmin {
+		if code := h.stepUp(c); code != "" {
+			h.renderUserForm(c, nil, gin.H{"Title": adminT(lang, "user.new"), "Error": adminT(lang, "mfa.error."+code)})
+			return
+		}
 	}
 
 	if err := h.svc.CreateUser(username, email, password, displayName, role); err != nil {
-		h.render(c, "user_form", gin.H{
-			"Title": adminT(lang, "user.new"), "Active": "users",
-			"Roles": h.svc.GetRoles(),
-			"Error": adminT(lang, "error.create_failed", err.Error()),
-		})
+		h.renderUserForm(c, nil, gin.H{"Title": adminT(lang, "user.new"), "Error": adminT(lang, "error.create_failed", err.Error())})
 		return
 	}
 	h.logAction(c, "create", "user", 0, username)
@@ -507,12 +527,7 @@ func (h *Handler) UserEdit(c *gin.Context) {
 		return
 	}
 	lang := h.svc.AdminLanguage()
-	h.render(c, "user_form", gin.H{
-		"Title":  adminT(lang, "user.edit"),
-		"Active": "users",
-		"Item":   item,
-		"Roles":  h.svc.GetRoles(),
-	})
+	h.renderUserForm(c, item, gin.H{"Title": adminT(lang, "user.edit")})
 }
 
 func (h *Handler) UserUpdate(c *gin.Context) {
@@ -525,9 +540,18 @@ func (h *Handler) UserUpdate(c *gin.Context) {
 		return
 	}
 	lang := h.svc.AdminLanguage()
+	// Making someone a super admin and setting a password need a code from
+	// an account with two-step verification on.
+	newRole := c.PostForm("role")
+	if (newRole == user.RoleSuperAdmin && item.Role != user.RoleSuperAdmin) || c.PostForm("password") != "" {
+		if code := h.stepUp(c); code != "" {
+			h.renderUserForm(c, item, gin.H{"Title": adminT(lang, "user.edit"), "Error": adminT(lang, "mfa.error."+code)})
+			return
+		}
+	}
 	item.Email = user.EmailPointer(c.PostForm("email"))
 	item.DisplayName = c.PostForm("display_name")
-	item.Role = c.PostForm("role")
+	item.Role = newRole
 	// Unchecked checkboxes are omitted from form submissions. Persist the
 	// resulting false value explicitly so administrators can disable an
 	// account, and accept any submitted value as the checked state.
@@ -540,11 +564,7 @@ func (h *Handler) UserUpdate(c *gin.Context) {
 		}
 	}
 	if err := h.svc.userRepo.Update(item); err != nil {
-		h.render(c, "user_form", gin.H{
-			"Title": adminT(lang, "user.edit"), "Active": "users",
-			"Item": item, "Roles": h.svc.GetRoles(),
-			"Error": adminT(lang, "error.update_failed", err.Error()),
-		})
+		h.renderUserForm(c, item, gin.H{"Title": adminT(lang, "user.edit"), "Error": adminT(lang, "error.update_failed", err.Error())})
 		return
 	}
 	h.logAction(c, "update", "user", item.ID, item.Username)
@@ -557,6 +577,9 @@ func (h *Handler) UserDelete(c *gin.Context) {
 	}
 	id := getIDParam(c)
 	_ = h.svc.userRepo.Delete(id)
+	if h.svc.secondFactor != nil {
+		_ = h.svc.secondFactor.Remove(c.Request.Context(), id)
+	}
 	h.logAction(c, "delete", "user", id, "")
 	c.Redirect(http.StatusFound, "/admin/users?success="+url.QueryEscape(adminT(h.svc.AdminLanguage(), "notice.deleted")))
 }
@@ -979,8 +1002,7 @@ func (h *Handler) PluginSettings(c *gin.Context) {
 	data["MenuItems"] = h.buildMenuItems(adminLang, c.GetString("admin_role"))
 	data["SiteName"] = h.svc.SiteName()
 	data["PublicBaseURL"] = requestBaseURL(c)
-	h.injectVersionStatus(data)
-	h.injectExtensionBanners(c, data)
+	h.injectLayoutBanners(c, data)
 
 	if success := c.Query("success"); success != "" {
 		data["Success"] = success

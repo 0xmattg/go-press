@@ -43,6 +43,7 @@ const (
 	PurposePackagePublisher = "package-publisher"
 	PurposePackageMarket    = "package-market"
 	PurposeCatalog          = "catalog"
+	PurposeNotices          = "notices"
 )
 
 var (
@@ -212,6 +213,13 @@ func MarketStatement(id PackageID, publisherKID, digest string) Statement {
 // and the hex SHA-256 of the catalog document.
 func CatalogStatement(sequence int64, documentSHA256 string) Statement {
 	return Statement{Purpose: PurposeCatalog, Fields: []string{strconv.FormatInt(sequence, 10), documentSHA256}}
+}
+
+// NoticesStatement is what the GoPress project signs, offline, for a bundle
+// of official admin announcements: its sequence number and the hex SHA-256
+// of the bundle document.
+func NoticesStatement(sequence int64, documentSHA256 string) Statement {
+	return Statement{Purpose: PurposeNotices, Fields: []string{strconv.FormatInt(sequence, 10), documentSHA256}}
 }
 
 // Signature is a detached signature as stored in signature files and

@@ -117,7 +117,7 @@ require_token = false        # true：Web 安装器要求输入一次性安装�
 
 ### `[cms]`
 
-- `jwt_secret` — 后台会话与 API Bearer Token 的签名密钥，**每个站点必须是唯一的随机值**，泄露后等于把后台和 API 钥匙交给攻击者。安装器会自动生成；**为空或仍是示例占位值（`go-press-change-this-secret-in-production`）时应用会拒绝启动**，可用 `openssl rand -base64 32` 手动生成
+- `jwt_secret` — 后台会话与 API Bearer Token 的签名密钥，**每个站点必须是唯一的随机值**，泄露后等于把后台和 API 钥匙交给攻击者。安装器会自动生成；**为空或仍是示例占位值（`go-press-change-this-secret-in-production`）时应用会拒绝启动**，可用 `openssl rand -base64 32` 手动生成。两步验证密钥和恢复码的保护密钥也由它派生：更换后所有人都要重新登录，已开启两步验证的账号需要用恢复码登录并重新设置
 - `jwt_expire_hours` — 后台/ API Token 有效期（小时）。注意：被禁用或降级的账号无需等待过期，下一次请求即失效（服务端会按数据库实时状态复核）
 - `upload_dir` — 上传根目录，子目录按年月组织（`uploads/2026/04/...`）
 
@@ -128,6 +128,8 @@ require_token = false        # true：Web 安装器要求输入一次性安装�
 - **后台会话 Cookie** — `HttpOnly` + `SameSite=Lax`，且当 `[site].url` 为 `https://` 时自动加 `Secure`（HTTPS 部署不会再明文传输后台 Token）。因此请把生产站点的 `url` 配成 `https://…`
 - **CSRF 同源校验** — 后台所有改状态请求（含登录、插件后台路由）校验 `Origin`/`Referer` 与站点同源，跨站请求被拒（`403`）
 - **登录限流** — 后台登录按来源 IP 限制失败次数（默认 5 分钟内 10 次失败即临时拦截，返回 `429`），失败尝试写入审计日志
+- **两步验证** — 后台账号可以用验证器 App 开启两步验证，见[账号安全](../admin/overview.md#账号安全)
+- **官方公告只认签名** — 公告只从官方更新检查接收，必须用 GoPress 内置的公告公钥签名，且不能比上次接受的公告包更旧，见[通知](../admin/overview.md#通知)
 - **客户端 IP 防伪造** — 只信任 `[server].trusted_proxies`（默认仅本机回环）转发的 `X-Forwarded-For` / `X-Real-IP`，直接访问的客户端无法通过伪造请求头冒充其他 IP 绕过上述限流
 - **账号状态实时生效** — 禁用账号或调整角色后，其已签发的后台/API Token 立即失效或按新角色鉴权，无需等到 Token 过期
 - **前台 Session 可即时撤销** — 前台用户 Session 存在数据库中且每次请求复核账号状态；停用账号后，下一次请求会撤销数据库 Session 并清除浏览器 Cookie

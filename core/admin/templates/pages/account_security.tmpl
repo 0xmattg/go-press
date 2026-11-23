@@ -1,0 +1,164 @@
+{{define "content"}}
+{{$s := .Security}}
+<div class="content-header">
+    <h2>{{.Title}}</h2>
+</div>
+
+<div class="card settings-shell account-security" id="two-step">
+    <section class="settings-section">
+        <div class="mfa-heading">
+            <h3 class="settings-section-title">{{T . "mfa.section_title"}}</h3>
+            {{if $s.Status.Enabled}}<span class="badge badge-published">{{T . "mfa.state_on"}}</span>
+            {{else}}<span class="badge badge-inactive">{{T . "mfa.state_off"}}</span>{{end}}
+        </div>
+        <p class="mfa-intro">{{T . "mfa.intro"}}</p>
+
+        {{if $s.SetupRequired}}
+        <div class="alert alert-error mfa-inline-alert" role="alert">{{T . "mfa.required_notice"}}</div>
+        {{end}}
+
+        {{if $s.Enrollment}}
+        {{/* Step 2 of the setup: the secret is in this response only. */}}
+        <div class="mfa-setup">
+            <ol class="mfa-steps">
+                <li>{{T . "mfa.setup_step_app"}}</li>
+                <li>{{T . "mfa.setup_step_scan"}}</li>
+                <li>{{T . "mfa.setup_step_code"}}</li>
+            </ol>
+            <div class="mfa-setup-grid">
+                <figure class="mfa-qr">
+                    <img src="{{$s.QRImage}}" width="198" height="198" alt="{{T . "mfa.qr_alt"}}">
+                </figure>
+                <div class="mfa-manual">
+                    <label for="mfaSecret">{{T . "mfa.manual_label"}}</label>
+                    <div class="mfa-secret-row">
+                        <code class="mfa-secret" id="mfaSecret">{{$s.Enrollment.Secret}}</code>
+                        <button type="button" class="btn btn-secondary btn-sm" data-copy-target="mfaSecret" data-copied="{{T . "mfa.copied"}}">{{T . "mfa.copy"}}</button>
+                    </div>
+                    <p class="form-help">{{T . "mfa.manual_help"}}</p>
+                    <p><a class="mfa-open-link" href="{{$s.AppLink}}">{{T . "mfa.open_in_app"}}</a></p>
+                </div>
+            </div>
+            <form method="POST" action="/admin/account/security/confirm" class="mfa-form">
+                <div class="form-group">
+                    <label for="mfaConfirmCode">{{T . "mfa.code_label"}}</label>
+                    <input type="text" id="mfaConfirmCode" name="code" required autofocus inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" maxlength="7" class="mfa-code-input" placeholder="123456">
+                </div>
+                <div class="mfa-actions">
+                    <button type="submit" class="btn btn-primary">{{T . "mfa.confirm"}}</button>
+                    <a href="/admin/account/security" class="btn btn-secondary">{{T . "action.cancel"}}</a>
+                </div>
+            </form>
+        </div>
+
+        {{else if $s.RecoveryCodes}}
+        {{/* Shown once, right after setup or after replacing the codes. */}}
+        <div class="mfa-recovery">
+            <h4>{{T . "mfa.recovery_title"}}</h4>
+            <p>{{T . "mfa.recovery_save"}}</p>
+            <ul class="mfa-recovery-codes" id="mfaRecoveryCodes">
+                {{range $s.RecoveryCodes}}<li><code>{{.}}</code></li>{{end}}
+            </ul>
+            <div class="mfa-actions">
+                <a class="btn btn-secondary btn-sm" href="{{$s.RecoveryFile}}" download="gopress-recovery-codes.txt">{{T . "mfa.download"}}</a>
+                <button type="button" class="btn btn-secondary btn-sm" data-copy-target="mfaRecoveryCodes" data-copied="{{T . "mfa.copied"}}">{{T . "mfa.copy"}}</button>
+            </div>
+            <label class="checkbox-label mfa-saved">
+                <input type="checkbox" data-enable-target="mfaRecoveryDone">
+                {{T . "mfa.recovery_saved"}}
+            </label>
+            <div class="mfa-actions">
+                <a href="/admin/account/security" class="btn btn-primary" id="mfaRecoveryDone" aria-disabled="true" data-disabled-link>{{T . "mfa.done"}}</a>
+            </div>
+        </div>
+
+        {{else if $s.Status.Enabled}}
+        <dl class="mfa-facts">
+            <dt>{{T . "mfa.enabled_since"}}</dt><dd>{{formatDate $s.Status.EnabledAt}}</dd>
+            <dt>{{T . "mfa.recovery_left_label"}}</dt><dd>{{T . "mfa.recovery_left" $s.Status.RecoveryLeft $s.RecoveryTotal}}</dd>
+        </dl>
+        {{if $s.Status.Unreadable}}
+        <div class="alert alert-error mfa-inline-alert" role="alert">{{T . "mfa.notice.unreadable_message"}}</div>
+        {{end}}
+        <div class="mfa-manage">
+            <form method="POST" action="/admin/account/security/recovery" class="mfa-form">
+                <h4>{{T . "mfa.regenerate_title"}}</h4>
+                <p class="form-help">{{T . "mfa.regenerate_help"}}</p>
+                <div class="form-group">
+                    <label for="mfaRegenCode">{{T . "mfa.code_label"}}</label>
+                    <input type="text" id="mfaRegenCode" name="otp_code" required inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" maxlength="7" class="mfa-code-input" placeholder="123456">
+                </div>
+                <button type="submit" class="btn btn-secondary">{{T . "mfa.regenerate"}}</button>
+            </form>
+            {{if $s.Required}}
+            <div class="mfa-form">
+                <h4>{{T . "mfa.disable_title"}}</h4>
+                <p class="form-help">{{T . "mfa.error.required_role"}}</p>
+            </div>
+            {{else}}
+            <form method="POST" action="/admin/account/security/disable" class="mfa-form">
+                <h4>{{T . "mfa.disable_title"}}</h4>
+                <p class="form-help">{{T . "mfa.disable_help"}}</p>
+                <div class="form-group">
+                    <label for="mfaDisablePassword">{{T . "field.password"}}</label>
+                    <input type="password" id="mfaDisablePassword" name="password" required autocomplete="current-password">
+                </div>
+                <div class="form-group">
+                    <label for="mfaDisableCode">{{T . "mfa.code_or_recovery_label"}}</label>
+                    <input type="text" id="mfaDisableCode" name="code" required autocomplete="one-time-code" autocapitalize="off" spellcheck="false" maxlength="16" class="mfa-code-input">
+                </div>
+                <button type="submit" class="btn btn-danger">{{T . "mfa.disable"}}</button>
+            </form>
+            {{end}}
+        </div>
+
+        {{else}}
+        {{if $s.Status.Pending}}
+        <form method="POST" action="/admin/account/security/confirm" class="mfa-form">
+            <p class="form-help">{{T . "mfa.pending_help"}}</p>
+            <div class="form-group">
+                <label for="mfaPendingCode">{{T . "mfa.code_label"}}</label>
+                <input type="text" id="mfaPendingCode" name="code" required inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" maxlength="7" class="mfa-code-input" placeholder="123456">
+            </div>
+            <button type="submit" class="btn btn-primary">{{T . "mfa.confirm"}}</button>
+        </form>
+        {{end}}
+        <form method="POST" action="/admin/account/security/begin" class="mfa-form">
+            <p class="form-help">{{if $s.Status.Pending}}{{T . "mfa.restart_help"}}{{else}}{{T . "mfa.begin_help"}}{{end}}</p>
+            <div class="form-group">
+                <label for="mfaBeginPassword">{{T . "field.password"}}</label>
+                <input type="password" id="mfaBeginPassword" name="password" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn {{if $s.Status.Pending}}btn-secondary{{else}}btn-primary{{end}}">{{if $s.Status.Pending}}{{T . "mfa.restart"}}{{else}}{{T . "mfa.begin"}}{{end}}</button>
+        </form>
+        {{end}}
+    </section>
+</div>
+
+{{with $s.Policy}}
+<div class="card settings-shell account-security" id="two-step-policy">
+    <section class="settings-section settings-section-admin">
+        <h3 class="settings-section-title">{{T $ "mfa.policy_title"}}</h3>
+        <p class="mfa-intro">{{T $ "mfa.policy_help"}}</p>
+        <form method="POST" action="/admin/account/security/policy" class="mfa-form">
+            <fieldset class="mfa-roles">
+                <legend>{{T $ "mfa.policy_roles"}}</legend>
+                {{range .Roles}}
+                <label class="checkbox-label">
+                    <input type="checkbox" name="required_roles" value="{{.Name}}" {{if .Checked}}checked{{end}}>
+                    {{roleDisplayFor $ .Name}}
+                </label>
+                {{end}}
+            </fieldset>
+            {{if .SecondFactor}}
+            <div class="form-group">
+                <label for="mfaPolicyCode">{{T $ "mfa.code_label"}}</label>
+                <input type="text" id="mfaPolicyCode" name="otp_code" required inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" maxlength="7" class="mfa-code-input" placeholder="123456">
+            </div>
+            {{end}}
+            <button type="submit" class="btn btn-primary">{{T $ "action.save"}}</button>
+        </form>
+    </section>
+</div>
+{{end}}
+{{end}}
