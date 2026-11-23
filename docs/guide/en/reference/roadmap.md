@@ -10,7 +10,8 @@
   publishing, sorting, and theme-independent core types.
 - **Admin CMS** — data-driven CRUD, Quill editor, media picker, server-side
   filtering and pagination, Screen Options, menus, redirects, cache, mail,
-  themes, plugins, users, comments, settings, audit logs, and RBAC enforcement.
+  themes, plugins, users, comments, settings, audit logs, a notice center,
+  two-step verification for admin accounts, and RBAC enforcement.
 - **Theme runtime** — BaseTheme, config-driven rewrites and template mapping,
   page bundles, fallback hierarchy, common funcmap, semantic frontend hook
   slots, theme settings, logos, demo import, and hot switching.
@@ -67,6 +68,7 @@
 - Benchmark suite and performance tuning.
 - Theme and plugin version migration hooks.
 - Paid themes in the theme market, and a plugin market.
+- Signed official announcements from gopress.xyz in the admin notice center.
 
 ## Contributing
 

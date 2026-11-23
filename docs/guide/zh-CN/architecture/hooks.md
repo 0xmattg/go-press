@@ -159,8 +159,15 @@ e.Hooks.AddFilter(hook.UserPublicBadges, func(value interface{}, args ...interfa
 | `admin.content.permalink_prefix` | `admin.HookContentPermalinkPrefix` | filter，内容编辑页永久链接前缀注入。filter value: `string`；args: `*gin.Context, *content.Content` |
 | `admin.content_form.fields` | `hook.AdminContentFormFields` | filter，内容编辑/创建页的 meta box 插槽。filter value: `template.HTML`；args: `*content.Content, *content.ContentTypeDef`。模板中由 `{{renderHook "admin.content_form.fields" .Item .TypeDef}}` 渲染 |
 | `admin.content.saved` | `hook.AdminContentSaved` | action，内容行保存后。args: `*gin.Context, *content.Content`。插件按自己的 form key 持久化到 `gp_content_meta` |
+| `admin.notices` | `hook.AdminNotices` | filter，后台每个页面顶部的通知。filter value: `[]notice.Notice`；args: `*gin.Context, lang string` |
 
 详见 [后台扩展点](../admin/extension-points.md)。
+
+## 更新检查 Hook
+
+| Hook 名称 | Go 常量 | 用途 |
+|---|---|---|
+| `updatecheck.response` | `hook.UpdateCheckResponse` | filter，提供更新检查服务的插件在返回结果前调用。filter value: `updatecheck.Response`；args: `updatecheck.Request, *gin.Context`。另一个插件可以借此加入签名公告包（`Notices`）或调低 `TTLSeconds`，两个插件互不依赖 |
 
 ## SEO Hook
 

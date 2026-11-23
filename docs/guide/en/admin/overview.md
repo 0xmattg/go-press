@@ -92,6 +92,77 @@ When the market revokes the version of the theme in use, the theme keeps
 running and every admin page shows a banner until you switch to another theme
 or upgrade.
 
+## Notices
+
+Notices from GoPress and from plugins appear at the top of every admin page,
+below the top bar: red for critical, amber for warnings and blue for
+information, with a label such as Security or Configuration. Up to three are
+open; the rest fold under "N more notices".
+
+Each notice offers one or both ways to dismiss it, for you only:
+
+- **×** hides it for now. It comes back after the time the tooltip names
+  (24 hours unless the notice sets another) if it still applies.
+- **Got it** hides it for good. If its content changes enough to need
+  reading again, it shows again.
+
+Dismissals are stored on the server per user, so they follow you to other
+browsers, and both actions are written to the audit log. A notice disappears
+on its own when it expires or the problem it reports is fixed. Notices need
+the `notice.read` capability (super admins by default) unless the notice names
+another one; plugins can add notices through `admin.notices`, see
+[Admin Extension Points](extension-points.md#admin-notices).
+
+**Announcements from GoPress.** With update checks on (Settings → *Official
+Updates and Beta Usage Feedback*), the daily update check can also bring
+announcements from the GoPress project, such as a security advisory for the
+version you run. They appear in the notice center for those with
+`notice.read`, offer both **×** and **Got it**, and disappear when they expire
+or when the site is upgraded past the versions they are about. The project
+signs them offline and the site accepts only bundles signed with the keys
+built into GoPress, so whoever controls the update server cannot write them;
+a site also refuses a bundle older than the one it has. Turning update checks
+off stops them.
+
+## Account Security
+
+**Account security**, in the top bar, is where every admin user turns on
+two-step verification for their own account. After the password, signing in
+then also asks for a 6-digit code from an authenticator app on their phone,
+such as Google Authenticator.
+
+- **Setting it up** — confirm your password, scan the QR code (or type the key)
+  in the app, and enter the code it shows. You then get 10 recovery codes,
+  shown once; download or copy them. Turning it on keeps your current session
+  and signs the account out everywhere else.
+- **Signing in** — after the password, enter the code from the app, or use a
+  recovery code. Each recovery code works once; the notice center reminds you
+  when fewer than 3 are left. Five wrong codes in 15 minutes lock the code step
+  for 15 minutes.
+- **Sensitive actions** — accounts with two-step verification on enter a fresh
+  code to turn on developer mode, make someone a super admin, set a password
+  on the Users page, reset someone's two-step verification, change the roles
+  that must use it, and replace their recovery codes. Each code works once, so
+  two such actions in the same 30 seconds need two codes. Recovery codes are
+  accepted only to sign in and to turn two-step verification off.
+- **Required roles** — those who may change settings choose, under
+  **Required for roles**, roles that must use it. Accounts with those roles can
+  only open the account security page until they set it up, and cannot turn it
+  off. Nothing is required by default.
+- **Turning it off** — takes the password and a code or a recovery code.
+- **Lost phone and recovery codes** — another super admin opens the account on
+  the Users page and chooses **Reset two-step verification**; the account is
+  signed out everywhere and sets it up again at its next sign-in. With no one
+  else to do it, run `-reset-2fa` on the server, see
+  [Installation](../getting-started/installation.md#resetting-two-step-verification).
+
+Two-step verification protects signing in to the admin. API keys in
+`config.toml` and Agent credentials do not sign in, so it does not apply to
+them. Turning it on or off, resets, uses of recovery codes and wrong codes are
+written to the audit log. When mail is set up, the account owner gets an email
+when their two-step verification is turned off or reset, a recovery code is
+used, or new recovery codes are created.
+
 ## Mail Settings
 
 Mail settings are managed on a dedicated system page instead of the general options form. SMTP transport values are saved to the active site's `config.toml` under `[mail]`; notification switches and recipient preferences are saved as options. `go-mail` is the default driver, with a `stdlib` standard-library branch available.
@@ -104,4 +175,4 @@ Mail settings are managed on a dedicated system page instead of the general opti
 
 ## Extension Points
 
-Plugins can add settings pages, content form fields, save handlers, content-list tabs, frontend hook output, SEO overrides, and sitemap transformers without modifying admin core templates directly.
+Plugins can add settings pages, content form fields, save handlers, content-list tabs, admin notices, sensitive actions that need a two-step verification code, frontend hook output, SEO overrides, and sitemap transformers without modifying admin core templates directly.

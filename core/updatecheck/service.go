@@ -18,6 +18,7 @@ import (
 	"github.com/0xmattg/go-press/core/option"
 	"github.com/0xmattg/go-press/pkg/logger"
 	"github.com/0xmattg/go-press/pkg/semver"
+	"github.com/0xmattg/go-press/pkg/sign"
 )
 
 const (
@@ -50,6 +51,12 @@ type Service struct {
 	inFlight bool
 	now      func() time.Time
 	random   func(time.Duration) time.Duration
+
+	// Official announcements: accepted only from noticeEndpoint, the
+	// official core update check, and verified with noticeKeys.
+	noticeEndpoint string
+	noticeKeys     sign.KeySet
+	official       officialState
 }
 
 func NewService(store Store, registry *Registry, client *Client) *Service {
@@ -59,8 +66,12 @@ func NewService(store Store, registry *Registry, client *Client) *Service {
 		client:   client,
 		now:      func() time.Time { return time.Now().UTC() },
 		random:   secureRandomDuration,
+
+		noticeEndpoint: DefaultCoreEndpoint,
+		noticeKeys:     BuiltinNoticeKeys(),
 	}
 	s.load()
+	s.loadOfficial()
 	return s
 }
 
@@ -199,6 +210,11 @@ func (s *Service) check(ctx context.Context) error {
 		for _, target := range requestTargets {
 			answered[target.Key()] = true
 		}
+		// Announcements come only with the official core update check;
+		// any other endpoint's are ignored.
+		if endpoint == s.noticeEndpoint && hasCoreTarget(requestTargets) {
+			s.acceptNotices(response.Notices, checkedAt)
+		}
 		ttl := clampTTL(time.Duration(response.TTLSeconds) * time.Second)
 		if ttl < nextTTL {
 			nextTTL = ttl
@@ -265,6 +281,15 @@ func (s *Service) check(ctx context.Context) error {
 	s.mu.Unlock()
 	logger.Info("GoPress update check completed", "targets", len(targets), "next_check_at", checkedAt.Add(nextTTL))
 	return nil
+}
+
+func hasCoreTarget(targets []Target) bool {
+	for _, target := range targets {
+		if target.Kind == KindCore && target.Slug == "gopress" {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Service) ensureInstance() (Instance, error) {

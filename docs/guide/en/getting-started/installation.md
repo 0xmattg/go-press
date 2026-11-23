@@ -217,6 +217,21 @@ server binary with `-migrate`:
 Back up the database before deploying a release. See
 [Versioned Migrations](../reference/database-prefix.md#versioned-migrations).
 
+## Resetting Two-Step Verification
+
+If an admin lost both their phone and their recovery codes and no other super
+admin can reset their two-step verification in the admin, turn it off on the
+server:
+
+```bash
+./build/gopress-server -config sites/example.com/config.toml -reset-2fa admin
+```
+
+The command ends the account's sessions, writes the audit log and exits without
+serving HTTP. The account signs in with its password and sets two-step
+verification up again. Anyone who can run it can also read `config.toml`, so it
+gives no access that the server shell does not already give.
+
 ## Common Development Commands
 
 Examples use `./build/gopress` (local build). After `make install` you can drop the `./build/` prefix.

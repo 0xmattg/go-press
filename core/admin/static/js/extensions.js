@@ -150,6 +150,11 @@
             password = el('input', { type: 'password', id: id + 'Password', autocomplete: 'current-password', required: true });
             body.appendChild(el('div', { 'class': 'form-group ext-password' }, [el('label', { 'for': id + 'Password', text: opts.password }), password]));
         }
+        var otp = null;
+        if (opts.otp) {
+            otp = el('input', { type: 'text', id: id + 'Otp', inputmode: 'numeric', autocomplete: 'one-time-code', maxlength: '7', 'class': 'mfa-code-input', required: true });
+            body.appendChild(el('div', { 'class': 'form-group ext-password' }, [el('label', { 'for': id + 'Otp', text: opts.otp }), otp]));
+        }
         var error = el('div', { 'class': 'ext-dialog-error', role: 'alert', hidden: true });
         body.appendChild(error);
 
@@ -161,7 +166,7 @@
         if (opts.danger) dialog.classList.add('ext-dialog-danger');
 
         function ready() {
-            return (!ack || ack.checked) && (!password || password.value !== '');
+            return (!ack || ack.checked) && (!password || password.value !== '') && (!otp || otp.value.replace(/\s/g, '').length === 6);
         }
         function sync() {
             submit.disabled = busy || !ready();
@@ -186,11 +191,17 @@
             close: close,
             showError: showError,
             password: function () { return password ? password.value : ''; },
-            clearPassword: function () { if (password) password.value = ''; sync(); }
+            otp: function () { return otp ? otp.value : ''; },
+            clearPassword: function () {
+                if (password) password.value = '';
+                if (otp) otp.value = '';
+                sync();
+            }
         };
 
         if (ack) ack.addEventListener('change', sync);
         if (password) password.addEventListener('input', sync);
+        if (otp) otp.addEventListener('input', sync);
         cancel.addEventListener('click', close);
         closeButton.addEventListener('click', close);
         // Esc must not close a dialog whose request is running.
@@ -796,6 +807,7 @@
                     }))],
                     ack: t('devmode_ack'),
                     password: t('devmode_password'),
+                    otp: block.hasAttribute('data-ext-devmode-otp') ? t('devmode_otp') : '',
                     submitLabel: t('devmode_submit'),
                     busyLabel: t('working'),
                     onSubmit: function (ctx) {
@@ -803,6 +815,7 @@
                         form.append('enabled', '1');
                         form.append('confirm', '1');
                         form.append('password', ctx.password());
+                        if (ctx.otp()) form.append('otp_code', ctx.otp());
                         ctx.clearPassword();
                         return request('POST', '/admin/settings/developer-mode', form).then(function (data) {
                             if (!data.ok) return { error: errorText(data.error) };

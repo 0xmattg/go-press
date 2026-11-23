@@ -70,6 +70,7 @@ import (
 	coreMail "github.com/0xmattg/go-press/core/mail"
 	"github.com/0xmattg/go-press/core/media"
 	"github.com/0xmattg/go-press/core/menu"
+	"github.com/0xmattg/go-press/core/mfa"
 	"github.com/0xmattg/go-press/core/notification"
 	"github.com/0xmattg/go-press/core/option"
 	"github.com/0xmattg/go-press/core/plugin"
@@ -198,6 +199,9 @@ type Engine struct {
 
 	// Auth handles admin/session JWT concerns.
 	Auth *user.Auth
+	// MFA is two-step verification for admin accounts (nil without a
+	// database). Plugins protect sensitive routes with RequireSecondFactor.
+	MFA *mfa.Service
 
 	// Public authentication is provider-neutral. Plugins register verified
 	// identity methods through this core-owned runtime.
@@ -441,6 +445,16 @@ func New(cfg *config.Config, db *gorm.DB) *Engine {
 	// Initialize auth
 	e.Auth = user.NewAuth(cfg.CMS.JWTSecret, cfg.CMS.JWTExpireHours, e.Users)
 	e.Auth.SetSecureCookies(secureCookies)
+	if db != nil {
+		second, err := mfa.New(db, cfg.CMS.JWTSecret)
+		if err != nil {
+			logger.Error("Two-step verification is unavailable", "error", err)
+		} else {
+			e.MFA = second
+			e.Auth.SetSecondFactor(second)
+			e.Auth.SetSecondFactorPolicy(admin.SecondFactorPolicy(e.Options))
+		}
+	}
 	e.RegistrationPolicy = user.NewRegistrationPolicy(e.Options, e.RBAC)
 	e.AuthProviders = user.NewProviderRegistry()
 	e.IdentityBroker = user.NewIdentityBroker(e.DB, e.Users, e.Identities, e.RegistrationPolicy)
@@ -1637,6 +1651,34 @@ func (e *Engine) themeDispatcher(c *gin.Context) {
 	theme.ServeHTTP(c)
 }
 
+// RequireSecondFactor protects a sensitive plugin route: the signed-in
+// admin user must have two-step verification on and send a fresh code from
+// their authenticator app with each request (form field otp_code or header
+// X-GoPress-OTP). Place it after admin.RequirePermission. See
+// admin.RequireSecondFactor for the responses.
+func (e *Engine) RequireSecondFactor() gin.HandlerFunc {
+	return admin.RequireSecondFactor(e.MFA, e.Audit)
+}
+
+// VerifySecondFactor checks the second-factor code of the current request
+// for a plugin handler that answers with a page: "" when it is accepted,
+// otherwise second_factor_not_enrolled, second_factor_invalid,
+// second_factor_locked or second_factor_unavailable. See
+// admin.VerifySecondFactor.
+func (e *Engine) VerifySecondFactor(c *gin.Context) string {
+	return admin.VerifySecondFactor(c, e.MFA, e.Audit)
+}
+
+// HasSecondFactor reports whether an admin user has two-step verification
+// on, so a page can tell them before they try a sensitive action.
+func (e *Engine) HasSecondFactor(userID uint) bool {
+	if e == nil || e.MFA == nil {
+		return false
+	}
+	_, on, err := e.MFA.EnabledAt(userID)
+	return err == nil && on
+}
+
 // SetupAdmin creates the admin module and handler.
 // Admin templates and static assets live under core/admin/templates and core/admin/static.
 func (e *Engine) SetupAdmin() {
@@ -1659,6 +1701,7 @@ func (e *Engine) SetupAdmin() {
 	)
 	svc.SetCommentService(e.Comments)
 	svc.SetAuditService(e.Audit)
+	svc.SetMFA(e.MFA)
 	svc.SetContentCommandService(e.ContentCommands)
 	svc.SetTaxonomyCommandService(e.TaxonomyCommands)
 	h := admin.NewHandler(svc, e.Registry, "core/admin/templates")

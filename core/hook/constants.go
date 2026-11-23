@@ -176,11 +176,35 @@ const (
 	// plugin. Deactivating the plugin removes the filter and the nav entries.
 	AdminNavItems = "admin.nav.items"
 
+	// AdminNotices filters the notices shown as banners at the top of every
+	// admin page. The filter value is []notice.Notice; args[0] is the
+	// request's *gin.Context and args[1] the normalized admin UI language.
+	// Append notices with text translated for that language; each needs a
+	// Source (the plugin's slug) and an ID unique within it. The admin
+	// normalizes them (notice.Normalize), shows each user those their role
+	// may read and has not dismissed, and owns the markup. The filter runs
+	// on every admin page, so keep it cheap. Deactivating the plugin
+	// removes the filter and its notices.
+	AdminNotices = "admin.notices"
+
 	// TaxonomyCreated, TaxonomyUpdated, and TaxonomyDeleted fire after a
 	// framework-owned taxonomy command commits. Args: (*taxonomy.Taxonomy).
 	TaxonomyCreated = "taxonomy.created"
 	TaxonomyUpdated = "taxonomy.updated"
 	TaxonomyDeleted = "taxonomy.deleted"
+)
+
+// Update check hooks let extensions of an update service add to its
+// answers without the services knowing each other.
+const (
+	// UpdateCheckResponse filters the answer an update service is about to
+	// send. The filter value is updatecheck.Response; args[0] is the
+	// updatecheck.Request and args[1] the request's *gin.Context. An
+	// announcements service sets Notices to a bundle signed offline and may
+	// lower TTLSeconds so sites check again sooner; it leaves the updates of
+	// targets it does not own alone. Core does not answer update checks
+	// itself: a plugin that does calls this filter before answering.
+	UpdateCheckResponse = "updatecheck.response"
 )
 
 // Comment hooks expose the framework-owned comment lifecycle without coupling

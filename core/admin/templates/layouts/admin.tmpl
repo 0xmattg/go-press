@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}} - {{.SiteName}} CMS</title>
-    <link rel="stylesheet" href="/static/admin/css/admin.css?v=78">
+    <link rel="stylesheet" href="/static/admin/css/admin.css?v=82">
 </head>
 <body class="admin-body">
     <aside class="sidebar" id="sidebar">
@@ -46,6 +46,7 @@
             <div class="topbar-user">
                 <span class="user-name">{{.CurrentUser}}</span>
                 <span class="user-role">({{roleDisplayFor . .CurrentRole}})</span>
+                <a href="/admin/account/security" class="topbar-link{{if eq .Active "account"}} active{{end}}">{{T . "topbar.account_security"}}</a>
                 <a href="/" class="topbar-link" target="_blank">{{T . "topbar.view_site"}}</a>
                 <a href="/admin/logout" class="topbar-link logout">{{T . "topbar.logout"}}</a>
             </div>
@@ -83,6 +84,17 @@
             </span>
             <a href="/admin/settings#modules" class="btn btn-sm btn-primary" style="margin-left:auto;text-decoration:none;white-space:nowrap;">{{T . "modules.enable_now"}}</a>
         </div>
+        {{end}}
+        {{with .AdminNotices}}
+        <section class="admin-notices" id="adminNotices" aria-label="{{.Label}}">
+            {{range .Open}}{{template "admin-notice" .}}{{end}}
+            {{if .Folded}}
+            <details class="admin-notices-more">
+                <summary data-more-one="{{.MoreOne}}" data-more-many="{{.MoreMany}}">{{.MoreLabel}}</summary>
+                {{range .Folded}}{{template "admin-notice" .}}{{end}}
+            </details>
+            {{end}}
+        </section>
         {{end}}
         {{if .Success}}
         <div class="alert alert-success" role="status">{{.Success}}</div>
@@ -175,9 +187,32 @@
         progressWorkingMessage: {{jsT . "progress.working_message"}},
         editorHtmlSourceTitle: {{jsT . "editor.html_source_title"}},
         editorHtmlSourceLabel: {{jsT . "editor.html_source_label"}},
-        editorVisualModeTitle: {{jsT . "editor.visual_mode_title"}}
+        editorVisualModeTitle: {{jsT . "editor.visual_mode_title"}},
+        secondFactorTitle: {{jsT . "mfa.section_title"}},
+        secondFactorHelp: {{jsT . "mfa.dialog_help"}},
+        secondFactorLabel: {{jsT . "mfa.code_label"}},
+        secondFactorSubmit: {{jsT . "mfa.dialog_submit"}},
+        secondFactorCancel: {{jsT . "action.cancel"}}
     };
     </script>
-    <script src="/static/admin/js/admin.js?v=18"></script>
+    <script src="/static/admin/js/admin.js?v=20"></script>
 </body>
 </html>{{end}}
+
+{{/* admin-notice draws one notice-center notice (NoticeView). Title,
+message and link text are plain text and are escaped. */}}
+{{define "admin-notice"}}<div class="alert admin-notice admin-notice-{{.Severity}}" role="{{if eq .Severity "critical"}}alert{{else}}status{{end}}" data-notice-source="{{.Source}}" data-notice-id="{{.ID}}" data-notice-revision="{{.Revision}}">
+                <div class="admin-notice-body">
+                    <span class="admin-notice-category">{{.CategoryLabel}}</span>
+                    <strong class="admin-notice-title">{{.Title}}</strong>
+                    {{if .Message}}<p class="admin-notice-message">{{.Message}}</p>{{end}}
+                    {{with .Link}}<a class="admin-notice-link" href="{{.URL}}"{{if $.External}} target="_blank" rel="noopener noreferrer"{{end}}>{{$.LinkLabel}}</a>{{end}}
+                    <span class="admin-notice-error" hidden>{{.FailedText}}</span>
+                </div>
+                {{if or .Acknowledgeable .Snoozable}}
+                <div class="admin-notice-actions">
+                    {{if .Acknowledgeable}}<button type="button" class="btn btn-sm btn-secondary admin-notice-ack" data-notice-mode="acknowledge" title="{{.AckHint}}">{{.AckLabel}}</button>{{end}}
+                    {{if .Snoozable}}<button type="button" class="admin-notice-snooze" data-notice-mode="snooze" aria-label="{{.SnoozeHint}}" title="{{.SnoozeHint}}">&times;</button>{{end}}
+                </div>
+                {{end}}
+            </div>{{end}}

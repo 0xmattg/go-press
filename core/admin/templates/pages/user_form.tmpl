@@ -41,10 +41,37 @@
             </label>
         </div>
         {{end}}
+        {{if .AskSecondFactor}}
+        <div class="form-group mfa-field">
+            <label for="otp_code">{{T . "mfa.code_label"}}</label>
+            <input type="text" id="otp_code" name="otp_code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" maxlength="7" class="mfa-code-input" placeholder="123456">
+            <p class="form-help">{{T . "mfa.user_form_help"}}</p>
+        </div>
+        {{end}}
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">{{T . "action.save"}}</button>
             <a href="/admin/users" class="btn">{{T . "action.cancel"}}</a>
         </div>
     </form>
 </div>
+{{if and .Item .TargetSecondFactor}}
+<div class="card settings-shell account-security">
+    <section class="settings-section">
+        <div class="mfa-heading">
+            <h3 class="settings-section-title">{{T . "mfa.section_title"}}</h3>
+            <span class="badge badge-published">{{T . "mfa.state_on"}}</span>
+        </div>
+        <form method="POST" action="/admin/users/{{.Item.ID}}/mfa-reset" class="mfa-form">
+            <p class="form-help">{{T . "mfa.reset_help"}}</p>
+            {{if .AskSecondFactor}}
+            <div class="form-group">
+                <label for="mfaResetCode">{{T . "mfa.code_label"}}</label>
+                <input type="text" id="mfaResetCode" name="otp_code" required inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" maxlength="7" class="mfa-code-input" placeholder="123456">
+            </div>
+            {{end}}
+            <button type="submit" class="btn btn-danger">{{T . "mfa.reset"}}</button>
+        </form>
+    </section>
+</div>
+{{end}}
 {{end}}

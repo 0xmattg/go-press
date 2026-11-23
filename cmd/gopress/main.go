@@ -23,6 +23,10 @@ Usage:
                                     packages (keygen, check, build, digest,
                                     sign, verify, catalog). Works outside a
                                     GoPress checkout.
+  gopress notice <command> [args...]
+                                    Create keys for, sign and verify official
+                                    admin announcement bundles (keygen, sign,
+                                    verify). Works outside a GoPress checkout.
   gopress help                      Show this help.
 
 Examples:
@@ -44,6 +48,9 @@ func main() {
 	// pkg works on package files and needs no repository checkout.
 	if sub == "pkg" {
 		os.Exit(runPkg(rest, os.Stdout, os.Stderr))
+	}
+	if sub == "notice" {
+		os.Exit(runNotice(rest, os.Stdout, os.Stderr))
 	}
 
 	root, err := findRepoRoot()

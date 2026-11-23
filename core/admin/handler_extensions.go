@@ -374,11 +374,13 @@ func packageErrorStatus(code string) int {
 	case "check_failed", "incompatible", "revoked", "paid", "content_mismatch", "dependencies_unmet",
 		"broken", "archive_damaged", "activation_failed", "password_incorrect", "password_unavailable":
 		return http.StatusUnprocessableEntity
-	case "too_many_attempts":
+	case "too_many_attempts", codeLocked:
 		return http.StatusTooManyRequests
+	case codeInvalid, codeNotEnrolled:
+		return http.StatusForbidden
 	case "catalog_unavailable", "download_failed":
 		return http.StatusBadGateway
-	case "unavailable", "market_disabled":
+	case "unavailable", "market_disabled", codeUnavailable:
 		return http.StatusServiceUnavailable
 	default:
 		return http.StatusInternalServerError
@@ -670,6 +672,11 @@ func (h *Handler) DeveloperModeUpdate(c *gin.Context) {
 		return
 	}
 	h.developerModeThrottle.reset(key)
+	// With two-step verification on, a code from the app is needed too.
+	if code := h.stepUp(c); code != "" {
+		h.packageErrorJSON(c, &PackageError{Code: code, Detail: "a two-step verification code is needed"})
+		return
+	}
 	if err := pm.SetDeveloperMode(true); err != nil {
 		h.packageErrorJSON(c, err)
 		return

@@ -70,6 +70,10 @@ func AuthMiddleware(auth *user.Auth) gin.HandlerFunc {
 		c.Set("admin_user_id", claims.UserID)
 		c.Set("admin_username", claims.Username)
 		c.Set("admin_role", claims.Role)
+		c.Set("admin_second_factor", claims.SecondFactor)
+		if blockUntilSecondFactor(c, claims) {
+			return
+		}
 		c.Next()
 	}
 }
@@ -106,6 +110,10 @@ func RequirePermission(auth *user.Auth, rbac *user.RBAC, resource, action string
 		c.Set("admin_user_id", claims.UserID)
 		c.Set("admin_username", claims.Username)
 		c.Set("admin_role", claims.Role)
+		c.Set("admin_second_factor", claims.SecondFactor)
+		if blockUntilSecondFactor(c, claims) {
+			return
+		}
 		c.Next()
 	}
 }

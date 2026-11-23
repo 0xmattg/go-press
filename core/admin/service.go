@@ -27,6 +27,7 @@ import (
 	"github.com/0xmattg/go-press/core/extension"
 	coreMail "github.com/0xmattg/go-press/core/mail"
 	coreMedia "github.com/0xmattg/go-press/core/media"
+	"github.com/0xmattg/go-press/core/mfa"
 	"github.com/0xmattg/go-press/core/option"
 	"github.com/0xmattg/go-press/core/taxonomy"
 	"github.com/0xmattg/go-press/core/user"
@@ -59,6 +60,9 @@ type Service struct {
 
 	mediaVariantJobMu sync.Mutex
 	mediaVariantJob   MediaVariantJob
+
+	// secondFactor is two-step verification; nil without a database.
+	secondFactor *mfa.Service
 }
 
 // CommentService is the narrow comment capability required by admin. Keeping
@@ -735,11 +739,15 @@ func (s *Service) isSettingReadOnly(key string) bool {
 // coreOwnedOption reports options the generic settings save must not create
 // or overwrite through new_key: core's system settings (active_theme among
 // them), plugin activation and demo import flags, and developer mode, which
-// only its own endpoint writes.
+// only its own endpoint writes, each user's notice dismissals, which only
+// the notice center writes, and the roles that must use two-step
+// verification, which only the account security page writes after a code.
 func coreOwnedOption(key string) bool {
 	return option.IsSystemSetting(key) ||
 		strings.HasPrefix(key, "plugin_active_") ||
 		strings.HasPrefix(key, "demo_imported_") ||
+		strings.HasPrefix(key, noticeDismissedOptionPrefix) ||
+		key == OptionSecondFactorRoles ||
 		key == extension.OptionDeveloperMode
 }
 
