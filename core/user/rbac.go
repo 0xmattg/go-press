@@ -73,20 +73,20 @@ func (r *RBAC) registerDefaults() {
 		"menu.read": true, "menu.update": true,
 		"user.read":      true,
 		"comment.create": true, "comment.moderate": true,
-		"profile.read_own": true,
-		"dashboard.read":   true,
+		"profile.read_own": true, "profile.update": true,
+		"dashboard.read": true,
 	})
 	r.RegisterRole(RoleAuthor, "作者", 30, map[string]bool{
 		"content.create": true, "content.read": true, "content.update_own": true, "content.delete_own": true,
 		"taxonomy.read": true,
 		"media.create":  true, "media.read": true, "media.update_own": true,
-		"comment.create": true, "profile.read_own": true,
+		"comment.create": true, "profile.read_own": true, "profile.update": true,
 		"dashboard.read": true,
 	})
 	r.RegisterRole(RoleContributor, "投稿者", 20, map[string]bool{
 		"content.create": true, "content.read": true, "content.update_own": true,
 		"taxonomy.read":  true,
-		"comment.create": true, "profile.read_own": true,
+		"comment.create": true, "profile.read_own": true, "profile.update": true,
 		"dashboard.read": true,
 	})
 	r.RegisterRole(RoleSubscriber, "订阅者", 10, map[string]bool{

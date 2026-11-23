@@ -101,6 +101,26 @@ A theme's account page can list the entries plugins offer, such as the way into 
 
 Wherever a theme shows a member's name, such as comment authors, forum posts and member pages, it can add the public badges plugins give that member with `userBadges .Ctx <user ID>`, for example a "verified" mark that links to the member's page in the plugin's area. See [Public Badges](../architecture/hooks.md#public-badges).
 
+Signed-in members can edit their display name, photo and a short bio through core's profile endpoint, so a theme only provides the form. Post `multipart/form-data` to `/account/profile` with `display_name` (1 to 50 characters), `bio` (optional, up to 160 characters of plain text), `avatar` (optional: a JPEG, PNG or GIF of at most 5 MB, cropped to a 256 × 256 square and re-encoded), `remove_avatar=1` to go back to initials, and `return_to` (a path on the site). Names and bios cannot contain links. Core checks that the request comes from the site and that the member may `profile.update` (every built-in role may), then redirects to `return_to` with `profile=saved` or `profile_error=` `display_name`, `bio`, `link`, `avatar`, `avatar_size` or `failed`. The new name and photo appear wherever the theme shows `DisplayName` and `AvatarURL`.
+
+`accountProfile .Ctx` gives the form everything it needs, so a theme, a theme package included, builds it in templates alone. It returns nothing for visitors who are not signed in; otherwise `.FormURL`, `.CanEdit` (the member may `profile.update`), the current `.DisplayName`, `.AvatarURL` and `.Bio`, the result of the last submission (`.Saved`, or `.Error` with one of the codes above) and the limits `.MaxDisplayName`, `.MaxBio`, `.MaxAvatarMB` and `.AvatarAccept` (for the file input's `accept`):
+
+```gotemplate
+{{with accountProfile .Ctx}}{{if .CanEdit}}
+{{if .Saved}}<p role="status">{{T $.Ctx "profile.saved"}}</p>{{end}}
+{{with .Error}}<p role="alert">{{T $.Ctx (printf "profile.error.%s" .)}}</p>{{end}}
+<form method="post" action="{{.FormURL}}" enctype="multipart/form-data">
+  <input type="hidden" name="return_to" value="/profile">
+  <input type="file" name="avatar" accept="{{.AvatarAccept}}">
+  <input type="text" name="display_name" value="{{.DisplayName}}" maxlength="{{.MaxDisplayName}}" required>
+  <textarea name="bio" maxlength="{{.MaxBio}}">{{.Bio}}</textarea>
+  <button type="submit">{{T $.Ctx "profile.save"}}</button>
+</form>
+{{end}}{{end}}
+```
+
+Go themes that show other members' bios, for example on member pages, read them through `theme.ProfileApp`.
+
 ## Theme and Plugin Boundary
 
 Built-in GoPress themes and themes intended for production use must expose the standard semantic hook slots and use core helpers. Plugins should inject through those slots. Neither side should import the other. The required slots and the repository-level contract test are documented in [Creating Themes](creating-themes.md#base-layout-contract).

@@ -174,7 +174,7 @@ lock_developer_mode = true
 - `endpoint`、`catalog_keys`、`package_keys` — 让站点改用自建市场，整体替换官方市场，所以三项必须一起配；只配了一部分时服务拒绝启动。`catalog_keys` 校验市场目录的签名，`package_keys` 校验市场对每个主题包的加签；每组最多 4 把公钥，同一把公钥不能同时出现在两组里。端点必须用 HTTPS（只有本机回环地址可以用 HTTP，方便本地测试）
 - `lock_developer_mode` — 运维锁。开发者模式始终关闭：后台打不开，之前打开过的也视为关闭。生产站建议开启，这样即使后台会话被盗，也装不了没有市场签名的包。只配它不算配置了自建市场
 
-自建市场需要提供：`<endpoint>/catalog?schema=1` 返回用 `gopress pkg catalog sign` 签名的目录；每个主题包放在目录条目的 `download_url`。下载只用 HTTPS、不跟随重定向，并且大小必须和目录里记录的一致，所以地址要直接指向文件本身。详见[主题包](../themes/theme-packages.md#安装和管理)。
+自建市场需要提供：`<endpoint>/catalog?schema=1` 返回用 `gopress pkg catalog sign` 签名的目录；每个主题包放在目录条目的 `download_url`。下载只用 HTTPS、不跟随重定向，并且大小必须和目录里记录的一致，所以地址要直接指向文件本身。详见[主题包](../themes/theme-packages.md#安装和管理)；目录格式和加签见[发布到 GoPress 市场](../themes/publishing.md#自建市场)。
 
 自建市场还要在 `POST <endpoint>/updates/check` 回答更新检查。后台的更新检查开关（系统设置 →「官方更新检查与 Beta 使用情况反馈」）打开时，站点会把从这个市场安装、带市场签名的主题发过去，不带安装 ID：
 

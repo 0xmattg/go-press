@@ -1435,6 +1435,8 @@ func (e *Engine) SetupRouter() *gin.Engine {
 	// registered later by active plugins through routes.register.
 	if e.FrontendAuth != nil {
 		e.FrontendAuth.RegisterRoutes(r)
+		// A signed-in member's profile form (display name, bio, avatar).
+		r.POST(AccountProfilePath, e.handleAccountProfile)
 	}
 
 	// REST API (/api/v1/...)

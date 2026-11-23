@@ -150,6 +150,26 @@ e.Hooks.RemoveFilter(handle)
 
 主题显示会员名字的地方（评论作者、论坛帖子、会员主页等），可以用 `userBadges .Ctx <用户 ID>` 加上插件给这位会员的公开徽章，例如链接到他在插件区域主页的「已认证」标识。见[公开徽章](../architecture/hooks.md#公开徽章)。
 
+已登录会员可以通过 core 的资料接口修改显示名称、头像和一段简短简介，主题只需要提供表单：以 `multipart/form-data` 提交到 `/account/profile`，字段为 `display_name`（1 到 50 个字符）、`bio`（选填，最多 160 个字符的纯文本）、`avatar`（选填，JPEG、PNG 或 GIF，最大 5 MB，会裁成 256 × 256 的正方形并重新编码）、`remove_avatar=1`（恢复显示首字母）和 `return_to`（本站路径）。显示名称和简介不能包含链接。core 会检查请求来自本站、会员有 `profile.update` 权限（内置角色都有），然后跳回 `return_to`，带上 `profile=saved` 或 `profile_error=`（`display_name`、`bio`、`link`、`avatar`、`avatar_size`、`failed`）。新名字和头像会出现在主题显示 `DisplayName`、`AvatarURL` 的所有地方。
+
+`accountProfile .Ctx` 提供表单需要的全部数据，所以主题（包括主题包）只写模板就能做出编辑表单。未登录时它返回空；否则提供 `.FormURL`、`.CanEdit`（会员是否有 `profile.update` 权限）、当前的 `.DisplayName`、`.AvatarURL`、`.Bio`，上次提交的结果（`.Saved`，或 `.Error` 为上面的错误码之一），以及限制 `.MaxDisplayName`、`.MaxBio`、`.MaxAvatarMB`、`.AvatarAccept`（用于文件框的 `accept`）：
+
+```gotemplate
+{{with accountProfile .Ctx}}{{if .CanEdit}}
+{{if .Saved}}<p role="status">{{T $.Ctx "profile.saved"}}</p>{{end}}
+{{with .Error}}<p role="alert">{{T $.Ctx (printf "profile.error.%s" .)}}</p>{{end}}
+<form method="post" action="{{.FormURL}}" enctype="multipart/form-data">
+    <input type="hidden" name="return_to" value="/profile">
+    <input type="file" name="avatar" accept="{{.AvatarAccept}}">
+    <input type="text" name="display_name" value="{{.DisplayName}}" maxlength="{{.MaxDisplayName}}" required>
+    <textarea name="bio" maxlength="{{.MaxBio}}">{{.Bio}}</textarea>
+    <button type="submit">{{T $.Ctx "profile.save"}}</button>
+</form>
+{{end}}{{end}}
+```
+
+Go 主题要显示其他会员的简介（例如会员主页）时，通过 `theme.ProfileApp` 读取。
+
 ## 主题与插件边界
 
 主题负责呈现，插件通过稳定的 core Hook、Filter、funcmap 和 capability
