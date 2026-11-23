@@ -18,7 +18,7 @@ This page covers joining, keys, building and signing, submitting, review, and ma
 
 ## Before you start
 
-- **A working theme package.** Follow [Theme Packages](theme-packages.md): page bundles, no scripts, external hosts declared in `[[external]]`. Preview it on a development site with `gopress serve -theme-package ./my-theme` and make sure its demo data shows the theme well.
+- **A working theme package.** Follow [Theme Packages](theme-packages.md): page bundles, no scripts, external hosts declared in `[[external]]`. Preview it on a development site with `gopress serve -theme-package ./my-theme` and make sure its demo data shows the theme well. The [GoPress market samples](https://github.com/0xmattg/go-press-market-samples) repository has the full source of a few published market themes to learn from.
 - **The `gopress` command line.** The `gopress pkg` commands work outside a GoPress checkout.
 - **What the listing shows.** The market takes the theme's name and description from `theme.toml` and its picture from `screenshot.png` at the top level of the package. Add a `README.md`, and a `LICENSE` that lets people use the theme on their sites. Only use fonts, images and other assets you may distribute.
 

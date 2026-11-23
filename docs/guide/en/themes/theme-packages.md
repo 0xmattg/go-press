@@ -4,6 +4,8 @@ A theme package is a theme without Go code: a plain `.zip` file holding `theme.t
 
 This page covers the package format, the tools to check, build and sign packages, the [local preview](#local-preview) on a development site, and how sites [install and manage](#installing-and-managing-packages) packages. To list a package in the official market, see [Publishing to the GoPress Market](publishing.md).
 
+For complete examples, see the [GoPress market samples](https://github.com/0xmattg/go-press-market-samples) repository: the full source of a few theme packages published in the market, such as Deckle, which you can check, preview and build with the commands below.
+
 ## Go themes and theme packages
 
 | | Go theme | Theme package |
