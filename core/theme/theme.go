@@ -105,6 +105,12 @@ type PublicAuthorizationApp interface {
 	CanPublicUser(c *gin.Context, resource, action string) bool
 }
 
+// ProfileApp is optional: it reads a member's public bio, for the
+// accountProfile template function and for themes that show bios.
+type ProfileApp interface {
+	ProfileBio(userID uint) (string, error)
+}
+
 // Theme is the runtime contract every GoPress theme must implement.
 //
 // Core owns request dispatch and calls ServeHTTP for front-end paths after

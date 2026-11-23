@@ -47,6 +47,7 @@ import (
 	"github.com/0xmattg/go-press/core/hook"
 	coreI18n "github.com/0xmattg/go-press/core/i18n"
 	"github.com/0xmattg/go-press/core/mail"
+	coreMedia "github.com/0xmattg/go-press/core/media"
 	"github.com/0xmattg/go-press/core/menu"
 	"github.com/0xmattg/go-press/core/option"
 	"github.com/0xmattg/go-press/core/rewrite"
@@ -440,6 +441,41 @@ func (b *BaseTheme) BaseFuncMap() template.FuncMap {
 			}
 			return user.NormalizeAccountActions(list)
 		}
+		// accountProfile gives the signed-in member's profile form its data:
+		// where it posts, whether they may edit, the current values, the
+		// result of the last submission and the limits. It returns nil for
+		// visitors who are not signed in, and is computed once per request.
+		engineFuncs["accountProfile"] = func(data interface{}) *user.AccountProfileView {
+			c := templateGinContext(data)
+			account := user.CurrentUser(c)
+			if c == nil || account == nil || !account.IsActive {
+				return nil
+			}
+			if cached, ok := c.Get(accountProfileCacheKey); ok {
+				if view, ok := cached.(*user.AccountProfileView); ok {
+					return view
+				}
+			}
+			view := &user.AccountProfileView{
+				FormURL: user.AccountProfilePath, DisplayName: account.DisplayName, AvatarURL: account.AvatarURL,
+				MaxDisplayName: user.MaxDisplayNameRunes, MaxBio: user.MaxBioRunes,
+				MaxAvatarMB: coreMedia.MaxAvatarBytes >> 20, AvatarAccept: coreMedia.AvatarAccept,
+			}
+			if view.DisplayName == "" {
+				view.DisplayName = account.Username
+			}
+			if authz, ok := b.App.(PublicAuthorizationApp); ok {
+				view.CanEdit = authz.CanPublicUser(c, "profile", "update")
+			}
+			if profiles, ok := b.App.(ProfileApp); ok {
+				if bio, err := profiles.ProfileBio(account.ID); err == nil {
+					view.Bio = bio
+				}
+			}
+			view.Saved, view.Error = user.ProfileResult(c.Request)
+			c.Set(accountProfileCacheKey, view)
+			return view
+		}
 		// userBadges lists the public badges extensions give a member
 		// (hook.UserPublicBadges), for showing next to their name. It takes
 		// the page data or its gin context and a user ID; results are kept
@@ -562,8 +598,12 @@ func containsGinContext(args []interface{}) bool {
 	return false
 }
 
-// publicBadgesCacheKey holds a request's userBadges results by user ID.
-const publicBadgesCacheKey = "gopress.public_badges"
+// publicBadgesCacheKey holds a request's userBadges results by user ID;
+// accountProfileCacheKey holds its accountProfile result.
+const (
+	publicBadgesCacheKey   = "gopress.public_badges"
+	accountProfileCacheKey = "gopress.account_profile"
+)
 
 // badgeUserID accepts the integer types templates pass for a user ID and
 // reports false for anything else or for 0.

@@ -2,7 +2,7 @@
 
 A theme package is a theme without Go code: a plain `.zip` file holding `theme.toml`, templates, styles, images, fonts, locale files and optional demo data. A theme package does not need GoPress to be recompiled, so it can be distributed to other sites.
 
-This version provides the package format, the tools to check, build and sign packages, and a [local preview](#local-preview) that runs a package on your development site. Installing theme packages from a site's admin comes in a later version.
+This page covers the package format, the tools to check, build and sign packages, the [local preview](#local-preview) on a development site, and how sites [install and manage](#installing-and-managing-packages) packages. To list a package in the official market, see [Publishing to the GoPress Market](publishing.md).
 
 ## Go themes and theme packages
 
@@ -14,6 +14,8 @@ This version provides the package format, the tools to check, build and sign pac
 | Settings page | `[[settings]]` or a custom admin template | `[[settings]]` only; core generates the page |
 | Scripts | Allowed | **Not allowed**; use core's [interaction components](interactions.md) |
 | External resources | Unrestricted | Must be declared in `[[external]]` |
+
+**Theme packages can do less than Go themes for now.** A package can only use what core provides: the data functions, the interaction components, and account features such as the profile form (`accountProfile`), public badges and account actions. Some features still need Go code, for example forms that post comments or contact messages, so a package can list approved comments but cannot offer a comment form yet. We keep moving common needs into core, so theme packages, and with them the themes in the market, can do more with each release.
 
 ## Layout
 

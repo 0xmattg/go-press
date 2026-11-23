@@ -45,7 +45,7 @@
   package format with static checks and `gopress pkg` build and signing
   commands; install, upgrade, rollback, uninstall and revocation; a
   Content-Security-Policy for theme packages and built-in front-end
-  interactions; browsing, installing and upgrading free theme packages from the
+  interactions; browsing, installing and upgrading theme packages from the
   official market at gopress.xyz in the admin, with update notices for
   installed packages.
 - **Runtime stability** — concurrency-safe plugin lifecycle and i18n snapshots,

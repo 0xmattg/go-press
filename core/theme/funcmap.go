@@ -89,6 +89,9 @@ func CommonFuncMap() template.FuncMap {
 		"userBadges": func(data interface{}, id interface{}) []user.PublicBadge {
 			return nil
 		},
+		"accountProfile": func(data interface{}) *user.AccountProfileView {
+			return nil
+		},
 		"loginURL":         user.LoginURL,
 		"loginProviderURL": user.LoginProviderURL,
 		"logoutURL":        user.LogoutURL,

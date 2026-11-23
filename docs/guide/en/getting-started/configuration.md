@@ -244,7 +244,7 @@ A self-hosted market serves its catalog at `<endpoint>/catalog?schema=1`,
 signed with `gopress pkg catalog sign`, and each package at the
 `download_url` of its catalog entry. Downloads use HTTPS, follow no
 redirects, and must be exactly the size the catalog lists, so link to the
-file itself. See [Theme Packages](../themes/theme-packages.md#installing-and-managing-packages).
+file itself. See [Theme Packages](../themes/theme-packages.md#installing-and-managing-packages), and [Publishing to the GoPress Market](../themes/publishing.md#running-your-own-market) for the catalog format and countersigning.
 
 A self-hosted market also answers update checks at `POST <endpoint>/updates/check`.
 While the update check setting is on (Settings → *Official Updates and Beta
