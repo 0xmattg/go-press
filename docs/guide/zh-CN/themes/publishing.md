@@ -18,7 +18,7 @@ GoPress 官方市场 [gopress.xyz/market](https://gopress.xyz/market) 收录[主
 
 ## 开始之前
 
-- **一个能正常使用的主题包。** 按[主题包](theme-packages.md)的要求编写：页面 bundle、不含脚本、外部域名在 `[[external]]` 里声明。在开发站点上用 `gopress serve -theme-package ./my-theme` 预览，确认演示数据能把主题展示好。
+- **一个能正常使用的主题包。** 按[主题包](theme-packages.md)的要求编写：页面 bundle、不含脚本、外部域名在 `[[external]]` 里声明。在开发站点上用 `gopress serve -theme-package ./my-theme` 预览，确认演示数据能把主题展示好。可以参考 [GoPress 市场样例](https://github.com/0xmattg/go-press-market-samples)仓库，里面收录了部分已上架市场主题的完整源码。
 - **`gopress` 命令行。** `gopress pkg` 系列命令不需要 GoPress 源码目录。
 - **市场展示什么。** 市场从 `theme.toml` 取主题名称和描述，从主题包顶层的 `screenshot.png` 取截图。另外请附上 `README.md`，以及允许他人在自己站点上使用该主题的 `LICENSE`。字体、图片等素材必须是你有权分发的。
 
